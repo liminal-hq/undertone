@@ -69,7 +69,7 @@ placeBuilding.play();
 ```
 
 See `demo/` for a runnable local playground (`bun run demo`), or the deployed version at
-[liminal-hq.github.io/undertone](https://liminal-hq.github.io/undertone/).
+[liminalhq.ca/undertone](https://liminalhq.ca/undertone/).
 
 ## API
 
