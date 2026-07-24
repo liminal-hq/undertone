@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { note, sound, stack } from '../src/index';
+import { note, sound } from '../src/index';
 import type { SoundType } from '../src/index';
 
 interface FieldConfig {
@@ -70,7 +70,7 @@ function generateCode(values: Record<string, number>, soundType: SoundType, pitc
     `.slide(${values.slide})`,
     `.nudge(${values.nudge})`
   ].join('\n  ');
-  return `stack(\n  ${base}\n  ${chain}\n);`;
+  return `${base}\n  ${chain}\n  .play();`;
 }
 
 export function initPlayground(): void {
@@ -131,7 +131,7 @@ export function initPlayground(): void {
 
   playButton.addEventListener('click', () => {
     const voice = buildVoice(values, soundTypeSelect.value as SoundType, pitchInput.value);
-    stack(voice).play();
+    voice.play();
   });
 
   updateCode();
