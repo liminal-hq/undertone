@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build library
+        run: bun run build
+      - name: Write summary
+        if: always()
+        run: echo "## Build" >> "${GITHUB_STEP_SUMMARY}"
+
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Run tests
+        run: bun run test
+      - name: Write summary
+        if: always()
+        run: echo "## Test" >> "${GITHUB_STEP_SUMMARY}"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: ESLint
+        run: bun run lint
+      - name: Write summary
+        if: always()
+        run: echo "## Lint" >> "${GITHUB_STEP_SUMMARY}"
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Prettier check
+        run: bun run format:check
+      - name: Write summary
+        if: always()
+        run: echo "## Format" >> "${GITHUB_STEP_SUMMARY}"
+
+  demo:
+    name: Demo (build + typecheck)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Typecheck demo
+        run: bun run typecheck:demo
+      - name: Build demo
+        run: bun run build:demo
+      - name: Write summary
+        if: always()
+        run: echo "## Demo" >> "${GITHUB_STEP_SUMMARY}"

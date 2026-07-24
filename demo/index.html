@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Undertone — a procedural SFX synth for games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        background: #0a0f1c;
+        color: #e2e8f0;
+        font-family: ui-monospace, 'Fira Code', 'JetBrains Mono', Menlo, monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 48px;
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: #a78bfa;
+        margin-bottom: 0;
+      }
+
+      h2 {
+        color: #5aa2ff;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+
+      p {
+        color: #94a3b8;
+        margin-top: 0;
+      }
+
+      section {
+        width: 100%;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        background: #132644;
+        border: 2px solid #2e3540;
+        color: #e2e8f0;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        border-color: #5aa2ff;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .playground-top-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      select,
+      input[type='text'] {
+        background: #101c34;
+        border: 1px solid #2e3540;
+        color: #e2e8f0;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      .playground-row {
+        display: grid;
+        grid-template-columns: 180px 1fr 70px;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 0;
+      }
+
+      .playground-label {
+        color: #9aa4b2;
+        font-size: 13px;
+      }
+
+      .playground-value {
+        color: #7bffb7;
+        font-size: 13px;
+        text-align: right;
+      }
+
+      input[type='range'] {
+        accent-color: #5aa2ff;
+      }
+
+      #playground-code {
+        background: #050507;
+        border: 1px solid #2e3540;
+        border-radius: 8px;
+        padding: 16px;
+        color: #7bffb7;
+        font-size: 13px;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Undertone</h1>
+    <p>
+      A small, dependency-free procedural synth engine for one-shot game sound effects. Every click
+      below resumes/creates the shared AudioContext (browsers require a user gesture before audio
+      can play).
+    </p>
+
+    <section>
+      <h2>Presets</h2>
+      <div class="buttons">
+        <button id="play-place-building">▶ Place Building</button>
+        <button id="play-ui-blip">▶ UI Blip</button>
+        <button id="play-error">▶ Error</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Playground</h2>
+      <p>Tweak a voice, hear it instantly, copy the code.</p>
+      <div class="playground-top-row">
+        <label
+          >Sound
+          <select id="playground-sound-type">
+            <option value="sine">sine</option>
+            <option value="triangle">triangle</option>
+            <option value="square">square</option>
+            <option value="sawtooth">sawtooth</option>
+            <option value="white">white noise</option>
+            <option value="pink">pink noise</option>
+            <option value="brown">brown noise</option>
+          </select>
+        </label>
+        <label>
+          Note
+          <input type="text" id="playground-pitch" value="c3" size="4" />
+        </label>
+        <button id="playground-play">▶ Play</button>
+      </div>
+      <div id="playground-controls"></div>
+      <pre id="playground-code"></pre>
+    </section>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
