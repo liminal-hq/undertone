@@ -217,6 +217,30 @@ export class Pattern<T> {
   nudge(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
     return this.withPatch({ nudgeTime: seconds });
   }
+
+  /** Stereo position, -1 (hard left) to 1 (hard right). */
+  pan(this: Pattern<ControlPatch>, position: number): Pattern<ControlPatch> {
+    if (position < -1 || position > 1) {
+      throw new Error(`pan() position must be between -1 and 1, got ${position}`);
+    }
+    return this.withPatch({ pan: position });
+  }
+
+  /**
+   * Juxtaposes the pattern with a transformed copy of itself: the original
+   * plays hard left, `fn(pattern)` plays hard right — e.g. `pat.jux(rev)`.
+   */
+  jux(
+    this: Pattern<ControlPatch>,
+    fn: (pat: Pattern<ControlPatch>) => Pattern<ControlPatch>
+  ): Pattern<ControlPatch> {
+    return stack(this.pan(-1), fn(this).pan(1));
+  }
+}
+
+/** Standalone cycle-reversal, for point-free style: `pat.jux(rev)`. */
+export function rev<T>(pat: Pattern<T>): Pattern<T> {
+  return pat.rev();
 }
 
 /** The empty pattern: querying it never returns events. */

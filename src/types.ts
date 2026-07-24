@@ -28,8 +28,16 @@ export interface VoiceParams {
   filterRelease: number;
   /** Pitch glide (portamento) time in seconds; starts an octave above the target and slides down. */
   slideTime: number;
-  /** Start-time offset in seconds, relative to a stack()'s shared start time. */
+  /** Start-time offset in seconds, relative to the pattern's shared start time. */
   nudgeTime: number;
+  /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */
+  pan?: number;
+  /**
+   * Gate length in seconds: the envelopes hold at their sustain level until this
+   * long after the voice starts, then release. Percussive (no hold) when
+   * undefined. The scheduler sets this from each event's pattern duration.
+   */
+  duration?: number;
 }
 
 /**
@@ -72,6 +80,10 @@ export interface BiquadFilterNodeLike extends AudioNodeLike {
   Q: AudioParamLike;
 }
 
+export interface StereoPannerNodeLike extends AudioNodeLike {
+  pan: AudioParamLike;
+}
+
 export interface AudioBufferLike {
   getChannelData(channel: number): Float32Array;
 }
@@ -89,6 +101,7 @@ export interface AudioContextLike {
   createOscillator(): OscillatorNodeLike;
   createGain(): GainNodeLike;
   createBiquadFilter(): BiquadFilterNodeLike;
+  createStereoPanner(): StereoPannerNodeLike;
   createBufferSource(): AudioBufferSourceNodeLike;
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
 }

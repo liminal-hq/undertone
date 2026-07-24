@@ -35,10 +35,13 @@ const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a pe
 const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actually completes before stop()
 
 /**
- * Schedules a percussive attack→decay→(no held plateau)→release envelope on an
- * AudioParam, ramping between `base` and `peak` rather than assuming 0 is the
- * floor — gain envelopes use base=0, filter envelopes use base=the resting cutoff.
- * Returns the absolute time the envelope finishes (fully released).
+ * Schedules an attack→decay→release envelope on an AudioParam, ramping between
+ * `base` and `peak` rather than assuming 0 is the floor — gain envelopes use
+ * base=0, filter envelopes use base=the resting cutoff. Without `gateEnd` the
+ * shape is percussive (release starts as soon as the decay lands); with it,
+ * the envelope holds at its sustain level until the gate closes, which is what
+ * gives pattern events their note length. Returns the absolute time the
+ * envelope finishes (fully released).
  */
 function scheduleEnvelope(
   param: AudioParamLike,
@@ -48,7 +51,8 @@ function scheduleEnvelope(
   attack: number,
   decay: number,
   sustainFraction: number,
-  release: number
+  release: number,
+  gateEnd?: number
 ): number {
   const sustainValue = base + (peak - base) * sustainFraction;
 
@@ -68,7 +72,12 @@ function scheduleEnvelope(
     param.setValueAtTime(sustainValue, decayEnd);
   }
 
-  const releaseEnd = decayEnd + release;
+  const releaseStart = gateEnd !== undefined ? Math.max(decayEnd, gateEnd) : decayEnd;
+  if (releaseStart > decayEnd) {
+    param.setValueAtTime(sustainValue, releaseStart);
+  }
+
+  const releaseEnd = releaseStart + release;
   if (release > 0) {
     param.linearRampToValueAtTime(base, releaseEnd);
   }
@@ -83,6 +92,7 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
 /** Realizes a single voice against a real (or fake, for tests) AudioContext, starting at `startTime`. */
 export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime: number): void {
   const voiceStart = startTime + params.nudgeTime;
+  const gateEnd = params.duration !== undefined ? voiceStart + params.duration : undefined;
 
   const gainNode = ctx.createGain();
   const gainReleaseEnd = scheduleEnvelope(
@@ -93,7 +103,8 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     params.attack,
     params.decay,
     params.sustain,
-    params.release
+    params.release,
+    gateEnd
   );
 
   let filterReleaseEnd = gainReleaseEnd;
@@ -128,7 +139,8 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
       params.filterAttack,
       params.filterDecay,
       params.filterSustain,
-      params.filterRelease
+      params.filterRelease,
+      gateEnd
     );
     source.connect(filter);
     filter.connect(gainNode);
@@ -136,7 +148,14 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     source.connect(gainNode);
   }
 
-  gainNode.connect(ctx.destination);
+  if (params.pan !== undefined) {
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(params.pan, voiceStart);
+    gainNode.connect(panner);
+    panner.connect(ctx.destination);
+  } else {
+    gainNode.connect(ctx.destination);
+  }
 
   const voiceEnd = Math.max(gainReleaseEnd, filterReleaseEnd) + STOP_TAIL_SECONDS;
   source.start(voiceStart);

@@ -153,6 +153,91 @@ describe('playVoice', () => {
     expect(bufferSource.connectedTo).toEqual([ctx.gains[0]]);
   });
 
+  it('holds the sustain level until the gate ends when duration is set', () => {
+    const ctx = new FakeAudioContext();
+    const params = resolveParams({
+      pitch: 'c3',
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0.5,
+      release: 0.05,
+      gainLevel: 1,
+      duration: 0.5
+    });
+
+    playVoice(ctx, params, 0);
+
+    expect(ctx.gains[0].gain.calls).toEqual([
+      { method: 'setValueAtTime', value: 0, time: 0 },
+      { method: 'linearRampToValueAtTime', value: 1, time: 0.01 },
+      { method: 'linearRampToValueAtTime', value: 0.5, time: 0.11 },
+      { method: 'setValueAtTime', value: 0.5, time: 0.5 },
+      { method: 'linearRampToValueAtTime', value: 0, time: 0.55 }
+    ]);
+  });
+
+  it('applies the same gate to the filter envelope', () => {
+    const ctx = new FakeAudioContext();
+    const params = resolveParams({
+      pitch: 'c3',
+      filterCutoff: 200,
+      filterEnvAmount: 100,
+      filterAttack: 0.01,
+      filterDecay: 0.04,
+      filterSustain: 0.5,
+      filterRelease: 0.1,
+      duration: 0.5
+    });
+
+    playVoice(ctx, params, 0);
+
+    expect(ctx.filters[0].frequency.calls).toEqual([
+      { method: 'setValueAtTime', value: 200, time: 0 },
+      { method: 'linearRampToValueAtTime', value: 300, time: 0.01 },
+      { method: 'linearRampToValueAtTime', value: 250, time: 0.05 },
+      { method: 'setValueAtTime', value: 250, time: 0.5 },
+      { method: 'linearRampToValueAtTime', value: 200, time: 0.6 }
+    ]);
+  });
+
+  it('stays percussive (no hold) when the envelope outlasts the gate', () => {
+    const ctx = new FakeAudioContext();
+    const params = resolveParams({
+      pitch: 'c3',
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0,
+      release: 0.05,
+      duration: 0.05
+    });
+
+    playVoice(ctx, params, 0);
+
+    // Release starts at decay end (0.11), not at the earlier gate end.
+    const calls = ctx.gains[0].gain.calls;
+    expect(calls).toHaveLength(4);
+    expect(calls[3].method).toBe('linearRampToValueAtTime');
+    expect(calls[3].time).toBeCloseTo(0.16, 10);
+  });
+
+  it('routes through a stereo panner when pan is set', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', pan: -1 }), 2);
+
+    expect(ctx.panners).toHaveLength(1);
+    const panner = ctx.panners[0];
+    expect(ctx.gains[0].connectedTo).toEqual([panner]);
+    expect(panner.connectedTo).toEqual([ctx.destination]);
+    expect(panner.pan.calls).toEqual([{ method: 'setValueAtTime', value: -1, time: 2 }]);
+  });
+
+  it('creates no panner node at all when pan is undefined', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
+    expect(ctx.panners).toHaveLength(0);
+    expect(ctx.gains[0].connectedTo).toEqual([ctx.destination]);
+  });
+
   it('stops the source shortly after the slowest envelope (gain vs filter) finishes releasing', () => {
     const ctx = new FakeAudioContext();
     // Filter release ends later than gain release here.

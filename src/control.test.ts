@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { note, sound } from './control';
 import { Fraction } from './fraction';
-import { hasOnset, type Pattern } from './pattern';
+import { hasOnset, rev, type Pattern } from './pattern';
 import type { ControlPatch } from './types';
 
 function onsets(pat: Pattern<ControlPatch>, cycle = 0): ControlPatch[] {
@@ -98,6 +98,25 @@ describe('chainable controls', () => {
 
   it('later calls override earlier ones', () => {
     expect(onsets(note('c3').gain(0.1).gain(0.9))).toEqual([{ pitch: 'c3', gainLevel: 0.9 }]);
+  });
+
+  it('pans and validates the range', () => {
+    expect(onsets(note('c3').pan(0.5))).toEqual([{ pitch: 'c3', pan: 0.5 }]);
+    expect(() => note('c3').pan(2)).toThrow(/between -1 and 1/);
+  });
+
+  it('jux plays the original hard left and the transformed copy hard right', () => {
+    const pat = note('c3 e3').jux(rev);
+    const events = onsets(pat).map((v) => ({ pitch: v.pitch, pan: v.pan }));
+    expect(events).toContainEqual({ pitch: 'c3', pan: -1 });
+    expect(events).toContainEqual({ pitch: 'e3', pan: -1 });
+    expect(events).toContainEqual({ pitch: 'e3', pan: 1 });
+    expect(events).toContainEqual({ pitch: 'c3', pan: 1 });
+
+    const left = onsets(pat).filter((v) => v.pan === -1);
+    const right = onsets(pat).filter((v) => v.pan === 1);
+    expect(left.map((v) => v.pitch)).toEqual(['c3', 'e3']);
+    expect(right.map((v) => v.pitch)).toEqual(['e3', 'c3']);
   });
 
   it('composes with pattern combinators', () => {
