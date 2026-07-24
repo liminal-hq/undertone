@@ -7,6 +7,12 @@ import type { SoundEffect } from '../src/index';
 import { placeBuilding } from './placeBuilding';
 import { uiBlip } from './uiBlip';
 import { error } from './error';
+import { bulldoze } from './bulldoze';
+import { cashIn } from './cashIn';
+import { powerOn } from './powerOn';
+import { milestone } from './milestone';
+import { notification } from './notification';
+import { undo } from './undo';
 import { initPlayground } from './playground';
 
 function wireButton(selector: string, effect: SoundEffect): void {
@@ -17,5 +23,11 @@ function wireButton(selector: string, effect: SoundEffect): void {
 wireButton('#play-place-building', placeBuilding);
 wireButton('#play-ui-blip', uiBlip);
 wireButton('#play-error', error);
+wireButton('#play-bulldoze', bulldoze);
+wireButton('#play-cash-in', cashIn);
+wireButton('#play-power-on', powerOn);
+wireButton('#play-milestone', milestone);
+wireButton('#play-notification', notification);
+wireButton('#play-undo', undo);
 
 initPlayground();
