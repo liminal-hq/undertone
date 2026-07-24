@@ -11,6 +11,7 @@ import {
   type LoopOptions,
   type PlayOptions
 } from './scheduler.js';
+import { MAX_CHANNELS, surroundGains } from './surround.js';
 import type { ControlPatch, SoundType } from './types.js';
 
 /** A half-open span of cycle time [begin, end). */
@@ -231,6 +232,33 @@ export class Pattern<T> {
       throw new Error(`pan() position must be between -1 and 1, got ${position}`);
     }
     return this.withPatch({ pan: position });
+  }
+
+  /**
+   * Multichannel (up to 7.1) placement: per-speaker output gains in the order
+   * FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries). Takes precedence over
+   * pan(). On destinations that can't address that many speakers (or without
+   * enableMultichannel()), the voice folds down to stereo automatically.
+   */
+  channels(this: Pattern<ControlPatch>, gains: number[]): Pattern<ControlPatch> {
+    if (gains.length < 1 || gains.length > MAX_CHANNELS) {
+      throw new Error(`channels() takes 1-${MAX_CHANNELS} gains, got ${gains.length}`);
+    }
+    for (const level of gains) {
+      if (!Number.isFinite(level) || level < 0) {
+        throw new Error(`channels() gains must be finite and >= 0, got ${level}`);
+      }
+    }
+    return this.withPatch({ channelGains: [...gains] });
+  }
+
+  /**
+   * Places the voice at an angle on the 7.1 speaker ring: 0° front-centre,
+   * ±30° front, ±90° sides, ±150° rears, ±180° dead-behind — equal-power
+   * panned between the two nearest speakers. Sugar for channels(surroundGains(angle)).
+   */
+  surround(this: Pattern<ControlPatch>, angleDegrees: number): Pattern<ControlPatch> {
+    return this.withPatch({ channelGains: surroundGains(angleDegrees) });
   }
 
   /**

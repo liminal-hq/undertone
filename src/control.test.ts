@@ -105,6 +105,16 @@ describe('chainable controls', () => {
     expect(() => note('c3').pan(2)).toThrow(/between -1 and 1/);
   });
 
+  it('places voices on the 7.1 ring via channels() and surround()', () => {
+    expect(onsets(note('c3').channels([0, 0, 0, 0.8]))[0]).toEqual({
+      pitch: 'c3',
+      channelGains: [0, 0, 0, 0.8]
+    });
+    expect(onsets(note('c3').surround(-90))[0].channelGains?.[4]).toBe(1);
+    expect(() => note('c3').channels([])).toThrow(/1-8 gains/);
+    expect(() => note('c3').channels([1, -0.5])).toThrow(/finite and >= 0/);
+  });
+
   it('jux plays the original hard left and the transformed copy hard right', () => {
     const pat = note('c3 e3').jux(rev);
     const events = onsets(pat).map((v) => ({ pitch: v.pitch, pan: v.pan }));

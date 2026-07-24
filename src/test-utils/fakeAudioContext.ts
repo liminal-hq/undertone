@@ -6,9 +6,11 @@
 import type {
   AudioBufferLike,
   AudioContextLike,
+  AudioDestinationNodeLike,
   AudioNodeLike,
   AudioParamLike,
   BiquadFilterNodeLike,
+  ChannelMergerNodeLike,
   GainNodeLike,
   OscillatorNodeLike,
   StereoPannerNodeLike,
@@ -46,9 +48,12 @@ export class FakeAudioParam implements AudioParamLike {
 
 class FakeNode implements AudioNodeLike {
   connectedTo: AudioNodeLike[] = [];
+  /** Full connect() records, including merger input indices. */
+  connections: { node: AudioNodeLike; output: number; input: number }[] = [];
 
-  connect(destination: AudioNodeLike): AudioNodeLike {
+  connect(destination: AudioNodeLike, output = 0, input = 0): AudioNodeLike {
     this.connectedTo.push(destination);
+    this.connections.push({ node: destination, output, input });
     return destination;
   }
 }
@@ -82,6 +87,18 @@ export class FakeStereoPannerNode extends FakeNode implements StereoPannerNodeLi
   pan = new FakeAudioParam();
 }
 
+export class FakeChannelMergerNode extends FakeNode implements ChannelMergerNodeLike {
+  constructor(readonly numberOfInputs: number) {
+    super();
+  }
+}
+
+export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
+  maxChannelCount = 2;
+  channelCount = 2;
+  channelInterpretation = 'speakers';
+}
+
 export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSourceNodeLike {
   buffer: AudioBufferLike | null = null;
   started: number[] = [];
@@ -113,12 +130,13 @@ class FakeAudioBuffer implements AudioBufferLike {
 export class FakeAudioContext implements AudioContextLike {
   currentTime = 0;
   sampleRate = 44100;
-  destination: AudioNodeLike = new FakeNode();
+  destination = new FakeAudioDestinationNode();
 
   readonly oscillators: FakeOscillatorNode[] = [];
   readonly gains: FakeGainNode[] = [];
   readonly filters: FakeBiquadFilterNode[] = [];
   readonly panners: FakeStereoPannerNode[] = [];
+  readonly mergers: FakeChannelMergerNode[] = [];
   readonly bufferSources: FakeAudioBufferSourceNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
@@ -142,6 +160,12 @@ export class FakeAudioContext implements AudioContextLike {
   createStereoPanner(): FakeStereoPannerNode {
     const node = new FakeStereoPannerNode();
     this.panners.push(node);
+    return node;
+  }
+
+  createChannelMerger(numberOfInputs: number): FakeChannelMergerNode {
+    const node = new FakeChannelMergerNode(numberOfInputs);
+    this.mergers.push(node);
     return node;
   }
 

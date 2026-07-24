@@ -3,9 +3,16 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioContextLike, AudioParamLike, ControlPatch, VoiceParams } from './types.js';
+import type {
+  AudioContextLike,
+  AudioParamLike,
+  ControlPatch,
+  GainNodeLike,
+  VoiceParams
+} from './types.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
+import { foldToStereo, MAX_CHANNELS } from './surround.js';
 
 const DEFAULT_PARAMS: VoiceParams = {
   soundType: 'sine',
@@ -148,7 +155,40 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     source.connect(gainNode);
   }
 
-  if (params.pan !== undefined) {
+  connectOutput(ctx, gainNode, params, voiceStart);
+
+  const voiceEnd = Math.max(gainReleaseEnd, filterReleaseEnd) + STOP_TAIL_SECONDS;
+  source.start(voiceStart);
+  source.stop(voiceEnd);
+}
+
+/**
+ * Routes the enveloped voice to the destination: through per-speaker gains
+ * into a channel merger when channelGains is set (folded to stereo when the
+ * destination can't address that many speakers), through a stereo panner when
+ * pan is set, or straight through otherwise.
+ */
+function connectOutput(
+  ctx: AudioContextLike,
+  gainNode: GainNodeLike,
+  params: VoiceParams,
+  voiceStart: number
+): void {
+  if (params.channelGains !== undefined) {
+    const available = ctx.destination.channelCount ?? 2;
+    const requested = params.channelGains.slice(0, MAX_CHANNELS);
+    const gains = requested.length > available ? foldToStereo(requested) : requested;
+    const merger = ctx.createChannelMerger(gains.length);
+    gains.forEach((level, channel) => {
+      if (level > 0) {
+        const channelGain = ctx.createGain();
+        channelGain.gain.setValueAtTime(level, voiceStart);
+        gainNode.connect(channelGain);
+        channelGain.connect(merger, 0, channel);
+      }
+    });
+    merger.connect(ctx.destination);
+  } else if (params.pan !== undefined) {
     const panner = ctx.createStereoPanner();
     panner.pan.setValueAtTime(params.pan, voiceStart);
     gainNode.connect(panner);
@@ -156,10 +196,6 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
   } else {
     gainNode.connect(ctx.destination);
   }
-
-  const voiceEnd = Math.max(gainReleaseEnd, filterReleaseEnd) + STOP_TAIL_SECONDS;
-  source.start(voiceStart);
-  source.stop(voiceEnd);
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

@@ -231,6 +231,51 @@ describe('playVoice', () => {
     expect(panner.pan.calls).toEqual([{ method: 'setValueAtTime', value: -1, time: 2 }]);
   });
 
+  it('routes channelGains through per-speaker gains into a merger on a multichannel destination', () => {
+    const ctx = new FakeAudioContext();
+    ctx.destination.maxChannelCount = 8;
+    ctx.destination.channelCount = 8;
+
+    // FL 0.5, SR 1 (indices 0 and 5)
+    playVoice(ctx, resolveParams({ pitch: 'a4', channelGains: [0.5, 0, 0, 0, 0, 1] }), 1);
+
+    expect(ctx.mergers).toHaveLength(1);
+    const merger = ctx.mergers[0];
+    expect(merger.numberOfInputs).toBe(6);
+    expect(merger.connectedTo).toEqual([ctx.destination]);
+
+    // envelope gain + one channel gain per nonzero entry
+    expect(ctx.gains).toHaveLength(3);
+    const [envelope, flGain, srGain] = ctx.gains;
+    expect(envelope.connectedTo).toEqual([flGain, srGain]);
+    expect(flGain.gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.5, time: 1 }]);
+    expect(flGain.connections).toEqual([{ node: merger, output: 0, input: 0 }]);
+    expect(srGain.connections).toEqual([{ node: merger, output: 0, input: 5 }]);
+    expect(ctx.panners).toHaveLength(0);
+  });
+
+  it('folds channelGains down to stereo when the destination cannot address them', () => {
+    const ctx = new FakeAudioContext(); // stereo destination
+    const gains = [0, 0, 1, 0, 0, 0, 0, 0]; // centre only
+
+    playVoice(ctx, resolveParams({ pitch: 'a4', channelGains: gains }), 0);
+
+    const merger = ctx.mergers[0];
+    expect(merger.numberOfInputs).toBe(2);
+    const channelGainNodes = ctx.gains.slice(1);
+    expect(channelGainNodes).toHaveLength(2);
+    expect(channelGainNodes[0].gain.calls[0].value).toBeCloseTo(Math.SQRT1_2, 10);
+    expect(channelGainNodes[1].gain.calls[0].value).toBeCloseTo(Math.SQRT1_2, 10);
+  });
+
+  it('gives channelGains precedence over pan', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', pan: -1, channelGains: [1, 0] }), 0);
+
+    expect(ctx.mergers).toHaveLength(1);
+    expect(ctx.panners).toHaveLength(0);
+  });
+
   it('creates no panner node at all when pan is undefined', () => {
     const ctx = new FakeAudioContext();
     playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
