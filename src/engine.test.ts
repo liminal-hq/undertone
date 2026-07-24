@@ -4,21 +4,39 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from 'vitest';
-import { note, sound } from './voice';
-import { playVoice, playVoices } from './engine';
+import { playVoice, playVoices, resolveParams } from './engine';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
+
+describe('resolveParams', () => {
+  it('fills a patch out with the documented defaults', () => {
+    const params = resolveParams({ pitch: 'c2' });
+    expect(params).toMatchObject({
+      pitch: 'c2',
+      soundType: 'sine',
+      gainLevel: 0.8,
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0,
+      release: 0.05,
+      filterCutoff: undefined,
+      slideTime: 0,
+      nudgeTime: 0
+    });
+  });
+});
 
 describe('playVoice', () => {
   it('builds oscillator -> gain -> destination for a plain pitched voice', () => {
     const ctx = new FakeAudioContext();
-    const params = note('a4')
-      .sound('triangle')
-      .attack(0.01)
-      .decay(0.1)
-      .sustain(0)
-      .release(0.05)
-      .gain(0.7)
-      .getParams();
+    const params = resolveParams({
+      pitch: 'a4',
+      soundType: 'triangle',
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0,
+      release: 0.05,
+      gainLevel: 0.7
+    });
 
     playVoice(ctx, params, 0);
 
@@ -36,16 +54,16 @@ describe('playVoice', () => {
 
   it('sets oscillator frequency directly (no slide) when slideTime is 0', () => {
     const ctx = new FakeAudioContext();
-    playVoice(ctx, note('a4').getParams(), 0);
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
 
     expect(ctx.oscillators[0].frequency.calls).toEqual([
       { method: 'setValueAtTime', value: 440, time: 0 }
     ]);
   });
 
-  it('glides from an octave above down to the target note when slide() is set', () => {
+  it('glides from an octave above down to the target note when slideTime is set', () => {
     const ctx = new FakeAudioContext();
-    playVoice(ctx, note('a4').slide(0.07).getParams(), 0);
+    playVoice(ctx, resolveParams({ pitch: 'a4', slideTime: 0.07 }), 0);
 
     expect(ctx.oscillators[0].frequency.calls).toEqual([
       { method: 'setValueAtTime', value: 880, time: 0 },
@@ -55,13 +73,14 @@ describe('playVoice', () => {
 
   it('schedules a percussive attack/decay/release gain envelope with no held plateau', () => {
     const ctx = new FakeAudioContext();
-    const params = note('c2')
-      .attack(0.001)
-      .decay(0.1)
-      .sustain(0.25)
-      .release(0.05)
-      .gain(0.9)
-      .getParams();
+    const params = resolveParams({
+      pitch: 'c2',
+      attack: 0.001,
+      decay: 0.1,
+      sustain: 0.25,
+      release: 0.05,
+      gainLevel: 0.9
+    });
 
     playVoice(ctx, params, 0);
 
@@ -77,9 +96,9 @@ describe('playVoice', () => {
     expect(calls[3].time).toBeCloseTo(0.151, 10);
   });
 
-  it('offsets everything by nudge() relative to the shared start time', () => {
+  it('offsets everything by nudgeTime relative to the shared start time', () => {
     const ctx = new FakeAudioContext();
-    playVoice(ctx, note('a4').nudge(0.02).getParams(), 1);
+    playVoice(ctx, resolveParams({ pitch: 'a4', nudgeTime: 0.02 }), 1);
 
     expect(ctx.gains[0].gain.calls[0]).toMatchObject({ time: 1.02 });
     expect(ctx.oscillators[0].started).toEqual([1.02]);
@@ -87,7 +106,15 @@ describe('playVoice', () => {
 
   it('inserts a lowpass filter between source and gain, enveloped between lpf and lpf+lpenv', () => {
     const ctx = new FakeAudioContext();
-    const params = note('c2').lpf(220).lpenv(5).lpa(0.001).lpd(0.08).lps(0).lpr(0.05).getParams();
+    const params = resolveParams({
+      pitch: 'c2',
+      filterCutoff: 220,
+      filterEnvAmount: 5,
+      filterAttack: 0.001,
+      filterDecay: 0.08,
+      filterSustain: 0,
+      filterRelease: 0.05
+    });
 
     playVoice(ctx, params, 0);
 
@@ -105,15 +132,19 @@ describe('playVoice', () => {
     ]);
   });
 
-  it('creates no filter node at all when lpf() was never called', () => {
+  it('creates no filter node at all when filterCutoff is undefined', () => {
     const ctx = new FakeAudioContext();
-    playVoice(ctx, note('a4').getParams(), 0);
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
     expect(ctx.filters).toHaveLength(0);
   });
 
   it('builds a buffer source (not an oscillator) for noise sound types', () => {
     const ctx = new FakeAudioContext();
-    playVoice(ctx, sound('white').attack(0).decay(0.02).sustain(0).release(0.01).getParams(), 0);
+    playVoice(
+      ctx,
+      resolveParams({ soundType: 'white', attack: 0, decay: 0.02, sustain: 0, release: 0.01 }),
+      0
+    );
 
     expect(ctx.oscillators).toHaveLength(0);
     expect(ctx.bufferSources).toHaveLength(1);
@@ -127,7 +158,15 @@ describe('playVoice', () => {
     // Filter release ends later than gain release here.
     playVoice(
       ctx,
-      note('c2').attack(0).decay(0).sustain(0).release(0.05).lpf(200).lpr(0.5).getParams(),
+      resolveParams({
+        pitch: 'c2',
+        attack: 0,
+        decay: 0,
+        sustain: 0,
+        release: 0.05,
+        filterCutoff: 200,
+        filterRelease: 0.5
+      }),
       0
     );
 
@@ -140,7 +179,11 @@ describe('playVoices', () => {
     const ctx = new FakeAudioContext();
     playVoices(
       ctx,
-      [note('c2').getParams(), note('c6').nudge(0.02).getParams(), sound('white').getParams()],
+      [
+        resolveParams({ pitch: 'c2' }),
+        resolveParams({ pitch: 'c6', nudgeTime: 0.02 }),
+        resolveParams({ soundType: 'white' })
+      ],
       0
     );
 

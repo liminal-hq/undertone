@@ -3,9 +3,32 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioContextLike, AudioParamLike, VoiceParams } from './types.js';
+import type { AudioContextLike, AudioParamLike, ControlPatch, VoiceParams } from './types.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
+
+const DEFAULT_PARAMS: VoiceParams = {
+  soundType: 'sine',
+  pitch: undefined,
+  gainLevel: 0.8,
+  attack: 0.01,
+  decay: 0.1,
+  sustain: 0,
+  release: 0.05,
+  filterCutoff: undefined,
+  filterEnvAmount: 0,
+  filterAttack: 0,
+  filterDecay: 0,
+  filterSustain: 1,
+  filterRelease: 0,
+  slideTime: 0,
+  nudgeTime: 0
+};
+
+/** Fills a pattern event's partial parameter patch out to a complete set of voice parameters. */
+export function resolveParams(patch: ControlPatch): VoiceParams {
+  return { ...DEFAULT_PARAMS, ...patch };
+}
 
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
 const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"

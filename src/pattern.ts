@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction, ONE } from './fraction.js';
+import type { ControlPatch, SoundType } from './types.js';
 
 /** A half-open span of cycle time [begin, end). */
 export interface TimeSpan {
@@ -146,6 +147,75 @@ export class Pattern<T> {
   euclid(pulses: number, steps: number, rotation = 0): Pattern<T> {
     const slots = rotate(bjorklund(pulses, steps), rotation);
     return seq(...slots.map((on) => (on ? this : (silence as Pattern<T>))));
+  }
+
+  // --- Voice-control methods (only available on patterns of voice parameters) ---
+
+  private withPatch(this: Pattern<ControlPatch>, patch: ControlPatch): Pattern<ControlPatch> {
+    return this.fmap((value) => ({ ...value, ...patch }));
+  }
+
+  /** Sets/overrides the oscillator waveform or noise type across all events. */
+  sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch> {
+    return this.withPatch({ soundType: type });
+  }
+
+  attack(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ attack: seconds });
+  }
+
+  decay(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ decay: seconds });
+  }
+
+  /** Fraction (0-1) of gain the decay stage settles to before release. */
+  sustain(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
+    return this.withPatch({ sustain: level });
+  }
+
+  release(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ release: seconds });
+  }
+
+  gain(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
+    return this.withPatch({ gainLevel: level });
+  }
+
+  /** Base lowpass cutoff in Hz. Creates a filter stage; omit to skip filtering entirely. */
+  lpf(this: Pattern<ControlPatch>, hz: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterCutoff: hz });
+  }
+
+  /** Hz the filter envelope adds on top of lpf() at its peak. */
+  lpenv(this: Pattern<ControlPatch>, hzAmount: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterEnvAmount: hzAmount });
+  }
+
+  lpa(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterAttack: seconds });
+  }
+
+  lpd(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterDecay: seconds });
+  }
+
+  /** Fraction (0-1) between lpf() and its envelope peak the decay stage settles to. */
+  lps(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterSustain: level });
+  }
+
+  lpr(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ filterRelease: seconds });
+  }
+
+  /** Pitch glide (portamento): starts an octave above the target note and slides down. */
+  slide(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ slideTime: seconds });
+  }
+
+  /** Start-time offset in seconds applied to every event when played. */
+  nudge(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ nudgeTime: seconds });
   }
 }
 

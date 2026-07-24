@@ -33,6 +33,12 @@ export interface VoiceParams {
 }
 
 /**
+ * A partial set of voice parameters carried by each pattern event. Chainable
+ * pattern methods merge patches; the engine fills in defaults at play time.
+ */
+export type ControlPatch = Partial<VoiceParams>;
+
+/**
  * The minimal Web Audio surface engine.ts depends on. A real AudioContext/OscillatorNode/etc.
  * satisfies these structurally, so playVoice() works unchanged in a browser; tests pass a
  * hand-written fake instead (Web Audio doesn't exist outside a browser/jsdom-with-polyfill).
