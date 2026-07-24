@@ -4,6 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction, ONE } from './fraction.js';
+import {
+  loopPattern,
+  playPattern,
+  type LoopHandle,
+  type LoopOptions,
+  type PlayOptions
+} from './scheduler.js';
 import type { ControlPatch, SoundType } from './types.js';
 
 /** A half-open span of cycle time [begin, end). */
@@ -235,6 +242,21 @@ export class Pattern<T> {
     fn: (pat: Pattern<ControlPatch>) => Pattern<ControlPatch>
   ): Pattern<ControlPatch> {
     return stack(this.pan(-1), fn(this).pan(1));
+  }
+
+  /**
+   * Plays one cycle's worth of events as a one-shot sound effect (each event's
+   * gate length comes from its share of the cycle). Uses a lazily-created
+   * shared AudioContext when none is passed — call from a user gesture the
+   * first time (autoplay policy).
+   */
+  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): void {
+    playPattern(this, options);
+  }
+
+  /** Loops the pattern until stop() is called on the returned handle. */
+  loop(this: Pattern<ControlPatch>, options: LoopOptions = {}): LoopHandle {
+    return loopPattern(this, options);
   }
 }
 
