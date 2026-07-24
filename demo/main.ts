@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { SoundEffect } from '../src/index';
+import type { ControlPatch, Pattern } from '../src/index';
 import { placeBuilding } from './placeBuilding';
 import { uiBlip } from './uiBlip';
 import { error } from './error';
@@ -14,8 +14,9 @@ import { milestone } from './milestone';
 import { notification } from './notification';
 import { undo } from './undo';
 import { initPlayground } from './playground';
+import { initPatternLab } from './patternLab';
 
-function wireButton(selector: string, effect: SoundEffect): void {
+function wireButton(selector: string, effect: Pattern<ControlPatch>): void {
   const button = document.querySelector<HTMLButtonElement>(selector);
   button?.addEventListener('click', () => effect.play());
 }
@@ -31,3 +32,4 @@ wireButton('#play-notification', notification);
 wireButton('#play-undo', undo);
 
 initPlayground();
+initPatternLab();

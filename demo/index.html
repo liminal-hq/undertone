@@ -108,7 +108,8 @@
         accent-color: #5aa2ff;
       }
 
-      #playground-code {
+      #playground-code,
+      #lab-code {
         background: #050507;
         border: 1px solid #2e3540;
         border-radius: 8px;
@@ -118,14 +119,82 @@
         white-space: pre-wrap;
         overflow-x: auto;
       }
+
+      #lab-notation {
+        width: 100%;
+        box-sizing: border-box;
+        background: #050507;
+        border: 1px solid #2e3540;
+        border-radius: 8px;
+        color: #ffd479;
+        font-family: inherit;
+        font-size: 16px;
+        padding: 12px 14px;
+        margin: 12px 0;
+      }
+
+      #lab-notation:focus {
+        outline: none;
+        border-color: #5aa2ff;
+      }
+
+      .lab-toggles {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 10px 0;
+      }
+
+      .lab-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #101c34;
+        border: 1px solid #2e3540;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: #9aa4b2;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .lab-toggle:has(input:checked) {
+        border-color: #a78bfa;
+        color: #e2e8f0;
+      }
+
+      .lab-toggle input {
+        accent-color: #a78bfa;
+      }
+
+      .lab-error {
+        color: #ff8097;
+        background: #2a0f16;
+        border: 1px solid #7f1d2e;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        margin: 10px 0;
+      }
+
+      #lab-viz {
+        width: 100%;
+        height: 140px;
+        display: block;
+        background: #050507;
+        border: 1px solid #2e3540;
+        border-radius: 8px;
+        margin: 12px 0;
+      }
     </style>
   </head>
   <body>
     <h1>Undertone</h1>
     <p>
-      A small, dependency-free procedural synth engine for one-shot game sound effects. Every click
-      below resumes/creates the shared AudioContext (browsers require a user gesture before audio
-      can play).
+      A small, dependency-free procedural synth engine for game sound effects and pattern-based
+      music. Browsers require a user gesture before audio can play — the AudioContext is created on
+      your first click.
     </p>
 
     <section>
@@ -141,6 +210,40 @@
         <button id="play-ui-blip">▶ UI Blip</button>
         <button id="play-error">▶ Error</button>
       </div>
+    </section>
+
+    <section>
+      <h2>Pattern lab</h2>
+      <p>
+        Polyphonic cycles from mini-notation: <code>[a b]</code> subdivides,
+        <code>&lt;a b&gt;</code> alternates per cycle, <code>,</code> stacks chords and layers,
+        <code>(3,8)</code> is a euclidean rhythm, <code>*2</code> doubles up, <code>~</code> rests.
+        Pick an example (it starts looping), then edit everything live — including 7.1 surround
+        placement if your hardware has it.
+      </p>
+      <div class="buttons" id="lab-examples"></div>
+      <input id="lab-notation" type="text" spellcheck="false" value="c3 e3 g3 &lt;b3 c4&gt;" />
+      <div class="playground-top-row">
+        <label
+          >Sound
+          <select id="lab-sound">
+            <option value="sine">sine</option>
+            <option value="triangle" selected>triangle</option>
+            <option value="square">square</option>
+            <option value="sawtooth">sawtooth</option>
+            <option value="white">white noise</option>
+            <option value="pink">pink noise</option>
+            <option value="brown">brown noise</option>
+          </select>
+        </label>
+        <button id="lab-play">▶ Once</button>
+        <button id="lab-loop">⟳ Loop</button>
+      </div>
+      <div class="lab-toggles" id="lab-toggles"></div>
+      <div id="lab-controls"></div>
+      <div class="lab-error" id="lab-error" hidden></div>
+      <canvas id="lab-viz"></canvas>
+      <pre id="lab-code"></pre>
     </section>
 
     <section>
