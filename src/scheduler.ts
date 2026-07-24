@@ -45,6 +45,10 @@ const DEFAULT_BPM = 120;
 const SECONDS_PER_CYCLE_AT_1_BPM = 240; // four beats per cycle
 const LOOKAHEAD_SECONDS = 0.3; // how far ahead of the audio clock each tick schedules
 const TICK_MS = 100;
+// Headroom between loop() being called and pattern time zero, so the very
+// first onset isn't scheduled at exactly "now" (already in the past by the
+// time the nodes are built, which would clamp its attack).
+const START_LATENCY_SECONDS = 0.1;
 // Scheduling-window boundaries are quantized to this per-cycle grid so their
 // denominators stay small — Fraction arithmetic must never leave integer-safe
 // range even after days of looping. Event times are unaffected: a rational
@@ -127,7 +131,7 @@ export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): Lo
   const ctx = options.ctx ?? getSharedContext();
   const cycleSeconds = cycleSecondsFor(options.bpm);
   const timer = options.timer ?? defaultTimer;
-  const startTime = ctx.currentTime;
+  const startTime = ctx.currentTime + START_LATENCY_SECONDS;
   let scheduledUntil = new Fraction(0); // pattern time, in cycles
 
   const tick = (): void => {

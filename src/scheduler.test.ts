@@ -102,16 +102,17 @@ describe('loop', () => {
 
     note('c3').loop({ ctx, timer, bpm: 240 }); // 1-second cycles
 
-    // First tick covers [now, now + 0.3s): just the cycle-0 onset.
+    // First tick covers the lookahead window: just the cycle-0 onset, placed
+    // 100ms out so its attack isn't already in the past.
     expect(ctx.oscillators).toHaveLength(1);
-    expect(ctx.oscillators[0].started).toEqual([0]);
+    expect(ctx.oscillators[0].started).toEqual([0.1]);
     expect(timer.intervalMs).toBe(100);
 
     // Clock advances past cycle 1's onset minus lookahead: cycle 1 gets scheduled.
     ctx.currentTime = 1.0;
     timer.tick();
     expect(ctx.oscillators).toHaveLength(2);
-    expect(ctx.oscillators[1].started).toEqual([1]);
+    expect(ctx.oscillators[1].started).toEqual([1.1]);
   });
 
   it("gates each looped voice with its event's share of the cycle", () => {
@@ -125,7 +126,7 @@ describe('loop', () => {
     expect(ctx.gains[0].gain.calls).toContainEqual({
       method: 'setValueAtTime',
       value: 0.4,
-      time: 0.5
+      time: 0.6 // 0.1s start latency + 0.5s gate
     });
   });
 
@@ -151,11 +152,12 @@ describe('loop', () => {
       timer.tick();
     }
 
-    // ~10 seconds covered -> 10 cycles x 3 onsets, each at an exact third.
+    // ~10 seconds covered -> 10 cycles x 3 onsets, each at an exact third
+    // past the 0.1s start latency.
     expect(ctx.oscillators.length).toBeGreaterThanOrEqual(30);
     const started = ctx.oscillators.map((osc) => osc.started[0]);
-    expect(started[4]).toBeCloseTo(1 + 1 / 3, 10);
-    expect(started[28]).toBeCloseTo(9 + 1 / 3, 10);
+    expect(started[4]).toBeCloseTo(0.1 + 1 + 1 / 3, 10);
+    expect(started[28]).toBeCloseTo(0.1 + 9 + 1 / 3, 10);
   });
 
   it('stops scheduling when the handle is stopped', () => {

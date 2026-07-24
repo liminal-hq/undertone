@@ -115,6 +115,16 @@ describe('mini', () => {
     expect(() => parse('<a@2 b>')).toThrow(/not supported inside <>/);
   });
 
+  it('rejects hex/exponent notation instead of silently coercing it', () => {
+    expect(() => parse('a*0x10')).toThrow(/expected a number/);
+    expect(() => parse('a*1e3')).toThrow(/expected a number/);
+  });
+
+  it('wraps combinator errors with the modifier position', () => {
+    expect(() => parse('a*-2')).toThrow(/position 1.*positive/);
+    expect(() => parse('a(-1,4)')).toThrow(/position 1.*pulses/);
+  });
+
   it('reports leaf validation errors with their position', () => {
     const strict = (source: string) =>
       mini(source, (word) => {

@@ -101,6 +101,7 @@ export class FakeAudioDestinationNode extends FakeNode implements AudioDestinati
 
 export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSourceNodeLike {
   buffer: AudioBufferLike | null = null;
+  loop = false;
   started: number[] = [];
   stopped: number[] = [];
 

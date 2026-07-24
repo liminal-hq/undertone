@@ -19,10 +19,13 @@ const SOUND_TYPES: readonly string[] = [
 ];
 
 function parsePitchWord(word: string): string | number {
+  // Both branches validate eagerly so bad pitches fail at build time, not play time.
   if (/^\d+(\.\d+)?$/.test(word)) {
-    return Number(word);
+    const hz = Number(word);
+    noteToFrequency(hz);
+    return hz;
   }
-  noteToFrequency(word); // validates eagerly so bad notes fail at build time, not play time
+  noteToFrequency(word);
   return word;
 }
 

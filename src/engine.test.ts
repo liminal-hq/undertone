@@ -180,6 +180,7 @@ describe('playVoice', () => {
     const ctx = new FakeAudioContext();
     const params = resolveParams({
       pitch: 'c3',
+      sustain: 0.5,
       filterCutoff: 200,
       filterEnvAmount: 100,
       filterAttack: 0.01,
@@ -198,6 +199,59 @@ describe('playVoice', () => {
       { method: 'setValueAtTime', value: 250, time: 0.5 },
       { method: 'linearRampToValueAtTime', value: 200, time: 0.6 }
     ]);
+  });
+
+  it('skips gating entirely when sustain is 0 — a silent hold would only waste node lifetime', () => {
+    const ctx = new FakeAudioContext();
+    const params = resolveParams({
+      pitch: 'c3',
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0,
+      release: 0.05,
+      duration: 8
+    });
+
+    playVoice(ctx, params, 0);
+
+    expect(ctx.gains[0].gain.calls).toHaveLength(4);
+    expect(ctx.gains[0].gain.calls[3]).toMatchObject({ time: 0.16 });
+    expect(ctx.oscillators[0].stopped[0]).toBeCloseTo(0.18, 10);
+  });
+
+  it('caps and loops the noise buffer for long gates instead of generating huge buffers', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(
+      ctx,
+      resolveParams({ soundType: 'white', sustain: 0.5, release: 0.05, duration: 8 }),
+      0
+    );
+
+    const buffer = ctx.bufferSources[0].buffer;
+    expect(buffer).not.toBeNull();
+    expect(buffer!.getChannelData(0).length).toBe(2 * ctx.sampleRate);
+    expect(ctx.bufferSources[0].loop).toBe(true);
+  });
+
+  it('keeps short noise buffers envelope-sized and unlooped', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(
+      ctx,
+      resolveParams({ soundType: 'white', attack: 0, decay: 0.02, sustain: 0, release: 0.01 }),
+      0
+    );
+
+    const buffer = ctx.bufferSources[0].buffer;
+    expect(buffer!.getChannelData(0).length).toBeLessThan(0.1 * ctx.sampleRate);
+    expect(ctx.bufferSources[0].loop).toBe(false);
+  });
+
+  it('clamps negative start times to the context origin', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', nudgeTime: -0.5 }), 0);
+
+    expect(ctx.oscillators[0].started).toEqual([0]);
+    expect(ctx.gains[0].gain.calls[0]).toMatchObject({ time: 0 });
   });
 
   it('stays percussive (no hold) when the envelope outlasts the gate', () => {
@@ -266,6 +320,53 @@ describe('playVoice', () => {
     expect(channelGainNodes).toHaveLength(2);
     expect(channelGainNodes[0].gain.calls[0].value).toBeCloseTo(Math.SQRT1_2, 10);
     expect(channelGainNodes[1].gain.calls[0].value).toBeCloseTo(Math.SQRT1_2, 10);
+  });
+
+  it('folds 7.1 placement to 5.1 (not stereo) on a six-channel destination', () => {
+    const ctx = new FakeAudioContext();
+    ctx.destination.maxChannelCount = 6;
+    ctx.destination.channelCount = 6;
+
+    // RL only (index 6) — must fold into SL (index 4), not vanish or go stereo.
+    playVoice(ctx, resolveParams({ pitch: 'a4', channelGains: [0, 0, 0, 0, 0, 0, 1, 0] }), 0);
+
+    const merger = ctx.mergers[0];
+    expect(merger.numberOfInputs).toBe(6);
+    const channelGain = ctx.gains[1];
+    expect(channelGain.gain.calls[0].value).toBeCloseTo(Math.SQRT1_2, 10);
+    expect(channelGain.connections).toEqual([{ node: merger, output: 0, input: 4 }]);
+  });
+
+  it('routes unplaced voices through a centred stereo merger on a widened destination', () => {
+    const ctx = new FakeAudioContext();
+    ctx.destination.channelCount = 8; // as after enableMultichannel() on 7.1 hardware
+
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
+
+    // A bare mono connect would land in FL only under discrete interpretation.
+    const merger = ctx.mergers[0];
+    expect(merger.numberOfInputs).toBe(2);
+    expect(ctx.gains).toHaveLength(3);
+    expect(ctx.gains[1].gain.calls[0].value).toBe(1);
+    expect(ctx.gains[2].gain.calls[0].value).toBe(1);
+    expect(ctx.gains[1].connections).toEqual([{ node: merger, output: 0, input: 0 }]);
+    expect(ctx.gains[2].connections).toEqual([{ node: merger, output: 0, input: 1 }]);
+  });
+
+  it('treats empty channelGains as no placement at all', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', channelGains: [] }), 0);
+
+    expect(ctx.mergers).toHaveLength(0);
+    expect(ctx.gains[0].connectedTo).toEqual([ctx.destination]);
+  });
+
+  it('pads single-entry channelGains to two so the merger cannot up-mix mono to both speakers', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', channelGains: [1] }), 0);
+
+    expect(ctx.mergers[0].numberOfInputs).toBe(2);
+    expect(ctx.gains).toHaveLength(2); // envelope + FL only; the zero-gain channel gets no node
   });
 
   it('gives channelGains precedence over pan', () => {

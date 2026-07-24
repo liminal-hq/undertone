@@ -12,7 +12,7 @@ import type {
 } from './types.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
-import { foldToStereo, MAX_CHANNELS } from './surround.js';
+import { foldChannelGains, MAX_CHANNELS } from './surround.js';
 
 const DEFAULT_PARAMS: VoiceParams = {
   soundType: 'sine',
@@ -38,6 +38,7 @@ export function resolveParams(patch: ControlPatch): VoiceParams {
 }
 
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
+const MAX_NOISE_BUFFER_SECONDS = 2; // longer gates loop the buffer instead of growing it
 const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"
 const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actually completes before stop()
 
@@ -98,8 +99,13 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
 
 /** Realizes a single voice against a real (or fake, for tests) AudioContext, starting at `startTime`. */
 export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime: number): void {
-  const voiceStart = startTime + params.nudgeTime;
-  const gateEnd = params.duration !== undefined ? voiceStart + params.duration : undefined;
+  // Clamp to the context's origin — real AudioParams/sources throw RangeError on negative times.
+  const voiceStart = Math.max(startTime + params.nudgeTime, 0);
+  // A gate is only meaningful when there is a sustain level to hold; with
+  // sustain 0 the voice is silent after its decay, so holding (and keeping
+  // the nodes alive for the whole event length) would be pure waste.
+  const gateEnd =
+    params.duration !== undefined && params.sustain > 0 ? voiceStart + params.duration : undefined;
 
   const gainNode = ctx.createGain();
   const gainReleaseEnd = scheduleEnvelope(
@@ -120,8 +126,13 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
 
   if (isNoiseType(params.soundType)) {
     const bufferSource = source as ReturnType<AudioContextLike['createBufferSource']>;
-    const bufferDuration = Math.max(gainReleaseEnd - voiceStart, 0.05);
+    // Cap the synchronously-generated buffer and loop it for longer gates —
+    // otherwise a slow looped noise pattern would allocate multi-second
+    // buffers on the main thread every cycle.
+    const audibleSeconds = Math.max(gainReleaseEnd - voiceStart, 0.05);
+    const bufferDuration = Math.min(audibleSeconds, MAX_NOISE_BUFFER_SECONDS);
     bufferSource.buffer = buildNoiseBuffer(ctx, params.soundType, bufferDuration);
+    bufferSource.loop = audibleSeconds > bufferDuration;
   } else {
     const oscillator = source as ReturnType<AudioContextLike['createOscillator']>;
     oscillator.type = params.soundType;
@@ -164,9 +175,11 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
 
 /**
  * Routes the enveloped voice to the destination: through per-speaker gains
- * into a channel merger when channelGains is set (folded to stereo when the
- * destination can't address that many speakers), through a stereo panner when
- * pan is set, or straight through otherwise.
+ * into a channel merger when channelGains is set (folded down as far as the
+ * destination requires), through a stereo panner when pan is set, or straight
+ * through otherwise. On a destination widened by enableMultichannel(), the
+ * plain path also goes through a two-channel merger — a bare mono connect
+ * would land in the front-left speaker only under discrete interpretation.
  */
 function connectOutput(
   ctx: AudioContextLike,
@@ -174,28 +187,42 @@ function connectOutput(
   params: VoiceParams,
   voiceStart: number
 ): void {
-  if (params.channelGains !== undefined) {
-    const available = ctx.destination.channelCount ?? 2;
-    const requested = params.channelGains.slice(0, MAX_CHANNELS);
-    const gains = requested.length > available ? foldToStereo(requested) : requested;
-    const merger = ctx.createChannelMerger(gains.length);
-    gains.forEach((level, channel) => {
-      if (level > 0) {
-        const channelGain = ctx.createGain();
-        channelGain.gain.setValueAtTime(level, voiceStart);
-        gainNode.connect(channelGain);
-        channelGain.connect(merger, 0, channel);
-      }
-    });
-    merger.connect(ctx.destination);
-  } else if (params.pan !== undefined) {
+  const available = ctx.destination.channelCount ?? 2;
+  let placement = params.channelGains?.slice(0, MAX_CHANNELS);
+  if (placement !== undefined && placement.length === 0) {
+    placement = undefined;
+  }
+
+  if (placement === undefined && params.pan !== undefined) {
     const panner = ctx.createStereoPanner();
     panner.pan.setValueAtTime(params.pan, voiceStart);
     gainNode.connect(panner);
     panner.connect(ctx.destination);
-  } else {
-    gainNode.connect(ctx.destination);
+    return;
   }
+
+  if (placement === undefined) {
+    if (available <= 2) {
+      gainNode.connect(ctx.destination);
+      return;
+    }
+    placement = [1, 1]; // centred stereo image, matching the spec's mono->stereo up-mix
+  }
+
+  while (placement.length < 2) {
+    placement.push(0); // a 1-channel merger would up-mix to both speakers, ignoring the placement
+  }
+  const gains = foldChannelGains(placement, available);
+  const merger = ctx.createChannelMerger(gains.length);
+  gains.forEach((level, channel) => {
+    if (level > 0) {
+      const channelGain = ctx.createGain();
+      channelGain.gain.setValueAtTime(level, voiceStart);
+      gainNode.connect(channelGain);
+      channelGain.connect(merger, 0, channel);
+    }
+  });
+  merger.connect(ctx.destination);
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

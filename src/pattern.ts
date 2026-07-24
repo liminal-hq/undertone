@@ -341,10 +341,15 @@ export function stack<T>(...pats: Pattern<T>[]): Pattern<T> {
  * cycle proportionally. `seq` is timecat with equal weights.
  */
 export function timecat<T>(pairs: [number, Pattern<T>][]): Pattern<T> {
-  const total = pairs.reduce((sum, [weight]) => sum.add(Fraction.from(weight)), new Fraction(0));
-  if (total.n <= 0) {
+  for (const [weight] of pairs) {
+    if (!Number.isFinite(weight) || weight <= 0) {
+      throw new Error(`timecat() weights must be positive, got ${weight}`);
+    }
+  }
+  if (pairs.length === 0) {
     return silence as Pattern<T>;
   }
+  const total = pairs.reduce((sum, [weight]) => sum.add(Fraction.from(weight)), new Fraction(0));
   let pos = new Fraction(0);
   const parts = pairs.map(([weight, pat]) => {
     const w = Fraction.from(weight);

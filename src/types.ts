@@ -111,6 +111,7 @@ export interface AudioBufferLike {
 
 export interface AudioBufferSourceNodeLike extends AudioNodeLike {
   buffer: AudioBufferLike | null;
+  loop: boolean;
   start(when?: number): void;
   stop(when?: number): void;
 }

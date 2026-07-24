@@ -130,8 +130,12 @@ export function initPlayground(): void {
   pitchInput.addEventListener('input', updateCode);
 
   playButton.addEventListener('click', () => {
-    const voice = buildVoice(values, soundTypeSelect.value as SoundType, pitchInput.value);
-    voice.play();
+    try {
+      const voice = buildVoice(values, soundTypeSelect.value as SoundType, pitchInput.value);
+      voice.play();
+    } catch (err) {
+      codeOutput!.textContent = `// ${err instanceof Error ? err.message : String(err)}`;
+    }
   });
 
   updateCode();

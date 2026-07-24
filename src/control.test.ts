@@ -34,6 +34,7 @@ describe('note', () => {
   it('rejects invalid notes eagerly, at build time', () => {
     expect(() => note('c3 h9')).toThrow(/Invalid note name/);
     expect(() => note(-1)).toThrow(/Invalid frequency/);
+    expect(() => note('c3 0 e3')).toThrow(/Invalid frequency/);
   });
 });
 

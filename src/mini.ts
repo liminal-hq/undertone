@@ -127,17 +127,28 @@ class Parser<T> {
     return expanded.length === 1 ? expanded[0][1] : timecat(expanded);
   }
 
+  /** Runs a combinator, rewrapping its error with the modifier's source position. */
+  private guarded<R>(pos: number, fn: () => R): R {
+    try {
+      return fn();
+    } catch (error) {
+      this.fail(error instanceof Error ? error.message : String(error), pos);
+    }
+  }
+
   private parseTerm(): Term<T> {
     let pattern = this.parseAtom();
     let weight = 1;
     let replicate = 1;
     for (;;) {
       if (this.peekSymbol('*')) {
-        this.next();
-        pattern = pattern.fast(this.parseNumber('*'));
+        const symbol = this.next();
+        const factor = this.parseNumber('*');
+        pattern = this.guarded(symbol.pos, () => pattern.fast(factor));
       } else if (this.peekSymbol('/')) {
-        this.next();
-        pattern = pattern.slow(this.parseNumber('/'));
+        const symbol = this.next();
+        const factor = this.parseNumber('/');
+        pattern = this.guarded(symbol.pos, () => pattern.slow(factor));
       } else if (this.peekSymbol('!')) {
         this.next();
         replicate = this.parseNumber('!', { integer: true });
@@ -151,7 +162,7 @@ class Parser<T> {
           this.fail('"@" weight must be positive');
         }
       } else if (this.peekSymbol('(')) {
-        this.next();
+        const symbol = this.next();
         const pulses = this.parseNumber('euclid pulses', { integer: true });
         this.expectSymbol(',');
         const steps = this.parseNumber('euclid steps', { integer: true });
@@ -161,7 +172,7 @@ class Parser<T> {
           rotation = this.parseNumber('euclid rotation', { integer: true });
         }
         this.expectSymbol(')');
-        pattern = pattern.euclid(pulses, steps, rotation);
+        pattern = this.guarded(symbol.pos, () => pattern.euclid(pulses, steps, rotation));
       } else {
         return { pattern, weight, replicate };
       }
@@ -214,7 +225,9 @@ class Parser<T> {
 
   private parseNumber(context: string, opts: { integer?: boolean } = {}): number {
     const token = this.next();
-    const value = token.kind === 'word' ? Number(token.text) : NaN;
+    // Strict decimal syntax only — Number() alone would accept "0x10" or "1e3".
+    const value =
+      token.kind === 'word' && /^-?\d+(\.\d+)?$/.test(token.text) ? Number(token.text) : NaN;
     if (!Number.isFinite(value)) {
       this.fail(`expected a number after "${context}" but found "${token.text}"`, token.pos);
     }

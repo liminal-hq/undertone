@@ -189,8 +189,13 @@ function drawPattern(canvas: HTMLCanvasElement, pat: Pattern<ControlPatch>): voi
     context.stroke();
   }
 
+  const NOISE_TYPES = new Set(['white', 'pink', 'brown']);
+  const isNoiseHap = (value: ControlPatch): boolean =>
+    value.soundType !== undefined && NOISE_TYPES.has(value.soundType);
+
   const haps = pat.query({ begin: new Fraction(0), end: new Fraction(CYCLES) }).filter(hasOnset);
   const pitchLogs = haps
+    .filter((hap) => !isNoiseHap(hap.value))
     .map((hap) => hap.value.pitch)
     .filter((pitch): pitch is string | number => pitch !== undefined)
     .map((pitch) => Math.log2(noteToFrequency(pitch)));
@@ -206,7 +211,8 @@ function drawPattern(canvas: HTMLCanvasElement, pat: Pattern<ControlPatch>): voi
     const pitch = hap.value.pitch;
 
     let y: number;
-    if (pitch === undefined) {
+    if (pitch === undefined || isNoiseHap(hap.value)) {
+      // Noise voices ignore pitch entirely — draw them in the grey lane.
       context.fillStyle = '#64748b';
       y = height - 16;
     } else {
@@ -289,6 +295,9 @@ export function initPatternLab(): void {
       }
       updateCode();
     } catch (err) {
+      // Invalidate so Play/Loop can't fire a stale pattern that no longer
+      // matches the notation box; a running loop keeps its last good pattern.
+      currentPattern = undefined;
       errorBox!.hidden = false;
       errorBox!.textContent = err instanceof Error ? err.message : String(err);
     }
@@ -395,6 +404,11 @@ export function initPatternLab(): void {
     const button = document.createElement('button');
     button.textContent = `♪ ${example.label}`;
     button.addEventListener('click', () => {
+      // A pending notation edit must not fire after the example takes over.
+      if (notationDebounce !== undefined) {
+        window.clearTimeout(notationDebounce);
+        notationDebounce = undefined;
+      }
       Object.assign(state, DEFAULT_STATE, example.state);
       syncControls();
       loopHandle?.stop();

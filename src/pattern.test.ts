@@ -93,6 +93,11 @@ describe('seq', () => {
 });
 
 describe('timecat', () => {
+  it('rejects non-positive weights', () => {
+    expect(() => timecat([[0, pure('a')]])).toThrow(/positive/);
+    expect(() => timecat([[-1, pure('a')]])).toThrow(/positive/);
+  });
+
   it('divides the cycle by weight', () => {
     expect(
       queryCycle(

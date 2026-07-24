@@ -91,6 +91,25 @@ export function foldToStereo(channelGains: number[]): number[] {
 }
 
 /**
+ * Folds a channel-gain array down to what the destination can address:
+ * pass-through when it fits, 7.1 rears folded into the 5.1 sides on
+ * six-channel destinations, and a full stereo fold-down otherwise.
+ */
+export function foldChannelGains(channelGains: number[], availableChannels: number): number[] {
+  if (channelGains.length <= availableChannels) {
+    return channelGains;
+  }
+  if (availableChannels >= 6) {
+    const g = (index: number): number => channelGains[index] ?? 0;
+    const five1 = [g(0), g(1), g(2), g(3), g(4), g(5)];
+    five1[4] += Math.SQRT1_2 * g(6);
+    five1[5] += Math.SQRT1_2 * g(7);
+    return five1;
+  }
+  return foldToStereo(channelGains);
+}
+
+/**
  * Opts a context's destination into its full hardware channel count with
  * discrete channel interpretation, so channelGains address real speakers.
  * Call once, e.g. right after creating your AudioContext; without it (or on
