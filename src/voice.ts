@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { SoundType, VoiceParams } from './types';
+import type { SoundType, VoiceParams } from './types.js';
 
 const DEFAULT_PARAMS: VoiceParams = {
   soundType: 'sine',

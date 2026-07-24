@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioBufferLike, AudioContextLike, NoiseType } from './types';
+import type { AudioBufferLike, AudioContextLike, NoiseType } from './types.js';
 
 /** Generates a single-channel noise buffer of the given type and duration. */
 export function buildNoiseBuffer(

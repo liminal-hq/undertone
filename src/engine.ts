@@ -3,9 +3,9 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioContextLike, AudioParamLike, VoiceParams } from './types';
-import { noteToFrequency } from './pitch';
-import { buildNoiseBuffer } from './noise';
+import type { AudioContextLike, AudioParamLike, VoiceParams } from './types.js';
+import { noteToFrequency } from './pitch.js';
+import { buildNoiseBuffer } from './noise.js';
 
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
 const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"

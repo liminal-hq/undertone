@@ -3,9 +3,9 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioContextLike } from './types';
-import { Voice, note, sound } from './voice';
-import { playVoices } from './engine';
+import type { AudioContextLike } from './types.js';
+import { Voice, note, sound } from './voice.js';
+import { playVoices } from './engine.js';
 
 export { note, sound, Voice };
 export type { AudioContextLike, NoiseType, OscType, SoundType, VoiceParams } from './types';

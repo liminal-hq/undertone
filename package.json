@@ -1,6 +1,6 @@
 {
   "name": "@liminal-hq/undertone",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A small, dependency-free procedural synth engine for one-shot game sound effects — Web Audio, Strudel-flavoured syntax, zero deps.",
   "type": "module",
   "main": "dist/index.js",
