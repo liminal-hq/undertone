@@ -73,30 +73,48 @@ function cycleSecondsFor(bpm: number | undefined): number {
   return SECONDS_PER_CYCLE_AT_1_BPM / beats;
 }
 
-/** Realizes every event onset in `span` as a voice on the context's clock. */
+/**
+ * Realizes every event onset in `span` as a voice on the context's clock.
+ * When `gated`, each voice's envelope holds until its event's share of the
+ * cycle ends (note length); otherwise envelopes run their percussive course.
+ */
 function scheduleSpan(
   ctx: AudioContextLike,
   pattern: PatternLike,
   span: TimeSpan,
   patternStartTime: number,
-  cycleSeconds: number
+  cycleSeconds: number,
+  gated: boolean
 ): void {
   for (const hap of pattern.query(span)) {
     if (!hap.whole || !hap.whole.begin.eq(hap.part.begin)) {
       continue; // a tail overlapping the window, not an onset — already scheduled
     }
     const startTime = patternStartTime + hap.whole.begin.toNumber() * cycleSeconds;
-    const duration = hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds;
-    playVoice(ctx, resolveParams({ duration, ...hap.value }), startTime);
+    const patch = gated
+      ? { duration: hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds, ...hap.value }
+      : hap.value;
+    playVoice(ctx, resolveParams(patch), startTime);
   }
 }
 
-/** Plays one cycle's worth of the pattern as a one-shot sound effect. */
+/**
+ * Plays one cycle's worth of the pattern as a one-shot sound effect. One-shots
+ * are ungated — envelopes stay percussive, exactly like the 0.1.x SFX
+ * behaviour; note-length gating belongs to loop().
+ */
 export function playPattern(pattern: PatternLike, options: PlayOptions = {}): void {
   const ctx = options.ctx ?? getSharedContext();
   const cycleSeconds = cycleSecondsFor(options.bpm);
   const start = options.when ?? ctx.currentTime;
-  scheduleSpan(ctx, pattern, { begin: new Fraction(0), end: new Fraction(1) }, start, cycleSeconds);
+  scheduleSpan(
+    ctx,
+    pattern,
+    { begin: new Fraction(0), end: new Fraction(1) },
+    start,
+    cycleSeconds,
+    false
+  );
 }
 
 /**
@@ -119,7 +137,14 @@ export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): Lo
     if (horizon.lte(scheduledUntil)) {
       return;
     }
-    scheduleSpan(ctx, pattern, { begin: scheduledUntil, end: horizon }, startTime, cycleSeconds);
+    scheduleSpan(
+      ctx,
+      pattern,
+      { begin: scheduledUntil, end: horizon },
+      startTime,
+      cycleSeconds,
+      true
+    );
     scheduledUntil = horizon;
   };
 

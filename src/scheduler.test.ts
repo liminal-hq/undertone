@@ -71,23 +71,14 @@ describe('play', () => {
     expect(ctx.oscillators[1].started).toEqual([5.02]);
   });
 
-  it("gates each voice with its event's share of the cycle", () => {
+  it('stays percussive (ungated) so one-shots sound exactly like 0.1.x', () => {
     const ctx = new FakeAudioContext();
 
-    // 60 bpm -> 4-second cycles; two events -> 2-second gates. With sustain 0.5
-    // the envelope holds at 0.4 (0.8 gain default * 0.5) until its gate closes.
-    note('c3 e3').sustain(0.5).play({ ctx, when: 0, bpm: 60 });
+    note('c3').sustain(0.5).play({ ctx, when: 0 });
 
-    expect(ctx.gains[0].gain.calls).toContainEqual({
-      method: 'setValueAtTime',
-      value: 0.4,
-      time: 2
-    });
-    expect(ctx.gains[1].gain.calls).toContainEqual({
-      method: 'setValueAtTime',
-      value: 0.4,
-      time: 4
-    });
+    // set 0, ramp to peak, ramp to sustain, ramp to 0 — no gate-hold call.
+    expect(ctx.gains[0].gain.calls).toHaveLength(4);
+    expect(ctx.gains[0].gain.calls.filter((c) => c.method === 'setValueAtTime')).toHaveLength(1);
   });
 
   it('does not re-trigger events whose tails cross into the cycle (slow patterns)', () => {
@@ -121,6 +112,21 @@ describe('loop', () => {
     timer.tick();
     expect(ctx.oscillators).toHaveLength(2);
     expect(ctx.oscillators[1].started).toEqual([1]);
+  });
+
+  it("gates each looped voice with its event's share of the cycle", () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+
+    // 240 bpm -> 1-second cycles; two events -> 0.5-second gates. With sustain
+    // 0.5 the envelope holds at 0.4 (0.8 default gain * 0.5) until gate close.
+    note('c3 e3').sustain(0.5).loop({ ctx, timer, bpm: 240 });
+
+    expect(ctx.gains[0].gain.calls).toContainEqual({
+      method: 'setValueAtTime',
+      value: 0.4,
+      time: 0.5
+    });
   });
 
   it('never schedules the same onset twice', () => {
