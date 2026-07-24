@@ -20,11 +20,9 @@ The API is deliberately Strudel-flavoured (`note()`, `.sound()`, ADSR methods, `
 
 ## Installation
 
-Not yet published to npm. Until then, install directly from GitHub:
-
 ```bash
-bun add github:liminal-hq/undertone
-# or: npm install github:liminal-hq/undertone
+bun add @liminal-hq/undertone
+# or: npm install @liminal-hq/undertone
 ```
 
 ## Usage

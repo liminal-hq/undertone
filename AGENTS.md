@@ -77,7 +77,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 - TypeScript library, zero runtime dependencies, built on the Web Audio API.
 - Package manager: `bun`. Tests: `vitest`. Lint/format: `eslint` + `prettier`. Build: `tsc` (emits `dist/`, declarations included).
-- Not yet published to npm — consumed via a GitHub dependency in the meantime.
+- Published to npm as `@liminal-hq/undertone`. Bump `version` in `package.json` and `npm publish --access public` (requires an authenticator OTP) to release.
 
 ## Licence and Copyright
 
