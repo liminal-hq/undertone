@@ -143,3 +143,47 @@ describe('chainable controls', () => {
     expect(onsets(pat, 1).map((v) => v.pitch)).toEqual(['c3', 'e3']);
   });
 });
+
+describe('patterned parameters', () => {
+  it('assigns one control step per event when the step counts match', () => {
+    const pat = note('c3 e3 g3 b3').gain('.1 .2 .3 .4');
+    expect(onsets(pat).map((v) => v.gainLevel)).toEqual([0.1, 0.2, 0.3, 0.4]);
+  });
+
+  it('samples the control at each event onset time, not by event index', () => {
+    // Two control steps over four equal events: the control step covering
+    // each onset supplies the value, so the first half of the cycle shares
+    // one gain and the second half shares the other.
+    const pat = note('c3 e3 g3 b3').gain('.1 .2');
+    expect(onsets(pat).map((v) => v.gainLevel)).toEqual([0.1, 0.1, 0.2, 0.2]);
+  });
+
+  it('alternates per cycle through <...> the same way mini-notation always does', () => {
+    const pat = note('c3').pan('<.25 .75>');
+    expect(onsets(pat, 0)[0].pan).toBe(0.25);
+    expect(onsets(pat, 1)[0].pan).toBe(0.75);
+  });
+
+  it('leaves the key unset where the control has a rest', () => {
+    const pat = note('c3 e3').gain('.5 ~');
+    expect(onsets(pat).map((v) => v.gainLevel)).toEqual([0.5, undefined]);
+  });
+
+  it('rejects an invalid literal in a control string, at build time', () => {
+    expect(() => note('c3').gain('abc')).toThrow(/Invalid number/);
+  });
+
+  it('validates every literal in a patterned pan(), not just scalars', () => {
+    expect(() => note('c3').pan('2')).toThrow(/between -1 and 1/);
+    expect(() => note('c3').pan('<.5 2>')).toThrow(/between -1 and 1/);
+  });
+
+  it('early() negates a patterned value the same way it negates a scalar', () => {
+    const pat = note('c3 e3').early('.01 .02');
+    expect(onsets(pat).map((v) => v.nudgeTime)).toEqual([-0.01, -0.02]);
+  });
+
+  it('still accepts a plain scalar everywhere a string is accepted', () => {
+    expect(onsets(note('c3 e3').gain(0.4)).map((v) => v.gainLevel)).toEqual([0.4, 0.4]);
+  });
+});

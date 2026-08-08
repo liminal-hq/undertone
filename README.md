@@ -115,6 +115,8 @@ See `demo/` for a runnable local playground with a live pattern editor (`bun run
 
 Tempo: `bpm` counts four beats per cycle; the default 120 bpm means 2-second cycles. When no `ctx` is passed, a shared `AudioContext` is created lazily on first use — trigger the first `play()`/`loop()` from a user gesture (autoplay policy).
 
+**Patterned parameters:** every numeric control above (`attack`, `decay`, `sustain`, `release`, `gain`, `lpf`, `lpenv`, `lpa`, `lpd`, `lps`, `lpr`, `slide`, `nudge`/`late`/`early`, `pan`) also accepts a mini-notation string instead of a plain number — `.gain(".1 .2 .3 .4")`, `.pan("<.25 .75>")`. Structure comes from the pattern it's called on: at each event's onset, whichever control step covers that instant supplies the value, and a rest (`~`) in the control leaves that event's value unset.
+
 ## Development
 
 ```bash
