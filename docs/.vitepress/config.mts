@@ -32,11 +32,17 @@ const guideSidebar = [
   }
 ];
 
+const base = '/undertone/docs/';
+
 export default defineConfig({
   title: 'undertone',
   description: 'A procedural synth engine for games and music, built on the Web Audio API.',
-  base: '/undertone/docs/',
+  base,
   cleanUrls: true,
+  // Absolute, not `favicon.svg` — a bare relative href resolves against the
+  // *current page's* URL, so it'd 404 from anywhere but the site root (the
+  // same bug the Playground nav link had).
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}favicon.svg` }]],
   markdown: {
     // The guide's effects/arrange pages embed Mermaid diagrams as fenced ```mermaid blocks.
     mermaid: true
