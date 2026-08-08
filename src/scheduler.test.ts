@@ -3,9 +3,10 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { note, sound } from './control';
 import { stack } from './pattern';
+import { resetTempo, setcpm } from './scheduler';
 import type { TimerLike } from './scheduler';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
 
@@ -180,5 +181,38 @@ describe('loop', () => {
 
     expect(ctx.oscillators[0].frequency.calls[0].value).toBe(220);
     expect(ctx.oscillators[1].frequency.calls[0].value).toBe(440);
+  });
+});
+
+describe('setcpm', () => {
+  afterEach(() => resetTempo());
+
+  it('sets a default cycle length used by play()/loop() calls that omit bpm', () => {
+    const ctx = new FakeAudioContext();
+    setcpm(60); // 60 cycles/min = 1 cycle/sec
+    note('c3 e3').play({ ctx, when: 0 });
+    expect(ctx.oscillators.map((osc) => osc.started[0])).toEqual([0, 0.5]);
+  });
+
+  it('is overridden by an explicit bpm on the call', () => {
+    const ctx = new FakeAudioContext();
+    setcpm(60); // would otherwise give 1-second cycles
+    note('c3 e3').play({ ctx, when: 0, bpm: 480 }); // 0.5-second cycles
+    expect(ctx.oscillators.map((osc) => osc.started[0])).toEqual([0, 0.25]);
+  });
+
+  it('rejects a non-positive cpm', () => {
+    expect(() => setcpm(0)).toThrow(/must be positive/);
+    expect(() => setcpm(-5)).toThrow(/must be positive/);
+  });
+});
+
+describe('resetTempo', () => {
+  it('restores the plain 120bpm (2-second cycle) default', () => {
+    const ctx = new FakeAudioContext();
+    setcpm(60);
+    resetTempo();
+    note('c3 e3').play({ ctx, when: 0 });
+    expect(ctx.oscillators.map((osc) => osc.started[0])).toEqual([0, 1]);
   });
 });

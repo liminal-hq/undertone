@@ -28,6 +28,7 @@ export {
   registerSample,
   registerSamples
 } from './samples.js';
+export { resetTempo, setcpm } from './scheduler.js';
 export {
   CHANNEL_ORDER,
   MAX_CHANNELS,

@@ -2,22 +2,24 @@
   <img src="assets/hero.svg" alt="Undertone — procedural one-shot sound effects for games" width="100%">
 </p>
 
-Undertone is a small, dependency-free procedural synth engine for games — one-shot sound effects _and_ polyphonic pattern-based music, built directly on the Web Audio API. Everything is a pattern: a UI blip is a pattern you play once, a melody is a pattern you loop.
+Undertone is a procedural synth engine for games and music, built directly on the Web Audio API — one-shot sound effects, looped grooves, and full multi-section songs, all from the same pattern. Everything is a pattern: a UI blip is a pattern you play once, a melody is a pattern you loop, a whole track is patterns arranged end to end.
 
 ## Features
 
-- **Zero runtime dependencies.** Pure TypeScript on top of `AudioContext`/`OscillatorNode`/`GainNode`/`BiquadFilterNode`/`StereoPannerNode`/`ChannelMergerNode`/`AudioBufferSourceNode`.
+- **Zero required runtime dependencies.** Pure TypeScript on top of the Web Audio API. Sample playback optionally does a plain `fetch()`, but only when you register a sample with a URL — nothing is bundled or fetched by default.
 - **Mini-notation** — `note('c3 [e3 g3] <a3 b3> ~')` — sequences, subdivision, per-cycle alternation, rests, chords, replication, elongation, and euclidean rhythms in one string.
-- **Pattern combinators**: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, `stack`, `seq`, `cat` — all immutable, all composable, with exact rational cycle time underneath (triplets never drift).
-- **Chainable, immutable voice controls** — `.sound()`, ADSR, `.gain()`, lowpass filter + filter envelope, `.slide()`, `.nudge()` — applied across every event of a pattern.
-- **Polyphony everywhere**: chords via `[c3,e3,g3]`, layers via `stack()`, overlapping voices each get their own node graph.
+- **Pattern combinators**: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, `stack`, `seq`, `cat`, `arrange` — all immutable, all composable, with exact rational cycle time underneath (triplets never drift).
+- **Scales and chords** — `n('0 2 4').scale('D5:minor')` for scale-degree melodies, `chord('Dm9').voicing()` for chord symbols expanded to real pitches — no bundled music-theory data, just the maths.
+- **Sample playback, bring-your-own-assets** — `s('bd sd hh')` plays registered samples the same way `sound()` plays synth voices; see Samples below.
+- **Chainable, immutable voice controls** — ADSR, `.gain()`, lowpass + highpass filters with envelopes, a 4-stage phaser, reverb/delay sends, `.slide()`, `.nudge()` — every one of them accepts a mini-notation string to pattern it, not just a scalar.
+- **Polyphony everywhere**: chords via `[c3,e3,g3]` or `.voicing()`, layers via `stack()`, overlapping voices each get their own node graph.
 - **One-shot or looped**: `pattern.play()` fires a single cycle (percussive envelopes, exactly right for game SFX); `pattern.loop({ bpm })` runs a lookahead cycle scheduler where each note's envelope is gated by its event length.
 - **Stereo and up-to-7.1 placement**: `.pan(-1..1)`, `.channels([...])` per-speaker gains, `.surround(angle)` equal-power placement on the speaker ring — with automatic stereo fold-down on plain hardware.
 - **Fully unit-tested**, including the actual Web Audio node graph, envelope automation timing, and the loop scheduler, against a hand-written fake `AudioContext`.
 
-## Why not Strudel?
+## Provenance
 
-The API is deliberately Strudel-flavoured (`note()`, mini-notation, `stack()`, `jux(rev)`) because that's a genuinely pleasant way to describe both a synth voice and a musical pattern. But [Strudel](https://strudel.cc) itself is AGPL-3.0-or-later licensed, which conflicts with permissively-licensed projects that want to bundle it into a shipped client. Undertone is a clean-room implementation: the pattern engine is built from the published TidalCycles papers and public documentation of the mini-notation semantics, never from Strudel's source, and covers a deliberately small subset — a lightweight synth voice, one-shot SFX, and enough of the pattern/cycle vocabulary to write real game music.
+Undertone's vocabulary is Strudel-flavoured — `note()`, mini-notation, `stack()`, `jux(rev)`, chord symbols, scale names — because it's a genuinely pleasant way to describe both a synth voice and a musical pattern, and a good foundation worth building on. From there, undertone is its own project: a clean-room, MIT-licensed implementation built from the published TidalCycles papers, standard music theory, and Strudel's own published documentation and behaviour — never from its source, sample manifests, soundfont data, voicing dictionaries, or impulse-response data. ([Strudel](https://strudel.cc) itself is AGPL-3.0-or-later, which is why undertone couldn't just depend on it directly.) Samples stay bring-your-own-assets rather than a bundled or CDN-hosted library: nothing is fetched until you explicitly register one.
 
 ## Installation
 
@@ -179,10 +181,11 @@ why a track with several different reverb characters gives each one its own orbi
 | `.channels(gains)` `.surround(angle)`                    | Multichannel placement (up to 7.1): raw per-speaker gains in FL, FR, C, LFE, SL, SR, RL, RR order, or an angle on the speaker ring.                  |
 | `.play(options?)`                                        | One-shot: schedules one cycle's worth of events. `{ ctx?, bpm?, when? }`.                                                                            |
 | `.loop(options?)`                                        | Loops with a lookahead scheduler; returns a handle with `stop()`. `{ ctx?, bpm?, timer? }`.                                                          |
+| `setcpm(cyclesPerMinute)` `resetTempo()`                 | Sets/clears a default tempo for `play()`/`loop()` calls that omit `bpm` — see the tempo note below the table.                                        |
 | `enableMultichannel(ctx)`                                | Opts the context's destination into its full hardware channel count (call once); without it, multichannel voices fold down to stereo.                |
 | `mini(source, leaf)` `pure(v)` `silence` `timecat(...)`  | Lower-level pattern building blocks, exported for power users.                                                                                       |
 
-Tempo: `bpm` counts four beats per cycle; the default 120 bpm means 2-second cycles. When no `ctx` is passed, a shared `AudioContext` is created lazily on first use — trigger the first `play()`/`loop()` from a user gesture (autoplay policy).
+Tempo: `bpm` counts four beats per cycle; the default 120 bpm means 2-second cycles. `setcpm(cyclesPerMinute)` sets a default tempo used whenever a `play()`/`loop()` call omits `bpm` (an explicit `bpm` always wins) — the top-of-file "set it once" style some scripts prefer over passing `{ bpm }` everywhere; `resetTempo()` clears it back to the plain 120 bpm default. When no `ctx` is passed, a shared `AudioContext` is created lazily on first use — trigger the first `play()`/`loop()` from a user gesture (autoplay policy).
 
 **Patterned parameters:** every numeric control above (`attack`, `decay`, `sustain`, `release`, `gain`, `lpf`, `lpenv`, `lpa`, `lpd`, `lps`, `lpr`, `slide`, `nudge`/`late`/`early`, `pan`) also accepts a mini-notation string instead of a plain number — `.gain(".1 .2 .3 .4")`, `.pan("<.25 .75>")`. Structure comes from the pattern it's called on: at each event's onset, whichever control step covers that instant supplies the value, and a rest (`~`) in the control leaves that event's value unset.
 
