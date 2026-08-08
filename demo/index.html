@@ -178,7 +178,8 @@
         margin: 10px 0;
       }
 
-      #lab-viz {
+      #lab-viz,
+      #composer-viz {
         width: 100%;
         height: 140px;
         display: block;
@@ -186,6 +187,25 @@
         border: 1px solid #2e3540;
         border-radius: 8px;
         margin: 12px 0;
+      }
+
+      #composer-editor .cm-editor {
+        border: 1px solid #2e3540;
+        border-radius: 8px;
+        font-size: 13px;
+        min-height: 220px;
+        max-height: 420px;
+        margin: 12px 0;
+      }
+
+      #composer-editor .cm-editor.cm-focused {
+        outline: none;
+        border-color: #5aa2ff;
+      }
+
+      #composer-editor .cm-scroller {
+        font-family: inherit;
+        line-height: 1.5;
       }
     </style>
   </head>
@@ -244,6 +264,27 @@
       <div class="lab-error" id="lab-error" hidden></div>
       <canvas id="lab-viz"></canvas>
       <pre id="lab-code"></pre>
+    </section>
+
+    <section>
+      <h2>Composer</h2>
+      <p>
+        The full API, live: write any JS expression using <code>note</code>, <code>sound</code>,
+        <code>stack</code>, <code>seq</code>, <code>cat</code>, euclidean rhythms, chained voice
+        controls, even plain JS loops and helper functions — return a <code>Pattern</code> and it
+        plays. Runs as you type. Code executes directly in this page, same as pasting into
+        devtools — an infinite loop will hang the tab.
+      </p>
+      <div class="buttons" id="composer-examples"></div>
+      <div id="composer-editor"></div>
+      <div class="playground-top-row">
+        <button id="composer-play">▶ Once</button>
+        <button id="composer-loop">⟳ Loop</button>
+        <button id="composer-share">⧉ Copy link</button>
+      </div>
+      <div id="composer-controls"></div>
+      <div class="lab-error" id="composer-error" hidden></div>
+      <canvas id="composer-viz"></canvas>
     </section>
 
     <section>
