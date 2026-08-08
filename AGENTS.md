@@ -60,6 +60,8 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 - Do not push or force-push unless explicitly requested by the user.
 - Use focused commits with clear messages describing the change just made, not the whole branch history.
+- **Branch naming:** `<type>/<short-description>`, where `<type>` matches the commit-message Conventional Commit type (`feat`, `fix`, `docs`, `test`, `ci`, `build`, `chore`) — for example `feat/composer-live-playground`. Include an issue number when the branch addresses a filed issue: `fix/issue-<number>-<short-description>` (for example, `fix/issue-19-wsl2-deb-runtime`). For release prep, use `chore/release-v<version>` (for example, `chore/release-v0.0.4`).
+- Decide the branch name before the first push / PR creation. Do not rename a branch that already has an open pull request — GitHub closes the PR rather than repointing it to the new ref, and the closed PR cannot be reopened without recreating a branch with the exact original name.
 
 ## Testing
 
