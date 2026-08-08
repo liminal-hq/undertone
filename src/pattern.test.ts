@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { Fraction } from './fraction';
 import {
   Pattern,
+  arrange,
   bjorklund,
   cat,
   hasOnset,
@@ -132,6 +133,40 @@ describe('cat', () => {
   it('unfolds nested alternations one step per visit (a b a c)', () => {
     const pat = cat(pure('a'), cat(pure('b'), pure('c')));
     expect([0, 1, 2, 3].map((c) => queryCycle(pat, c)[0].value)).toEqual(['a', 'b', 'a', 'c']);
+  });
+});
+
+describe('arrange', () => {
+  it('plays each section for its own span of whole cycles', () => {
+    const pat = arrange([2, pure('a')], [1, pure('b')]);
+    expect([0, 1, 2].map((c) => queryCycle(pat, c)[0].value)).toEqual(['a', 'a', 'b']);
+  });
+
+  it('loops the whole arrangement once the total is reached', () => {
+    const pat = arrange([2, pure('a')], [1, pure('b')]);
+    expect([3, 4, 5].map((c) => queryCycle(pat, c)[0].value)).toEqual(['a', 'a', 'b']);
+  });
+
+  it("restarts each section's pattern at its own cycle 0", () => {
+    const pat = arrange([4, cat(pure('x'), pure('y'))]);
+    expect([0, 1, 4, 5].map((c) => queryCycle(pat, c)[0].value)).toEqual(['x', 'y', 'x', 'y']);
+  });
+
+  it('handles a query spanning a section boundary', () => {
+    const pat = arrange([1, pure('a')], [1, pure('b')]);
+    const events = pat
+      .query({ begin: new Fraction(0), end: new Fraction(2) })
+      .map((hap) => hap.value);
+    expect(events).toEqual(['a', 'b']);
+  });
+
+  it('rejects non-positive-integer cycle counts', () => {
+    expect(() => arrange([0, pure('a')])).toThrow(/positive integers/);
+    expect(() => arrange([1.5, pure('a')])).toThrow(/positive integers/);
+  });
+
+  it('returns silence for no sections', () => {
+    expect(queryCycle(arrange())).toEqual([]);
   });
 });
 
