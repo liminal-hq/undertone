@@ -110,6 +110,28 @@ approximation of voice-leading, not real voice-leading: same-root chord changes 
 share common tones automatically, but there's no guarantee across different roots. Events built
 with `note()`/`n()` (already pitched) pass through `.voicing()` unchanged.
 
+## Samples
+
+Undertone ships **no bundled samples** — synthesis stays zero-dependency and small. Sample
+playback is entirely bring-your-own-assets: `registerSample(name, source)` (or `registerSamples({
+...})` for many at once) points a name at a URL, an already-fetched `ArrayBuffer`, an
+already-decoded `AudioBuffer`, or `{ url?, data?, buffer?, baseNote? }` for more control (`baseNote`
+is the pitch the recording actually sounds at, default `"c4"`, used to compute playback rate for
+pitched samples). Nothing is fetched until you ask: call `await loadSamples(ctx)` up front to
+preload and decode everything registered (or pass specific names), or just start playing — a
+sample that isn't decoded yet is silently skipped for that one onset (with a once-per-name
+console warning) and picked up by later onsets once decoding finishes.
+
+`s(input)` (and the chainable `.s(name)`) work like `sound()`, except any word that isn't one of
+the seven synth types becomes a sample name instead of throwing — `s("bd sd hh")`,
+`note('c3').s('gm_acoustic_bass')`. `.bank(name)` is a lookup convention, not a loader: it tries
+`` `${name}_${sampleName}` `` before falling back to the bare sample name, so registering
+`registerSample('RolandTR707_bd', ...)` lets `s('bd').bank('RolandTR707')` find it.
+
+**You are responsible for the legal status of whatever you register.** Undertone doesn't fetch,
+bundle, or point at any sample library (Strudel's own CDN/soundfonts included) by default — bring
+audio you have the rights to use.
+
 ## API
 
 | Call                                                     | What it does                                                                                                                                         |
@@ -118,6 +140,9 @@ with `note()`/`n()` (already pitched) pass through `.voicing()` unchanged.
 | `sound(input)`                                           | Pattern of unpitched voices — the entry point for noise (`'white' \| 'pink' \| 'brown'`), also accepts mini-notation.                                |
 | `n(input)` `.scale(spec)`                                | Scale-degree pattern (`n('0 2 4')`) resolved into real pitches by `.scale("D5:minor")`. `spec` is `"<root><octave>:<name>"`; see Scales below.       |
 | `chord(input)` `.voicing(options?)`                      | Chord-symbol pattern (`chord('<Dm9 BbM7>')`) expanded into simultaneous notes by `.voicing()`. `options?: { anchor? }`; see Chords below.            |
+| `s(input)` `.s(name)` `.bank(name)`                      | Synth voice or registered sample (`s('bd sd')`); non-synth words become sample names. `.bank()` is a lookup prefix; see Samples below.               |
+| `registerSample(name, source)` `registerSamples(map)`    | Registers a sample — `source` is a URL, `ArrayBuffer`, `AudioBuffer`, or `{ url?, data?, buffer?, baseNote? }`. See Samples below.                   |
+| `loadSamples(ctx, names?)`                               | Preloads and decodes registered samples (all, or just `names`) against `ctx`. Returns a `Promise<void>`.                                             |
 | `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                      |
 | `arrange([cycles, pat], ...)`                            | Plays each pattern for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song. |
 | `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                                  |

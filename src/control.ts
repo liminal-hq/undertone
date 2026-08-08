@@ -7,17 +7,8 @@ import { parseChord } from './chord.js';
 import { mini } from './mini.js';
 import { Pattern, pure } from './pattern.js';
 import { noteToFrequency } from './pitch.js';
+import { SOUND_TYPES, isSoundType } from './types.js';
 import type { ControlPatch, SoundType } from './types.js';
-
-const SOUND_TYPES: readonly string[] = [
-  'sine',
-  'triangle',
-  'square',
-  'sawtooth',
-  'white',
-  'pink',
-  'brown'
-];
 
 function parsePitchWord(word: string): string | number {
   // Both branches validate eagerly so bad pitches fail at build time, not play time.
@@ -50,11 +41,25 @@ export function note(input: string | number): Pattern<ControlPatch> {
  */
 export function sound(input: SoundType | string): Pattern<ControlPatch> {
   return mini<ControlPatch>(input, (word) => {
-    if (!SOUND_TYPES.includes(word)) {
+    if (!isSoundType(word)) {
       throw new Error(`Invalid sound type: "${word}". Expected one of ${SOUND_TYPES.join(', ')}.`);
     }
-    return { soundType: word as SoundType };
+    return { soundType: word };
   });
+}
+
+/**
+ * Starts a pattern of synth voices or registered samples: a word matching one
+ * of the seven synth SoundTypes behaves exactly like sound(); any other word
+ * becomes a sample name (see samples.ts's registerSample()), validated
+ * against the registry at play time rather than here, since registration can
+ * happen after the pattern is built. Accepts a mini-notation string
+ * ("bd ~ [bd bd] sd", "<gm_acoustic_bass>").
+ */
+export function s(input: SoundType | string): Pattern<ControlPatch> {
+  return mini<ControlPatch>(input, (word) =>
+    isSoundType(word) ? { soundType: word } : { sampleName: word }
+  );
 }
 
 const INTEGER_WORD_PATTERN = /^-?\d+$/;

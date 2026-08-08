@@ -3,9 +3,12 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { playVoice, playVoices, resolveParams } from './engine';
+import { noteToFrequency } from './pitch';
+import { clearSamples, registerSample } from './samples';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
+import type { AudioBufferLike } from './types';
 
 describe('resolveParams', () => {
   it('fills a patch out with the documented defaults', () => {
@@ -402,6 +405,82 @@ describe('playVoice', () => {
     );
 
     expect(ctx.oscillators[0].stopped[0]).toBeCloseTo(0.52, 5);
+  });
+});
+
+describe('sample voices', () => {
+  const FAKE_BUFFER: AudioBufferLike = { getChannelData: () => new Float32Array(4) };
+
+  beforeEach(() => {
+    clearSamples();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  it('builds a buffer source (not an oscillator) using the registered sample, at playbackRate 1 for an unpitched hit', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd' }), 0);
+
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.bufferSources).toHaveLength(1);
+    const bufferSource = ctx.bufferSources[0];
+    expect(bufferSource.buffer).toBe(FAKE_BUFFER);
+    expect(bufferSource.playbackRate.calls).toEqual([
+      { method: 'setValueAtTime', value: 1, time: 0 }
+    ]);
+    expect(bufferSource.connectedTo).toEqual([ctx.gains[0]]);
+  });
+
+  it("computes playbackRate from pitch relative to the sample's registered baseNote", () => {
+    registerSample('piano', { buffer: FAKE_BUFFER, baseNote: 'c4' });
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'piano', pitch: 'e4' }), 0);
+
+    const expectedRate = noteToFrequency('e4') / noteToFrequency('c4');
+    expect(ctx.bufferSources[0].playbackRate.calls[0].value).toBeCloseTo(expectedRate, 10);
+  });
+
+  it('assumes a c4 baseNote when the registered sample sets none', () => {
+    registerSample('piano', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'piano', pitch: 'g4' }), 0);
+
+    const expectedRate = noteToFrequency('g4') / noteToFrequency('c4');
+    expect(ctx.bufferSources[0].playbackRate.calls[0].value).toBeCloseTo(expectedRate, 10);
+  });
+
+  it('prefers the banked key over the bare name, falling back when unregistered', () => {
+    const banked: AudioBufferLike = { getChannelData: () => new Float32Array(8) };
+    registerSample('RolandTR707_bd', banked);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', sampleBank: 'RolandTR707' }), 0);
+
+    expect(ctx.bufferSources[0].buffer).toBe(banked);
+  });
+
+  it('sampleName takes precedence over soundType when both are set', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', soundType: 'triangle' }), 0);
+
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.bufferSources).toHaveLength(1);
+  });
+
+  it('skips the voice entirely — no nodes created at all — for an unregistered sample name', () => {
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'nope' }), 0);
+
+    expect(ctx.bufferSources).toHaveLength(0);
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.gains).toHaveLength(0);
+    expect(console.warn).toHaveBeenCalledTimes(1);
   });
 });
 

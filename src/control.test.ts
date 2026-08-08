@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { voicingPitches } from './chord';
-import { chord, n, note, sound } from './control';
+import { chord, n, note, s, sound } from './control';
 import { Fraction } from './fraction';
 import { hasOnset, rev, type Pattern } from './pattern';
 import { midiToFrequency, noteToFrequency } from './pitch';
@@ -51,6 +51,24 @@ describe('sound', () => {
 
   it('rejects unknown sound types eagerly', () => {
     expect(() => sound('velvet')).toThrow(/Invalid sound type/);
+  });
+});
+
+describe('s', () => {
+  it('behaves exactly like sound() for a synth type', () => {
+    expect(onsets(s('white'))).toEqual([{ soundType: 'white' }]);
+  });
+
+  it('treats an unknown word as a sample name instead of throwing', () => {
+    expect(onsets(s('bd'))).toEqual([{ sampleName: 'bd' }]);
+  });
+
+  it('parses mini-notation mixing synth types and sample names, underscores included', () => {
+    expect(onsets(s('bd white gm_acoustic_bass'))).toEqual([
+      { sampleName: 'bd' },
+      { soundType: 'white' },
+      { sampleName: 'gm_acoustic_bass' }
+    ]);
   });
 });
 
@@ -234,6 +252,26 @@ describe('chainable controls', () => {
       .every(2, (p) => p.rev());
     expect(onsets(pat, 0).map((v) => v.pitch)).toEqual(['e3', 'c3']);
     expect(onsets(pat, 1).map((v) => v.pitch)).toEqual(['c3', 'e3']);
+  });
+
+  it('.s() sets a sample name for a non-synth word, or behaves like .sound() for a synth type', () => {
+    expect(onsets(note('c3').s('bd'))).toEqual([{ pitch: 'c3', sampleName: 'bd' }]);
+    expect(onsets(note('c3').s('triangle'))).toEqual([{ pitch: 'c3', soundType: 'triangle' }]);
+  });
+
+  it('.s() clears the previous soundType/sampleName when switching between them', () => {
+    expect(onsets(note('c3').s('bd').s('triangle'))).toEqual([
+      { pitch: 'c3', soundType: 'triangle' }
+    ]);
+    expect(onsets(note('c3').sound('triangle').s('bd'))).toEqual([
+      { pitch: 'c3', sampleName: 'bd' }
+    ]);
+  });
+
+  it('.bank() sets a bank prefix used for sample lookup', () => {
+    expect(onsets(note('c3').s('bd').bank('RolandTR707'))).toEqual([
+      { pitch: 'c3', sampleName: 'bd', sampleBank: 'RolandTR707' }
+    ]);
   });
 });
 

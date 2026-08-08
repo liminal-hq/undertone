@@ -4,10 +4,10 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction, ONE } from './fraction.js';
+import { voicingPitches } from './chord.js';
 // mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
 // cycle — safe here because both modules only reference each other's bindings inside function
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
-import { voicingPitches } from './chord.js';
 import { mini } from './mini.js';
 import { midiToFrequency } from './pitch.js';
 import { parseScale, scaleDegreeToMidi } from './scale.js';
@@ -19,6 +19,7 @@ import {
   type PlayOptions
 } from './scheduler.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
+import { isSoundType } from './types.js';
 import type { ControlPatch, SoundType, VoiceParams } from './types.js';
 
 /** A half-open span of cycle time [begin, end). */
@@ -205,6 +206,23 @@ export class Pattern<T> {
   /** Sets/overrides the oscillator waveform or noise type across all events. */
   sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch> {
     return this.withPatch({ soundType: type });
+  }
+
+  /**
+   * Sets the voice to a synth SoundType or a registered sample name — a synth
+   * type behaves exactly like sound(); anything else becomes a sample name
+   * (see samples.ts's registerSample()), clearing any previous sample name or
+   * synth type respectively so the two never both apply at once.
+   */
+  s(this: Pattern<ControlPatch>, name: SoundType | string): Pattern<ControlPatch> {
+    return isSoundType(name)
+      ? this.withPatch({ soundType: name, sampleName: undefined })
+      : this.withPatch({ sampleName: name, soundType: undefined });
+  }
+
+  /** Bank prefix for sample lookup — tried as `${name}_${sampleName}` before falling back to bare `sampleName`. */
+  bank(this: Pattern<ControlPatch>, name: string): Pattern<ControlPatch> {
+    return this.withPatch({ sampleBank: name });
   }
 
   /**

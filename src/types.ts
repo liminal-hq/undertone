@@ -7,10 +7,33 @@ export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
 export type NoiseType = 'white' | 'pink' | 'brown';
 export type SoundType = OscType | NoiseType;
 
+/** Runtime companion to SoundType, for code that needs to check membership (s()/.s()/.bank()). */
+export const SOUND_TYPES: readonly SoundType[] = [
+  'sine',
+  'triangle',
+  'square',
+  'sawtooth',
+  'white',
+  'pink',
+  'brown'
+];
+
+export function isSoundType(word: string): word is SoundType {
+  return (SOUND_TYPES as readonly string[]).includes(word);
+}
+
 export interface VoiceParams {
   soundType: SoundType;
   /** Note name ("c2", "a4", "f#3") or a raw Hz number. Ignored for noise sound types. */
   pitch?: string | number;
+  /**
+   * A name registered via registerSample() (see samples.ts). Takes precedence
+   * over `soundType` when set — set by s()/.s() for any word that isn't a
+   * synth SoundType.
+   */
+  sampleName?: string;
+  /** `.bank(name)` — tried as `${sampleBank}_${sampleName}` before falling back to `sampleName` alone. */
+  sampleBank?: string;
   gainLevel: number;
   attack: number;
   decay: number;
@@ -121,6 +144,7 @@ export interface AudioBufferLike {
 export interface AudioBufferSourceNodeLike extends AudioNodeLike {
   buffer: AudioBufferLike | null;
   loop: boolean;
+  playbackRate: AudioParamLike;
   start(when?: number): void;
   stop(when?: number): void;
 }
@@ -136,4 +160,6 @@ export interface AudioContextLike {
   createChannelMerger(numberOfInputs: number): ChannelMergerNodeLike;
   createBufferSource(): AudioBufferSourceNodeLike;
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
+  /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
+  decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
 }

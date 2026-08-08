@@ -102,6 +102,7 @@ export class FakeAudioDestinationNode extends FakeNode implements AudioDestinati
 export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSourceNodeLike {
   buffer: AudioBufferLike | null = null;
   loop = false;
+  playbackRate = new FakeAudioParam();
   started: number[] = [];
   stopped: number[] = [];
 
@@ -178,5 +179,10 @@ export class FakeAudioContext implements AudioContextLike {
 
   createBuffer(_numChannels: number, length: number): AudioBufferLike {
     return new FakeAudioBuffer(length);
+  }
+
+  /** Decodes to a silent buffer sized from the input — tests assert on registration/routing, not on decoded audio content. */
+  decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike> {
+    return Promise.resolve(new FakeAudioBuffer(Math.max(data.byteLength, 1)));
   }
 }

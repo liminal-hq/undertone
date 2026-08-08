@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-export { chord, n, note, sound } from './control.js';
+export { chord, n, note, s, sound } from './control.js';
 export { mini } from './mini.js';
 export {
   Pattern,
@@ -18,7 +18,15 @@ export {
   timecat
 } from './pattern.js';
 export { Fraction } from './fraction.js';
-export { noteToFrequency } from './pitch.js';
+export { midiToFrequency, noteToFrequency, noteToMidi } from './pitch.js';
+export {
+  clearSamples,
+  getSampleBaseNote,
+  getSampleBuffer,
+  loadSamples,
+  registerSample,
+  registerSamples
+} from './samples.js';
 export {
   CHANNEL_ORDER,
   MAX_CHANNELS,
@@ -28,6 +36,7 @@ export {
 } from './surround.js';
 export type { Hap, TimeSpan } from './pattern.js';
 export type { LoopHandle, LoopOptions, PlayOptions, TimerLike } from './scheduler.js';
+export type { SampleSource } from './samples.js';
 export type {
   AudioContextLike,
   AudioDestinationNodeLike,

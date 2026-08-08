@@ -12,11 +12,14 @@ import type {
 } from './types.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
+import { getSampleBaseNote, getSampleBuffer } from './samples.js';
 import { foldChannelGains, MAX_CHANNELS } from './surround.js';
 
 const DEFAULT_PARAMS: VoiceParams = {
   soundType: 'sine',
   pitch: undefined,
+  sampleName: undefined,
+  sampleBank: undefined,
   gainLevel: 0.8,
   attack: 0.01,
   decay: 0.1,
@@ -38,6 +41,7 @@ export function resolveParams(patch: ControlPatch): VoiceParams {
 }
 
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
+const DEFAULT_SAMPLE_BASE_NOTE = 'c4'; // the pitch an unregistered-baseNote sample is assumed to sound at
 const MAX_NOISE_BUFFER_SECONDS = 2; // longer gates loop the buffer instead of growing it
 const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"
 const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actually completes before stop()
@@ -97,8 +101,22 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
   return soundType === 'white' || soundType === 'pink' || soundType === 'brown';
 }
 
-/** Realizes a single voice against a real (or fake, for tests) AudioContext, starting at `startTime`. */
+/**
+ * Realizes a single voice against a real (or fake, for tests) AudioContext,
+ * starting at `startTime`. A sample voice whose buffer isn't decoded yet (or
+ * whose name was never registered) is silently skipped — samples.ts already
+ * warns once per name; call loadSamples() up front to avoid skipped voices on
+ * the first play.
+ */
 export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime: number): void {
+  const usingSample = params.sampleName !== undefined;
+  const sampleBuffer = usingSample
+    ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
+    : undefined;
+  if (usingSample && sampleBuffer === undefined) {
+    return;
+  }
+
   // Clamp to the context's origin — real AudioParams/sources throw RangeError on negative times.
   const voiceStart = Math.max(startTime + params.nudgeTime, 0);
   // A gate is only meaningful when there is a sustain level to hold; with
@@ -122,9 +140,20 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
 
   let filterReleaseEnd = gainReleaseEnd;
 
-  const source = isNoiseType(params.soundType) ? ctx.createBufferSource() : ctx.createOscillator();
+  const source =
+    usingSample || isNoiseType(params.soundType)
+      ? ctx.createBufferSource()
+      : ctx.createOscillator();
 
-  if (isNoiseType(params.soundType)) {
+  if (usingSample) {
+    const bufferSource = source as ReturnType<AudioContextLike['createBufferSource']>;
+    bufferSource.buffer = sampleBuffer as NonNullable<typeof sampleBuffer>;
+    const baseNote =
+      getSampleBaseNote(params.sampleName as string, params.sampleBank) ?? DEFAULT_SAMPLE_BASE_NOTE;
+    const rate =
+      params.pitch !== undefined ? noteToFrequency(params.pitch) / noteToFrequency(baseNote) : 1;
+    bufferSource.playbackRate.setValueAtTime(rate, voiceStart);
+  } else if (isNoiseType(params.soundType)) {
     const bufferSource = source as ReturnType<AudioContextLike['createBufferSource']>;
     // Cap the synchronously-generated buffer and loop it for longer gates —
     // otherwise a slow looped noise pattern would allocate multi-second
