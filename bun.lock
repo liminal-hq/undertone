@@ -26,6 +26,7 @@
         "vitepress": "^1.6.4",
         "vitepress-plugin-mermaid": "^2.0.17",
         "vitest": "^4.1.10",
+        "vue": "^3.5.41",
       },
     },
   },

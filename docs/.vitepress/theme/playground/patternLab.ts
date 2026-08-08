@@ -3,8 +3,8 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { enableMultichannel, note, rev } from '../src/index';
-import type { ControlPatch, LoopHandle, Pattern, SoundType } from '../src/index';
+import { enableMultichannel, note, rev } from '../../../../src/index';
+import type { ControlPatch, LoopHandle, Pattern, SoundType } from '../../../../src/index';
 import { drawPattern } from './pianoRoll';
 
 interface LabState {

@@ -70,7 +70,7 @@ const handle = music.loop({ bpm: 110 });
 handle.stop();
 ```
 
-See `demo/` for a runnable local playground with a live pattern editor (`bun run demo`), or the deployed version at [liminalhq.ca/undertone/playground](https://liminalhq.ca/undertone/playground/).
+Run `bun run docs:dev` for a local live pattern editor at `/playground`, or use the deployed version at [liminalhq.ca/undertone/playground](https://liminalhq.ca/undertone/playground/).
 
 ## Documentation
 
@@ -200,7 +200,7 @@ bun install
 bun run test          # vitest
 bun run lint           # eslint
 bun run build          # tsc -> dist/
-bun run demo            # local playground at http://localhost:5173
+bun run docs:dev       # docs site + live playground at http://localhost:5173
 ```
 
 ## License

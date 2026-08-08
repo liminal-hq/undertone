@@ -71,17 +71,17 @@ jobs:
         if: always()
         run: echo "## Format" >> "${GITHUB_STEP_SUMMARY}"
 
-  demo:
-    name: Demo (build + typecheck)
+  docs:
+    name: Docs (build + typecheck)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - name: Typecheck demo
-        run: bun run typecheck:demo
-      - name: Build demo
-        run: bun run build:demo
+      - name: Typecheck docs theme
+        run: bun run typecheck:docs
+      - name: Build docs site
+        run: bun run docs:build
       - name: Write summary
         if: always()
-        run: echo "## Demo" >> "${GITHUB_STEP_SUMMARY}"
+        run: echo "## Docs" >> "${GITHUB_STEP_SUMMARY}"

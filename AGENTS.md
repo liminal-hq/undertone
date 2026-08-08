@@ -9,10 +9,9 @@
 
 - `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound()/n()/chord()/s() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), note-name/MIDI parsing (`pitch.ts`), named scales (`scale.ts`), chord symbols + voicing (`chord.ts`), bring-your-own-assets sample registry (`samples.ts`), per-orbit reverb/delay buses (`effects.ts`), noise generation (`noise.ts`), shared types (`types.ts`), public exports (`index.ts`)
 - `src/test-utils/`: hand-written Web Audio fakes shared by the test suite; excluded from the published build
-- `demo/`: the local dev server and deployed GitHub Pages playground; not part of the published package
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
-- `assets/`: authored visual assets (`hero.svg`)
-- `docs/`: the VitePress documentation site — homepage (`index.md`), the narrative guide split by topic (`guide/*.md`), `recipes.md`, `coming-from-strudel.md`, the TypeDoc-generated API reference (`api/`, gitignored, rebuilt by `bun run docs:api`), and site config (`.vitepress/`); `README.md` stays the quick-reference API tables
+- `assets/`: authored visual assets (`hero.svg`, `icon.svg`)
+- `docs/`: the VitePress documentation site and the deployed playground — homepage (`index.md`), the narrative guide split by topic (`guide/*.md`), `recipes.md`, `coming-from-strudel.md`, the TypeDoc-generated API reference (`api/`, gitignored, rebuilt by `bun run docs:api`), the interactive playground (`playground.md` + its component and logic under `.vitepress/theme/`), and site config (`.vitepress/`); `README.md` stays the quick-reference API tables
 
 ## Commit Messages
 
@@ -67,7 +66,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Testing
 
 - Run `bun run test`, `bun run lint`, `bun run format:check`, and `bun run build` before considering work complete.
-- Run `bun run typecheck:demo` and `bun run build:demo` when `demo/` changes.
+- Run `bun run typecheck:docs` and `bun run docs:build` when `docs/.vitepress/theme/` or `docs/playground.md` changes.
 - Engine/synthesis changes need a test against the fake `AudioContext` in `src/test-utils/fakeAudioContext.ts` asserting the resulting node graph and automation calls — not just that the code runs.
 - State explicitly when a change hasn't been listened to in a real browser; automated tests cannot verify perceived sound quality.
 
@@ -85,7 +84,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Licence and Copyright
 
 - **Requirement:** New source files (and substantially rewritten source files) should include a short header as the first content in the file.
-- **Applies to:** `.ts` files in `src/` and `demo/`.
+- **Applies to:** `.ts` files in `src/` and `docs/.vitepress/theme/`.
 - **Do not add headers to:** generated files (`dist/`), lockfiles, config files (`.json`, `.yml`), markdown docs, or the SVG asset.
 
 Preferred header format for TypeScript:

@@ -3,8 +3,8 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { note, sound } from '../src/index';
-import type { SoundType } from '../src/index';
+import { note, sound } from '../../../../src/index';
+import type { SoundType } from '../../../../src/index';
 
 interface FieldConfig {
   id: string;
@@ -73,7 +73,7 @@ function generateCode(values: Record<string, number>, soundType: SoundType, pitc
   return `${base}\n  ${chain}\n  .play();`;
 }
 
-export function initPlayground(): void {
+export function initVoiceTweaker(): void {
   const controlsContainer = document.querySelector<HTMLDivElement>('#playground-controls');
   const codeOutput = document.querySelector<HTMLPreElement>('#playground-code');
   const soundTypeSelect = document.querySelector<HTMLSelectElement>('#playground-sound-type');

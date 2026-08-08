@@ -3,8 +3,8 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { Fraction, hasOnset, noteToFrequency } from '../src/index';
-import type { ControlPatch, Pattern } from '../src/index';
+import { Fraction, hasOnset, noteToFrequency } from '../../../../src/index';
+import type { ControlPatch, Pattern } from '../../../../src/index';
 
 const NOISE_TYPES = new Set(['white', 'pink', 'brown']);
 

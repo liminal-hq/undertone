@@ -31,8 +31,8 @@ import {
   stack,
   surroundGains,
   timecat
-} from '../src/index';
-import type { ControlPatch, LoopHandle } from '../src/index';
+} from '../../../../src/index';
+import type { ControlPatch, LoopHandle } from '../../../../src/index';
 import { drawPattern } from './pianoRoll';
 
 const STORAGE_KEY = 'undertone-composer-script';
