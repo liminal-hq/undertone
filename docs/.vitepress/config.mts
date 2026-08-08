@@ -32,13 +32,17 @@ const guideSidebar = [
   }
 ];
 
-const base = '/undertone/docs/';
+const base = '/undertone/';
 
 export default defineConfig({
   title: 'undertone',
   description: 'A procedural synth engine for games and music, built on the Web Audio API.',
   base,
   cleanUrls: true,
+  // The playground is a separate Vite build (demo/) merged into dist/playground/
+  // by the CI workflow, not a page VitePress itself renders — its own dead-link
+  // checker has no way to know that route is real.
+  ignoreDeadLinks: [/^\/playground\//],
   // Absolute, not `favicon.svg` — a bare relative href resolves against the
   // *current page's* URL, so it'd 404 from anywhere but the site root (the
   // same bug the Playground nav link had).
@@ -53,7 +57,10 @@ export default defineConfig({
       { text: 'Recipes', link: '/recipes' },
       { text: 'Coming from Strudel', link: '/coming-from-strudel' },
       { text: 'API', link: '/api/' },
-      { text: 'Playground', link: 'https://liminalhq.ca/undertone/' },
+      // target forces a real browser navigation instead of VitePress's SPA
+      // router, which would otherwise try to soft-navigate to /playground/
+      // as if it were a doc page and render a 404 — it's a separate build.
+      { text: 'Playground', link: '/playground/', target: '_self' },
       { text: 'GitHub', link: 'https://github.com/liminal-hq/undertone' }
     ],
     sidebar: {

@@ -10,6 +10,10 @@ hero:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
+    - theme: brand
+      text: Try it Live
+      link: /playground/
+      target: _self
     - theme: alt
       text: Recipes
       link: /recipes
@@ -72,6 +76,7 @@ Every constructor returns an immutable `Pattern`; every chained call returns a n
 ## Where to go from here
 
 - **[Getting started](/guide/getting-started)** — the mental model and your first sounds, building up through [mini-notation](/guide/mini-notation), [scales and chords](/guide/melody-and-harmony), [samples](/guide/samples), [effects](/guide/effects), and [full arrangements](/guide/arranging-songs).
+- **<a href="/undertone/playground/" target="_self">Try it live</a>** — a live pattern editor in the browser, no install required.
 - **[Recipes](/recipes)** — complete, runnable patterns to copy and adapt: a drum machine, an ambient pad, a game-SFX kit, a multi-section song.
 - **[Coming from Strudel](/coming-from-strudel)** — already write Strudel? The vocabulary transfers; here are the differences that actually matter.
 - **[API reference](/api/)** — every exported function, class, and type, generated from the source.

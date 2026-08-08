@@ -28,21 +28,21 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build the playground
-        run: bunx vite build demo --base=/undertone/
-
       - name: Build the docs site
         run: bun run docs:build
 
-      - name: Merge docs into the playground build
+      - name: Build the playground
+        run: bunx vite build demo --base=/undertone/playground/
+
+      - name: Merge the playground into the docs build
         run: |
-          mkdir -p demo/dist/docs
-          cp -r docs/.vitepress/dist/. demo/dist/docs/
+          mkdir -p docs/.vitepress/dist/playground
+          cp -r demo/dist/. docs/.vitepress/dist/playground/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: demo/dist
+          path: docs/.vitepress/dist
 
   deploy:
     runs-on: ubuntu-24.04
