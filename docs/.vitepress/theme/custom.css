@@ -6,19 +6,20 @@
  * variables is the supported way to get gradient hero text, no extra
  * selectors needed.
  *
- * The dark-mode value matches the gradient the main Liminal HQ homepage uses
- * on its own hero headline (HeroSection.module.css: `#fff 20%, #ffaa40,
- * #f43f5e`) — that page is dark-only, so the near-white first stop is safe
- * there. Light mode swaps in the org's ink-mark brand gradient (plum through
- * burnt orange to amber) instead of reusing the same stops verbatim: a
- * white-forward gradient would wash out to near-invisible on this site's
- * light background.
+ * This is undertone's own gradient, not the org's ink/amber mark palette:
+ * a frequency-analyzer heat map (violet through magenta to gold), the same
+ * colour language every spectrogram and level meter uses for low-to-high
+ * energy — apt for a project whose whole surface is "what does this sound
+ * do." Dark mode uses the full-brightness end of the scale (the way real
+ * spectrogram displays run on dark backgrounds so the hot colours read);
+ * light mode stays in the scale's more saturated, lower-energy half, since
+ * the gold end would wash out against a white page.
  */
 :root {
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(to right, #5d3147, #cf5d22, #f19b18);
+  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #8c2981, #de4968);
 }
 
 .dark {
-  --vp-home-hero-name-background: linear-gradient(to right, #fff 20%, #ffaa40, #f43f5e);
+  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #de4968, #fe9f6d);
 }
