@@ -88,29 +88,30 @@ See `demo/` for a runnable local playground with a live pattern editor (`bun run
 
 ## API
 
-| Call                                                     | What it does                                                                                                                                   |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `note(input)`                                            | Pattern of pitched voices (default sound: sine). `input` is a note name (`"c2"`, `"f#3"`), a raw Hz number, or a mini-notation string of them. |
-| `sound(input)`                                           | Pattern of unpitched voices — the entry point for noise (`'white' \| 'pink' \| 'brown'`), also accepts mini-notation.                          |
-| `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                |
-| `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                            |
-| `.rev()`                                                 | Reverse each cycle (also exported standalone as `rev` for `jux(rev)`).                                                                         |
-| `.every(n, fn)`                                          | Apply `fn` to the pattern every nth cycle.                                                                                                     |
-| `.euclid(pulses, steps, rot?)`                           | Distribute the pattern over a euclidean rhythm.                                                                                                |
-| `.jux(fn)`                                               | Original hard left, `fn(pattern)` hard right.                                                                                                  |
-| `.sound(type)`                                           | Waveform or noise type: `'sine' \| 'triangle' \| 'square' \| 'sawtooth' \| 'white' \| 'pink' \| 'brown'`.                                      |
-| `.attack(s)` `.decay(s)` `.sustain(level)` `.release(s)` | Amplitude envelope. One-shots are percussive; in `loop()` the envelope holds at `sustain` until the event's gate ends.                         |
-| `.gain(level)`                                           | Peak amplitude (0-1).                                                                                                                          |
-| `.lpf(hz)`                                               | Base lowpass filter cutoff. Omit entirely to skip filtering.                                                                                   |
-| `.lpenv(hz)` `.lpa(s)` `.lpd(s)` `.lps(level)` `.lpr(s)` | Filter envelope — same shape as the amplitude envelope, ranging between `lpf` and `lpf + lpenv`.                                               |
-| `.slide(s)`                                              | Pitch glide: starts an octave above the target note and slides down over `s` seconds.                                                          |
-| `.nudge(s)`                                              | Start-time offset in seconds for every event.                                                                                                  |
-| `.pan(p)`                                                | Stereo position, -1 (left) to 1 (right).                                                                                                       |
-| `.channels(gains)` `.surround(angle)`                    | Multichannel placement (up to 7.1): raw per-speaker gains in FL, FR, C, LFE, SL, SR, RL, RR order, or an angle on the speaker ring.            |
-| `.play(options?)`                                        | One-shot: schedules one cycle's worth of events. `{ ctx?, bpm?, when? }`.                                                                      |
-| `.loop(options?)`                                        | Loops with a lookahead scheduler; returns a handle with `stop()`. `{ ctx?, bpm?, timer? }`.                                                    |
-| `enableMultichannel(ctx)`                                | Opts the context's destination into its full hardware channel count (call once); without it, multichannel voices fold down to stereo.          |
-| `mini(source, leaf)` `pure(v)` `silence` `timecat(...)`  | Lower-level pattern building blocks, exported for power users.                                                                                 |
+| Call                                                     | What it does                                                                                                                                         |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `note(input)`                                            | Pattern of pitched voices (default sound: sine). `input` is a note name (`"c2"`, `"f#3"`), a raw Hz number, or a mini-notation string of them.       |
+| `sound(input)`                                           | Pattern of unpitched voices — the entry point for noise (`'white' \| 'pink' \| 'brown'`), also accepts mini-notation.                                |
+| `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                      |
+| `arrange([cycles, pat], ...)`                            | Plays each pattern for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song. |
+| `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                                  |
+| `.rev()`                                                 | Reverse each cycle (also exported standalone as `rev` for `jux(rev)`).                                                                               |
+| `.every(n, fn)`                                          | Apply `fn` to the pattern every nth cycle.                                                                                                           |
+| `.euclid(pulses, steps, rot?)`                           | Distribute the pattern over a euclidean rhythm.                                                                                                      |
+| `.jux(fn)`                                               | Original hard left, `fn(pattern)` hard right.                                                                                                        |
+| `.sound(type)`                                           | Waveform or noise type: `'sine' \| 'triangle' \| 'square' \| 'sawtooth' \| 'white' \| 'pink' \| 'brown'`.                                            |
+| `.attack(s)` `.decay(s)` `.sustain(level)` `.release(s)` | Amplitude envelope. One-shots are percussive; in `loop()` the envelope holds at `sustain` until the event's gate ends.                               |
+| `.gain(level)`                                           | Peak amplitude (0-1).                                                                                                                                |
+| `.lpf(hz)`                                               | Base lowpass filter cutoff. Omit entirely to skip filtering.                                                                                         |
+| `.lpenv(hz)` `.lpa(s)` `.lpd(s)` `.lps(level)` `.lpr(s)` | Filter envelope — same shape as the amplitude envelope, ranging between `lpf` and `lpf + lpenv`.                                                     |
+| `.slide(s)`                                              | Pitch glide: starts an octave above the target note and slides down over `s` seconds.                                                                |
+| `.nudge(s)` `.late(s)` `.early(s)`                       | Start-time offset in seconds for every event (`late`/`early` are signed aliases of `nudge`).                                                         |
+| `.pan(p)`                                                | Stereo position, -1 (left) to 1 (right).                                                                                                             |
+| `.channels(gains)` `.surround(angle)`                    | Multichannel placement (up to 7.1): raw per-speaker gains in FL, FR, C, LFE, SL, SR, RL, RR order, or an angle on the speaker ring.                  |
+| `.play(options?)`                                        | One-shot: schedules one cycle's worth of events. `{ ctx?, bpm?, when? }`.                                                                            |
+| `.loop(options?)`                                        | Loops with a lookahead scheduler; returns a handle with `stop()`. `{ ctx?, bpm?, timer? }`.                                                          |
+| `enableMultichannel(ctx)`                                | Opts the context's destination into its full hardware channel count (call once); without it, multichannel voices fold down to stereo.                |
+| `mini(source, leaf)` `pure(v)` `silence` `timecat(...)`  | Lower-level pattern building blocks, exported for power users.                                                                                       |
 
 Tempo: `bpm` counts four beats per cycle; the default 120 bpm means 2-second cycles. When no `ctx` is passed, a shared `AudioContext` is created lazily on first use — trigger the first `play()`/`loop()` from a user gesture (autoplay policy).
 

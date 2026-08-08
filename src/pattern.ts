@@ -226,6 +226,16 @@ export class Pattern<T> {
     return this.withPatch({ nudgeTime: seconds });
   }
 
+  /** Delays every event by `seconds` — an alias of nudge() under Strudel's name. */
+  late(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ nudgeTime: seconds });
+  }
+
+  /** Moves every event `seconds` earlier — the negative of late()/nudge(). */
+  early(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
+    return this.withPatch({ nudgeTime: -seconds });
+  }
+
   /** Stereo position, -1 (hard left) to 1 (hard right). */
   pan(this: Pattern<ControlPatch>, position: number): Pattern<ControlPatch> {
     if (position < -1 || position > 1) {
@@ -379,6 +389,45 @@ export function cat<T>(...pats: Pattern<T>[]): Pattern<T> {
       const offset = new Fraction(cycle - Math.floor(cycle / pats.length));
       const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
       return pats[index].query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
+    })
+  );
+}
+
+/**
+ * Plays each pattern for its own span of whole cycles, in order, looping the
+ * whole arrangement once the total cycle count is reached — the backbone of a
+ * multi-section song (`arrange([8, intro], [16, verse], [8, outro])`). Each
+ * section's pattern experiences its own cycles starting at 0 whenever its span
+ * begins, so `<a b c>` inside a section always opens on `a` no matter where that
+ * section falls within the overall arrangement.
+ */
+export function arrange<T>(...sections: [cycles: number, pat: Pattern<T>][]): Pattern<T> {
+  for (const [cycles] of sections) {
+    if (!Number.isInteger(cycles) || cycles <= 0) {
+      throw new Error(`arrange() cycle counts must be positive integers, got ${cycles}`);
+    }
+  }
+  if (sections.length === 0) {
+    return silence as Pattern<T>;
+  }
+  const starts: number[] = [];
+  let total = 0;
+  for (const [cycles] of sections) {
+    starts.push(total);
+    total += cycles;
+  }
+  return new Pattern((span) =>
+    splitIntoCycles(span).flatMap((cycleSpan) => {
+      const cycle = cycleSpan.begin.floor();
+      const local = ((cycle % total) + total) % total;
+      const index = sections.findIndex((section, i) => local < starts[i] + section[0]);
+      const sectionStart = starts[index];
+      const pat = sections[index][1];
+      // Shift time so the section pattern experiences its own cycles from 0,
+      // restarting at the top of every pass through the arrangement.
+      const offset = new Fraction(cycle - (local - sectionStart));
+      const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
+      return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
     })
   );
 }

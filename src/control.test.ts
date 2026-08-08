@@ -101,6 +101,11 @@ describe('chainable controls', () => {
     expect(onsets(note('c3').gain(0.1).gain(0.9))).toEqual([{ pitch: 'c3', gainLevel: 0.9 }]);
   });
 
+  it('late() and early() set nudgeTime with opposite sign', () => {
+    expect(onsets(note('c3').late(0.03))).toEqual([{ pitch: 'c3', nudgeTime: 0.03 }]);
+    expect(onsets(note('c3').early(0.03))).toEqual([{ pitch: 'c3', nudgeTime: -0.03 }]);
+  });
+
   it('pans and validates the range', () => {
     expect(onsets(note('c3').pan(0.5))).toEqual([{ pitch: 'c3', pan: 0.5 }]);
     expect(() => note('c3').pan(2)).toThrow(/between -1 and 1/);
