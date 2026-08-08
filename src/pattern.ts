@@ -371,6 +371,71 @@ export class Pattern<T> {
   }
 
   /**
+   * Static highpass cutoff in Hz, in series after lpf(). Creates a filter
+   * stage; omit entirely to skip it. Accepts a mini-notation string.
+   */
+  hpf(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('hpfCutoff', hz);
+  }
+
+  /**
+   * LFO rate in Hz driving a 4-stage allpass phaser. Creates the phaser stage;
+   * omit entirely to skip it. Accepts a mini-notation string.
+   */
+  phaser(this: Pattern<ControlPatch>, rateHz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('phaserRate', rateHz);
+  }
+
+  /**
+   * Reverb send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a mini-notation string.
+   */
+  room(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('roomLevel', level);
+  }
+
+  /**
+   * Reverb decay character for the orbit's shared bus, roughly 1 (short) to
+   * 10 (long) — see effects.ts's getOrbitBus(). Accepts a mini-notation
+   * string.
+   */
+  roomsize(this: Pattern<ControlPatch>, size: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('roomSize', size);
+  }
+
+  /**
+   * Delay send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a mini-notation string.
+   */
+  delay(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayLevel', level);
+  }
+
+  /** Delay time in seconds for the orbit's shared delay bus. Accepts a mini-notation string. */
+  delaytime(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayTime', seconds);
+  }
+
+  /** Feedback (0-1) for the orbit's shared delay bus. Accepts a mini-notation string. */
+  delayfeedback(this: Pattern<ControlPatch>, amount: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayFeedback', amount);
+  }
+
+  /**
+   * Which shared effects bus (see effects.ts's getOrbitBus()) this voice's
+   * room()/delay() sends target. Default 0. Every voice sending to the same
+   * orbit shares one reverb and one delay line, so give a voice its own orbit
+   * number when it needs a distinct room size or delay time from its
+   * neighbours. Scalar only — not a mini-notation-patterned control.
+   */
+  orbit(this: Pattern<ControlPatch>, n: number): Pattern<ControlPatch> {
+    if (!Number.isInteger(n) || n < 0) {
+      throw new Error(`orbit() must be a non-negative integer, got ${n}`);
+    }
+    return this.withPatch({ orbit: n });
+  }
+
+  /**
    * Multichannel (up to 7.1) placement: per-speaker output gains in the order
    * FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries). Takes precedence over
    * pan(). On destinations that can't address that many speakers (or without

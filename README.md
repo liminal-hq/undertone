@@ -132,6 +132,20 @@ the seven synth types becomes a sample name instead of throwing — `s("bd sd hh
 bundle, or point at any sample library (Strudel's own CDN/soundfonts included) by default — bring
 audio you have the rights to use.
 
+## Effects
+
+Beyond `.lpf()`, voices can chain a static highpass (`.hpf(hz)`) and a 4-stage allpass phaser
+(`.phaser(rateHz)`), plus reverb and delay sends: `.room(level)`/`.roomsize(size)` and
+`.delay(level)`/`.delaytime(s)`/`.delayfeedback(amount)`. All of these accept a mini-notation
+string like every other numeric control (see Patterned parameters above).
+
+Reverb and delay are **shared per-orbit buses**, not one node per voice — `.orbit(n)` (default 0,
+integer, not patternable) picks which bus a voice's room/delay sends target. Every voice sending
+to the same orbit shares one reverb (an impulse response procedurally generated from `roomsize`,
+regenerated only when that orbit's size actually changes) and one delay line; give a voice its own
+orbit number when it needs a distinct room size or delay time from its neighbours — that's exactly
+why a track with several different reverb characters gives each one its own orbit.
+
 ## API
 
 | Call                                                     | What it does                                                                                                                                         |
@@ -143,6 +157,10 @@ audio you have the rights to use.
 | `s(input)` `.s(name)` `.bank(name)`                      | Synth voice or registered sample (`s('bd sd')`); non-synth words become sample names. `.bank()` is a lookup prefix; see Samples below.               |
 | `registerSample(name, source)` `registerSamples(map)`    | Registers a sample — `source` is a URL, `ArrayBuffer`, `AudioBuffer`, or `{ url?, data?, buffer?, baseNote? }`. See Samples below.                   |
 | `loadSamples(ctx, names?)`                               | Preloads and decodes registered samples (all, or just `names`) against `ctx`. Returns a `Promise<void>`.                                             |
+| `.hpf(hz)` `.phaser(rateHz)`                             | Static highpass, in series after `.lpf()`; and a 4-stage allpass phaser. Neither creates a node when omitted.                                        |
+| `.room(level)` `.roomsize(size)`                         | Reverb send (0-1) to the voice's orbit bus, and the shared bus's decay character (~1-10). See Effects below.                                         |
+| `.delay(level)` `.delaytime(s)` `.delayfeedback(amount)` | Delay send (0-1) to the voice's orbit bus, and the shared bus's time/feedback. See Effects below.                                                    |
+| `.orbit(n)`                                              | Which shared reverb/delay bus (`getOrbitBus`) the voice's sends target. Default 0, non-negative integer, not patternable.                            |
 | `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                      |
 | `arrange([cycles, pat], ...)`                            | Plays each pattern for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song. |
 | `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                                  |

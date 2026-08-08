@@ -273,6 +273,45 @@ describe('chainable controls', () => {
       { pitch: 'c3', sampleName: 'bd', sampleBank: 'RolandTR707' }
     ]);
   });
+
+  it('sets the effects controls, patterned strings included', () => {
+    const pat = note('c3 e3')
+      .hpf('200 400')
+      .phaser(0.5)
+      .room('.3 .5')
+      .roomsize(4)
+      .delay(0.2)
+      .delaytime(0.3)
+      .delayfeedback(0.4);
+    expect(onsets(pat)).toEqual([
+      {
+        pitch: 'c3',
+        hpfCutoff: 200,
+        phaserRate: 0.5,
+        roomLevel: 0.3,
+        roomSize: 4,
+        delayLevel: 0.2,
+        delayTime: 0.3,
+        delayFeedback: 0.4
+      },
+      {
+        pitch: 'e3',
+        hpfCutoff: 400,
+        phaserRate: 0.5,
+        roomLevel: 0.5,
+        roomSize: 4,
+        delayLevel: 0.2,
+        delayTime: 0.3,
+        delayFeedback: 0.4
+      }
+    ]);
+  });
+
+  it('orbit() validates a non-negative integer and is not patternable', () => {
+    expect(onsets(note('c3').orbit(2))).toEqual([{ pitch: 'c3', orbit: 2 }]);
+    expect(() => note('c3').orbit(-1)).toThrow(/non-negative integer/);
+    expect(() => note('c3').orbit(1.5)).toThrow(/non-negative integer/);
+  });
 });
 
 describe('patterned parameters', () => {

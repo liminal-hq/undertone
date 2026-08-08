@@ -5,11 +5,13 @@
 
 import type {
   AudioContextLike,
+  AudioNodeLike,
   AudioParamLike,
   ControlPatch,
   GainNodeLike,
   VoiceParams
 } from './types.js';
+import { getOrbitBus } from './effects.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
 import { getSampleBaseNote, getSampleBuffer } from './samples.js';
@@ -31,6 +33,14 @@ const DEFAULT_PARAMS: VoiceParams = {
   filterDecay: 0,
   filterSustain: 1,
   filterRelease: 0,
+  hpfCutoff: undefined,
+  phaserRate: undefined,
+  roomLevel: undefined,
+  roomSize: 3,
+  delayLevel: undefined,
+  delayTime: 0.3,
+  delayFeedback: 0.35,
+  orbit: undefined,
   slideTime: 0,
   nudgeTime: 0
 };
@@ -45,6 +55,10 @@ const DEFAULT_SAMPLE_BASE_NOTE = 'c4'; // the pitch an unregistered-baseNote sam
 const MAX_NOISE_BUFFER_SECONDS = 2; // longer gates loop the buffer instead of growing it
 const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"
 const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actually completes before stop()
+const DEFAULT_ORBIT = 0;
+const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper notches
+const PHASER_CENTER_HZ = 1000;
+const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the center
 
 /**
  * Schedules an attack→decay→release envelope on an AudioParam, ramping between
@@ -175,6 +189,8 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     }
   }
 
+  let tail: AudioNodeLike = source;
+
   if (params.filterCutoff !== undefined) {
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -189,17 +205,106 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
       params.filterRelease,
       gateEnd
     );
-    source.connect(filter);
-    filter.connect(gainNode);
-  } else {
-    source.connect(gainNode);
+    tail.connect(filter);
+    tail = filter;
   }
 
-  connectOutput(ctx, gainNode, params, voiceStart);
-
+  // Neither insert below has its own envelope, so filterReleaseEnd is already
+  // final here — safe to compute voiceEnd now and reuse it for the phaser's
+  // LFO stop time as well as the source's own stop() at the end.
   const voiceEnd = Math.max(gainReleaseEnd, filterReleaseEnd) + STOP_TAIL_SECONDS;
+
+  if (params.hpfCutoff !== undefined) {
+    const hpf = ctx.createBiquadFilter();
+    hpf.type = 'highpass';
+    hpf.frequency.setValueAtTime(params.hpfCutoff, voiceStart);
+    tail.connect(hpf);
+    tail = hpf;
+  }
+
+  if (params.phaserRate !== undefined) {
+    tail = connectPhaser(ctx, tail, params.phaserRate, voiceStart, voiceEnd);
+  }
+
+  tail.connect(gainNode);
+
+  const finalNode = connectOutput(ctx, gainNode, params, voiceStart);
+  connectEffectSends(ctx, finalNode, params, voiceStart);
+
   source.start(voiceStart);
   source.stop(voiceEnd);
+}
+
+/**
+ * Inserts a 4-stage series allpass phaser: one LFO drives every stage's
+ * frequency together through a shared depth gain, so the notches sweep in
+ * lockstep rather than independently. Returns the new tail to connect onward.
+ */
+function connectPhaser(
+  ctx: AudioContextLike,
+  input: AudioNodeLike,
+  rateHz: number,
+  voiceStart: number,
+  voiceEnd: number
+): AudioNodeLike {
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.setValueAtTime(rateHz, voiceStart);
+
+  const depth = ctx.createGain();
+  depth.gain.setValueAtTime(PHASER_DEPTH_HZ, voiceStart);
+  lfo.connect(depth);
+
+  let tail = input;
+  for (let i = 0; i < PHASER_STAGE_COUNT; i++) {
+    const stage = ctx.createBiquadFilter();
+    stage.type = 'allpass';
+    stage.frequency.setValueAtTime(PHASER_CENTER_HZ, voiceStart);
+    depth.connect(stage.frequency);
+    tail.connect(stage);
+    tail = stage;
+  }
+
+  lfo.start(voiceStart);
+  lfo.stop(voiceEnd);
+  return tail;
+}
+
+/**
+ * Sends the finished voice to its orbit's shared reverb/delay buses (see
+ * effects.ts) when room/delay levels are set — post-placement, so the wet
+ * signal follows pan/channels like the dry signal does. No sends, no orbit
+ * bus lookup at all, when neither level is set.
+ */
+function connectEffectSends(
+  ctx: AudioContextLike,
+  finalNode: AudioNodeLike,
+  params: VoiceParams,
+  voiceStart: number
+): void {
+  const hasRoom = params.roomLevel !== undefined && params.roomLevel > 0;
+  const hasDelay = params.delayLevel !== undefined && params.delayLevel > 0;
+  if (!hasRoom && !hasDelay) {
+    return;
+  }
+
+  const bus = getOrbitBus(ctx, params.orbit ?? DEFAULT_ORBIT);
+
+  if (hasRoom) {
+    bus.setRoomSize(params.roomSize);
+    const send = ctx.createGain();
+    send.gain.setValueAtTime(params.roomLevel as number, voiceStart);
+    finalNode.connect(send);
+    send.connect(bus.reverbInput);
+  }
+
+  if (hasDelay) {
+    bus.setDelay(params.delayTime, params.delayFeedback);
+    const send = ctx.createGain();
+    send.gain.setValueAtTime(params.delayLevel as number, voiceStart);
+    finalNode.connect(send);
+    send.connect(bus.delayInput);
+  }
 }
 
 /**
@@ -215,7 +320,7 @@ function connectOutput(
   gainNode: GainNodeLike,
   params: VoiceParams,
   voiceStart: number
-): void {
+): AudioNodeLike {
   const available = ctx.destination.channelCount ?? 2;
   let placement = params.channelGains?.slice(0, MAX_CHANNELS);
   if (placement !== undefined && placement.length === 0) {
@@ -227,13 +332,13 @@ function connectOutput(
     panner.pan.setValueAtTime(params.pan, voiceStart);
     gainNode.connect(panner);
     panner.connect(ctx.destination);
-    return;
+    return panner;
   }
 
   if (placement === undefined) {
     if (available <= 2) {
       gainNode.connect(ctx.destination);
-      return;
+      return gainNode;
     }
     placement = [1, 1]; // centred stereo image, matching the spec's mono->stereo up-mix
   }
@@ -252,6 +357,7 @@ function connectOutput(
     }
   });
   merger.connect(ctx.destination);
+  return merger;
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

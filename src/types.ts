@@ -49,6 +49,22 @@ export interface VoiceParams {
   /** Fraction (0-1) between filterCutoff and its peak the decay stage settles to. */
   filterSustain: number;
   filterRelease: number;
+  /** Static highpass cutoff in Hz, in series after the lowpass. No filter is created when undefined. */
+  hpfCutoff?: number;
+  /** LFO rate in Hz driving a 4-stage allpass phaser. No phaser is created when undefined. */
+  phaserRate?: number;
+  /** Reverb send level (0-1) to this voice's orbit bus. No send at all when undefined or 0. */
+  roomLevel?: number;
+  /** Reverb decay character for the orbit's shared bus, roughly 1 (short) to 10 (long) — see effects.ts. */
+  roomSize: number;
+  /** Delay send level (0-1) to this voice's orbit bus. No send at all when undefined or 0. */
+  delayLevel?: number;
+  /** Delay time in seconds for the orbit's shared delay bus. */
+  delayTime: number;
+  /** Feedback (0-1) for the orbit's shared delay bus. */
+  delayFeedback: number;
+  /** Which shared effects bus (see effects.ts's getOrbitBus()) this voice's room/delay sends target. Default 0. */
+  orbit?: number;
   /** Pitch glide (portamento) time in seconds; starts an octave above the target and slides down. */
   slideTime: number;
   /** Start-time offset in seconds, relative to the pattern's shared start time. */
@@ -98,7 +114,8 @@ export interface AudioParamLike {
 }
 
 export interface AudioNodeLike {
-  connect(destination: AudioNodeLike, output?: number, input?: number): AudioNodeLike;
+  /** A destination may be another node (audio-rate signal) or a param (e.g. the phaser LFO -> each stage's frequency). */
+  connect(destination: AudioNodeLike | AudioParamLike, output?: number, input?: number): void;
 }
 
 /**
@@ -137,6 +154,14 @@ export interface StereoPannerNodeLike extends AudioNodeLike {
 /** A channel merger has no extra members the engine needs — inputs are addressed via connect(). */
 export type ChannelMergerNodeLike = AudioNodeLike;
 
+export interface ConvolverNodeLike extends AudioNodeLike {
+  buffer: AudioBufferLike | null;
+}
+
+export interface DelayNodeLike extends AudioNodeLike {
+  delayTime: AudioParamLike;
+}
+
 export interface AudioBufferLike {
   getChannelData(channel: number): Float32Array;
 }
@@ -160,6 +185,8 @@ export interface AudioContextLike {
   createChannelMerger(numberOfInputs: number): ChannelMergerNodeLike;
   createBufferSource(): AudioBufferSourceNodeLike;
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
+  createConvolver(): ConvolverNodeLike;
+  createDelay(maxDelayTime?: number): DelayNodeLike;
   /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
   decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
 }
