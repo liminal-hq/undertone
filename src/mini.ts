@@ -19,7 +19,9 @@ interface Term<T> {
 }
 
 const SYMBOLS = new Set(['[', ']', '<', '>', '(', ')', ',', '*', '/', '!', '@', '~']);
-const WORD_CHAR = /[a-zA-Z0-9#.-]/;
+// '_' included for sample names (s("gm_acoustic_bass"), the .bank() lookup convention's
+// "${bank}_${name}" key) — not needed by any other existing leaf vocabulary.
+const WORD_CHAR = /[a-zA-Z0-9#._-]/;
 
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];

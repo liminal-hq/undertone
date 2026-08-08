@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from 'vitest';
-import { noteToFrequency } from './pitch';
+import { midiToFrequency, noteToFrequency, noteToMidi } from './pitch';
 
 describe('noteToFrequency', () => {
   it('resolves a4 to 440Hz exactly', () => {
@@ -43,5 +43,28 @@ describe('noteToFrequency', () => {
     expect(() => noteToFrequency('h4')).toThrow();
     expect(() => noteToFrequency('c')).toThrow();
     expect(() => noteToFrequency('')).toThrow();
+  });
+});
+
+describe('noteToMidi', () => {
+  it('resolves c4 (middle C) to MIDI 60 and a4 to MIDI 69', () => {
+    expect(noteToMidi('c4')).toBe(60);
+    expect(noteToMidi('a4')).toBe(69);
+  });
+
+  it('applies sharp and flat accidentals', () => {
+    expect(noteToMidi('c#4')).toBe(61);
+    expect(noteToMidi('db4')).toBe(61);
+  });
+
+  it('rejects malformed note names', () => {
+    expect(() => noteToMidi('h4')).toThrow(/Invalid note name/);
+  });
+});
+
+describe('midiToFrequency', () => {
+  it('resolves MIDI 69 to 440Hz exactly, composing with noteToMidi to match noteToFrequency', () => {
+    expect(midiToFrequency(69)).toBe(440);
+    expect(midiToFrequency(noteToMidi('c2'))).toBeCloseTo(noteToFrequency('c2'), 10);
   });
 });

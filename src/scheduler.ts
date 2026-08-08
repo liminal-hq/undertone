@@ -69,12 +69,38 @@ function getSharedContext(): AudioContextLike {
   return sharedContext;
 }
 
-function cycleSecondsFor(bpm: number | undefined): number {
-  const beats = bpm ?? DEFAULT_BPM;
-  if (!(beats > 0)) {
-    throw new Error(`bpm must be positive, got ${beats}`);
+let defaultCyclesPerMinute: number | undefined;
+
+/**
+ * Sets a default tempo in cycles per minute, used by play()/loop() calls that
+ * don't pass an explicit `bpm` — the top-of-file "set it once" style some
+ * scripts prefer over per-call options. An explicit `{ bpm }` on a given call
+ * always wins over this. Global mutable state, read once at each play()/
+ * loop() call (not live-reactive mid-loop) — call again to change it.
+ */
+export function setcpm(cyclesPerMinute: number): void {
+  if (!(cyclesPerMinute > 0)) {
+    throw new Error(`setcpm() must be positive, got ${cyclesPerMinute}`);
   }
-  return SECONDS_PER_CYCLE_AT_1_BPM / beats;
+  defaultCyclesPerMinute = cyclesPerMinute;
+}
+
+/** Clears any setcpm() override, restoring the plain 120bpm default — test hygiene, not needed in normal use. */
+export function resetTempo(): void {
+  defaultCyclesPerMinute = undefined;
+}
+
+function cycleSecondsFor(bpm: number | undefined): number {
+  if (bpm !== undefined) {
+    if (!(bpm > 0)) {
+      throw new Error(`bpm must be positive, got ${bpm}`);
+    }
+    return SECONDS_PER_CYCLE_AT_1_BPM / bpm;
+  }
+  if (defaultCyclesPerMinute !== undefined) {
+    return 60 / defaultCyclesPerMinute;
+  }
+  return SECONDS_PER_CYCLE_AT_1_BPM / DEFAULT_BPM;
 }
 
 /**
