@@ -4,10 +4,12 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { indentWithTab } from '@codemirror/commands';
-import { javascript } from '@codemirror/lang-javascript';
+import { javascript, javascriptLanguage } from '@codemirror/lang-javascript';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { keymap } from '@codemirror/view';
+import { hoverTooltip, keymap } from '@codemirror/view';
+import type { Tooltip } from '@codemirror/view';
 import { basicSetup, EditorView } from 'codemirror';
 import {
   CHANNEL_ORDER,
@@ -60,6 +62,278 @@ const SCOPE: Record<string, unknown> = {
 };
 const SCOPE_NAMES = Object.keys(SCOPE);
 const SCOPE_VALUES = Object.values(SCOPE);
+
+interface ApiDoc {
+  signature: string;
+  doc: string;
+}
+
+// Hand-authored — the API is small and fixed, so this drives both autocomplete
+// and hover docs without needing a full TypeScript language service.
+const API_DOCS: Record<string, ApiDoc> = {
+  note: {
+    signature: 'note(input: string | number) => Pattern<ControlPatch>',
+    doc: 'Pattern of pitched voices (default sound: sine). input is a note name ("c2", "f#3"), a raw Hz number, or a mini-notation string of them.'
+  },
+  sound: {
+    signature: 'sound(input: SoundType) => Pattern<ControlPatch>  |  .sound(type)',
+    doc: "Pattern of unpitched voices — the entry point for noise ('white' | 'pink' | 'brown'), also accepts mini-notation. Chainable as .sound(type) to set a voice's waveform or noise type."
+  },
+  stack: {
+    signature: 'stack(...pats: Pattern<T>[]) => Pattern<T>',
+    doc: 'Plays all patterns simultaneously (polyphony: chords, layers).'
+  },
+  seq: {
+    signature: 'seq(...pats: Pattern<T>[]) => Pattern<T>',
+    doc: 'Concatenates patterns within a single cycle, each taking an equal share.'
+  },
+  cat: {
+    signature: 'cat(...pats: Pattern<T>[]) => Pattern<T>',
+    doc: "Plays one pattern per cycle, in rotation (Tidal's slowcat)."
+  },
+  rev: {
+    signature: 'rev(pat: Pattern<T>) => Pattern<T>  |  .rev()',
+    doc: 'Reverses each cycle in time (cycle-local mirror). Exported standalone for point-free style (pat.jux(rev)) and as the chainable .rev().'
+  },
+  pure: {
+    signature: 'pure(value: T) => Pattern<T>',
+    doc: 'A pattern that repeats value once per cycle.'
+  },
+  silence: {
+    signature: 'silence: Pattern<never>',
+    doc: 'The empty pattern: querying it never returns events.'
+  },
+  hasOnset: {
+    signature: 'hasOnset(hap: Hap<unknown>) => boolean',
+    doc: "True when the hap's part contains the event's onset, i.e. it should actually trigger a voice."
+  },
+  timecat: {
+    signature: 'timecat(pairs: [number, Pattern<T>][]) => Pattern<T>',
+    doc: 'Concatenates patterns within a cycle with explicit relative weights — the building block behind seq().'
+  },
+  mini: {
+    signature: 'mini(source: string, leaf: (token: string) => Pattern<T>) => Pattern<T>',
+    doc: 'Lower-level mini-notation parser, exported for power users building custom leaf types.'
+  },
+  Pattern: {
+    signature: 'class Pattern<T>',
+    doc: 'The pattern core: a query from a cycle timespan to the events overlapping it. Immutable — every combinator returns a new Pattern.'
+  },
+  Fraction: {
+    signature: 'class Fraction',
+    doc: 'Exact rational cycle time, used throughout the engine so triplets and euclidean rhythms never drift.'
+  },
+  noteToFrequency: {
+    signature: 'noteToFrequency(pitch: string | number) => number',
+    doc: 'Converts a note name ("c3") or raw Hz number to a frequency in Hz.'
+  },
+  CHANNEL_ORDER: {
+    signature: 'CHANNEL_ORDER: string[]',
+    doc: 'Speaker order used by channels()/surround(): FL, FR, C, LFE, SL, SR, RL, RR.'
+  },
+  MAX_CHANNELS: {
+    signature: 'MAX_CHANNELS: number',
+    doc: 'The maximum channel count channels() accepts (7.1 = 8).'
+  },
+  enableMultichannel: {
+    signature: 'enableMultichannel(ctx: AudioContext) => void',
+    doc: "Opts the context's destination into its full hardware channel count — call once so surround()/channels() address real speakers instead of folding to stereo."
+  },
+  foldToStereo: {
+    signature: 'foldToStereo(gains: number[]) => [number, number]',
+    doc: 'Folds a multichannel gain array down to a stereo [left, right] pair.'
+  },
+  surroundGains: {
+    signature: 'surroundGains(angleDegrees: number) => number[]',
+    doc: 'Computes per-speaker gains for an angle on the 7.1 speaker ring — what surround() uses internally.'
+  },
+  fast: {
+    signature: '.fast(factor: number) => Pattern<T>',
+    doc: 'Speeds the whole pattern up: fast(2) squeezes two cycles into every one.'
+  },
+  slow: {
+    signature: '.slow(factor: number) => Pattern<T>',
+    doc: 'Slows the whole pattern down: slow(2) stretches one cycle over two.'
+  },
+  every: {
+    signature: '.every(n: number, fn: (pat) => pat) => Pattern<T>',
+    doc: 'Applies fn to the pattern on every nth cycle (cycles 0, n, 2n, ...).'
+  },
+  euclid: {
+    signature: '.euclid(pulses: number, steps: number, rotation?: number) => Pattern<T>',
+    doc: 'Distributes the pattern over a euclidean rhythm: pulses onsets spread evenly across steps slots per cycle.'
+  },
+  jux: {
+    signature: '.jux(fn: (pat) => pat) => Pattern<ControlPatch>',
+    doc: 'Juxtaposes the pattern with a transformed copy: original plays hard left, fn(pattern) plays hard right.'
+  },
+  attack: {
+    signature: '.attack(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Amplitude envelope attack time.'
+  },
+  decay: {
+    signature: '.decay(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Amplitude envelope decay time.'
+  },
+  sustain: {
+    signature: '.sustain(level: number) => Pattern<ControlPatch>',
+    doc: "Fraction (0-1) of gain the decay stage settles to before release. In loop() (and play({gated: true})), the envelope holds at this level until the event's gate closes."
+  },
+  release: {
+    signature: '.release(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Amplitude envelope release time.'
+  },
+  gain: {
+    signature: '.gain(level: number) => Pattern<ControlPatch>',
+    doc: 'Peak amplitude (0-1).'
+  },
+  lpf: {
+    signature: '.lpf(hz: number) => Pattern<ControlPatch>',
+    doc: 'Base lowpass filter cutoff in Hz. Omit entirely to skip filtering.'
+  },
+  lpenv: {
+    signature: '.lpenv(hzAmount: number) => Pattern<ControlPatch>',
+    doc: 'Hz the filter envelope adds on top of lpf() at its peak.'
+  },
+  lpa: {
+    signature: '.lpa(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Filter envelope attack time.'
+  },
+  lpd: {
+    signature: '.lpd(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Filter envelope decay time.'
+  },
+  lps: {
+    signature: '.lps(level: number) => Pattern<ControlPatch>',
+    doc: 'Fraction (0-1) between lpf() and its envelope peak the decay stage settles to.'
+  },
+  lpr: {
+    signature: '.lpr(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Filter envelope release time.'
+  },
+  slide: {
+    signature: '.slide(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
+  },
+  nudge: {
+    signature: '.nudge(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Start-time offset in seconds applied to every event.'
+  },
+  pan: {
+    signature: '.pan(position: number) => Pattern<ControlPatch>',
+    doc: 'Stereo position, -1 (hard left) to 1 (hard right).'
+  },
+  channels: {
+    signature: '.channels(gains: number[]) => Pattern<ControlPatch>',
+    doc: 'Multichannel (up to 7.1) placement: per-speaker output gains in FL, FR, C, LFE, SL, SR, RL, RR order.'
+  },
+  surround: {
+    signature: '.surround(angleDegrees: number) => Pattern<ControlPatch>',
+    doc: 'Places the voice at an angle on the 7.1 speaker ring, equal-power panned between the two nearest speakers.'
+  },
+  play: {
+    signature: '.play(options?: { ctx?, bpm?, when?, gated? }) => void',
+    doc: 'Plays one cycle as a one-shot. Percussive by default; gated: true holds each event for its own share of the cycle, like loop().'
+  },
+  loop: {
+    signature: '.loop(options?: { ctx?, bpm?, timer? }) => LoopHandle',
+    doc: 'Loops the pattern until stop() is called on the returned handle. Each event is gated to its own share of the cycle.'
+  }
+};
+
+const METHOD_NAMES = [
+  'fast',
+  'slow',
+  'rev',
+  'every',
+  'euclid',
+  'sound',
+  'attack',
+  'decay',
+  'sustain',
+  'release',
+  'gain',
+  'lpf',
+  'lpenv',
+  'lpa',
+  'lpd',
+  'lps',
+  'lpr',
+  'slide',
+  'nudge',
+  'pan',
+  'channels',
+  'surround',
+  'jux',
+  'play',
+  'loop'
+];
+
+function completionType(name: string): string {
+  if (name === 'Pattern' || name === 'Fraction') return 'class';
+  if (name === 'CHANNEL_ORDER' || name === 'MAX_CHANNELS' || name === 'silence') return 'constant';
+  return SCOPE_NAMES.includes(name) ? 'function' : 'method';
+}
+
+function toCompletion(name: string): Completion {
+  const info = API_DOCS[name];
+  return {
+    label: name,
+    type: completionType(name),
+    detail: info?.signature,
+    info: info?.doc
+  };
+}
+
+const TOPLEVEL_COMPLETIONS: Completion[] = SCOPE_NAMES.map(toCompletion);
+const METHOD_COMPLETIONS: Completion[] = METHOD_NAMES.map(toCompletion);
+
+/** Completes SCOPE names at the top level and chainable method names after a `.`. */
+function apiCompletionSource(context: CompletionContext): CompletionResult | null {
+  const afterDot = context.matchBefore(/\.\w*/);
+  if (afterDot) {
+    return { from: afterDot.from + 1, options: METHOD_COMPLETIONS, validFor: /^\w*$/ };
+  }
+  const word = context.matchBefore(/[A-Za-z_]\w*/);
+  if (!word || (word.from === word.to && !context.explicit)) {
+    return null;
+  }
+  return { from: word.from, options: TOPLEVEL_COMPLETIONS, validFor: /^[A-Za-z_]\w*$/ };
+}
+
+/** Hover tooltip for any identifier the docs table knows about, member or top-level. */
+const apiHoverTooltip = hoverTooltip((view, pos): Tooltip | null => {
+  const { from, to, text } = view.state.doc.lineAt(pos);
+  let start = pos;
+  let end = pos;
+  while (start > from && /\w/.test(text[start - from - 1])) start--;
+  while (end < to && /\w/.test(text[end - from])) end++;
+  if (start === end) {
+    return null;
+  }
+  const word = text.slice(start - from, end - from);
+  const info = API_DOCS[word];
+  if (!info) {
+    return null;
+  }
+  return {
+    pos: start,
+    end,
+    above: true,
+    create() {
+      const dom = document.createElement('div');
+      dom.className = 'cm-api-hover';
+      const sig = document.createElement('div');
+      sig.className = 'cm-api-hover-signature';
+      sig.textContent = info.signature;
+      const doc = document.createElement('div');
+      doc.className = 'cm-api-hover-doc';
+      doc.textContent = info.doc;
+      dom.append(sig, doc);
+      return { dom };
+    }
+  };
+});
 
 interface ComposerExample {
   label: string;
@@ -306,6 +580,8 @@ export function initComposer(): void {
       basicSetup,
       keymap.of([indentWithTab]),
       javascript(),
+      javascriptLanguage.data.of({ autocomplete: apiCompletionSource }),
+      apiHoverTooltip,
       oneDark,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) scheduleRebuild();

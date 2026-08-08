@@ -207,6 +207,25 @@
         font-family: inherit;
         line-height: 1.5;
       }
+
+      .cm-api-hover {
+        max-width: 360px;
+        padding: 8px 10px;
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      .cm-api-hover-signature {
+        color: #7bffb7;
+        font-weight: 600;
+        margin-bottom: 4px;
+        white-space: pre-wrap;
+      }
+
+      .cm-api-hover-doc {
+        color: #cbd5e1;
+        line-height: 1.4;
+      }
     </style>
   </head>
   <body>
@@ -272,8 +291,8 @@
         The full API, live: write any JS expression using <code>note</code>, <code>sound</code>,
         <code>stack</code>, <code>seq</code>, <code>cat</code>, euclidean rhythms, chained voice
         controls, even plain JS loops and helper functions — return a <code>Pattern</code> and it
-        plays. Runs as you type. Code executes directly in this page, same as pasting into
-        devtools — an infinite loop will hang the tab.
+        plays. Runs as you type. Code executes directly in this page, same as pasting into devtools
+        — an infinite loop will hang the tab.
       </p>
       <div class="buttons" id="composer-examples"></div>
       <div id="composer-editor"></div>
