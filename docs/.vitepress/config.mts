@@ -47,7 +47,7 @@ export default defineConfig({
       { text: 'Recipes', link: '/recipes' },
       { text: 'Coming from Strudel', link: '/coming-from-strudel' },
       { text: 'API', link: '/api/' },
-      { text: 'Playground', link: '../' },
+      { text: 'Playground', link: 'https://liminalhq.ca/undertone/' },
       { text: 'GitHub', link: 'https://github.com/liminal-hq/undertone' }
     ],
     sidebar: {
