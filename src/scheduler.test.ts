@@ -93,6 +93,20 @@ describe('play', () => {
     const ctx = new FakeAudioContext();
     expect(() => note('c3').play({ ctx, bpm: 0 })).toThrow(/bpm must be positive/);
   });
+
+  it('holds each event for its own share of the cycle when gated, like loop()', () => {
+    const ctx = new FakeAudioContext();
+
+    // 240 bpm -> 1-second cycle; two events -> 0.5-second gates. With sustain
+    // 0.5 the envelope holds at 0.4 (0.8 default gain * 0.5) until gate close.
+    note('c3 e3').sustain(0.5).play({ ctx, when: 0, bpm: 240, gated: true });
+
+    expect(ctx.gains[0].gain.calls).toContainEqual({
+      method: 'setValueAtTime',
+      value: 0.4,
+      time: 0.5
+    });
+  });
 });
 
 describe('loop', () => {
