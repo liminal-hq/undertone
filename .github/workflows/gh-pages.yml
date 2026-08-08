@@ -31,6 +31,14 @@ jobs:
       - name: Build the playground
         run: bunx vite build demo --base=/undertone/
 
+      - name: Build the docs site
+        run: bun run docs:build
+
+      - name: Merge docs into the playground build
+        run: |
+          mkdir -p demo/dist/docs
+          cp -r docs/.vitepress/dist/. demo/dist/docs/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
