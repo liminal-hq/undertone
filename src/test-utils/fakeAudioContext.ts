@@ -11,6 +11,8 @@ import type {
   AudioParamLike,
   BiquadFilterNodeLike,
   ChannelMergerNodeLike,
+  ConvolverNodeLike,
+  DelayNodeLike,
   GainNodeLike,
   OscillatorNodeLike,
   StereoPannerNodeLike,
@@ -47,14 +49,13 @@ export class FakeAudioParam implements AudioParamLike {
 }
 
 class FakeNode implements AudioNodeLike {
-  connectedTo: AudioNodeLike[] = [];
-  /** Full connect() records, including merger input indices. */
-  connections: { node: AudioNodeLike; output: number; input: number }[] = [];
+  connectedTo: (AudioNodeLike | AudioParamLike)[] = [];
+  /** Full connect() records, including merger input indices. Destination may be a node or a param (e.g. the phaser LFO -> a filter's frequency). */
+  connections: { node: AudioNodeLike | AudioParamLike; output: number; input: number }[] = [];
 
-  connect(destination: AudioNodeLike, output = 0, input = 0): AudioNodeLike {
+  connect(destination: AudioNodeLike | AudioParamLike, output = 0, input = 0): void {
     this.connectedTo.push(destination);
     this.connections.push({ node: destination, output, input });
-    return destination;
   }
 }
 
@@ -93,6 +94,14 @@ export class FakeChannelMergerNode extends FakeNode implements ChannelMergerNode
   }
 }
 
+export class FakeConvolverNode extends FakeNode implements ConvolverNodeLike {
+  buffer: AudioBufferLike | null = null;
+}
+
+export class FakeDelayNode extends FakeNode implements DelayNodeLike {
+  delayTime = new FakeAudioParam();
+}
+
 export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
   maxChannelCount = 2;
   channelCount = 2;
@@ -102,6 +111,7 @@ export class FakeAudioDestinationNode extends FakeNode implements AudioDestinati
 export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSourceNodeLike {
   buffer: AudioBufferLike | null = null;
   loop = false;
+  playbackRate = new FakeAudioParam();
   started: number[] = [];
   stopped: number[] = [];
 
@@ -115,14 +125,18 @@ export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSo
 }
 
 class FakeAudioBuffer implements AudioBufferLike {
-  private readonly channel: Float32Array;
+  /** One independent array per channel — a per-channel reverb IR needs its channels to actually differ. */
+  private readonly channels: Float32Array[];
 
-  constructor(length: number) {
-    this.channel = new Float32Array(length);
+  constructor(numChannels: number, length: number) {
+    this.channels = Array.from(
+      { length: Math.max(numChannels, 1) },
+      () => new Float32Array(length)
+    );
   }
 
-  getChannelData(): Float32Array {
-    return this.channel;
+  getChannelData(channel: number): Float32Array {
+    return this.channels[channel];
   }
 }
 
@@ -139,6 +153,8 @@ export class FakeAudioContext implements AudioContextLike {
   readonly panners: FakeStereoPannerNode[] = [];
   readonly mergers: FakeChannelMergerNode[] = [];
   readonly bufferSources: FakeAudioBufferSourceNode[] = [];
+  readonly convolvers: FakeConvolverNode[] = [];
+  readonly delays: FakeDelayNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
     const node = new FakeOscillatorNode();
@@ -176,7 +192,24 @@ export class FakeAudioContext implements AudioContextLike {
     return node;
   }
 
-  createBuffer(_numChannels: number, length: number): AudioBufferLike {
-    return new FakeAudioBuffer(length);
+  createConvolver(): FakeConvolverNode {
+    const node = new FakeConvolverNode();
+    this.convolvers.push(node);
+    return node;
+  }
+
+  createDelay(): FakeDelayNode {
+    const node = new FakeDelayNode();
+    this.delays.push(node);
+    return node;
+  }
+
+  createBuffer(numChannels: number, length: number): AudioBufferLike {
+    return new FakeAudioBuffer(numChannels, length);
+  }
+
+  /** Decodes to a silent mono buffer sized from the input — tests assert on registration/routing, not on decoded audio content. */
+  decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike> {
+    return Promise.resolve(new FakeAudioBuffer(1, Math.max(data.byteLength, 1)));
   }
 }

@@ -4,6 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction, ONE } from './fraction.js';
+import { voicingPitches } from './chord.js';
+// mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
+// cycle — safe here because both modules only reference each other's bindings inside function
+// bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
+import { mini } from './mini.js';
+import { midiToFrequency } from './pitch.js';
+import { degreeToMidi, parseScale } from './scale.js';
 import {
   loopPattern,
   playPattern,
@@ -12,7 +19,8 @@ import {
   type PlayOptions
 } from './scheduler.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
-import type { ControlPatch, SoundType } from './types.js';
+import { isSoundType } from './types.js';
+import type { ControlPatch, SoundType, VoiceParams } from './types.js';
 
 /** A half-open span of cycle time [begin, end). */
 export interface TimeSpan {
@@ -163,75 +171,299 @@ export class Pattern<T> {
     return this.fmap((value) => ({ ...value, ...patch }));
   }
 
-  /** Sets/overrides the oscillator waveform or noise type across all events. */
+  /**
+   * Merges a control whose value may itself be patterned in time: `input` is
+   * either a plain number (applied uniformly, like withPatch) or a
+   * mini-notation string sampled per event. Structure comes from `this` —
+   * for each of its haps, the control is queried at the hap's own onset time
+   * and whichever control step covers that instant supplies the value; a rest
+   * (`~`) in the control at that instant leaves the key unset for that hap.
+   * `validate`/`transform` run once per distinct literal in the control
+   * string, at build time (same eager-validation timing as note()'s pitch
+   * parsing), before any query happens.
+   */
+  private withControlPattern(
+    this: Pattern<ControlPatch>,
+    key: keyof VoiceParams,
+    input: number | string,
+    options?: { validate?: (v: number) => void; transform?: (v: number) => number }
+  ): Pattern<ControlPatch> {
+    const transform = options?.transform ?? ((v: number) => v);
+    const control = numberPattern(input, options?.validate).fmap(transform);
+    return new Pattern((span) => {
+      const haps = this.query(span);
+      if (haps.length === 0) {
+        return haps;
+      }
+      // One control query covering every hap's onset, instead of one query
+      // per hap — a busy pattern with several chained patterned controls
+      // would otherwise multiply query work on every onset in the
+      // scheduler's per-tick lookahead.
+      let minT = haps[0].whole?.begin ?? haps[0].part.begin;
+      let maxT = minT;
+      for (const hap of haps) {
+        const t = hap.whole?.begin ?? hap.part.begin;
+        if (t.lt(minT)) minT = t;
+        if (t.gt(maxT)) maxT = t;
+      }
+      const controlHaps = control.query({ begin: minT, end: maxT.add(ONE) });
+      return haps.map((hap) => {
+        const t = hap.whole?.begin ?? hap.part.begin;
+        const covering = controlHaps.find((c) => c.part.begin.lte(t) && t.lt(c.part.end));
+        return covering === undefined
+          ? hap
+          : { ...hap, value: { ...hap.value, [key]: covering.value } };
+      });
+    });
+  }
+
+  /**
+   * Sets/overrides the oscillator waveform or noise type across all events,
+   * clearing any sample name set by .s() — sampleName otherwise takes
+   * precedence over soundType in the engine, so without this a prior .s()
+   * would keep playing its sample silently through a later .sound() call.
+   */
   sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch> {
-    return this.withPatch({ soundType: type });
+    return this.withPatch({ soundType: type, sampleName: undefined });
   }
 
-  attack(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ attack: seconds });
+  /**
+   * Sets the voice to a synth SoundType or a registered sample name — a synth
+   * type behaves exactly like sound(); anything else becomes a sample name
+   * (see samples.ts's registerSample()), clearing any previous sample name or
+   * synth type respectively so the two never both apply at once.
+   */
+  s(this: Pattern<ControlPatch>, name: SoundType | string): Pattern<ControlPatch> {
+    return isSoundType(name)
+      ? this.withPatch({ soundType: name, sampleName: undefined })
+      : this.withPatch({ sampleName: name, soundType: undefined });
   }
 
-  decay(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ decay: seconds });
+  /** Bank prefix for sample lookup — tried as `${name}_${sampleName}` before falling back to bare `sampleName`. */
+  bank(this: Pattern<ControlPatch>, name: string): Pattern<ControlPatch> {
+    return this.withPatch({ sampleBank: name });
   }
 
-  /** Fraction (0-1) of gain the decay stage settles to before release. */
-  sustain(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
-    return this.withPatch({ sustain: level });
+  /**
+   * Resolves scale-degree events from n() into real pitches: `spec` is a scale
+   * string like `"D5:minor"`. Events without a `degree` (already pitched via
+   * note(), or unpitched noise from sound()) pass through unchanged.
+   */
+  scale(this: Pattern<ControlPatch>, spec: string): Pattern<ControlPatch> {
+    // Parsed once here — also serves as eager validation, same timing as
+    // note()'s pitch parsing — and reused for every event, instead of
+    // re-parsing `spec` from scratch on each one.
+    const parsed = parseScale(spec);
+    return this.fmap((value) => {
+      if (value.degree === undefined) {
+        return value;
+      }
+      const { degree, ...rest } = value;
+      return { ...rest, pitch: midiToFrequency(degreeToMidi(parsed, degree)) };
+    });
   }
 
-  release(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ release: seconds });
+  /**
+   * Expands chord-symbol events from chord() into simultaneous note events —
+   * one chord onset becomes N notes sharing the same whole/part, exactly the
+   * shape stack()ed chords already produce downstream (the scheduler/engine
+   * need no changes at all to play them). Events without a `chord` (already
+   * pitched via note()/n()) pass through unchanged.
+   */
+  voicing(
+    this: Pattern<ControlPatch>,
+    options?: { anchor?: string | number }
+  ): Pattern<ControlPatch> {
+    // Chord symbols cycle through a small, repeating vocabulary (e.g. a
+    // 4-chord progression), so memoizing voicingPitches() by symbol avoids
+    // re-parsing and re-voicing the same chord on every single onset.
+    const cache = new Map<string, number[]>();
+    return new Pattern((span) =>
+      this.query(span).flatMap((hap) => {
+        const { chord: symbol, ...rest } = hap.value;
+        if (symbol === undefined) {
+          return [hap];
+        }
+        let pitches = cache.get(symbol);
+        if (pitches === undefined) {
+          pitches = voicingPitches(symbol, options);
+          cache.set(symbol, pitches);
+        }
+        return pitches.map((midi) => ({
+          ...hap,
+          value: { ...rest, pitch: midiToFrequency(midi) }
+        }));
+      })
+    );
   }
 
-  gain(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
-    return this.withPatch({ gainLevel: level });
+  /** Amplitude envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */
+  attack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('attack', seconds);
   }
 
-  /** Base lowpass cutoff in Hz. Creates a filter stage; omit to skip filtering entirely. */
-  lpf(this: Pattern<ControlPatch>, hz: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterCutoff: hz });
+  /** Amplitude envelope decay time, in seconds. Accepts a mini-notation string to pattern it. */
+  decay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('decay', seconds);
   }
 
-  /** Hz the filter envelope adds on top of lpf() at its peak. */
-  lpenv(this: Pattern<ControlPatch>, hzAmount: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterEnvAmount: hzAmount });
+  /**
+   * Fraction (0-1) of gain the decay stage settles to before release.
+   * Accepts a mini-notation string to pattern it.
+   */
+  sustain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('sustain', level);
   }
 
-  lpa(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterAttack: seconds });
+  /** Amplitude envelope release time, in seconds. Accepts a mini-notation string to pattern it. */
+  release(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('release', seconds);
   }
 
-  lpd(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterDecay: seconds });
+  /** Peak amplitude (0-1). Accepts a mini-notation string to pattern it. */
+  gain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('gainLevel', level);
   }
 
-  /** Fraction (0-1) between lpf() and its envelope peak the decay stage settles to. */
-  lps(this: Pattern<ControlPatch>, level: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterSustain: level });
+  /**
+   * Base lowpass cutoff in Hz. Creates a filter stage; omit entirely to skip
+   * filtering. Accepts a mini-notation string to pattern it.
+   */
+  lpf(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterCutoff', hz);
   }
 
-  lpr(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ filterRelease: seconds });
+  /** Hz the filter envelope adds on top of lpf() at its peak. Accepts a mini-notation string. */
+  lpenv(this: Pattern<ControlPatch>, hzAmount: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterEnvAmount', hzAmount);
   }
 
-  /** Pitch glide (portamento): starts an octave above the target note and slides down. */
-  slide(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ slideTime: seconds });
+  /** Filter envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */
+  lpa(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterAttack', seconds);
   }
 
-  /** Start-time offset in seconds applied to every event when played. */
-  nudge(this: Pattern<ControlPatch>, seconds: number): Pattern<ControlPatch> {
-    return this.withPatch({ nudgeTime: seconds });
+  /** Filter envelope decay time, in seconds. Accepts a mini-notation string to pattern it. */
+  lpd(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterDecay', seconds);
   }
 
-  /** Stereo position, -1 (hard left) to 1 (hard right). */
-  pan(this: Pattern<ControlPatch>, position: number): Pattern<ControlPatch> {
-    if (position < -1 || position > 1) {
-      throw new Error(`pan() position must be between -1 and 1, got ${position}`);
+  /**
+   * Fraction (0-1) between lpf() and its envelope peak the decay stage settles
+   * to. Accepts a mini-notation string to pattern it.
+   */
+  lps(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterSustain', level);
+  }
+
+  /** Filter envelope release time, in seconds. Accepts a mini-notation string to pattern it. */
+  lpr(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('filterRelease', seconds);
+  }
+
+  /**
+   * Pitch glide (portamento): starts an octave above the target note and
+   * slides down. Accepts a mini-notation string to pattern it.
+   */
+  slide(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('slideTime', seconds);
+  }
+
+  /**
+   * Start-time offset in seconds applied to every event when played. Accepts a
+   * mini-notation string to pattern it.
+   */
+  nudge(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds);
+  }
+
+  /** Delays every event by `seconds` — an alias of nudge() under Strudel's name. */
+  late(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds);
+  }
+
+  /** Moves every event `seconds` earlier — the negative of late()/nudge(). */
+  early(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds, { transform: (v) => -v });
+  }
+
+  /**
+   * Stereo position, -1 (hard left) to 1 (hard right). Accepts a mini-notation
+   * string to pattern it; every literal in the string is range-checked.
+   */
+  pan(this: Pattern<ControlPatch>, position: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pan', position, {
+      validate: (v) => {
+        if (v < -1 || v > 1) {
+          throw new Error(`pan() position must be between -1 and 1, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Static highpass cutoff in Hz, in series after lpf(). Creates a filter
+   * stage; omit entirely to skip it. Accepts a mini-notation string.
+   */
+  hpf(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('hpfCutoff', hz);
+  }
+
+  /**
+   * LFO rate in Hz driving a 4-stage allpass phaser. Creates the phaser stage;
+   * omit entirely to skip it. Accepts a mini-notation string.
+   */
+  phaser(this: Pattern<ControlPatch>, rateHz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('phaserRate', rateHz);
+  }
+
+  /**
+   * Reverb send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a mini-notation string.
+   */
+  room(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('roomLevel', level);
+  }
+
+  /**
+   * Reverb decay character for the orbit's shared bus, roughly 1 (short) to
+   * 10 (long) — see effects.ts's getOrbitBus(). Accepts a mini-notation
+   * string.
+   */
+  roomsize(this: Pattern<ControlPatch>, size: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('roomSize', size);
+  }
+
+  /**
+   * Delay send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a mini-notation string.
+   */
+  delay(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayLevel', level);
+  }
+
+  /** Delay time in seconds for the orbit's shared delay bus. Accepts a mini-notation string. */
+  delaytime(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayTime', seconds);
+  }
+
+  /** Feedback (0-1) for the orbit's shared delay bus. Accepts a mini-notation string. */
+  delayfeedback(this: Pattern<ControlPatch>, amount: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('delayFeedback', amount);
+  }
+
+  /**
+   * Which shared effects bus (see effects.ts's getOrbitBus()) this voice's
+   * room()/delay() sends target. Default 0. Every voice sending to the same
+   * orbit shares one reverb and one delay line, so give a voice its own orbit
+   * number when it needs a distinct room size or delay time from its
+   * neighbours. Scalar only — not a mini-notation-patterned control.
+   */
+  orbit(this: Pattern<ControlPatch>, n: number): Pattern<ControlPatch> {
+    if (!Number.isInteger(n) || n < 0) {
+      throw new Error(`orbit() must be a non-negative integer, got ${n}`);
     }
-    return this.withPatch({ pan: position });
+    return this.withPatch({ orbit: n });
   }
 
   /**
@@ -307,6 +539,37 @@ export function pure<T>(value: T): Pattern<T> {
   );
 }
 
+// Deliberately stricter than JS's own Number() coercion (no exponents, no
+// leading '+', no bare "Infinity") and, unlike note()/sound()'s leaf regexes,
+// accepts a leading-dot form like ".155" — the natural way to write levels
+// under 1 in a patterned-parameter string.
+const NUMBER_WORD_PATTERN = /^-?(\d+(\.\d+)?|\.\d+)$/;
+
+function parseNumberWord(word: string): number {
+  if (!NUMBER_WORD_PATTERN.test(word)) {
+    throw new Error(`Invalid number in pattern: "${word}"`);
+  }
+  return Number(word);
+}
+
+/**
+ * Builds a Pattern<number> from a scalar or a mini-notation string of numbers
+ * (e.g. ".1 .2", "<.25 .72>") — the value side of a patterned control.
+ * `validate` runs once per distinct literal at build time, matching the eager
+ * validation timing note()/sound() already use for their own leaf words.
+ */
+function numberPattern(input: number | string, validate?: (v: number) => void): Pattern<number> {
+  if (typeof input === 'number') {
+    validate?.(input);
+    return pure(input);
+  }
+  return mini<number>(input, (word) => {
+    const value = parseNumberWord(word);
+    validate?.(value);
+    return value;
+  });
+}
+
 /**
  * Squeezes each cycle of `pat` into the window [winBegin, winEnd) of each cycle
  * (both in [0, 1]). The building block for seq/timecat.
@@ -379,6 +642,45 @@ export function cat<T>(...pats: Pattern<T>[]): Pattern<T> {
       const offset = new Fraction(cycle - Math.floor(cycle / pats.length));
       const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
       return pats[index].query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
+    })
+  );
+}
+
+/**
+ * Plays each pattern for its own span of whole cycles, in order, looping the
+ * whole arrangement once the total cycle count is reached — the backbone of a
+ * multi-section song (`arrange([8, intro], [16, verse], [8, outro])`). Each
+ * section's pattern experiences its own cycles starting at 0 whenever its span
+ * begins, so `<a b c>` inside a section always opens on `a` no matter where that
+ * section falls within the overall arrangement.
+ */
+export function arrange<T>(...sections: [cycles: number, pat: Pattern<T>][]): Pattern<T> {
+  for (const [cycles] of sections) {
+    if (!Number.isInteger(cycles) || cycles <= 0) {
+      throw new Error(`arrange() cycle counts must be positive integers, got ${cycles}`);
+    }
+  }
+  if (sections.length === 0) {
+    return silence as Pattern<T>;
+  }
+  const starts: number[] = [];
+  let total = 0;
+  for (const [cycles] of sections) {
+    starts.push(total);
+    total += cycles;
+  }
+  return new Pattern((span) =>
+    splitIntoCycles(span).flatMap((cycleSpan) => {
+      const cycle = cycleSpan.begin.floor();
+      const local = ((cycle % total) + total) % total;
+      const index = sections.findIndex((section, i) => local < starts[i] + section[0]);
+      const sectionStart = starts[index];
+      const pat = sections[index][1];
+      // Shift time so the section pattern experiences its own cycles from 0,
+      // restarting at the top of every pass through the arrangement.
+      const offset = new Fraction(cycle - (local - sectionStart));
+      const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
+      return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
     })
   );
 }

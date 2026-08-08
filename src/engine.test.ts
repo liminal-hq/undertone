@@ -3,9 +3,13 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getOrbitBus } from './effects';
 import { playVoice, playVoices, resolveParams } from './engine';
+import { noteToFrequency } from './pitch';
+import { clearSamples, registerSample } from './samples';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
+import type { AudioBufferLike } from './types';
 
 describe('resolveParams', () => {
   it('fills a patch out with the documented defaults', () => {
@@ -402,6 +406,227 @@ describe('playVoice', () => {
     );
 
     expect(ctx.oscillators[0].stopped[0]).toBeCloseTo(0.52, 5);
+  });
+});
+
+describe('sample voices', () => {
+  const FAKE_BUFFER: AudioBufferLike = { getChannelData: () => new Float32Array(4) };
+
+  beforeEach(() => {
+    clearSamples();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  it('builds a buffer source (not an oscillator) using the registered sample, at playbackRate 1 for an unpitched hit', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd' }), 0);
+
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.bufferSources).toHaveLength(1);
+    const bufferSource = ctx.bufferSources[0];
+    expect(bufferSource.buffer).toBe(FAKE_BUFFER);
+    expect(bufferSource.playbackRate.calls).toEqual([
+      { method: 'setValueAtTime', value: 1, time: 0 }
+    ]);
+    expect(bufferSource.connectedTo).toEqual([ctx.gains[0]]);
+  });
+
+  it("computes playbackRate from pitch relative to the sample's registered baseNote", () => {
+    registerSample('piano', { buffer: FAKE_BUFFER, baseNote: 'c4' });
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'piano', pitch: 'e4' }), 0);
+
+    const expectedRate = noteToFrequency('e4') / noteToFrequency('c4');
+    expect(ctx.bufferSources[0].playbackRate.calls[0].value).toBeCloseTo(expectedRate, 10);
+  });
+
+  it('assumes a c4 baseNote when the registered sample sets none', () => {
+    registerSample('piano', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'piano', pitch: 'g4' }), 0);
+
+    const expectedRate = noteToFrequency('g4') / noteToFrequency('c4');
+    expect(ctx.bufferSources[0].playbackRate.calls[0].value).toBeCloseTo(expectedRate, 10);
+  });
+
+  it('prefers the banked key over the bare name, falling back when unregistered', () => {
+    const banked: AudioBufferLike = { getChannelData: () => new Float32Array(8) };
+    registerSample('RolandTR707_bd', banked);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', sampleBank: 'RolandTR707' }), 0);
+
+    expect(ctx.bufferSources[0].buffer).toBe(banked);
+  });
+
+  it('sampleName takes precedence over soundType when both are set', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', soundType: 'triangle' }), 0);
+
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.bufferSources).toHaveLength(1);
+  });
+
+  it('skips the voice entirely — no nodes created at all — for an unregistered sample name', () => {
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'nope' }), 0);
+
+    expect(ctx.bufferSources).toHaveLength(0);
+    expect(ctx.oscillators).toHaveLength(0);
+    expect(ctx.gains).toHaveLength(0);
+    expect(console.warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('defaults to holding through a gate instead of the percussive synth default, unless sustain is set explicitly', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    // duration (as loop() would set from the pattern's own event length) is
+    // only honoured as a gate when sustain > 0 — samples now default there.
+    playVoice(ctx, resolveParams({ sampleName: 'bd', duration: 0.5 }), 0);
+
+    const calls = ctx.gains[0].gain.calls;
+    expect(calls).toContainEqual({ method: 'setValueAtTime', value: 0.8, time: 0.5 });
+  });
+
+  it('an explicit sustain still overrides the sample default', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', sustain: 0, duration: 0.5 }), 0);
+
+    // sustain 0 means no gate hold at all — same percussive shape as any other voice.
+    const calls = ctx.gains[0].gain.calls;
+    expect(calls).toHaveLength(4);
+    expect(calls.some((c) => c.time === 0.5)).toBe(false);
+  });
+});
+
+describe('hpf and phaser inserts', () => {
+  it('inserts a highpass filter in series after the lowpass', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', filterCutoff: 800, hpfCutoff: 200 }), 0);
+
+    expect(ctx.filters).toHaveLength(2);
+    const [lowpass, highpass] = ctx.filters;
+    expect(lowpass.type).toBe('lowpass');
+    expect(highpass.type).toBe('highpass');
+    expect(ctx.oscillators[0].connectedTo).toEqual([lowpass]);
+    expect(lowpass.connectedTo).toEqual([highpass]);
+    expect(highpass.connectedTo).toEqual([ctx.gains[0]]);
+    expect(highpass.frequency.calls).toEqual([{ method: 'setValueAtTime', value: 200, time: 0 }]);
+  });
+
+  it('creates no highpass filter at all when hpfCutoff is undefined', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
+    expect(ctx.filters).toHaveLength(0);
+  });
+
+  it('inserts a 4-stage allpass phaser driven by one LFO through a shared depth gain', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', phaserRate: 0.7, attack: 0, release: 0 }), 0);
+
+    const allpassStages = ctx.filters.filter((f) => f.type === 'allpass');
+    expect(allpassStages).toHaveLength(4);
+
+    // Main pitch oscillator + the phaser's own LFO oscillator.
+    expect(ctx.oscillators).toHaveLength(2);
+    const lfo = ctx.oscillators[1];
+    expect(lfo.frequency.calls).toEqual([{ method: 'setValueAtTime', value: 0.7, time: 0 }]);
+
+    // The LFO drives a shared depth gain, which fans out to every stage's frequency param.
+    const depthGain = ctx.gains.find((g) => g.connectedTo.includes(allpassStages[0].frequency));
+    expect(depthGain).toBeDefined();
+    for (const stage of allpassStages) {
+      expect(depthGain!.connectedTo).toContain(stage.frequency);
+    }
+
+    // Stages chain source -> stage0 -> stage1 -> stage2 -> stage3 -> gain.
+    expect(ctx.oscillators[0].connectedTo).toEqual([allpassStages[0]]);
+    expect(allpassStages[3].connectedTo).toEqual([ctx.gains[0]]);
+  });
+
+  it("stops the phaser's LFO alongside the voice's own end", () => {
+    const ctx = new FakeAudioContext();
+    playVoice(
+      ctx,
+      resolveParams({ pitch: 'a4', phaserRate: 1, attack: 0, decay: 0, sustain: 0, release: 0.05 }),
+      0
+    );
+
+    const lfo = ctx.oscillators[1];
+    expect(lfo.started).toEqual([0]);
+    expect(lfo.stopped[0]).toBeCloseTo(0.07, 10); // release end (0.05) + STOP_TAIL_SECONDS (0.02)
+  });
+
+  it('creates no phaser nodes at all when phaserRate is undefined', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
+    expect(ctx.oscillators).toHaveLength(1); // just the pitch oscillator, no LFO
+    expect(ctx.filters.filter((f) => f.type === 'allpass')).toHaveLength(0);
+  });
+});
+
+describe('reverb/delay sends and orbit buses', () => {
+  it('creates no orbit bus at all when neither roomLevel nor delayLevel is set', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4' }), 0);
+    expect(ctx.convolvers).toHaveLength(0);
+    expect(ctx.delays).toHaveLength(0);
+  });
+
+  it('sends the placed voice to the default orbit (0) reverb bus, post-pan', () => {
+    const ctx = new FakeAudioContext();
+    const bus = getOrbitBus(ctx, 0);
+
+    playVoice(ctx, resolveParams({ pitch: 'a4', pan: -1, roomLevel: 0.4 }), 0);
+
+    const panner = ctx.panners[0];
+    const send = ctx.gains.find((g) => g.connectedTo.includes(bus.reverbInput));
+    expect(send).toBeDefined();
+    expect(panner.connectedTo).toContain(send);
+    expect(send!.gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.4, time: 0 }]);
+  });
+
+  it('sends to the delay bus as well when delayLevel is set, using delayTime/delayFeedback', () => {
+    const ctx = new FakeAudioContext();
+    const bus = getOrbitBus(ctx, 0);
+
+    playVoice(
+      ctx,
+      resolveParams({ pitch: 'a4', delayLevel: 0.2, delayTime: 0.25, delayFeedback: 0.4 }),
+      0
+    );
+
+    const send = ctx.gains.find((g) => g.connectedTo.includes(bus.delayInput));
+    expect(send).toBeDefined();
+    expect(send!.gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.2, time: 0 }]);
+    expect(ctx.delays[0].delayTime.calls).toEqual([
+      { method: 'setValueAtTime', value: 0.25, time: 0 }
+    ]);
+  });
+
+  it('routes different orbit numbers to different buses', () => {
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ pitch: 'a4', roomLevel: 0.3, orbit: 0 }), 0);
+    playVoice(ctx, resolveParams({ pitch: 'a4', roomLevel: 0.3, orbit: 1 }), 0);
+
+    expect(ctx.convolvers).toHaveLength(2);
+  });
+
+  it('skips the send entirely when the level is 0', () => {
+    const ctx = new FakeAudioContext();
+    playVoice(ctx, resolveParams({ pitch: 'a4', roomLevel: 0 }), 0);
+    expect(ctx.convolvers).toHaveLength(0);
   });
 });
 

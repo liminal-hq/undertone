@@ -7,11 +7,12 @@
 
 ## Repository Layout
 
-- `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), note-name parsing (`pitch.ts`), noise generation (`noise.ts`), shared types (`types.ts`), public exports (`index.ts`)
+- `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound()/n()/chord()/s() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), note-name/MIDI parsing (`pitch.ts`), named scales (`scale.ts`), chord symbols + voicing (`chord.ts`), bring-your-own-assets sample registry (`samples.ts`), per-orbit reverb/delay buses (`effects.ts`), noise generation (`noise.ts`), shared types (`types.ts`), public exports (`index.ts`)
 - `src/test-utils/`: hand-written Web Audio fakes shared by the test suite; excluded from the published build
 - `demo/`: the local dev server and deployed GitHub Pages playground; not part of the published package
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`)
+- `docs/`: the narrative how-to guide (`guide.md`); `README.md` stays the API reference
 
 ## Commit Messages
 
