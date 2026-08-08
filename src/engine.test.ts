@@ -483,6 +483,30 @@ describe('sample voices', () => {
     expect(ctx.gains).toHaveLength(0);
     expect(console.warn).toHaveBeenCalledTimes(1);
   });
+
+  it('defaults to holding through a gate instead of the percussive synth default, unless sustain is set explicitly', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    // duration (as loop() would set from the pattern's own event length) is
+    // only honoured as a gate when sustain > 0 — samples now default there.
+    playVoice(ctx, resolveParams({ sampleName: 'bd', duration: 0.5 }), 0);
+
+    const calls = ctx.gains[0].gain.calls;
+    expect(calls).toContainEqual({ method: 'setValueAtTime', value: 0.8, time: 0.5 });
+  });
+
+  it('an explicit sustain still overrides the sample default', () => {
+    registerSample('bd', FAKE_BUFFER);
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ sampleName: 'bd', sustain: 0, duration: 0.5 }), 0);
+
+    // sustain 0 means no gate hold at all — same percussive shape as any other voice.
+    const calls = ctx.gains[0].gain.calls;
+    expect(calls).toHaveLength(4);
+    expect(calls.some((c) => c.time === 0.5)).toBe(false);
+  });
 });
 
 describe('hpf and phaser inserts', () => {

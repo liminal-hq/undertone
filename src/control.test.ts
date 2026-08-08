@@ -268,6 +268,12 @@ describe('chainable controls', () => {
     ]);
   });
 
+  it('.sound() also clears a previously-set sample name — sampleName otherwise wins in the engine', () => {
+    expect(onsets(note('c3').s('bd').sound('white'))).toEqual([
+      { pitch: 'c3', soundType: 'white' }
+    ]);
+  });
+
   it('.bank() sets a bank prefix used for sample lookup', () => {
     expect(onsets(note('c3').s('bd').bank('RolandTR707'))).toEqual([
       { pitch: 'c3', sampleName: 'bd', sampleBank: 'RolandTR707' }

@@ -3,6 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import { noteToFrequency } from './pitch.js';
 import type { AudioBufferLike, AudioContextLike } from './types.js';
 
 export interface SampleSource {
@@ -27,16 +28,23 @@ function isAudioBufferLike(value: object): value is AudioBufferLike {
 }
 
 function normalizeSource(source: RegisteredSource): SampleSource {
-  if (typeof source === 'string') {
-    return { url: source };
+  const normalized: SampleSource =
+    typeof source === 'string'
+      ? { url: source }
+      : source instanceof ArrayBuffer
+        ? { data: source }
+        : isAudioBufferLike(source)
+          ? { buffer: source }
+          : source;
+  if (normalized.baseNote !== undefined) {
+    // Eager validation — same timing as note()'s pitch parsing — so a typo'd
+    // baseNote fails here, at registration, instead of inside playVoice()
+    // during a loop's tick: a throw there happens before scheduledUntil
+    // advances, so the scheduler would re-query and re-throw on the same
+    // window forever.
+    noteToFrequency(normalized.baseNote);
   }
-  if (source instanceof ArrayBuffer) {
-    return { data: source };
-  }
-  if (isAudioBufferLike(source)) {
-    return { buffer: source };
-  }
-  return source;
+  return normalized;
 }
 
 const registry = new Map<string, SampleSource>();
@@ -97,12 +105,20 @@ async function decodeEntry(
   return ctx.decodeAudioData(data);
 }
 
-function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferLike> {
-  let pendingForContext = pendingByContext.get(ctx);
-  if (!pendingForContext) {
-    pendingForContext = new Map();
-    pendingByContext.set(ctx, pendingForContext);
+function getOrCreateMap<V>(
+  weakMap: WeakMap<AudioContextLike, Map<string, V>>,
+  ctx: AudioContextLike
+): Map<string, V> {
+  let map = weakMap.get(ctx);
+  if (!map) {
+    map = new Map();
+    weakMap.set(ctx, map);
   }
+  return map;
+}
+
+function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferLike> {
+  const pendingForContext = getOrCreateMap(pendingByContext, ctx);
   const existing = pendingForContext.get(key);
   if (existing) {
     return existing;
@@ -115,15 +131,21 @@ function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferL
     );
   }
 
-  const promise = decodeEntry(ctx, key, entry).then((buffer) => {
-    let decodedForContext = decodedByContext.get(ctx);
-    if (!decodedForContext) {
-      decodedForContext = new Map();
-      decodedByContext.set(ctx, decodedForContext);
+  const promise = decodeEntry(ctx, key, entry).then(
+    (buffer) => {
+      getOrCreateMap(decodedByContext, ctx).set(key, buffer);
+      return buffer;
+    },
+    (error: unknown) => {
+      // Don't let a transient failure (a network blip, a bad fetch) wedge
+      // this key forever — a rejected promise, once cached, would resolve
+      // to that same rejection on every future call. Drop it so the next
+      // attempt (e.g. after registerSample() re-registers a working source)
+      // retries from scratch.
+      pendingByContext.get(ctx)?.delete(key);
+      throw error;
     }
-    decodedForContext.set(key, buffer);
-    return buffer;
-  });
+  );
   pendingForContext.set(key, promise);
   return promise;
 }
@@ -173,12 +195,7 @@ export function getSampleBuffer(
   // (and cache, so getSampleBuffer/ensureDecoded agree on where decoded
   // buffers live regardless of which path produced them).
   if (entry.buffer) {
-    let decodedForContext = decodedByContext.get(ctx);
-    if (!decodedForContext) {
-      decodedForContext = new Map();
-      decodedByContext.set(ctx, decodedForContext);
-    }
-    decodedForContext.set(key, entry.buffer);
+    getOrCreateMap(decodedByContext, ctx).set(key, entry.buffer);
     return entry.buffer;
   }
 

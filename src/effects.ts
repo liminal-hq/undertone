@@ -13,11 +13,15 @@ const IR_DECAY_FLOOR = 0.001; // the envelope reaches this fraction of full scal
 const DELAY_MAX_SECONDS = 5; // generous headroom past the ~0.1-0.35s the sample songs actually use
 
 function roomSizeToSeconds(size: number): number {
-  const clamped = Math.max(size, 0.1);
-  return (
+  // The linear mapping only targets size in [1, 10]; below ~1.27 it
+  // extrapolates past zero, which would collapse buildImpulseResponse() to a
+  // degenerate near-empty buffer instead of a short room. Floor the output,
+  // not just the input, so any size at or below that clamps to the shortest
+  // documented room rather than going silent.
+  const seconds =
     ROOM_SIZE_MIN_SECONDS +
-    ((clamped - 1) * (ROOM_SIZE_MAX_SECONDS - ROOM_SIZE_MIN_SECONDS)) / ROOM_SIZE_REFERENCE_RANGE
-  );
+    ((size - 1) * (ROOM_SIZE_MAX_SECONDS - ROOM_SIZE_MIN_SECONDS)) / ROOM_SIZE_REFERENCE_RANGE;
+  return Math.max(seconds, ROOM_SIZE_MIN_SECONDS);
 }
 
 /**

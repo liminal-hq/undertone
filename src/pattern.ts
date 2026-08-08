@@ -10,7 +10,7 @@ import { voicingPitches } from './chord.js';
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
 import { mini } from './mini.js';
 import { midiToFrequency } from './pitch.js';
-import { parseScale, scaleDegreeToMidi } from './scale.js';
+import { degreeToMidi, parseScale } from './scale.js';
 import {
   loopPattern,
   playPattern,
@@ -190,22 +190,41 @@ export class Pattern<T> {
   ): Pattern<ControlPatch> {
     const transform = options?.transform ?? ((v: number) => v);
     const control = numberPattern(input, options?.validate).fmap(transform);
-    return new Pattern((span) =>
-      this.query(span).map((hap) => {
-        const t = (hap.whole ?? hap.part).begin;
-        const covering = control
-          .query({ begin: t, end: t.add(ONE) })
-          .find((c) => c.part.begin.lte(t) && t.lt(c.part.end));
+    return new Pattern((span) => {
+      const haps = this.query(span);
+      if (haps.length === 0) {
+        return haps;
+      }
+      // One control query covering every hap's onset, instead of one query
+      // per hap — a busy pattern with several chained patterned controls
+      // would otherwise multiply query work on every onset in the
+      // scheduler's per-tick lookahead.
+      let minT = haps[0].whole?.begin ?? haps[0].part.begin;
+      let maxT = minT;
+      for (const hap of haps) {
+        const t = hap.whole?.begin ?? hap.part.begin;
+        if (t.lt(minT)) minT = t;
+        if (t.gt(maxT)) maxT = t;
+      }
+      const controlHaps = control.query({ begin: minT, end: maxT.add(ONE) });
+      return haps.map((hap) => {
+        const t = hap.whole?.begin ?? hap.part.begin;
+        const covering = controlHaps.find((c) => c.part.begin.lte(t) && t.lt(c.part.end));
         return covering === undefined
           ? hap
           : { ...hap, value: { ...hap.value, [key]: covering.value } };
-      })
-    );
+      });
+    });
   }
 
-  /** Sets/overrides the oscillator waveform or noise type across all events. */
+  /**
+   * Sets/overrides the oscillator waveform or noise type across all events,
+   * clearing any sample name set by .s() — sampleName otherwise takes
+   * precedence over soundType in the engine, so without this a prior .s()
+   * would keep playing its sample silently through a later .sound() call.
+   */
   sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch> {
-    return this.withPatch({ soundType: type });
+    return this.withPatch({ soundType: type, sampleName: undefined });
   }
 
   /**
@@ -231,13 +250,16 @@ export class Pattern<T> {
    * note(), or unpitched noise from sound()) pass through unchanged.
    */
   scale(this: Pattern<ControlPatch>, spec: string): Pattern<ControlPatch> {
-    parseScale(spec); // eager validation, same timing as note()'s pitch parsing
+    // Parsed once here — also serves as eager validation, same timing as
+    // note()'s pitch parsing — and reused for every event, instead of
+    // re-parsing `spec` from scratch on each one.
+    const parsed = parseScale(spec);
     return this.fmap((value) => {
       if (value.degree === undefined) {
         return value;
       }
       const { degree, ...rest } = value;
-      return { ...rest, pitch: midiToFrequency(scaleDegreeToMidi(spec, degree)) };
+      return { ...rest, pitch: midiToFrequency(degreeToMidi(parsed, degree)) };
     });
   }
 
@@ -252,13 +274,22 @@ export class Pattern<T> {
     this: Pattern<ControlPatch>,
     options?: { anchor?: string | number }
   ): Pattern<ControlPatch> {
+    // Chord symbols cycle through a small, repeating vocabulary (e.g. a
+    // 4-chord progression), so memoizing voicingPitches() by symbol avoids
+    // re-parsing and re-voicing the same chord on every single onset.
+    const cache = new Map<string, number[]>();
     return new Pattern((span) =>
       this.query(span).flatMap((hap) => {
         const { chord: symbol, ...rest } = hap.value;
         if (symbol === undefined) {
           return [hap];
         }
-        return voicingPitches(symbol, options).map((midi) => ({
+        let pitches = cache.get(symbol);
+        if (pitches === undefined) {
+          pitches = voicingPitches(symbol, options);
+          cache.set(symbol, pitches);
+        }
+        return pitches.map((midi) => ({
           ...hap,
           value: { ...rest, pitch: midiToFrequency(midi) }
         }));

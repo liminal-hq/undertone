@@ -49,6 +49,15 @@ describe('registerSample / registerSamples', () => {
     registerSample('bd', FAKE_BUFFER);
     expect(getSampleBaseNote('bd')).toBeUndefined();
   });
+
+  it('rejects an invalid baseNote eagerly, at registration time', () => {
+    // Must throw here, not inside playVoice() during a loop's tick — a throw
+    // there happens before the scheduler advances scheduledUntil, so it
+    // would re-query and re-throw on the same window forever.
+    expect(() => registerSample('piano', { buffer: FAKE_BUFFER, baseNote: 'h4' })).toThrow(
+      /Invalid note name/
+    );
+  });
 });
 
 describe('getSampleBuffer', () => {
@@ -105,6 +114,24 @@ describe('loadSamples', () => {
   it('rejects for a name that was never registered', async () => {
     const ctx = new FakeAudioContext();
     await expect(loadSamples(ctx, ['nope'])).rejects.toThrow(/not registered/);
+  });
+
+  it('does not permanently cache a failed decode — a later call retries instead of replaying it', async () => {
+    registerSample('kick', { url: 'https://example.com/kick.wav' });
+    const ctx = new FakeAudioContext();
+
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new Error('network blip'))
+      .mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(4))
+      } as Response);
+
+    await expect(loadSamples(ctx, ['kick'])).rejects.toThrow(/network blip/);
+    await loadSamples(ctx, ['kick']); // must retry, not replay the cached rejection
+    expect(getSampleBuffer(ctx, 'kick')).toBeDefined();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 

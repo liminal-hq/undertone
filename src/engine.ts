@@ -45,9 +45,24 @@ const DEFAULT_PARAMS: VoiceParams = {
   nudgeTime: 0
 };
 
+// A sample recording is a fixed-length take, not a synth waveform shaped by
+// its own envelope — the percussive sustain:0 default (silent by ~0.16s
+// regardless of the buffer's actual length) is right for one-shot SFX but
+// wrong for "play the sample". Sample voices default to holding instead, so
+// a gated loop() event lets the recording ring for its full pattern-derived
+// length; an ungated one-shot play() still releases right after decay either
+// way (only a gate creates a hold plateau at all), so playing a sample
+// through with .play() still needs an explicit .sustain()/.release() — noted
+// in the README.
+const SAMPLE_DEFAULT_SUSTAIN = 1;
+
 /** Fills a pattern event's partial parameter patch out to a complete set of voice parameters. */
 export function resolveParams(patch: ControlPatch): VoiceParams {
-  return { ...DEFAULT_PARAMS, ...patch };
+  const resolved = { ...DEFAULT_PARAMS, ...patch };
+  if (patch.sampleName !== undefined && patch.sustain === undefined) {
+    resolved.sustain = SAMPLE_DEFAULT_SUSTAIN;
+  }
+  return resolved;
 }
 
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
@@ -58,7 +73,7 @@ const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actua
 const DEFAULT_ORBIT = 0;
 const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper notches
 const PHASER_CENTER_HZ = 1000;
-const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the center
+const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the centre
 
 /**
  * Schedules an attack→decay→release envelope on an AudioParam, ramping between
@@ -270,6 +285,20 @@ function connectPhaser(
   return tail;
 }
 
+/** Routes finalNode through a fresh send gain at `level`, into `target`. */
+function connectSend(
+  ctx: AudioContextLike,
+  finalNode: AudioNodeLike,
+  target: GainNodeLike,
+  level: number,
+  voiceStart: number
+): void {
+  const send = ctx.createGain();
+  send.gain.setValueAtTime(level, voiceStart);
+  finalNode.connect(send);
+  send.connect(target);
+}
+
 /**
  * Sends the finished voice to its orbit's shared reverb/delay buses (see
  * effects.ts) when room/delay levels are set — post-placement, so the wet
@@ -292,18 +321,12 @@ function connectEffectSends(
 
   if (hasRoom) {
     bus.setRoomSize(params.roomSize);
-    const send = ctx.createGain();
-    send.gain.setValueAtTime(params.roomLevel as number, voiceStart);
-    finalNode.connect(send);
-    send.connect(bus.reverbInput);
+    connectSend(ctx, finalNode, bus.reverbInput, params.roomLevel as number, voiceStart);
   }
 
   if (hasDelay) {
     bus.setDelay(params.delayTime, params.delayFeedback);
-    const send = ctx.createGain();
-    send.gain.setValueAtTime(params.delayLevel as number, voiceStart);
-    finalNode.connect(send);
-    send.connect(bus.delayInput);
+    connectSend(ctx, finalNode, bus.delayInput, params.delayLevel as number, voiceStart);
   }
 }
 

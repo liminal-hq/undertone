@@ -134,6 +134,18 @@ describe('OrbitBus.setRoomSize', () => {
 
     expect(ctx.convolvers[0].buffer).not.toBe(firstBuffer);
   });
+
+  it('floors the impulse response length instead of going degenerate for a tiny or non-positive size', () => {
+    const ctx = new FakeAudioContext();
+    const bus = getOrbitBus(ctx, 0);
+
+    for (const size of [0.1, 0, -5]) {
+      bus.setRoomSize(size);
+      const length = ctx.convolvers[0].buffer!.getChannelData(0).length;
+      // The documented range floors at ~0.3s — well above a degenerate 1-sample buffer.
+      expect(length).toBeGreaterThan(0.1 * ctx.sampleRate);
+    }
+  });
 });
 
 describe('OrbitBus.setDelay', () => {

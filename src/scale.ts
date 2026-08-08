@@ -59,13 +59,24 @@ export function parseScale(spec: string): ParsedScale {
 
 /**
  * Resolves a scale degree (0-based, may be negative or beyond the scale's own
- * length) against a scale spec to a MIDI note number, carrying the octave for
- * degrees outside [0, scale length).
+ * length) against an already-parsed scale to a MIDI note number, carrying the
+ * octave for degrees outside [0, scale length). Split out from
+ * scaleDegreeToMidi() so a caller resolving many degrees against the same
+ * spec (e.g. .scale() over a whole pattern) can parse once and reuse it,
+ * instead of re-parsing the spec string on every single event.
  */
-export function scaleDegreeToMidi(spec: string, degree: number): number {
-  const { rootMidi, intervals } = parseScale(spec);
-  const len = intervals.length;
+export function degreeToMidi(parsed: ParsedScale, degree: number): number {
+  const len = parsed.intervals.length;
   const octaveShift = Math.floor(degree / len);
   const indexInScale = ((degree % len) + len) % len;
-  return rootMidi + octaveShift * 12 + intervals[indexInScale];
+  return parsed.rootMidi + octaveShift * 12 + parsed.intervals[indexInScale];
+}
+
+/**
+ * Resolves a scale degree against a scale spec to a MIDI note number — see
+ * degreeToMidi(). Parses `spec` fresh each call; prefer parseScale() +
+ * degreeToMidi() directly when resolving many degrees against one spec.
+ */
+export function scaleDegreeToMidi(spec: string, degree: number): number {
+  return degreeToMidi(parseScale(spec), degree);
 }
