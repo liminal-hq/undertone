@@ -15,6 +15,7 @@ import { notification } from './notification';
 import { undo } from './undo';
 import { initPlayground } from './playground';
 import { initPatternLab } from './patternLab';
+import { initComposer } from './composer';
 
 function wireButton(selector: string, effect: Pattern<ControlPatch>): void {
   const button = document.querySelector<HTMLButtonElement>(selector);
@@ -33,3 +34,4 @@ wireButton('#play-undo', undo);
 
 initPlayground();
 initPatternLab();
+initComposer();
