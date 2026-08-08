@@ -72,6 +72,10 @@ handle.stop();
 
 See `demo/` for a runnable local playground with a live pattern editor (`bun run demo`), or the deployed version at [liminalhq.ca/undertone](https://liminalhq.ca/undertone/).
 
+## Documentation
+
+The tables below are the complete API reference — every call, one line each. For a narrative walkthrough, read [docs/guide.md](docs/guide.md): it builds up from a first one-shot blip to a multi-section `arrange()` song, with worked examples for mini-notation, scales, chords, samples, and effects, diagrams of the per-voice signal flow and song arrangement, and a troubleshooting list of the things that usually bite newcomers.
+
 ## Mini-notation
 
 `note()` and `sound()` accept a mini-notation string. Within one cycle:

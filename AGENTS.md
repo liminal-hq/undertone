@@ -12,6 +12,7 @@
 - `demo/`: the local dev server and deployed GitHub Pages playground; not part of the published package
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`)
+- `docs/`: the narrative how-to guide (`guide.md`); `README.md` stays the API reference
 
 ## Commit Messages
 
