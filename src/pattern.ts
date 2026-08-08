@@ -7,6 +7,7 @@ import { Fraction, ONE } from './fraction.js';
 // mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
 // cycle — safe here because both modules only reference each other's bindings inside function
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
+import { voicingPitches } from './chord.js';
 import { mini } from './mini.js';
 import { midiToFrequency } from './pitch.js';
 import { parseScale, scaleDegreeToMidi } from './scale.js';
@@ -220,6 +221,31 @@ export class Pattern<T> {
       const { degree, ...rest } = value;
       return { ...rest, pitch: midiToFrequency(scaleDegreeToMidi(spec, degree)) };
     });
+  }
+
+  /**
+   * Expands chord-symbol events from chord() into simultaneous note events —
+   * one chord onset becomes N notes sharing the same whole/part, exactly the
+   * shape stack()ed chords already produce downstream (the scheduler/engine
+   * need no changes at all to play them). Events without a `chord` (already
+   * pitched via note()/n()) pass through unchanged.
+   */
+  voicing(
+    this: Pattern<ControlPatch>,
+    options?: { anchor?: string | number }
+  ): Pattern<ControlPatch> {
+    return new Pattern((span) =>
+      this.query(span).flatMap((hap) => {
+        const { chord: symbol, ...rest } = hap.value;
+        if (symbol === undefined) {
+          return [hap];
+        }
+        return voicingPitches(symbol, options).map((midi) => ({
+          ...hap,
+          value: { ...rest, pitch: midiToFrequency(midi) }
+        }));
+      })
+    );
   }
 
   /** Amplitude envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */

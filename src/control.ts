@@ -3,6 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import { parseChord } from './chord.js';
 import { mini } from './mini.js';
 import { Pattern, pure } from './pattern.js';
 import { noteToFrequency } from './pitch.js';
@@ -78,4 +79,16 @@ export function n(input: string | number): Pattern<ControlPatch> {
     return pure<ControlPatch>({ degree: input });
   }
   return mini<ControlPatch>(input, (word) => ({ degree: parseDegreeWord(word) }));
+}
+
+/**
+ * Starts a chord-symbol pattern — chain `.voicing()` to expand each chord into
+ * simultaneous notes. Accepts a mini-notation string of chord symbols
+ * ("<Dm9 BbM7 Gm9 A7sus>").
+ */
+export function chord(input: string): Pattern<ControlPatch> {
+  return mini<ControlPatch>(input, (word) => {
+    parseChord(word); // eager validation, same timing as note()'s pitch parsing
+    return { chord: word };
+  });
 }

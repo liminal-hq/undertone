@@ -4,10 +4,11 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from 'vitest';
-import { n, note, sound } from './control';
+import { voicingPitches } from './chord';
+import { chord, n, note, sound } from './control';
 import { Fraction } from './fraction';
 import { hasOnset, rev, type Pattern } from './pattern';
-import { noteToFrequency } from './pitch';
+import { midiToFrequency, noteToFrequency } from './pitch';
 import type { ControlPatch } from './types';
 
 function onsets(pat: Pattern<ControlPatch>, cycle = 0): ControlPatch[] {
@@ -93,6 +94,54 @@ describe('scale', () => {
       { pitch: noteToFrequency('d5'), soundType: 'triangle', gainLevel: 0.5 },
       { pitch: noteToFrequency('f5'), soundType: 'triangle', gainLevel: 0.5 }
     ]);
+  });
+});
+
+describe('chord', () => {
+  it('builds a one-event-per-cycle pattern from a single chord symbol', () => {
+    expect(onsets(chord('Dm9'))).toEqual([{ chord: 'Dm9' }]);
+  });
+
+  it('parses mini-notation and alternation of chord symbols', () => {
+    const pat = chord('<Dm9 BbM7>');
+    expect(onsets(pat, 0)).toEqual([{ chord: 'Dm9' }]);
+    expect(onsets(pat, 1)).toEqual([{ chord: 'BbM7' }]);
+  });
+
+  it('rejects an invalid chord symbol eagerly, at build time', () => {
+    expect(() => chord('Dxyz')).toThrow(/Unknown chord quality/);
+  });
+});
+
+describe('voicing', () => {
+  it('expands one chord event into simultaneous notes matching voicingPitches()', () => {
+    const pitches = voicingPitches('Dm9').map((midi) => midiToFrequency(midi));
+    const events = onsets(chord('Dm9').voicing());
+    expect(events.map((v) => v.pitch)).toEqual(pitches);
+    expect(events.every((v) => v.chord === undefined)).toBe(true);
+  });
+
+  it('shares the same onset/whole span across the expanded notes', () => {
+    const haps = chord('Dm9')
+      .voicing()
+      .query({ begin: new Fraction(0), end: new Fraction(1) })
+      .filter(hasOnset);
+    expect(haps.length).toBe(voicingPitches('Dm9').length);
+    for (const hap of haps) {
+      expect(hap.part.begin.toNumber()).toBe(0);
+      expect(hap.part.end.toNumber()).toBe(1);
+    }
+  });
+
+  it('leaves already-pitched events (from note()) untouched', () => {
+    expect(onsets(note('c3').voicing())).toEqual([{ pitch: 'c3' }]);
+  });
+
+  it('composes with other chain methods after expansion', () => {
+    const pat = chord('C').voicing().sound('sine').gain(0.3);
+    const events = onsets(pat);
+    expect(events.length).toBe(3); // major triad
+    expect(events.every((v) => v.soundType === 'sine' && v.gainLevel === 0.3)).toBe(true);
   });
 });
 

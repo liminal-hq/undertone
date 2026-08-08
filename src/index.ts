@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-export { n, note, sound } from './control.js';
+export { chord, n, note, sound } from './control.js';
 export { mini } from './mini.js';
 export {
   Pattern,

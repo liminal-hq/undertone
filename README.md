@@ -97,6 +97,19 @@ ignored). Degrees beyond the scale's own length carry the octave (`n('7').scale(
 `c5`); negative degrees descend the same way. Events built with `note()` (already pitched) pass
 through `.scale()` unchanged, so `n()` and `note()` can be freely mixed in a `stack()`.
 
+## Chords
+
+`chord(input)` starts a chord-symbol pattern — `input` is a mini-notation string of chord symbols
+like `"<Dm9 BbM7 Gm9 A7sus>"`. Chain `.voicing()` to expand each chord into simultaneous notes
+(one chord onset becomes N notes sharing the same span, exactly like a `[c3,e3,g3]` chord written
+directly in mini-notation). Supported qualities: `''` (major), `m`, `6`, `m6`, `7`, `maj7`/`M7`,
+`m7`, `9`, `maj9`/`M9`, `m9`, `add9`, `madd9`, `sus2`, `sus4`, `7sus`/`7sus4`, `dim`, `dim7`, `aug`,
+`m7b5` — case matters (`M7` is a major seventh, `m7` is a minor seventh). Voicing is a stateless,
+deterministic function of the symbol (and an optional `{ anchor }` pitch, default middle C) — an
+approximation of voice-leading, not real voice-leading: same-root chord changes (`Dm` → `Dm7`)
+share common tones automatically, but there's no guarantee across different roots. Events built
+with `note()`/`n()` (already pitched) pass through `.voicing()` unchanged.
+
 ## API
 
 | Call                                                     | What it does                                                                                                                                         |
@@ -104,6 +117,7 @@ through `.scale()` unchanged, so `n()` and `note()` can be freely mixed in a `st
 | `note(input)`                                            | Pattern of pitched voices (default sound: sine). `input` is a note name (`"c2"`, `"f#3"`), a raw Hz number, or a mini-notation string of them.       |
 | `sound(input)`                                           | Pattern of unpitched voices — the entry point for noise (`'white' \| 'pink' \| 'brown'`), also accepts mini-notation.                                |
 | `n(input)` `.scale(spec)`                                | Scale-degree pattern (`n('0 2 4')`) resolved into real pitches by `.scale("D5:minor")`. `spec` is `"<root><octave>:<name>"`; see Scales below.       |
+| `chord(input)` `.voicing(options?)`                      | Chord-symbol pattern (`chord('<Dm9 BbM7>')`) expanded into simultaneous notes by `.voicing()`. `options?: { anchor? }`; see Chords below.            |
 | `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                      |
 | `arrange([cycles, pat], ...)`                            | Plays each pattern for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song. |
 | `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                                  |
