@@ -50,8 +50,17 @@ export interface VoiceParams {
 /**
  * A partial set of voice parameters carried by each pattern event. Chainable
  * pattern methods merge patches; the engine fills in defaults at play time.
+ *
+ * `degree` and `chord` are pre-play fields, not VoiceParams: n() sets `degree`
+ * for `.scale()` to resolve into `pitch`, and chord() sets `chord` for
+ * `.voicing()` to expand into per-note pitches. Neither survives past that
+ * resolution step, and engine.ts never reads them — they pass through
+ * resolveParams()'s spread harmlessly if a pattern reaches play time unresolved.
  */
-export type ControlPatch = Partial<VoiceParams>;
+export type ControlPatch = Partial<VoiceParams> & {
+  degree?: number;
+  chord?: string;
+};
 
 /**
  * The minimal Web Audio surface engine.ts depends on. A real AudioContext/OscillatorNode/etc.

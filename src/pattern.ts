@@ -8,6 +8,8 @@ import { Fraction, ONE } from './fraction.js';
 // cycle — safe here because both modules only reference each other's bindings inside function
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
 import { mini } from './mini.js';
+import { midiToFrequency } from './pitch.js';
+import { parseScale, scaleDegreeToMidi } from './scale.js';
 import {
   loopPattern,
   playPattern,
@@ -202,6 +204,22 @@ export class Pattern<T> {
   /** Sets/overrides the oscillator waveform or noise type across all events. */
   sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch> {
     return this.withPatch({ soundType: type });
+  }
+
+  /**
+   * Resolves scale-degree events from n() into real pitches: `spec` is a scale
+   * string like `"D5:minor"`. Events without a `degree` (already pitched via
+   * note(), or unpitched noise from sound()) pass through unchanged.
+   */
+  scale(this: Pattern<ControlPatch>, spec: string): Pattern<ControlPatch> {
+    parseScale(spec); // eager validation, same timing as note()'s pitch parsing
+    return this.fmap((value) => {
+      if (value.degree === undefined) {
+        return value;
+      }
+      const { degree, ...rest } = value;
+      return { ...rest, pitch: midiToFrequency(scaleDegreeToMidi(spec, degree)) };
+    });
   }
 
   /** Amplitude envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */

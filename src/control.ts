@@ -55,3 +55,27 @@ export function sound(input: SoundType | string): Pattern<ControlPatch> {
     return { soundType: word as SoundType };
   });
 }
+
+const INTEGER_WORD_PATTERN = /^-?\d+$/;
+
+function parseDegreeWord(word: string): number {
+  if (!INTEGER_WORD_PATTERN.test(word)) {
+    throw new Error(`Invalid scale degree: "${word}". Expected an integer.`);
+  }
+  return Number.parseInt(word, 10);
+}
+
+/**
+ * Starts a scale-degree pattern — chain `.scale("D5:minor")` to resolve it
+ * into real pitches. Accepts a raw integer degree or a mini-notation string of
+ * them ("0 2 4 <1 3>").
+ */
+export function n(input: string | number): Pattern<ControlPatch> {
+  if (typeof input === 'number') {
+    if (!Number.isInteger(input)) {
+      throw new Error(`Invalid scale degree: ${input}. Expected an integer.`);
+    }
+    return pure<ControlPatch>({ degree: input });
+  }
+  return mini<ControlPatch>(input, (word) => ({ degree: parseDegreeWord(word) }));
+}

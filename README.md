@@ -86,12 +86,24 @@ See `demo/` for a runnable local playground with a live pattern editor (`bun run
 | `a@3`       | Elongate: the step takes 3 shares of the cycle.                          |
 | `a(3,8)`    | Euclidean rhythm: 3 onsets spread over 8 slots; `a(3,8,1)` rotates by 1. |
 
+## Scales
+
+`n(input)` starts a scale-degree pattern — `input` is a raw integer, or a mini-notation string of
+them (`"0 2 4 <1 3>"`), just like `note()`. Chain `.scale("D5:minor")` to resolve those degrees
+into real pitches: the root is a note name + octave, the name is one of `major`/`ionian`,
+`minor`/`aeolian`, `dorian`, `phrygian`, `lydian`, `mixolydian`, `locrian`, `harmonicMinor`,
+`melodicMinor`, `majorPentatonic`, `minorPentatonic`, `chromatic` (case-insensitive, spaces/hyphens
+ignored). Degrees beyond the scale's own length carry the octave (`n('7').scale('c4:major')` is
+`c5`); negative degrees descend the same way. Events built with `note()` (already pitched) pass
+through `.scale()` unchanged, so `n()` and `note()` can be freely mixed in a `stack()`.
+
 ## API
 
 | Call                                                     | What it does                                                                                                                                         |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `note(input)`                                            | Pattern of pitched voices (default sound: sine). `input` is a note name (`"c2"`, `"f#3"`), a raw Hz number, or a mini-notation string of them.       |
 | `sound(input)`                                           | Pattern of unpitched voices — the entry point for noise (`'white' \| 'pink' \| 'brown'`), also accepts mini-notation.                                |
+| `n(input)` `.scale(spec)`                                | Scale-degree pattern (`n('0 2 4')`) resolved into real pitches by `.scale("D5:minor")`. `spec` is `"<root><octave>:<name>"`; see Scales below.       |
 | `stack(...pats)` `seq(...pats)` `cat(...pats)`           | Combine patterns: simultaneously / sequentially within a cycle / one per cycle.                                                                      |
 | `arrange([cycles, pat], ...)`                            | Plays each pattern for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song. |
 | `.fast(n)` `.slow(n)`                                    | Speed the whole pattern up or down.                                                                                                                  |

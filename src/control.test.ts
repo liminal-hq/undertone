@@ -4,9 +4,10 @@
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from 'vitest';
-import { note, sound } from './control';
+import { n, note, sound } from './control';
 import { Fraction } from './fraction';
 import { hasOnset, rev, type Pattern } from './pattern';
+import { noteToFrequency } from './pitch';
 import type { ControlPatch } from './types';
 
 function onsets(pat: Pattern<ControlPatch>, cycle = 0): ControlPatch[] {
@@ -49,6 +50,49 @@ describe('sound', () => {
 
   it('rejects unknown sound types eagerly', () => {
     expect(() => sound('velvet')).toThrow(/Invalid sound type/);
+  });
+});
+
+describe('n', () => {
+  it('builds a one-event-per-cycle pattern from a single degree', () => {
+    expect(onsets(n(2))).toEqual([{ degree: 2 }]);
+  });
+
+  it('parses mini-notation into multiple degree events, negatives included', () => {
+    expect(onsets(n('0 2 -1'))).toEqual([{ degree: 0 }, { degree: 2 }, { degree: -1 }]);
+  });
+
+  it('rejects non-integer input eagerly, at build time', () => {
+    expect(() => n(1.5)).toThrow(/Invalid scale degree/);
+    expect(() => n('1.5')).toThrow(/Invalid scale degree/);
+    expect(() => n('abc')).toThrow(/Invalid scale degree/);
+  });
+});
+
+describe('scale', () => {
+  it("resolves n()'s degree into pitch via a scale spec", () => {
+    const pat = n('0 2 4').scale('c4:major');
+    expect(onsets(pat)).toEqual([
+      { pitch: noteToFrequency('c4') },
+      { pitch: noteToFrequency('e4') },
+      { pitch: noteToFrequency('g4') }
+    ]);
+  });
+
+  it('leaves already-pitched events (from note()) untouched', () => {
+    expect(onsets(note('c3').scale('c4:major'))).toEqual([{ pitch: 'c3' }]);
+  });
+
+  it('rejects an invalid scale spec eagerly, at build time', () => {
+    expect(() => n('0').scale('nonsense')).toThrow(/Invalid scale spec/);
+  });
+
+  it('composes with other chain methods after resolution', () => {
+    const pat = n('0 2').scale('D5:minor').sound('triangle').gain(0.5);
+    expect(onsets(pat)).toEqual([
+      { pitch: noteToFrequency('d5'), soundType: 'triangle', gainLevel: 0.5 },
+      { pitch: noteToFrequency('f5'), soundType: 'triangle', gainLevel: 0.5 }
+    ]);
   });
 });
 
