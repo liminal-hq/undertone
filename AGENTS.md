@@ -12,7 +12,7 @@
 - `demo/`: the local dev server and deployed GitHub Pages playground; not part of the published package
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`)
-- `docs/`: the narrative how-to guide (`guide.md`); `README.md` stays the API reference
+- `docs/`: the VitePress documentation site — homepage (`index.md`), the narrative guide split by topic (`guide/*.md`), `recipes.md`, `coming-from-strudel.md`, the TypeDoc-generated API reference (`api/`, gitignored, rebuilt by `bun run docs:api`), and site config (`.vitepress/`); `README.md` stays the quick-reference API tables
 
 ## Commit Messages
 
