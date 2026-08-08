@@ -350,7 +350,9 @@ export function initComposer(): void {
 
   playButton.addEventListener('click', () => {
     rebuild(false);
-    currentPattern?.play({ ctx: getAudioContext(), bpm });
+    // Gated so "Once" previews exactly what one Loop cycle sounds like,
+    // rather than the percussive SFX-style envelope play() defaults to.
+    currentPattern?.play({ ctx: getAudioContext(), bpm, gated: true });
   });
 
   loopButton.addEventListener('click', () => {

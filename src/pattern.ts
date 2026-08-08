@@ -273,10 +273,11 @@ export class Pattern<T> {
   }
 
   /**
-   * Plays one cycle's worth of events as a one-shot sound effect (each event's
-   * gate length comes from its share of the cycle). Uses a lazily-created
-   * shared AudioContext when none is passed — call from a user gesture the
-   * first time (autoplay policy).
+   * Plays one cycle's worth of events as a one-shot. Envelopes are percussive
+   * by default (0.1.x SFX behaviour) — pass `{ gated: true }` to hold each
+   * event for its own share of the cycle instead, like loop(). Uses a
+   * lazily-created shared AudioContext when none is passed — call from a
+   * user gesture the first time (autoplay policy).
    */
   play(this: Pattern<ControlPatch>, options: PlayOptions = {}): void {
     playPattern(this, options);

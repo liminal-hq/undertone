@@ -25,6 +25,13 @@ export interface PlayOptions {
   bpm?: number;
   /** Absolute start time on the context's clock. Default: now. */
   when?: number;
+  /**
+   * Hold each event's envelope at its sustain level for its own share of the
+   * cycle, exactly like loop() — for previewing what one looped cycle will
+   * sound like. Default false: envelopes stay percussive (0.1.x SFX
+   * behaviour), which is what one-shot game sound effects want.
+   */
+  gated?: boolean;
 }
 
 export interface LoopOptions {
@@ -103,9 +110,10 @@ function scheduleSpan(
 }
 
 /**
- * Plays one cycle's worth of the pattern as a one-shot sound effect. One-shots
- * are ungated — envelopes stay percussive, exactly like the 0.1.x SFX
- * behaviour; note-length gating belongs to loop().
+ * Plays one cycle's worth of the pattern as a one-shot. Ungated by default —
+ * envelopes stay percussive, exactly like the 0.1.x SFX behaviour — or pass
+ * `{ gated: true }` to hold each event for its own share of the cycle, like
+ * loop(), which previews exactly what one looped cycle will sound like.
  */
 export function playPattern(pattern: PatternLike, options: PlayOptions = {}): void {
   const ctx = options.ctx ?? getSharedContext();
@@ -117,7 +125,7 @@ export function playPattern(pattern: PatternLike, options: PlayOptions = {}): vo
     { begin: new Fraction(0), end: new Fraction(1) },
     start,
     cycleSeconds,
-    false
+    options.gated ?? false
   );
 }
 
