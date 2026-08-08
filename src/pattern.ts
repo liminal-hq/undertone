@@ -553,8 +553,8 @@ function parseNumberWord(word: string): number {
 }
 
 /**
- * Builds a Pattern<number> from a scalar or a mini-notation string of numbers
- * (e.g. ".1 .2", "<.25 .72>") — the value side of a patterned control.
+ * Builds a `Pattern<number>` from a scalar or a mini-notation string of numbers
+ * (e.g. `".1 .2"`, `"<.25 .72>"`) — the value side of a patterned control.
  * `validate` runs once per distinct literal at build time, matching the eager
  * validation timing note()/sound() already use for their own leaf words.
  */
