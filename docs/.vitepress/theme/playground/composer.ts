@@ -24,6 +24,10 @@ const HISTORY_KEY = 'undertone-composer-history';
 const HISTORY_LIMIT = 30;
 const HISTORY_ENTRY_MAX_CHARS = 100_000;
 
+// Torn down at the start of the *next* initComposer() call — see the
+// bottom of that function for why this needs to survive across calls.
+let teardownPreviousComposer: (() => void) | undefined;
+
 // Every value export from src/index.ts a script can usefully call, minus a
 // few that don't fit this specific surface: setcpm()/resetTempo() would be
 // silently inert (the Once/Loop buttons always pass an explicit bpm from the
@@ -751,11 +755,15 @@ return arrange(
       {
         label: 'Velvet Basement',
         bpm: 86,
-        code: `// "Velvet Basement" — cinematic trip-hop/downtempo, 80 bars.
-// A full port of a real song sketch onto the real API: chord()/.voicing()
-// for the harmonic bed, n()/.scale() for two melody motifs, s()/.bank()
-// sample playback over a tiny procedurally-generated placeholder drum kit
-// (undertone ships no bundled samples), and arrange() for the structure.
+        code: `// "Velvet Basement" — a cinematic trip-hop/downtempo sketch, 80 bars.
+// Built around a spacious half-time break, a live-feeling bass, dark
+// extended chords, a distant "found-memory" pluck, filtered room tone,
+// and an arrangement that moves by addition and subtraction rather than
+// a drop. A full port onto the real API — no samples ship with
+// undertone, so a tiny procedurally-generated noise-decay drum kit
+// stands in for the break, and every synth voice gets an explicit
+// .sustain() so it actually holds through its note instead of the
+// engine's percussive sustain:0 default cutting it short.
 
 // A decaying noise burst stands in for a real drum sample — the
 // AudioBuffer constructor form needs no AudioContext, so this can just
@@ -779,14 +787,19 @@ registerSamples({
   RolandTR909_oh: { buffer: decayingNoiseBuffer(2500, 5) }
 });
 
-// ATMOSPHERE — a barely-there filtered noise bed, just enough room tone.
-const air = s('pink').lpf(1600).attack(0.4).release(1).gain(0.018);
+// ATMOSPHERE — very quiet filtered noise: essentially a "tape/room" bed.
+// .sustain(0.9) so it actually hums underneath the whole track instead
+// of decaying away within a tenth of a second.
+const air = s('pink').lpf(1600).attack(0.4).sustain(0.9).release(1).gain(0.018);
 
-// HARMONIC BED — chord() + .voicing().
+// HARMONIC BED — Dm9 -> BbM7 -> Gm9 -> A7sus. Extended/suspended harmony
+// keeps the emotional character ambiguous instead of a straightforward
+// pop progression. A real held chord pad, so it needs a high sustain.
 const chords = chord('<Dm9 BbM7 Gm9 A7sus>')
   .voicing()
   .sound('triangle')
   .attack(0.35)
+  .sustain(0.85)
   .release(1.4)
   .lpf(1450)
   .gain(0.16)
@@ -794,10 +807,12 @@ const chords = chord('<Dm9 BbM7 Gm9 A7sus>')
   .roomsize(6)
   .orbit(1);
 
+// A slightly brighter version for moments where the track opens up.
 const chordsOpen = chord('<Dm9 BbM7 Gm9 A7sus>')
   .voicing()
   .sound('sawtooth')
   .attack(0.3)
+  .sustain(0.85)
   .release(1.2)
   .lpf(2400)
   .gain(0.11)
@@ -805,7 +820,10 @@ const chordsOpen = chord('<Dm9 BbM7 Gm9 A7sus>')
   .roomsize(6)
   .orbit(1);
 
-// BASS — patterned gain across the four-note pattern.
+// BASS — not an EDM sub pattern; let it behave like somebody is actually
+// playing bass, with the occasional fifth/approach note and a gain that
+// breathes across the four-bar phrase. Sustained enough to ring through
+// its slot without turning into a held drone.
 const bass = note(
   \`<
     [d2 ~ d2 a1]
@@ -815,11 +833,15 @@ const bass = note(
   >\`
 )
   .sound('sawtooth')
+  .sustain(0.6)
   .release(0.3)
   .lpf(1050)
   .gain('.68 .5 .6 .55');
 
-// MAIN BREAK — s()/.bank() sample playback.
+// MAIN BREAK — the kick deliberately does NOT hammer every beat; the
+// snare gives the 2/4 backbeat; hats establish subdivision but stay
+// subordinate. Should feel slow even with things happening between the
+// main pulses.
 const breakbeat = stack(
   s('bd ~ [~ bd] ~').bank('RolandTR707').gain(0.72),
   s('~ sd ~ sd').bank('RolandTR707').gain(0.58).room(0.08).orbit(2),
@@ -827,6 +849,7 @@ const breakbeat = stack(
   s('~ ~ rim ~').bank('RolandTR707').gain(0.1).late(0.018)
 );
 
+// A slightly busier break for the larger sections.
 const breakbeatOpen = stack(
   s('bd ~ [~ bd] [bd ~]').bank('RolandTR707').gain(0.75),
   s('~ sd ~ sd').bank('RolandTR707').gain(0.61).room(0.1).orbit(2),
@@ -835,7 +858,11 @@ const breakbeatOpen = stack(
   s('~ ~ ~ oh').bank('RolandTR909').gain(0.075)
 );
 
-// "FOUND MEMORY" MOTIF — n()/.scale().
+// "FOUND MEMORY" MOTIF — plays the role an old soundtrack sample might
+// play, but it's new melodic material: sparse, high register, short
+// attack, large acoustic space. Should feel like this phrase belonged
+// to another record before somebody sampled it — sustain(0) is
+// deliberate here, a mallet-like pluck, not a pad.
 const memory = n(
   \`<
     [0 ~ 4 2]
@@ -856,6 +883,7 @@ const memory = n(
   .delayfeedback(0.4)
   .orbit(3);
 
+// A ghost copy creates a slightly unreal doubled quality.
 const memoryGhost = n(
   \`<
     [0 ~ ~ 2]
@@ -873,7 +901,8 @@ const memoryGhost = n(
   .roomsize(9)
   .orbit(3);
 
-// MUTED GUITAR FRAGMENTS — hpf.
+// MUTED GUITAR FRAGMENTS — not a strumming guitar; think snippets
+// caught by a sampler. Stays short and percussive on purpose.
 const guitar = note(
   \`<
     [d4 ~ ~ a3]
@@ -891,7 +920,9 @@ const guitar = note(
   .delay(0.15)
   .orbit(4);
 
-// COUNTERLINE — n()/.scale() again, plus a phaser for texture.
+// COUNTERLINE — intentionally absent most of the time; in a vocal song
+// the singer would occupy this perceptual area. A little sustain gives
+// it body without turning it into a full pad.
 const counter = n(
   \`<
     [~ 4 ~ 3]
@@ -903,6 +934,7 @@ const counter = n(
   .scale('D4:minor')
   .sound('sine')
   .attack(0.08)
+  .sustain(0.5)
   .release(0.6)
   .phaser(0.4)
   .gain(0.11)
@@ -910,11 +942,17 @@ const counter = n(
   .orbit(1);
 
 // SECTIONS
+// 8 bars: intriguing, before the rhythmic identity becomes obvious.
 const intro = stack(air, chords, memory);
+// 16 bars: establish the actual track.
 const bodyA = stack(air, chords, bass, breakbeat, memory);
+// 8 bars: brighten the spectrum rather than changing the whole song.
 const lift = stack(air, chords, chordsOpen, bass, breakbeatOpen, memory, memoryGhost, guitar);
+// 16 bars: same universe, slightly more internal motion.
 const bodyB = stack(air, chords, bass, breakbeat, memory, guitar, counter);
+// 8 bars: take the floor away — the listener should notice how much the drums mattered.
 const breakdown = stack(air, chords, memoryGhost, guitar);
+// 16 bars: the biggest version — wider + brighter + denser, not just louder.
 const returnFull = stack(
   air,
   chords,
@@ -926,6 +964,7 @@ const returnFull = stack(
   guitar,
   counter
 );
+// 8 bars: leave the artefact behind after the groove disappears.
 const outro = stack(air, chords, memory);
 
 // ARRANGEMENT — 80 bars, matching the original sketch's structure exactly.
@@ -943,10 +982,16 @@ return arrange(
         label: 'Velvet Procession',
         bpm: 72,
         code: `// "Velvet Procession II" — acoustic/orchestral/electronic trip-hop, 63 bars.
-// A full port: dry plucked strings up front, a wobbling string bed and
-// piano-synth pulse behind, resonant bass, restrained drums, and distant
-// vocal texture — all synthesized (no bundled samples), arranged so the
-// opening evolves every 1-2 bars instead of holding a static intro.
+// Dry picked acoustic instruments up front, plucked orchestral transients,
+// a sustained/wobbling string body behind them, a piano-synth pulse,
+// resonant acoustic bass, restrained drums with transition hats, and very
+// distant human/room colour. Most importantly: the arrangement starts
+// building immediately, evolving every 1-2 bars instead of holding a
+// static intro. A full port onto the real API — no samples ship with
+// undertone, so every gm_* / drum-machine reference in the original
+// sketch becomes a synthesized stand-in, and every held layer gets an
+// explicit .sustain() so it actually rings through its note instead of
+// the engine's percussive sustain:0 default cutting it short.
 
 function decayingNoiseBuffer(length, decay) {
   const buffer = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: 44100 });
@@ -967,10 +1012,14 @@ registerSamples({
   RolandTR707_oh: { buffer: decayingNoiseBuffer(2500, 5) }
 });
 
-// AIR — almost subliminal room tone, not "noise texture".
-const air = s('pink').hpf(3400).lpf(7800).gain(0.0045).room(0.48).roomsize(5).orbit(30);
+// AIR — almost subliminal. This isn't "noise texture"; it's just enough
+// high-frequency room information to keep the recording from feeling
+// digitally empty. Sustained so it's actually always there.
+const air = s('pink').hpf(3400).lpf(7800).sustain(0.9).gain(0.0045).room(0.48).roomsize(5).orbit(30);
 
-// PLUCKED STRING FRONT — short attack, common tones carried between chords.
+// PLUCKED STRING FRONT — short attack, but not completely dead
+// afterwards. The upper voices share common tones, so the harmony
+// changes underneath a related physical gesture: plucked != disconnected.
 const pizz = note(
   \`<
     [a3 e4 a4 c5 e5 c5]
@@ -988,7 +1037,9 @@ const pizz = note(
   .room(0.15)
   .orbit(1);
 
-// PLUCK TONAL TAIL — the "taaah..." after the pluck's "TAK".
+// PLUCK TONAL TAIL — the pizzicato provides the "TAK"; this provides the
+// "taaah...". Quiet enough that the listener hears both as one
+// complicated instrument, and a touch of sustain gives it an actual tail.
 const pizzTail = note(
   \`<
     [a4 e5 c5 e5]
@@ -999,6 +1050,7 @@ const pizzTail = note(
 )
   .sound('triangle')
   .attack(0.008)
+  .sustain(0.3)
   .release(0.48)
   .hpf(400)
   .lpf(2800)
@@ -1007,7 +1059,8 @@ const pizzTail = note(
   .roomsize(4.5)
   .orbit(31);
 
-// PLUCK ROOM — a few plucks get a separate distant reflection.
+// PLUCK ROOM — a third component: a few plucks get a separate distant
+// reflection, while the front transient stays articulate.
 const pizzRoom = note(
   \`<
     [~ ~ a5 ~ ~ c5]
@@ -1045,11 +1098,16 @@ const pizzLow = note(
   .room(0.17)
   .orbit(2);
 
-// WOBBLING VIOLIN BED — a continuously breathing ensemble behind the plucks.
+// WOBBLING VIOLIN BED — this is the important correction: the plucked
+// strings aren't sitting alone. Behind them is an almost continuously
+// breathing, slightly unstable ensemble filling the gaps between
+// attacks. The phaser gives movement; the long attack and a real
+// sustain keep it from fighting the plucks.
 const violins = chord('<Amadd9 Fmaj7 C6 Gsus2>')
   .voicing()
   .sound('sawtooth')
   .attack(0.32)
+  .sustain(0.85)
   .release(1.15)
   .lpf(2600)
   .gain(0.052)
@@ -1058,11 +1116,14 @@ const violins = chord('<Amadd9 Fmaj7 C6 Gsus2>')
   .roomsize(6)
   .orbit(3);
 
-// WOBBLING SHADOW — a slightly delayed second ensemble for motion.
+// WOBBLING SHADOW — a slightly delayed second ensemble. Tiny disagreement
+// in timing and phase creates motion: rather than "STRINGS", something
+// closer to "sssSTRRiiinnGGsss~~".
 const violinsShadow = chord('<Amadd9 Fmaj7 C6 Gsus2>')
   .voicing()
   .sound('sawtooth')
   .attack(0.42)
+  .sustain(0.85)
   .release(1.2)
   .hpf(420)
   .lpf(3400)
@@ -1074,7 +1135,8 @@ const violinsShadow = chord('<Amadd9 Fmaj7 C6 Gsus2>')
   .pan('<-0.36 0.36>')
   .orbit(4);
 
-// ACOUSTIC GUITAR — human/wooden rhythmic element between the plucks.
+// ACOUSTIC GUITAR — the human/wooden rhythmic element. Not as busy as it
+// could be; it fits between the orchestral plucks.
 const guitar = note(
   \`<
     [a3 ~ e4 ~ c4 e4]
@@ -1092,6 +1154,7 @@ const guitar = note(
   .room(0.09)
   .orbit(5);
 
+// Guitar thumb/body.
 const guitarBody = note(
   \`<
     [a2 ~ ~ e3]
@@ -1108,7 +1171,8 @@ const guitarBody = note(
   .room(0.16)
   .orbit(5);
 
-// FAKE PICK NOISE — a tiny physical "tk/sk/chk" under selected notes.
+// FAKE PICK / STRING CONTACT NOISE — a tiny physical "tk/sk/chk" under
+// selected guitar attacks. Very quiet.
 const pickNoise = s(
   \`<
     [white ~ white ~ [white white] ~]
@@ -1148,7 +1212,10 @@ const guitarRoom = note(
   .pan('<-0.46 0.46>')
   .orbit(34);
 
-// PIANO-SYNTH PULSE — the layer pulling the song along.
+// PIANO-SYNTH PULSE — the layer that pulls the song along. Not a piano
+// melody; a resonant rhythmic chord/object. Slight phase movement plus a
+// real sustain lets one attack overlap the next acoustic events instead
+// of just clicking and dying.
 const pianoPulse = note(
   \`<
     [a3 ~ e4 ~]
@@ -1159,6 +1226,7 @@ const pianoPulse = note(
 )
   .sound('sine')
   .attack(0.008)
+  .sustain(0.65)
   .release(0.62)
   .hpf(150)
   .lpf(3500)
@@ -1168,7 +1236,8 @@ const pianoPulse = note(
   .roomsize(3.8)
   .orbit(6);
 
-// PIANO UPPER SHIMMER — a faint upper component.
+// PIANO UPPER SHIMMER — only a faint upper component, so the piano feels
+// more like a processed sample than an obvious synth patch.
 const pianoGlow = note(
   \`<
     [e5 ~ c5 ~]
@@ -1179,6 +1248,7 @@ const pianoGlow = note(
 )
   .sound('triangle')
   .attack(0.012)
+  .sustain(0.4)
   .release(0.58)
   .hpf(800)
   .lpf(3900)
@@ -1188,7 +1258,9 @@ const pianoGlow = note(
   .delay(0.09)
   .orbit(35);
 
-// ACOUSTIC/UPRIGHT BASS — enters early, pulls the harmony forward.
+// ACOUSTIC/UPRIGHT BASS — enters early: the low end expands massively
+// around 13-17 seconds in the original mix analysis. Long enough to
+// resonate, active enough to pull the harmony forward.
 const bass = note(
   \`<
     [a2 ~ e3 a2]
@@ -1199,15 +1271,18 @@ const bass = note(
 )
   .sound('sawtooth')
   .attack(0.009)
+  .sustain(0.55)
   .release(0.68)
   .lpf(1550)
   .gain('.44 .39 .42 .37')
   .room(0.12)
   .orbit(7);
 
+// BASS BODY
 const bassBody = note('<a1 f1 c2 g1>')
   .sound('sine')
   .attack(0.035)
+  .sustain(0.7)
   .release(1.35)
   .lpf(235)
   .gain(0.105)
@@ -1215,7 +1290,9 @@ const bassBody = note('<a1 f1 c2 g1>')
   .roomsize(4)
   .orbit(36);
 
-// BASS ROOM HARMONICS — reverb the upper body only, not the sub-bass.
+// BASS ROOM HARMONICS — don't send the sub-bass into the hall; reverb
+// mostly the upper body of the instrument. That's what gives depth
+// without mud.
 const bassRoom = note(
   \`<
     [a2 ~ ~ e3]
@@ -1226,6 +1303,7 @@ const bassRoom = note(
 )
   .sound('sawtooth')
   .attack(0.01)
+  .sustain(0.5)
   .release(0.82)
   .hpf(170)
   .lpf(1150)
@@ -1234,6 +1312,7 @@ const bassRoom = note(
   .roomsize(6)
   .orbit(37);
 
+// BASS TRANSITION
 const bassTurn = note(
   \`<
     ~
@@ -1250,7 +1329,8 @@ const bassTurn = note(
   .room(0.14)
   .orbit(7);
 
-// DRUMS — sparse, providing weight and transitions rather than a groove.
+// DRUMS — based more on what worked before: sparse, providing weight and
+// transitions while guitar/pluck/piano carry the continuous movement.
 const kick = s(
   \`<
     [bd ~ ~ ~]
@@ -1293,6 +1373,7 @@ const snareRoom = s(
   .roomsize(7.5)
   .orbit(38);
 
+// Little human ghosts.
 const drumGhost = s(
   \`<
     [~ ~ [sd ~] ~]
@@ -1307,6 +1388,9 @@ const drumGhost = s(
   .room(0.19)
   .orbit(9);
 
+// Transition hi-hat — still deliberately not continuous. High-frequency
+// energy appears near the phrase boundary, making the section feel as
+// though it inhales.
 const hats = s(
   \`<
     ~
@@ -1321,6 +1405,7 @@ const hats = s(
   .room(0.19)
   .orbit(10);
 
+// Drum turn.
 const drumTurn = s(
   \`<
     ~
@@ -1338,6 +1423,8 @@ const drumTurn = s(
 
 const drums = stack(kick, snare, snareRoom, drumGhost, hats, drumTurn);
 
+// Slightly larger drum state — not "chorus drums", more like the room
+// suddenly has a little more movement.
 const drumsOpen = stack(
   kick,
   snare,
@@ -1378,7 +1465,8 @@ const pizzHigh = note(
   .pan('<0.4 -0.4 0.26 -0.26>')
   .orbit(12);
 
-// STRING PHRASE LIFT — a brief rise at the transition.
+// STRING PHRASE LIFT — brief rather than a big orchestral melody: think
+// the ensemble physically rising at the transition.
 const stringLift = note(
   \`<
     ~
@@ -1389,6 +1477,7 @@ const stringLift = note(
 )
   .sound('sawtooth')
   .attack(0.1)
+  .sustain(0.6)
   .release(0.72)
   .hpf(380)
   .lpf(4100)
@@ -1397,7 +1486,8 @@ const stringLift = note(
   .roomsize(7)
   .orbit(13);
 
-// DISTANT "LA LA" SUBSTITUTE — human voice as soundscape, not constant.
+// DISTANT "LA LA" SUBSTITUTE — human voice as soundscape. Strategically
+// placed, not constant.
 const ghostVox = note(
   \`<
     ~
@@ -1408,6 +1498,7 @@ const ghostVox = note(
 )
   .sound('sine')
   .attack(0.22)
+  .sustain(0.75)
   .release(1.05)
   .hpf(520)
   .lpf(3100)
@@ -1418,6 +1509,7 @@ const ghostVox = note(
   .pan('<0.4 -0.4 0.24 -0.24>')
   .orbit(14);
 
+// A very distant vocal reflection.
 const ghostVoxFar = note(
   \`<
     ~
@@ -1428,6 +1520,7 @@ const ghostVoxFar = note(
 )
   .sound('sine')
   .attack(0.35)
+  .sustain(0.75)
   .release(1.4)
   .hpf(900)
   .lpf(2900)
@@ -1438,7 +1531,8 @@ const ghostVoxFar = note(
   .delay(0.29)
   .orbit(15);
 
-// LITTLE ELECTRONIC DETAIL — one small synthetic object wandering the room.
+// LITTLE ELECTRONIC DETAIL — still a 90s electronically constructed
+// recording: one small synthetic object wandering through the room.
 const glassTick = note(
   \`<
     ~
@@ -1458,9 +1552,13 @@ const glassTick = note(
   .pan('<-0.48 0.5>')
   .orbit(16);
 
-// SECTIONS — the opening deliberately evolves every 1-2 bars.
+// SECTIONS — the opening deliberately evolves every 1-2 bars, giving the
+// listener the initial identity and then immediately starting to change it.
+
+// Bar one, ~3.3 seconds: give the listener the initial identity.
 const seed = stack(air, pizz, pizzTail, guitar, pickNoise);
 
+// Bar two: already deeper.
 const bloom = stack(
   air,
   pizz,
@@ -1473,6 +1571,7 @@ const bloom = stack(
   violins
 );
 
+// Bars 3-4: piano arrives, the wobble widens, still no full low end.
 const pulse = stack(
   air,
   pizz,
@@ -1489,7 +1588,8 @@ const pulse = stack(
   pianoGlow
 );
 
-// Low end arrives; drums begin quietly.
+// Bars 5-8: low end arrives (matching the ~13s bass-energy jump in the
+// original mix analysis); drums begin quietly.
 const foundation = stack(
   air,
   pizz,
@@ -1511,6 +1611,7 @@ const foundation = stack(
   glassTick
 );
 
+// Everything established becomes an actual groove, kept layered front-to-back.
 const verseA = stack(
   air,
   pizz,
@@ -1530,6 +1631,8 @@ const verseA = stack(
   glassTick
 );
 
+// More high-frequency orchestral energy — not dramatically louder; new
+// things happen in the back and upper midrange.
 const liftA = stack(
   air,
   pizz,
@@ -1555,7 +1658,8 @@ const liftA = stack(
   glassTick
 );
 
-// Pull density back for verse B, but retain memories of the lift.
+// Pull high density back but retain memories of the lift — never
+// return all the way to the original verse.
 const verseB = stack(
   air,
   pizz,
@@ -1577,6 +1681,7 @@ const verseB = stack(
   glassTick
 );
 
+// Second lift.
 const liftB = stack(
   air,
   pizz,
@@ -1603,7 +1708,8 @@ const liftB = stack(
   glassTick
 );
 
-// Drums vanish but piano/pluck/guitar stay in motion — don't stop the song.
+// Crucial: don't stop the song. Drums vanish, but piano/pluck/guitar
+// remain in motion — the giant room becomes obvious.
 const suspended = stack(
   air,
   pizz,
@@ -1622,7 +1728,8 @@ const suspended = stack(
   ghostVoxFar
 );
 
-// Bass attack + drums reappear.
+// Bass attack + drums reappear. Nothing needs to be hugely louder —
+// restoring transients creates the impact.
 const returnSection = stack(
   air,
   pizz,
@@ -1903,6 +2010,15 @@ export function initComposer(): void {
     return;
   }
 
+  // If initComposer() runs again against this same DOM without a full page
+  // reload (a hot-reloaded module during development, or a future
+  // non-SPA remount), stop the previous invocation's loop/timer/listeners/
+  // AudioContext first — otherwise they keep running invisibly alongside
+  // this new, independent set, which looks like "the loop can't be
+  // stopped" since the visible Stop button only ever reaches the newest
+  // invocation's handle.
+  teardownPreviousComposer?.();
+
   let bpm = 120;
   let currentPattern: Pattern<ControlPatch> | undefined;
   let loopHandle: LoopHandle | undefined;
@@ -2069,11 +2185,17 @@ export function initComposer(): void {
   bpmRow.append(bpmLabel, bpmRange, bpmValue);
   controlsBox.appendChild(bpmRow);
 
+  // A single wrapper around everything this call appends to examplesPanel
+  // (which also holds the template's static "Examples" <h2>) — lets
+  // teardown() below remove exactly what this invocation added, without
+  // touching that heading, if the component ever initializes twice.
+  const examplesListContainer = document.createElement('div');
+
   let activeButton: HTMLButtonElement | undefined;
   for (const group of EXAMPLE_GROUPS) {
     const heading = document.createElement('h3');
     heading.textContent = group.label;
-    examplesPanel.appendChild(heading);
+    examplesListContainer.appendChild(heading);
 
     const list = document.createElement('div');
     list.className = 'example-group';
@@ -2092,8 +2214,9 @@ export function initComposer(): void {
       }
       list.appendChild(button);
     }
-    examplesPanel.appendChild(list);
+    examplesListContainer.appendChild(list);
   }
+  examplesPanel.appendChild(examplesListContainer);
 
   playButton.addEventListener('click', () => {
     rebuild(false);
@@ -2253,19 +2376,34 @@ export function initComposer(): void {
     historyPanel.hidden = !opening;
   });
 
-  document.addEventListener('click', (event) => {
-    if (historyPanel.hidden) {
+  function closeHistoryOnOutsideClick(event: MouseEvent): void {
+    if (historyPanel!.hidden) {
       return;
     }
     const target = event.target as Node;
     if (
       target !== historyButton &&
-      !historyButton.contains(target) &&
-      !historyPanel.contains(target)
+      !historyButton!.contains(target) &&
+      !historyPanel!.contains(target)
     ) {
-      historyPanel.hidden = true;
+      historyPanel!.hidden = true;
     }
-  });
+  }
+  document.addEventListener('click', closeHistoryOnOutsideClick);
+
+  // Registers this instance's own cleanup so the *next* initComposer() call
+  // (see the top of this function) can tear it down first.
+  teardownPreviousComposer = () => {
+    loopHandle?.stop();
+    if (rebuildTimer !== undefined) {
+      window.clearTimeout(rebuildTimer);
+    }
+    document.removeEventListener('click', closeHistoryOnOutsideClick);
+    view.destroy();
+    examplesListContainer.remove();
+    controlsBox.innerHTML = '';
+    void audioContext?.close().catch(() => {});
+  };
 
   rebuild(false);
 }
