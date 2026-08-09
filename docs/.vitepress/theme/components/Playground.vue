@@ -31,10 +31,16 @@ onMounted(() => {
       <div class="playground-top-row">
         <button id="composer-play">▶ Once</button>
         <button id="composer-loop">⟳ Loop</button>
+        <button id="composer-open">⤒ Open</button>
+        <button id="composer-save">⤓ Save</button>
+        <button id="composer-history">⏱ History</button>
         <button id="composer-share">⧉ Copy link</button>
+        <input type="file" id="composer-file-input" accept=".js,.ts,.song,.txt" hidden />
+        <div class="history-panel" id="composer-history-panel" hidden></div>
       </div>
       <div id="composer-controls"></div>
       <div class="lab-error" id="composer-error" hidden></div>
+      <div class="lab-warning" id="composer-sample-warning" hidden></div>
       <canvas id="composer-viz"></canvas>
     </div>
     <aside class="playground-examples" id="composer-examples">
@@ -94,11 +100,114 @@ onMounted(() => {
 }
 
 .playground-console .playground-top-row {
+  position: relative;
   display: flex;
   gap: 16px;
   align-items: center;
   margin-bottom: 12px;
   flex-wrap: wrap;
+}
+
+.playground-console .history-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: 320px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #0f1626;
+  border: 1px solid #2e3540;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.playground-console :deep(.history-empty) {
+  color: #64748b;
+  font-size: 13px;
+  padding: 10px 8px;
+}
+
+.playground-console :deep(.history-list) {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playground-console :deep(.history-entry) {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.playground-console :deep(.history-entry-restore) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.playground-console :deep(.history-entry-restore:hover) {
+  background: #101c34;
+  border-color: #2e3540;
+}
+
+.playground-console :deep(.history-entry-name) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playground-console :deep(.history-entry-time) {
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.playground-console :deep(.history-entry-delete) {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #64748b;
+  padding: 0 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.playground-console :deep(.history-entry-delete:hover) {
+  color: #ff8097;
+  border-color: #7f1d2e;
+}
+
+.playground-console :deep(.history-clear) {
+  width: 100%;
+  margin-top: 6px;
+  background: transparent;
+  border: 1px solid #2e3540;
+  border-radius: 6px;
+  color: #9aa4b2;
+  padding: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.playground-console :deep(.history-clear:hover) {
+  border-color: #5aa2ff;
+  color: #e2e8f0;
 }
 
 .playground-console :deep(.playground-row) {
@@ -132,6 +241,30 @@ onMounted(() => {
   padding: 10px 14px;
   font-size: 13px;
   margin: 10px 0;
+}
+
+.playground-console .lab-warning {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #f5b942;
+  background: #2a2110;
+  border: 1px solid #7f631d;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.playground-console :deep(.lab-warning-dismiss) {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
 }
 
 .playground-console #composer-viz {

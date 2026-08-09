@@ -97,6 +97,11 @@ function cleanCommentLine(raw: string): string {
     .trim();
 }
 
+// A real title reads like "Velvet Basement", not a full explanatory sentence —
+// cap how long a candidate line can be so an ordinary descriptive comment
+// (most example scripts' first line) doesn't get mistaken for one.
+const MAX_TITLE_LENGTH = 48;
+
 /**
  * Derives a display name from the script's leading comment block (the
  * contiguous run of comment nodes before the first real statement), scanning
@@ -116,7 +121,7 @@ export function scriptName(source: string): string {
   const name = leadingComments
     .flatMap((block) => block.split('\n'))
     .map(cleanCommentLine)
-    .find((line) => /[A-Za-z]{3,}/.test(line));
+    .find((line) => line.length <= MAX_TITLE_LENGTH && /[A-Za-z]{3,}/.test(line));
 
   return name ?? `Untitled ${new Date().toLocaleString()}`;
 }

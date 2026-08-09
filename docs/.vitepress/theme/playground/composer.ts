@@ -14,10 +14,15 @@ import { basicSetup, EditorView } from 'codemirror';
 import * as api from '../../../../src/index';
 import { Fraction, Pattern, enableMultichannel } from '../../../../src/index';
 import type { ControlPatch, LoopHandle } from '../../../../src/index';
+import { findUnregisteredSamples, prepareImportedScript, scriptName } from './importScript';
+import type { UnregisteredSample } from './importScript';
 import { drawPattern } from './pianoRoll';
 
 const STORAGE_KEY = 'undertone-composer-script';
 const SHARE_PREFIX = '#composer=';
+const HISTORY_KEY = 'undertone-composer-history';
+const HISTORY_LIMIT = 30;
+const HISTORY_ENTRY_MAX_CHARS = 100_000;
 
 // Every value export from src/index.ts a script can usefully call, minus a
 // few that don't fit this specific surface: setcpm()/resetTempo() would be
@@ -763,6 +768,83 @@ function base64UrlDecode(encoded: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+interface HistoryEntry {
+  id: number;
+  name: string;
+  code: string;
+  savedAt: number;
+}
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = window.localStorage.getItem(HISTORY_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as HistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(entries: HistoryEntry[]): void {
+  try {
+    window.localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  } catch (err) {
+    // Drop the oldest entry and retry once on quota pressure; otherwise fail
+    // silently, same posture as rebuild()'s persist().
+    if (err instanceof DOMException && err.name === 'QuotaExceededError' && entries.length > 1) {
+      saveHistory(entries.slice(0, -1));
+    }
+  }
+}
+
+/** Records an explicit snapshot — never called from the keystroke debounce, only Save/Open. */
+function pushHistoryEntry(name: string, code: string): void {
+  if (code.length > HISTORY_ENTRY_MAX_CHARS) {
+    return;
+  }
+  const entries = loadHistory();
+  if (entries[0]?.code === code) {
+    return;
+  }
+  const savedAt = Date.now();
+  // Guards against two same-millisecond pushes (Open pushes current-then-imported
+  // back to back) colliding on id.
+  const id = entries[0] && entries[0].id >= savedAt ? entries[0].id + 1 : savedAt;
+  entries.unshift({ id, name, code, savedAt });
+  saveHistory(entries.slice(0, HISTORY_LIMIT));
+}
+
+function deleteHistoryEntry(id: number): void {
+  saveHistory(loadHistory().filter((entry) => entry.id !== id));
+}
+
+function clearHistory(): void {
+  try {
+    window.localStorage.removeItem(HISTORY_KEY);
+  } catch {
+    // Storage unavailable — nothing to clear.
+  }
+}
+
+function slugify(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'untitled';
+}
+
+function relativeTime(ms: number): string {
+  const seconds = Math.round((Date.now() - ms) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
 /**
  * Compiles source into a callable. Tries it as a bare expression first (so pasting
  * `stack(...)` just works), then falls back to statement mode for scripts that need
@@ -826,20 +908,32 @@ export function initComposer(): void {
   const examplesPanel = document.querySelector<HTMLDivElement>('#composer-examples');
   const controlsBox = document.querySelector<HTMLDivElement>('#composer-controls');
   const errorBox = document.querySelector<HTMLDivElement>('#composer-error');
+  const sampleWarningBox = document.querySelector<HTMLDivElement>('#composer-sample-warning');
   const canvas = document.querySelector<HTMLCanvasElement>('#composer-viz');
   const playButton = document.querySelector<HTMLButtonElement>('#composer-play');
   const loopButton = document.querySelector<HTMLButtonElement>('#composer-loop');
+  const openButton = document.querySelector<HTMLButtonElement>('#composer-open');
+  const saveButton = document.querySelector<HTMLButtonElement>('#composer-save');
+  const historyButton = document.querySelector<HTMLButtonElement>('#composer-history');
   const shareButton = document.querySelector<HTMLButtonElement>('#composer-share');
+  const fileInput = document.querySelector<HTMLInputElement>('#composer-file-input');
+  const historyPanel = document.querySelector<HTMLDivElement>('#composer-history-panel');
 
   if (
     !editorMount ||
     !examplesPanel ||
     !controlsBox ||
     !errorBox ||
+    !sampleWarningBox ||
     !canvas ||
     !playButton ||
     !loopButton ||
-    !shareButton
+    !openButton ||
+    !saveButton ||
+    !historyButton ||
+    !shareButton ||
+    !fileInput ||
+    !historyPanel
   ) {
     return;
   }
@@ -907,7 +1001,30 @@ export function initComposer(): void {
     }
   }
 
+  function showSampleWarning(missing: UnregisteredSample[]): void {
+    sampleWarningBox!.innerHTML = '';
+    if (missing.length === 0) {
+      sampleWarningBox!.hidden = true;
+      return;
+    }
+    const names = missing.map((m) => (m.bank ? `${m.bank}_${m.name}` : m.name)).join(', ');
+    const text = document.createElement('span');
+    text.textContent = `Unregistered sample${missing.length > 1 ? 's' : ''}: ${names} — ${
+      missing.length > 1 ? 'these voices' : 'this voice'
+    } will play silent until you registerSample() ${missing.length > 1 ? 'them' : 'it'}.`;
+    const dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.className = 'lab-warning-dismiss';
+    dismiss.textContent = '✕';
+    dismiss.addEventListener('click', () => {
+      sampleWarningBox!.hidden = true;
+    });
+    sampleWarningBox!.append(text, dismiss);
+    sampleWarningBox!.hidden = false;
+  }
+
   function loadScript(example: ComposerExample, autoLoop: boolean): void {
+    showSampleWarning([]);
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: example.code } });
     // dispatch() above triggers the updateListener below, which schedules its
     // own debounced rebuild via scheduleRebuild() — clear it or it fires
@@ -1049,6 +1166,140 @@ export function initComposer(): void {
         shareButton.textContent = 'Copy failed';
       }
     );
+  });
+
+  function setActiveExampleButton(button: HTMLButtonElement | undefined): void {
+    activeButton?.classList.remove('is-active');
+    activeButton = button;
+    button?.classList.add('is-active');
+  }
+
+  openButton.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = ''; // allow re-selecting the same file later
+    if (!file) {
+      return;
+    }
+    void file.text().then((source) => {
+      pushHistoryEntry(scriptName(view.state.doc.toString()), view.state.doc.toString());
+      const prepared = prepareImportedScript(source);
+      setActiveExampleButton(undefined);
+      // Opening a file loads it for editing, not playback — clicking an example
+      // is a "play it" intent, opening a file is an "edit it" intent.
+      loadScript(
+        { label: prepared.name ?? 'Imported', code: prepared.code, bpm: prepared.bpm },
+        false
+      );
+      pushHistoryEntry(prepared.name ?? scriptName(prepared.code), prepared.code);
+      showSampleWarning(currentPattern ? findUnregisteredSamples(currentPattern) : []);
+    });
+  });
+
+  saveButton.addEventListener('click', () => {
+    const code = view.state.doc.toString();
+    const name = scriptName(code);
+    const blob = new Blob([code], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${slugify(name)}.js`;
+    // Some browsers (notably Firefox) only honour the download attribute — and
+    // its filename — for an anchor that's actually in the document; otherwise
+    // they fall back to naming the file after the blob URL's own UUID.
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    pushHistoryEntry(name, code);
+  });
+
+  function renderHistoryPanel(): void {
+    historyPanel!.innerHTML = '';
+    const entries = loadHistory();
+    if (entries.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'history-empty';
+      empty.textContent = 'No saved versions yet — Open or Save adds one.';
+      historyPanel!.appendChild(empty);
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'history-list';
+    for (const entry of entries) {
+      const row = document.createElement('div');
+      row.className = 'history-entry';
+
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.className = 'history-entry-restore';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'history-entry-name';
+      nameSpan.textContent = entry.name;
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'history-entry-time';
+      timeSpan.textContent = relativeTime(entry.savedAt);
+      restore.append(nameSpan, timeSpan);
+      restore.addEventListener('click', () => {
+        setActiveExampleButton(undefined);
+        loadScript({ label: entry.name, code: entry.code }, false);
+        historyPanel!.hidden = true;
+      });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'history-entry-delete';
+      del.textContent = '✕';
+      del.title = 'Delete this version';
+      del.addEventListener('click', (event) => {
+        event.stopPropagation();
+        deleteHistoryEntry(entry.id);
+        renderHistoryPanel();
+      });
+
+      row.append(restore, del);
+      list.appendChild(row);
+    }
+    historyPanel!.appendChild(list);
+
+    const clearAll = document.createElement('button');
+    clearAll.type = 'button';
+    clearAll.className = 'history-clear';
+    clearAll.textContent = 'Clear all';
+    clearAll.addEventListener('click', (event) => {
+      // Without this, the click bubbles to the document-level "close on
+      // outside click" listener after renderHistoryPanel() has already
+      // detached this button — its target no longer reads as "inside the
+      // panel", so the panel would immediately close again.
+      event.stopPropagation();
+      clearHistory();
+      renderHistoryPanel();
+    });
+    historyPanel!.appendChild(clearAll);
+  }
+
+  historyButton.addEventListener('click', () => {
+    const opening = historyPanel.hidden;
+    if (opening) {
+      renderHistoryPanel();
+    }
+    historyPanel.hidden = !opening;
+  });
+
+  document.addEventListener('click', (event) => {
+    if (historyPanel.hidden) {
+      return;
+    }
+    const target = event.target as Node;
+    if (
+      target !== historyButton &&
+      !historyButton.contains(target) &&
+      !historyPanel.contains(target)
+    ) {
+      historyPanel.hidden = true;
+    }
   });
 
   rebuild(false);
