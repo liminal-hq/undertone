@@ -338,12 +338,206 @@ const apiHoverTooltip = hoverTooltip((view, pos): Tooltip | null => {
 interface ComposerExample {
   label: string;
   code: string;
+  /** Applied to the tempo slider when the example loads; omitted for one-shots, where tempo doesn't really apply. */
+  bpm?: number;
 }
 
-const EXAMPLES: ComposerExample[] = [
+interface ExampleGroup {
+  label: string;
+  examples: ComposerExample[];
+}
+
+// Every example is a bare pattern-returning expression, exactly like anything
+// you'd type by hand — evaluatePattern() runs them through the identical path,
+// so there's no separate "preset" representation that could drift from what's
+// actually on screen. Ordered simple to advanced: one-shot SFX, then
+// mini-notation patterns, then full multi-layer tracks.
+const EXAMPLE_GROUPS: ExampleGroup[] = [
   {
-    label: 'Layered tune',
-    code: `// Chords + a jux'd melody + a euclidean bassline, all stacked together.
+    label: 'Game SFX',
+    examples: [
+      {
+        label: 'Place Building',
+        code: `// A low thunk, a high sparkle, and a noise click, landed together.
+return stack(
+  note('c2')
+    .sound('triangle')
+    .attack(0.001).decay(0.1).sustain(0).release(0.05)
+    .gain(0.9)
+    .lpf(220).lpenv(5).lpa(0.001).lpd(0.08).lps(0).lpr(0.05)
+    .slide(0.07),
+  note('c6')
+    .sound('sine')
+    .attack(0.001).decay(0.15).sustain(0).release(0.1)
+    .gain(0.3)
+    .lpf(2000).lpenv(8).lpa(0.001).lpd(0.06).lps(0).lpr(0.1)
+    .nudge(0.02),
+  sound('white').attack(0).decay(0.02).sustain(0).release(0.01).gain(0.4).lpf(4000).lpenv(0)
+);`
+      },
+      {
+        label: 'UI Blip',
+        code: `// A short, higher-pitched confirmation blip — menu clicks, toggles.
+return stack(
+  note('a5').sound('sine').attack(0.001).decay(0.06).sustain(0).release(0.03).gain(0.5).lpf(3000),
+  sound('white').attack(0).decay(0.008).sustain(0).release(0.005).gain(0.15).lpf(6000)
+);`
+      },
+      {
+        label: 'Error',
+        code: `// A denied/error buzz — a descending square-wave slide through a tight filter.
+return note('a2')
+  .sound('square')
+  .attack(0.001).decay(0.12).sustain(0).release(0.08)
+  .gain(0.5)
+  .lpf(600).lpenv(0)
+  .slide(0.15);`
+      },
+      {
+        label: 'Bulldoze',
+        code: `// A crunchy demolition sound — brown noise crunch under a descending thunk.
+return stack(
+  note('a1')
+    .sound('sawtooth')
+    .attack(0.001).decay(0.14).sustain(0).release(0.08)
+    .gain(0.7)
+    .lpf(180).lpenv(3).lpa(0.001).lpd(0.1).lps(0).lpr(0.08)
+    .slide(0.12),
+  sound('brown').attack(0.001).decay(0.1).sustain(0.1).release(0.12).gain(0.5).lpf(900).lpenv(0)
+);`
+      },
+      {
+        label: 'Cash In',
+        code: `// A bright ascending two-note chime — a sale completed, income received.
+return stack(
+  note('c5').sound('triangle').attack(0.002).decay(0.12).sustain(0).release(0.08).gain(0.5).lpf(4000),
+  note('e5').sound('triangle').attack(0.002).decay(0.16).sustain(0).release(0.1).gain(0.5).lpf(4500).nudge(0.06)
+);`
+      },
+      {
+        label: 'Power On',
+        code: `// A rising sweep — a plant just connected to the power grid.
+return note('a3')
+  .sound('sawtooth')
+  .attack(0.02).decay(0.14).sustain(0.4).release(0.1)
+  .gain(0.35)
+  .lpf(300).lpenv(2200).lpa(0.16).lpd(0.05).lps(0.6).lpr(0.1);`
+      },
+      {
+        label: 'Milestone',
+        code: `// A short triumphant arpeggio — a population milestone, a new era.
+return stack(
+  note('c5').sound('triangle').attack(0.002).decay(0.1).sustain(0.2).release(0.08).gain(0.45).lpf(3500),
+  note('e5').sound('triangle').attack(0.002).decay(0.1).sustain(0.2).release(0.08).gain(0.45).lpf(3500).nudge(0.09),
+  note('g5').sound('triangle').attack(0.002).decay(0.1).sustain(0.2).release(0.08).gain(0.45).lpf(3500).nudge(0.18),
+  note('c6').sound('sine').attack(0.002).decay(0.3).sustain(0).release(0.2).gain(0.4).lpf(5000).nudge(0.27)
+);`
+      },
+      {
+        label: 'Notification',
+        code: `// A soft two-tone chime — a ticker item or advisor alert arrived.
+return stack(
+  note('e5').sound('sine').attack(0.005).decay(0.1).sustain(0.1).release(0.1).gain(0.35).lpf(3000),
+  note('b4').sound('sine').attack(0.005).decay(0.12).sustain(0.1).release(0.12).gain(0.3).lpf(3000).nudge(0.1)
+);`
+      },
+      {
+        label: 'Undo',
+        code: `// A quick reverse blip — undoing the last action.
+return note('a4')
+  .sound('square')
+  .attack(0.001).decay(0.08).sustain(0).release(0.04)
+  .gain(0.35)
+  .lpf(2200)
+  .slide(0.05);`
+      }
+    ]
+  },
+  {
+    label: 'Patterns',
+    examples: [
+      {
+        label: 'Arpeggio',
+        bpm: 140,
+        code: `// A held mini-notation phrase, transformed every 2nd cycle.
+return note('c3 e3 g3 <b3 c4>')
+  .sound('triangle')
+  .attack(0.004).decay(0.12).sustain(0.35).release(0.08)
+  .gain(0.6)
+  .lpf(2500)
+  .every(2, rev);`
+      },
+      {
+        label: 'Chorale',
+        bpm: 80,
+        code: `// A four-chord progression, one chord per cycle.
+return note('<[c3,e3,g3] [a2,c3,e3] [f2,a2,c3] [g2,b2,d3]>')
+  .sound('sine')
+  .attack(0.004).decay(0.12).sustain(0.85).release(0.08)
+  .gain(0.6)
+  .lpf(1800);`
+      },
+      {
+        label: 'Euclid groove',
+        bpm: 130,
+        code: `// Three layered euclidean rhythms, one string each.
+return note('[c2(3,8), g2(5,8,2), c4(7,16,4)]')
+  .sound('square')
+  .attack(0.004).decay(0.12).sustain(0.12).release(0.08)
+  .gain(0.6)
+  .lpf(900);`
+      },
+      {
+        label: 'Acid line',
+        bpm: 150,
+        code: `// A sawtooth bassline, juxtaposed against its own reverse.
+return note('a1 [a1 a2] c2 <e2 g1>')
+  .sound('sawtooth')
+  .attack(0.004).decay(0.12).sustain(0.25).release(0.08)
+  .gain(0.6)
+  .lpf(700)
+  .jux(rev);`
+      },
+      {
+        label: 'Music box',
+        bpm: 100,
+        code: `// A doubled-up alternating melody with a rest, juxed hard left/right.
+return note('<c5 e5 g5 b5 a5 g5>*2 ~')
+  .sound('sine')
+  .attack(0.004).decay(0.12).sustain(0.5).release(0.08)
+  .gain(0.6)
+  .lpf(4000)
+  .jux(rev);`
+      },
+      {
+        label: 'Polyrhythm',
+        bpm: 110,
+        code: `// A 3-against-2 layer, written as one parallel step.
+return note('[c4 e4 g4, c2 f2]')
+  .sound('triangle')
+  .attack(0.004).decay(0.12).sustain(0.4).release(0.08)
+  .gain(0.6)
+  .lpf(2500);`
+      },
+      {
+        label: 'Orbit (7.1)',
+        bpm: 120,
+        code: `// Two euclidean layers placed on the 7.1 surround ring.
+return note('c4(5,8) e4(3,8,2)')
+  .sound('triangle')
+  .attack(0.004).decay(0.12).sustain(0.2).release(0.08)
+  .gain(0.6)
+  .lpf(2500)
+  .surround(135);`
+      }
+    ]
+  },
+  {
+    label: 'Full tracks',
+    examples: [
+      {
+        label: 'Layered tune',
+        code: `// Chords + a jux'd melody + a euclidean bassline, all stacked together.
 return stack(
   note('<[c3,e3,g3] [a2,c3,e3] [f2,a2,c3] [g2,b2,d3]>') // one chord per cycle
     .sound('sine')
@@ -351,10 +545,10 @@ return stack(
   note('c5 [e5 g5] <b5 a5> ~').sound('triangle').every(2, rev).jux(rev).gain(0.4),
   note('c2(3,8)').sound('square').lpf(400) // euclidean bassline
 );`
-  },
-  {
-    label: 'Generative',
-    code: `// Build a pattern from a plain JS array instead of typing mini-notation.
+      },
+      {
+        label: 'Generative',
+        code: `// Build a pattern from a plain JS array instead of typing mini-notation.
 const scale = [0, 2, 4, 7, 9]; // major pentatonic, semitone offsets from c4
 const notes = scale.map((semitones) => noteToFrequency('c4') * 2 ** (semitones / 12));
 
@@ -363,10 +557,10 @@ return seq(...notes.map((hz) => note(hz).sound('triangle').sustain(0.3)))
   .sound('triangle')
   .gain(0.5)
   .lpf(3000);`
-  },
-  {
-    label: 'Helper functions',
-    code: `// It's real JS — define helpers, loop, branch, whatever you need.
+      },
+      {
+        label: 'Helper functions',
+        code: `// It's real JS — define helpers, loop, branch, whatever you need.
 const bass = (n) => note(n).sound('square').lpf(500).sustain(0.2).gain(0.6);
 const pad = (n) => note(n).sound('sine').sustain(0.9).gain(0.3).lpf(1200);
 
@@ -374,10 +568,10 @@ return stack(
   seq(bass('c2'), bass('c2'), bass('f2'), bass('g2')),
   pad('<[c3,e3,g3] [f3,a3,c4]>')
 );`
-  },
-  {
-    label: 'Drums + melody',
-    code: `// Euclidean noise hits under a cat()'d melody that alternates cycle to cycle.
+      },
+      {
+        label: 'Drums + melody',
+        code: `// Euclidean noise hits under a cat()'d melody that alternates cycle to cycle.
 return stack(
   sound('white(3,8)').attack(0).decay(0.03).release(0.01).gain(0.5).lpf(6000),
   sound('brown(5,8,2)').attack(0).decay(0.08).gain(0.35).lpf(300),
@@ -386,8 +580,12 @@ return stack(
     note('c4 d4 f4 a4').sound('triangle').sustain(0.2)
   ).gain(0.5)
 );`
+      }
+    ]
   }
 ];
+
+const DEFAULT_EXAMPLE = EXAMPLE_GROUPS[2].examples[0];
 
 function base64UrlEncode(text: string): string {
   const bytes = new TextEncoder().encode(text);
@@ -468,7 +666,7 @@ function evaluatePattern(source: string): Pattern<ControlPatch> {
 
 export function initComposer(): void {
   const editorMount = document.querySelector<HTMLDivElement>('#composer-editor');
-  const examplesRow = document.querySelector<HTMLDivElement>('#composer-examples');
+  const examplesPanel = document.querySelector<HTMLDivElement>('#composer-examples');
   const controlsBox = document.querySelector<HTMLDivElement>('#composer-controls');
   const errorBox = document.querySelector<HTMLDivElement>('#composer-error');
   const canvas = document.querySelector<HTMLCanvasElement>('#composer-viz');
@@ -478,7 +676,7 @@ export function initComposer(): void {
 
   if (
     !editorMount ||
-    !examplesRow ||
+    !examplesPanel ||
     !controlsBox ||
     !errorBox ||
     !canvas ||
@@ -542,14 +740,27 @@ export function initComposer(): void {
     rebuildTimer = window.setTimeout(() => rebuild(true), 300);
   }
 
-  function loadScript(source: string, autoLoop: boolean): void {
+  function setBpm(newBpm: number): void {
+    bpm = newBpm;
+    bpmRange.value = String(bpm);
+    bpmValue.textContent = String(bpm);
+    if (loopHandle && currentPattern) {
+      loopHandle.stop();
+      loopHandle = currentPattern.loop({ ctx: getAudioContext(), bpm });
+    }
+  }
+
+  function loadScript(example: ComposerExample, autoLoop: boolean): void {
     if (rebuildTimer !== undefined) {
       window.clearTimeout(rebuildTimer);
       rebuildTimer = undefined;
     }
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: source } });
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: example.code } });
     loopHandle?.stop();
     loopHandle = undefined;
+    if (example.bpm !== undefined) {
+      setBpm(example.bpm);
+    }
     rebuild(false);
     if (autoLoop && currentPattern) {
       loopHandle = currentPattern.loop({ ctx: getAudioContext(), bpm });
@@ -571,11 +782,12 @@ export function initComposer(): void {
     } catch {
       // Storage unavailable — fall through to default.
     }
-    return EXAMPLES[0].code;
+    return DEFAULT_EXAMPLE.code;
   }
 
+  const initialDoc = initialScript();
   const view = new EditorView({
-    doc: initialScript(),
+    doc: initialDoc,
     extensions: [
       basicSetup,
       keymap.of([indentWithTab]),
@@ -605,23 +817,39 @@ export function initComposer(): void {
   bpmValue.className = 'playground-value';
   bpmValue.textContent = String(bpm);
   bpmRange.addEventListener('input', () => {
+    // Live-updates the readout while dragging; the loop only restarts once
+    // the drag lands (the 'change' listener below), not on every pixel.
     bpm = Number(bpmRange.value);
     bpmValue.textContent = bpmRange.value;
   });
-  bpmRange.addEventListener('change', () => {
-    if (loopHandle && currentPattern) {
-      loopHandle.stop();
-      loopHandle = currentPattern.loop({ ctx: getAudioContext(), bpm });
-    }
-  });
+  bpmRange.addEventListener('change', () => setBpm(Number(bpmRange.value)));
   bpmRow.append(bpmLabel, bpmRange, bpmValue);
   controlsBox.appendChild(bpmRow);
 
-  for (const example of EXAMPLES) {
-    const button = document.createElement('button');
-    button.textContent = `♪ ${example.label}`;
-    button.addEventListener('click', () => loadScript(example.code, true));
-    examplesRow.appendChild(button);
+  let activeButton: HTMLButtonElement | undefined;
+  for (const group of EXAMPLE_GROUPS) {
+    const heading = document.createElement('h3');
+    heading.textContent = group.label;
+    examplesPanel.appendChild(heading);
+
+    const list = document.createElement('div');
+    list.className = 'example-group';
+    for (const example of group.examples) {
+      const button = document.createElement('button');
+      button.textContent = example.label;
+      button.addEventListener('click', () => {
+        activeButton?.classList.remove('is-active');
+        button.classList.add('is-active');
+        activeButton = button;
+        loadScript(example, true);
+      });
+      if (example.code === initialDoc) {
+        button.classList.add('is-active');
+        activeButton = button;
+      }
+      list.appendChild(button);
+    }
+    examplesPanel.appendChild(list);
   }
 
   playButton.addEventListener('click', () => {

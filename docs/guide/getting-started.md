@@ -36,7 +36,7 @@ Line by line:
 
 The one environmental catch: when you don't pass your own context, undertone lazily creates a shared `AudioContext` on first use, and browsers refuse to start audio outside a user gesture (autoplay policy). Make sure the _first_ `play()` or `loop()` in your app happens inside a click/keypress/tap handler; after that, fire away from anywhere.
 
-For a richer one-shot, layer voices with `stack()` — this is the [playground](/playground)'s "Place Building" preset, a low thunk plus a high sparkle plus a noise click, all starting together:
+For a richer one-shot, layer voices with `stack()` — this is the [playground](/playground)'s "Place Building" example, a low thunk plus a high sparkle plus a noise click, all starting together:
 
 ```ts
 import { note, sound, stack } from '@liminal-hq/undertone';

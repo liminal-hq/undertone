@@ -25,7 +25,7 @@ flowchart LR
   DLY --> DEST
 ```
 
-**The lowpass and its envelope.** `.lpf(hz)` sets the resting cutoff; `.lpenv(hz)` adds a filter envelope that sweeps between `lpf` and `lpf + lpenv`, shaped by its own ADSR (`.lpa`/`.lpd`/`.lps`/`.lpr`, same semantics as the amplitude envelope). A slow filter attack over a sawtooth is the classic rising-sweep — this is the [playground](/playground)'s "Power On" preset almost verbatim:
+**The lowpass and its envelope.** `.lpf(hz)` sets the resting cutoff; `.lpenv(hz)` adds a filter envelope that sweeps between `lpf` and `lpf + lpenv`, shaped by its own ADSR (`.lpa`/`.lpd`/`.lps`/`.lpr`, same semantics as the amplitude envelope). A slow filter attack over a sawtooth is the classic rising-sweep — this is the [playground](/playground)'s "Power On" example almost verbatim:
 
 ```ts
 note('a3')

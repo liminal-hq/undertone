@@ -23,3 +23,53 @@
 .dark {
   --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #de4968, #fe9f6d);
 }
+
+/**
+ * A full-width container for `layout: page` pages — used by the playground,
+ * whose editor+examples panel benefits from real width, not the narrow
+ * article column `layout: doc` caps content to. Matches the site's own
+ * overall page-width ceiling (--vp-layout-max-width) rather than an
+ * arbitrary one, so it reads as "wider", not "a different site".
+ */
+.page-shell {
+  max-width: var(--vp-layout-max-width);
+  margin: 0 auto;
+  padding: 48px 24px;
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-base);
+}
+
+.page-shell h1 {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 40px;
+  margin: 0 0 16px;
+}
+
+.page-shell > p {
+  max-width: 800px;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.page-shell code {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875em;
+  background: var(--vp-c-bg-alt);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    padding: 48px 48px;
+  }
+}
+
+@media (min-width: 960px) {
+  .page-shell {
+    padding: 64px 64px;
+  }
+}

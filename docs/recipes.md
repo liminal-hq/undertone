@@ -110,7 +110,7 @@ The long attacks only work because `loop()` gates each envelope by its event's l
 
 ## A game-SFX kit
 
-One-shots want the opposite envelope: near-zero attack, short decay, `sustain: 0`. Build the patterns once at module scope, then call `.play()` whenever the game event fires — patterns are immutable, so one object serves unlimited plays. These four are adapted from the [playground](/playground)'s preset kit:
+One-shots want the opposite envelope: near-zero attack, short decay, `sustain: 0`. Build the patterns once at module scope, then call `.play()` whenever the game event fires — patterns are immutable, so one object serves unlimited plays. These four are adapted from the [playground](/playground)'s "Game SFX" examples:
 
 ```ts
 import { note, sound, stack } from '@liminal-hq/undertone';
@@ -183,7 +183,7 @@ buyButton.addEventListener('click', () => cashIn.play());
 lockedDoor.addEventListener('click', () => error.play());
 ```
 
-Two one-shot habits worth building: `nudge(seconds)` is how you arpeggiate inside a single onset (a `<a b>` alternation won't help — `.play()` runs cycle zero only, so it always picks the first option), and `slide(seconds)` — a glide down from an octave above — is the fastest route to "thunk" and "whoosh" shapes. More worked one-shots are one click away in the [playground](/playground)'s preset row: `bulldoze`, `powerOn`, `notification`, `undo`.
+Two one-shot habits worth building: `nudge(seconds)` is how you arpeggiate inside a single onset (a `<a b>` alternation won't help — `.play()` runs cycle zero only, so it always picks the first option), and `slide(seconds)` — a glide down from an octave above — is the fastest route to "thunk" and "whoosh" shapes. More worked one-shots are one click away in the [playground](/playground)'s "Game SFX" examples: `bulldoze`, `powerOn`, `notification`, `undo`.
 
 ## An acid bassline
 
