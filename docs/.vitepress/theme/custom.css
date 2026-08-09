@@ -1,0 +1,128 @@
+/**
+ * Homepage hero name ("undertone") gradient text.
+ *
+ * VitePress always applies a `.clip` class to the hero `name` span and clips
+ * `--vp-home-hero-name-background` through it — overriding these two
+ * variables is the supported way to get gradient hero text, no extra
+ * selectors needed.
+ *
+ * This is undertone's own gradient, not the org's ink/amber mark palette:
+ * a frequency-analyzer heat map (violet through magenta to gold), the same
+ * colour language every spectrogram and level meter uses for low-to-high
+ * energy — apt for a project whose whole surface is "what does this sound
+ * do." Dark mode uses the full-brightness end of the scale (the way real
+ * spectrogram displays run on dark backgrounds so the hot colours read);
+ * light mode stays in the scale's more saturated, lower-energy half, since
+ * the gold end would wash out against a white page.
+ */
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #8c2981, #de4968);
+}
+
+.dark {
+  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #de4968, #fe9f6d);
+}
+
+/**
+ * A full-width container for `layout: page` pages — used by the playground,
+ * whose editor+examples panel benefits from real width, not the narrow
+ * article column `layout: doc` caps content to. Matches the site's own
+ * overall page-width ceiling (--vp-layout-max-width) rather than an
+ * arbitrary one, so it reads as "wider", not "a different site".
+ */
+.page-shell {
+  max-width: var(--vp-layout-max-width);
+  margin: 0 auto;
+  padding: 48px 24px;
+  color: var(--vp-c-text-1);
+  font-family: var(--vp-font-family-base);
+}
+
+.page-shell h1 {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 40px;
+  margin: 0 0 16px;
+}
+
+.page-shell > p {
+  max-width: 800px;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.page-shell code {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875em;
+  background: var(--vp-c-bg-alt);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    padding: 48px 48px;
+  }
+}
+
+@media (min-width: 960px) {
+  .page-shell {
+    padding: 64px 64px;
+  }
+}
+
+/**
+ * Nav bar overflow fix (768px-~884px gap band).
+ *
+ * VitePress's default theme switches the nav bar from "hamburger only" to
+ * "full inline menu" at a single hardcoded 768px breakpoint, spread across
+ * several components (VPNavBarMenu, VPNavBarHamburger, VPNavScreen,
+ * VPNavBarExtra) — there's no --vp-nav-* custom property for this, so a
+ * custom-property override can't move it; only overriding VitePress's own
+ * classes can.
+ *
+ * undertone's nav has five top-level items (Guide, Recipes, "Coming from
+ * Strudel", API, Playground) plus the search box, title, and the GitHub
+ * icon link (themeConfig.socialLinks in config.mts — moving it out of the
+ * plain nav-text items shrank the overflow band from its original ~865px
+ * natural-fit measurement down to ~780-795px, but didn't eliminate it). With
+ * `white-space: nowrap` on .VPNavBar, that content still doesn't fit before
+ * ~795px — measured in a real browser via Playwright, re-checked after the
+ * socialLinks change. VitePress's own 768px breakpoint fires before there's
+ * room for it, producing a gap band (roughly 768px to 795px) where the
+ * inline menu is shown but doesn't fit, and the nav's own scrollWidth
+ * overflows its clientWidth.
+ *
+ * Fix: keep the mobile (hamburger) layout active up through 959px instead
+ * of switching to the inline desktop menu at 768px, reusing 960px since
+ * that's already VitePress's own next breakpoint tier (see .page-shell
+ * above) — comfortable margin over the ~795px natural fit point, and one
+ * less thing to re-measure if a nav label changes length. Only the
+ * components that render inline nav content are targeted; VPNavScreen (the
+ * hamburger dropdown) is force-re-enabled for the same range so the mobile
+ * menu keeps working there instead of being stuck hidden by VitePress's own
+ * ">=768px: display none" rule.
+ *
+ * These are VitePress's actual internal class names, which are not a
+ * public API and can change between minor versions — if a VitePress
+ * upgrade breaks this, re-check
+ * node_modules/vitepress/dist/client/theme-default/components/VPNavBar*.vue
+ * and VPNavScreen.vue for the current breakpoints/classes.
+ */
+@media (min-width: 768px) and (max-width: 959px) {
+  .VPNavBarMenu,
+  .VPNavBarExtra {
+    display: none !important;
+  }
+
+  .VPNavBarHamburger {
+    display: flex !important;
+  }
+
+  .VPNavScreen {
+    display: block !important;
+  }
+}

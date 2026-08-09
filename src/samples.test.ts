@@ -8,6 +8,7 @@ import {
   clearSamples,
   getSampleBaseNote,
   getSampleBuffer,
+  isSampleRegistered,
   loadSamples,
   registerSample,
   registerSamples
@@ -99,6 +100,28 @@ describe('getSampleBuffer', () => {
     registerSample('bd', FAKE_BUFFER);
     const ctx = new FakeAudioContext();
     expect(getSampleBuffer(ctx, 'bd', 'RolandTR707')).toBe(FAKE_BUFFER);
+  });
+});
+
+describe('isSampleRegistered', () => {
+  it('is false for a name that was never registered', () => {
+    expect(isSampleRegistered('bd')).toBe(false);
+  });
+
+  it('is true for a bare registered name', () => {
+    registerSample('bd', FAKE_BUFFER);
+    expect(isSampleRegistered('bd')).toBe(true);
+  });
+
+  it('is true when the bank-prefixed key is registered, even if the bare name is not', () => {
+    registerSample('RolandTR707_bd', FAKE_BUFFER);
+    expect(isSampleRegistered('bd', 'RolandTR707')).toBe(true);
+    expect(isSampleRegistered('bd')).toBe(false);
+  });
+
+  it('falls back to the bare name when the banked key is not registered', () => {
+    registerSample('bd', FAKE_BUFFER);
+    expect(isSampleRegistered('bd', 'RolandTR707')).toBe(true);
   });
 });
 

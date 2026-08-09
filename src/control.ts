@@ -24,7 +24,7 @@ function parsePitchWord(word: string): string | number {
 /**
  * Starts a pitched pattern (default sound: sine). Accepts a raw Hz number, a
  * note name ("c2", "a4", "f#3"), or a mini-notation string of them
- * ("c3 [e3 g3] <a3 b3>").
+ * (`"c3 [e3 g3] <a3 b3>"`).
  */
 export function note(input: string | number): Pattern<ControlPatch> {
   if (typeof input === 'number') {
@@ -54,7 +54,7 @@ export function sound(input: SoundType | string): Pattern<ControlPatch> {
  * becomes a sample name (see samples.ts's registerSample()), validated
  * against the registry at play time rather than here, since registration can
  * happen after the pattern is built. Accepts a mini-notation string
- * ("bd ~ [bd bd] sd", "<gm_acoustic_bass>").
+ * (`"bd ~ [bd bd] sd"`, `"<gm_acoustic_bass>"`).
  */
 export function s(input: SoundType | string): Pattern<ControlPatch> {
   return mini<ControlPatch>(input, (word) =>
@@ -89,7 +89,7 @@ export function n(input: string | number): Pattern<ControlPatch> {
 /**
  * Starts a chord-symbol pattern — chain `.voicing()` to expand each chord into
  * simultaneous notes. Accepts a mini-notation string of chord symbols
- * ("<Dm9 BbM7 Gm9 A7sus>").
+ * (`"<Dm9 BbM7 Gm9 A7sus>"`).
  */
 export function chord(input: string): Pattern<ControlPatch> {
   return mini<ControlPatch>(input, (word) => {

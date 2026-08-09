@@ -211,6 +211,11 @@ export function getSampleBaseNote(name: string, bank?: string): string | number 
   return registry.get(key)?.baseNote;
 }
 
+/** Whether a sample name (optionally with a .bank() prefix) is currently registered. */
+export function isSampleRegistered(name: string, bank?: string): boolean {
+  return resolveRegisteredKey(name, bank) !== undefined;
+}
+
 /** Clears the registry and warning state — test hygiene, not needed in normal use. */
 export function clearSamples(): void {
   registry.clear();

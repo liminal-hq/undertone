@@ -24,6 +24,7 @@ export {
   clearSamples,
   getSampleBaseNote,
   getSampleBuffer,
+  isSampleRegistered,
   loadSamples,
   registerSample,
   registerSamples

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "docsRoot": "docs",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "intentionallyNotExported": [
+    "GainNodeLike",
+    "AudioBufferLike",
+    "BiquadFilterNodeLike",
+    "AudioBufferSourceNodeLike",
+    "AudioNodeLike",
+    "ConvolverNodeLike",
+    "DelayNodeLike",
+    "OscillatorNodeLike",
+    "StereoPannerNodeLike",
+    "RegisteredSource",
+    "AudioParamLike"
+  ]
+}
