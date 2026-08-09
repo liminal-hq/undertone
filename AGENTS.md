@@ -80,7 +80,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 - TypeScript library, zero runtime dependencies, built on the Web Audio API.
 - Package manager: `bun`. Tests: `vitest`. Lint/format: `eslint` + `prettier`. Build: `tsc` (emits `dist/`, declarations included).
-- Published to npm as `@liminal-hq/undertone`. Bump `version` in `package.json` and `npm publish --access public` (requires an authenticator OTP) to release.
+- Published to npm as `@liminal-hq/undertone`. To release: bump `version` in `package.json` on a `chore/release-v<version>` branch, merge to `main`, then push a matching `vX.Y.Z` tag (or run the "Release" workflow via `workflow_dispatch`). CI verifies the build, attaches the npm tarball to a GitHub release, and publishes to npm — the npm publish step waits for manual approval on the `npm-publish` environment in the Actions UI before it runs.
 
 ## Licence and Copyright
 
