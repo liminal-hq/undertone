@@ -151,10 +151,10 @@ jobs:
         run: bun run lint
       - name: Prettier check
         run: bun run format:check
-      - name: Typecheck demo
-        run: bun run typecheck:demo
-      - name: Build demo
-        run: bun run build:demo
+      - name: Typecheck docs theme
+        run: bun run typecheck:docs
+      - name: Build docs site
+        run: bun run docs:build
 
       - name: Create npm package tarball
         run: npm pack
