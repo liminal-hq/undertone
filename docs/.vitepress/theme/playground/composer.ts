@@ -11,39 +11,8 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { hoverTooltip, keymap } from '@codemirror/view';
 import type { Tooltip } from '@codemirror/view';
 import { basicSetup, EditorView } from 'codemirror';
-import {
-  CHANNEL_ORDER,
-  Fraction,
-  MAX_CHANNELS,
-  Pattern,
-  arrange,
-  cat,
-  chord,
-  clearSamples,
-  enableMultichannel,
-  foldToStereo,
-  getSampleBaseNote,
-  getSampleBuffer,
-  hasOnset,
-  loadSamples,
-  midiToFrequency,
-  mini,
-  n,
-  note,
-  noteToFrequency,
-  noteToMidi,
-  pure,
-  registerSample,
-  registerSamples,
-  rev,
-  s,
-  seq,
-  silence,
-  sound,
-  stack,
-  surroundGains,
-  timecat
-} from '../../../../src/index';
+import * as api from '../../../../src/index';
+import { Fraction, Pattern, enableMultichannel } from '../../../../src/index';
 import type { ControlPatch, LoopHandle } from '../../../../src/index';
 import { drawPattern } from './pianoRoll';
 
@@ -55,39 +24,13 @@ const SHARE_PREFIX = '#composer=';
 // silently inert (the Once/Loop buttons always pass an explicit bpm from the
 // tempo slider, and an explicit bpm always wins), and buildImpulseResponse()/
 // getOrbitBus() are effects-internals rather than composition primitives.
-const SCOPE: Record<string, unknown> = {
-  note,
-  sound,
-  n,
-  chord,
-  s,
-  mini,
-  Pattern,
-  arrange,
-  cat,
-  hasOnset,
-  pure,
-  rev,
-  seq,
-  silence,
-  stack,
-  timecat,
-  Fraction,
-  noteToFrequency,
-  noteToMidi,
-  midiToFrequency,
-  registerSample,
-  registerSamples,
-  loadSamples,
-  clearSamples,
-  getSampleBaseNote,
-  getSampleBuffer,
-  CHANNEL_ORDER,
-  MAX_CHANNELS,
-  enableMultichannel,
-  foldToStereo,
-  surroundGains
-};
+// Derived from the `api` namespace (rather than hand-listed) so a future
+// export is included automatically instead of silently missing from both the
+// eval sandbox and autocomplete until someone remembers to add it here too.
+const SCOPE_EXCLUDED = new Set(['setcpm', 'resetTempo', 'buildImpulseResponse', 'getOrbitBus']);
+const SCOPE: Record<string, unknown> = Object.fromEntries(
+  Object.entries(api).filter(([name]) => !SCOPE_EXCLUDED.has(name))
+);
 const SCOPE_NAMES = Object.keys(SCOPE);
 const SCOPE_VALUES = Object.values(SCOPE);
 

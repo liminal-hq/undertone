@@ -51,8 +51,7 @@ export default withMermaid({
       { text: 'Recipes', link: '/recipes' },
       { text: 'Coming from Strudel', link: '/coming-from-strudel' },
       { text: 'API', link: '/api/' },
-      { text: 'Playground', link: '/playground' },
-      { text: 'GitHub', link: 'https://github.com/liminal-hq/undertone' }
+      { text: 'Playground', link: '/playground' }
     ],
     sidebar: {
       '/guide/': guideSidebar,
@@ -62,6 +61,10 @@ export default withMermaid({
     },
     search: {
       provider: 'local'
-    }
+    },
+    // The dedicated icon slot, rather than a plain nav-text item — shaves one
+    // item off the inline text menu (see custom.css's nav-overflow note) and
+    // is the idiomatic place for a repo link.
+    socialLinks: [{ icon: 'github', link: 'https://github.com/liminal-hq/undertone' }]
   }
 });

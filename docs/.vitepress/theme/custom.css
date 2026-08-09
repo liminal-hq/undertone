@@ -84,23 +84,27 @@
  * custom-property override can't move it; only overriding VitePress's own
  * classes can.
  *
- * undertone's nav has six top-level items (Guide, Recipes, "Coming from
- * Strudel", API, Playground, GitHub) plus the search box and title. With
- * `white-space: nowrap` on .VPNavBar, that content has a fixed minimum
- * width of ~865px regardless of viewport — measured in a real browser via
- * Playwright, constant across 768-850px viewports. VitePress's own 768px
- * breakpoint fires well before there's room for it, producing a gap band
- * (roughly 768px to 884px) where the inline menu is shown but doesn't fit,
- * and document.documentElement.scrollWidth overflows clientWidth.
+ * undertone's nav has five top-level items (Guide, Recipes, "Coming from
+ * Strudel", API, Playground) plus the search box, title, and the GitHub
+ * icon link (themeConfig.socialLinks in config.mts — moving it out of the
+ * plain nav-text items shrank the overflow band from its original ~865px
+ * natural-fit measurement down to ~780-795px, but didn't eliminate it). With
+ * `white-space: nowrap` on .VPNavBar, that content still doesn't fit before
+ * ~795px — measured in a real browser via Playwright, re-checked after the
+ * socialLinks change. VitePress's own 768px breakpoint fires before there's
+ * room for it, producing a gap band (roughly 768px to 795px) where the
+ * inline menu is shown but doesn't fit, and the nav's own scrollWidth
+ * overflows its clientWidth.
  *
  * Fix: keep the mobile (hamburger) layout active up through 959px instead
  * of switching to the inline desktop menu at 768px, reusing 960px since
  * that's already VitePress's own next breakpoint tier (see .page-shell
- * above) and leaves a comfortable margin over the measured 884px natural
- * fit point. Only the components that render inline nav content are
- * targeted; VPNavScreen (the hamburger dropdown) is force-re-enabled for
- * the same range so the mobile menu keeps working there instead of being
- * stuck hidden by VitePress's own ">=768px: display none" rule.
+ * above) — comfortable margin over the ~795px natural fit point, and one
+ * less thing to re-measure if a nav label changes length. Only the
+ * components that render inline nav content are targeted; VPNavScreen (the
+ * hamburger dropdown) is force-re-enabled for the same range so the mobile
+ * menu keeps working there instead of being stuck hidden by VitePress's own
+ * ">=768px: display none" rule.
  *
  * These are VitePress's actual internal class names, which are not a
  * public API and can change between minor versions — if a VitePress

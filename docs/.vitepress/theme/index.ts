@@ -1,3 +1,6 @@
+// (c) Copyright 2026 Liminal HQ, Scott Morris
+// SPDX-License-Identifier: MIT
+
 import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
 import Playground from './components/Playground.vue';
