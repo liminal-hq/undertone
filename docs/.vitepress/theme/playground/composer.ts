@@ -146,6 +146,10 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: 'getSampleBuffer(name: string) => AudioBuffer | undefined',
     doc: 'The decoded AudioBuffer for a registered sample, once loadSamples() (or first playback) has resolved it.'
   },
+  isSampleRegistered: {
+    signature: 'isSampleRegistered(name: string, bank?: string) => boolean',
+    doc: 'Whether a sample name (optionally with a .bank() prefix) is currently registered.'
+  },
   CHANNEL_ORDER: {
     signature: 'CHANNEL_ORDER: string[]',
     doc: 'Speaker order used by channels()/surround(): FL, FR, C, LFE, SL, SR, RL, RR.'
