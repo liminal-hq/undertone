@@ -73,3 +73,52 @@
     padding: 64px 64px;
   }
 }
+
+/**
+ * Nav bar overflow fix (768px-~884px gap band).
+ *
+ * VitePress's default theme switches the nav bar from "hamburger only" to
+ * "full inline menu" at a single hardcoded 768px breakpoint, spread across
+ * several components (VPNavBarMenu, VPNavBarHamburger, VPNavScreen,
+ * VPNavBarExtra) — there's no --vp-nav-* custom property for this, so a
+ * custom-property override can't move it; only overriding VitePress's own
+ * classes can.
+ *
+ * undertone's nav has six top-level items (Guide, Recipes, "Coming from
+ * Strudel", API, Playground, GitHub) plus the search box and title. With
+ * `white-space: nowrap` on .VPNavBar, that content has a fixed minimum
+ * width of ~865px regardless of viewport — measured in a real browser via
+ * Playwright, constant across 768-850px viewports. VitePress's own 768px
+ * breakpoint fires well before there's room for it, producing a gap band
+ * (roughly 768px to 884px) where the inline menu is shown but doesn't fit,
+ * and document.documentElement.scrollWidth overflows clientWidth.
+ *
+ * Fix: keep the mobile (hamburger) layout active up through 959px instead
+ * of switching to the inline desktop menu at 768px, reusing 960px since
+ * that's already VitePress's own next breakpoint tier (see .page-shell
+ * above) and leaves a comfortable margin over the measured 884px natural
+ * fit point. Only the components that render inline nav content are
+ * targeted; VPNavScreen (the hamburger dropdown) is force-re-enabled for
+ * the same range so the mobile menu keeps working there instead of being
+ * stuck hidden by VitePress's own ">=768px: display none" rule.
+ *
+ * These are VitePress's actual internal class names, which are not a
+ * public API and can change between minor versions — if a VitePress
+ * upgrade breaks this, re-check
+ * node_modules/vitepress/dist/client/theme-default/components/VPNavBar*.vue
+ * and VPNavScreen.vue for the current breakpoints/classes.
+ */
+@media (min-width: 768px) and (max-width: 959px) {
+  .VPNavBarMenu,
+  .VPNavBarExtra {
+    display: none !important;
+  }
+
+  .VPNavBarHamburger {
+    display: flex !important;
+  }
+
+  .VPNavScreen {
+    display: block !important;
+  }
+}
