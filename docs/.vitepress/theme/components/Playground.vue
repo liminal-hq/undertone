@@ -22,9 +22,10 @@ onMounted(() => {
       <p>
         Write any JS expression using <code>note</code>, <code>sound</code>, <code>stack</code>,
         <code>seq</code>, <code>cat</code>, euclidean rhythms, chained voice controls, even plain JS
-        loops and helper functions — return a <code>Pattern</code> and it plays. Runs as you type.
-        Code executes directly in this page, same as pasting into devtools — an infinite loop will
-        hang the tab. Pick an example to start from somewhere.
+        loops and helper functions — return a <code>Pattern</code> and the buttons below play it.
+        Your code re-runs as you type, so a running loop picks up your edits live — and it executes
+        directly in this page, same as pasting into devtools: write an infinite loop and you'll hang
+        the tab. Not sure where to start? Pick an example.
       </p>
       <div id="composer-editor"></div>
       <div class="playground-top-row">
