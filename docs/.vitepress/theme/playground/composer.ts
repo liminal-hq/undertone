@@ -16,15 +16,27 @@ import {
   Fraction,
   MAX_CHANNELS,
   Pattern,
+  arrange,
   cat,
+  chord,
+  clearSamples,
   enableMultichannel,
   foldToStereo,
+  getSampleBaseNote,
+  getSampleBuffer,
   hasOnset,
+  loadSamples,
+  midiToFrequency,
   mini,
+  n,
   note,
   noteToFrequency,
+  noteToMidi,
   pure,
+  registerSample,
+  registerSamples,
   rev,
+  s,
   seq,
   silence,
   sound,
@@ -38,12 +50,20 @@ import { drawPattern } from './pianoRoll';
 const STORAGE_KEY = 'undertone-composer-script';
 const SHARE_PREFIX = '#composer=';
 
-// Every value export from src/index.ts — the full API surface a script can reach.
+// Every value export from src/index.ts a script can usefully call, minus a
+// few that don't fit this specific surface: setcpm()/resetTempo() would be
+// silently inert (the Once/Loop buttons always pass an explicit bpm from the
+// tempo slider, and an explicit bpm always wins), and buildImpulseResponse()/
+// getOrbitBus() are effects-internals rather than composition primitives.
 const SCOPE: Record<string, unknown> = {
   note,
   sound,
+  n,
+  chord,
+  s,
   mini,
   Pattern,
+  arrange,
   cat,
   hasOnset,
   pure,
@@ -54,6 +74,14 @@ const SCOPE: Record<string, unknown> = {
   timecat,
   Fraction,
   noteToFrequency,
+  noteToMidi,
+  midiToFrequency,
+  registerSample,
+  registerSamples,
+  loadSamples,
+  clearSamples,
+  getSampleBaseNote,
+  getSampleBuffer,
   CHANNEL_ORDER,
   MAX_CHANNELS,
   enableMultichannel,
@@ -79,9 +107,25 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: 'sound(input: SoundType) => Pattern<ControlPatch>  |  .sound(type)',
     doc: "Pattern of unpitched voices — the entry point for noise ('white' | 'pink' | 'brown'), also accepts mini-notation. Chainable as .sound(type) to set a voice's waveform or noise type."
   },
+  n: {
+    signature: 'n(input: string | number) => Pattern<ControlPatch>',
+    doc: 'Scale-degree pattern — input is an integer or mini-notation string of them, resolved into real pitches by .scale("d5:minor").'
+  },
+  chord: {
+    signature: 'chord(input: string) => Pattern<ControlPatch>',
+    doc: 'Chord-symbol pattern (mini-notation string of symbols like "<Dm9 BbM7>"), expanded into simultaneous notes by .voicing().'
+  },
+  s: {
+    signature: 's(input: SoundType | string) => Pattern<ControlPatch>  |  .s(name)',
+    doc: "Synth voice or registered sample: any word in input that isn't a synth type becomes a sample name. Chainable as .s(name) to reassign the sound/sample on an existing pattern."
+  },
   stack: {
     signature: 'stack(...pats: Pattern<T>[]) => Pattern<T>',
     doc: 'Plays all patterns simultaneously (polyphony: chords, layers).'
+  },
+  arrange: {
+    signature: 'arrange(...sections: [cycles: number, pat: Pattern<T>][]) => Pattern<T>',
+    doc: 'Plays each [cycles, pattern] section for its own span of whole cycles, looping the whole arrangement once the total is reached — the backbone of a multi-section song.'
   },
   seq: {
     signature: 'seq(...pats: Pattern<T>[]) => Pattern<T>',
@@ -127,6 +171,38 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: 'noteToFrequency(pitch: string | number) => number',
     doc: 'Converts a note name ("c3") or raw Hz number to a frequency in Hz.'
   },
+  noteToMidi: {
+    signature: 'noteToMidi(name: string) => number',
+    doc: 'Converts a note name ("c4") to its MIDI note number.'
+  },
+  midiToFrequency: {
+    signature: 'midiToFrequency(midi: number) => number',
+    doc: 'Converts a MIDI note number to a frequency in Hz.'
+  },
+  registerSample: {
+    signature: 'registerSample(name: string, source) => void',
+    doc: 'Registers a sample under name. source is a URL, ArrayBuffer, AudioBuffer, or { url?, data?, buffer?, baseNote? } — baseNote is the pitch the recording sounds at, for pitched playback via note().s(name).'
+  },
+  registerSamples: {
+    signature: 'registerSamples(map: Record<string, source>) => void',
+    doc: 'Registers many samples at once — see registerSample() for the source shape each value takes.'
+  },
+  loadSamples: {
+    signature: 'loadSamples(ctx: AudioContext, names?: string[]) => Promise<void>',
+    doc: 'Preloads and decodes registered samples (all, or just names) against ctx. Not required before playback — an undecoded sample is just silently skipped for that one onset.'
+  },
+  clearSamples: {
+    signature: 'clearSamples() => void',
+    doc: 'Unregisters every sample — mostly useful for tests or hot-reload cleanup, not typical composing.'
+  },
+  getSampleBaseNote: {
+    signature: 'getSampleBaseNote(name: string) => string | number | undefined',
+    doc: 'The baseNote a registered sample was recorded at, used to compute pitched playback rate.'
+  },
+  getSampleBuffer: {
+    signature: 'getSampleBuffer(name: string) => AudioBuffer | undefined',
+    doc: 'The decoded AudioBuffer for a registered sample, once loadSamples() (or first playback) has resolved it.'
+  },
   CHANNEL_ORDER: {
     signature: 'CHANNEL_ORDER: string[]',
     doc: 'Speaker order used by channels()/surround(): FL, FR, C, LFE, SL, SR, RL, RR.'
@@ -166,6 +242,18 @@ const API_DOCS: Record<string, ApiDoc> = {
   jux: {
     signature: '.jux(fn: (pat) => pat) => Pattern<ControlPatch>',
     doc: 'Juxtaposes the pattern with a transformed copy: original plays hard left, fn(pattern) plays hard right.'
+  },
+  scale: {
+    signature: '.scale(spec: string) => Pattern<ControlPatch>',
+    doc: 'Resolves n()\'s scale-degree events into real pitches. spec is "<root><octave>:<name>", e.g. "d5:minor". Events already pitched by note() pass through unchanged.'
+  },
+  voicing: {
+    signature: '.voicing(options?: { anchor? }) => Pattern<ControlPatch>',
+    doc: "Expands chord()'s chord symbols into simultaneous notes — a deterministic approximation of voice-leading, anchored near middle C by default."
+  },
+  bank: {
+    signature: '.bank(name: string) => Pattern<ControlPatch>',
+    doc: 'A sample-lookup prefix: tries `${name}_${sampleName}` before falling back to the bare sample name.'
   },
   attack: {
     signature: '.attack(seconds: number) => Pattern<ControlPatch>',
@@ -215,9 +303,49 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.slide(seconds: number) => Pattern<ControlPatch>',
     doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
   },
+  hpf: {
+    signature: '.hpf(hz: number) => Pattern<ControlPatch>',
+    doc: 'Static highpass filter, in series after .lpf(). Omit entirely to skip it.'
+  },
+  phaser: {
+    signature: '.phaser(rateHz: number) => Pattern<ControlPatch>',
+    doc: 'A 4-stage allpass phaser at rateHz. Omit entirely to skip it.'
+  },
+  room: {
+    signature: '.room(level: number) => Pattern<ControlPatch>',
+    doc: "Reverb send (0-1) to the voice's orbit bus. See roomsize()/orbit()."
+  },
+  roomsize: {
+    signature: '.roomsize(size: number) => Pattern<ControlPatch>',
+    doc: "The shared orbit bus's reverb decay character (roughly 1-10) — last-writer-wins across every voice on that orbit."
+  },
+  delay: {
+    signature: '.delay(level: number) => Pattern<ControlPatch>',
+    doc: "Delay send (0-1) to the voice's orbit bus. See delaytime()/delayfeedback()/orbit()."
+  },
+  delaytime: {
+    signature: '.delaytime(seconds: number) => Pattern<ControlPatch>',
+    doc: "The shared orbit bus's delay time — last-writer-wins across every voice on that orbit."
+  },
+  delayfeedback: {
+    signature: '.delayfeedback(amount: number) => Pattern<ControlPatch>',
+    doc: "The shared orbit bus's delay feedback amount."
+  },
+  orbit: {
+    signature: '.orbit(n: number) => Pattern<ControlPatch>',
+    doc: "Which shared reverb/delay bus the voice's room()/delay() sends target. Default 0, a non-negative integer, not patternable."
+  },
   nudge: {
     signature: '.nudge(seconds: number) => Pattern<ControlPatch>',
-    doc: 'Start-time offset in seconds applied to every event.'
+    doc: 'Start-time offset in seconds applied to every event. .late()/.early() are signed aliases.'
+  },
+  late: {
+    signature: '.late(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Signed alias of .nudge() — delays every event by seconds.'
+  },
+  early: {
+    signature: '.early(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Signed alias of .nudge() — moves every event seconds earlier.'
   },
   pan: {
     signature: '.pan(position: number) => Pattern<ControlPatch>',
@@ -248,6 +376,10 @@ const METHOD_NAMES = [
   'every',
   'euclid',
   'sound',
+  's',
+  'scale',
+  'voicing',
+  'bank',
   'attack',
   'decay',
   'sustain',
@@ -260,7 +392,17 @@ const METHOD_NAMES = [
   'lps',
   'lpr',
   'slide',
+  'hpf',
+  'phaser',
+  'room',
+  'roomsize',
+  'delay',
+  'delaytime',
+  'delayfeedback',
+  'orbit',
   'nudge',
+  'late',
+  'early',
   'pan',
   'channels',
   'surround',
@@ -580,6 +722,74 @@ return stack(
     note('c4 d4 f4 a4').sound('triangle').sustain(0.2)
   ).gain(0.5)
 );`
+      },
+      {
+        label: 'Neon drive (7.1)',
+        bpm: 110,
+        code: `// An 80s synthwave cruise built for a 7.1 rig: the arp orbits the whole
+// speaker ring (surround() isn't patternable, so cat() rotates eight fixed
+// copies, one angle per cycle), channels() spotlights exact speakers for the
+// side riser and rear zap, and the drums + lead hold the front on pan().
+
+// Front of house — drums on plain stereo.
+const kick = note('c1*4').sound('sine')
+  .attack(0.001).decay(0.12).sustain(0).release(0.05)
+  .gain(0.9).lpf(150).slide(0.05);
+const snare = sound('~ white ~ white')
+  .attack(0.001).decay(0.1).sustain(0).release(0.08)
+  .gain(0.5).hpf(900).lpf(6000);
+const hats = sound('white*8')
+  .attack(0).decay(0.02).sustain(0).release(0.01)
+  .gain(0.25).hpf(7000)
+  .pan('-0.6 0.6 -0.3 0.3'); // pan() is patternable — hats tick across the front
+
+const bass = cat(note('a1*8'), note('f1*8'), note('c2*8'), note('g1*8')) // Am F C G roots
+  .sound('sawtooth')
+  .attack(0.002).decay(0.1).sustain(0.3).release(0.05)
+  .gain(0.55).lpf(500);
+
+const pad = note('<[a2,c3,e3] [f2,a2,c3] [c3,e3,g3] [g2,b2,d3]>')
+  .sound('sawtooth')
+  .attack(0.06).decay(0.2).sustain(0.85).release(0.3)
+  .gain(0.25).lpf(1100).phaser(0.4);
+
+// The lead: two saw layers ~10 cents apart (detuned in plain JS), gliding on slide().
+const detuned = (line) => stack(
+  note(line),
+  note(line.split(' ').map((w) => (w === '~' ? w : (noteToFrequency(w) * 1.006).toFixed(1))).join(' '))
+);
+const lead = cat(detuned('a4 ~ c5 e5 ~ e5 d5 c5'), detuned('b4 ~ d5 ~ c5 ~ a4 ~'))
+  .sound('sawtooth')
+  .attack(0.01).decay(0.15).sustain(0.5).release(0.15)
+  .gain(0.3).lpf(2400)
+  .slide(0.09)
+  .pan('<-0.3 0.3>')
+  .delay(0.3).delaytime(0.41).delayfeedback(0.3); // ~a dotted eighth at 110 bpm
+
+// The showpiece: the arp laps the whole 7.1 ring, one 45° step per cycle.
+const arpNotes = note('a3 c4 e4 a4 c5 a4 e4 c4')
+  .sound('triangle')
+  .attack(0.002).decay(0.1).sustain(0.15).release(0.06)
+  .gain(0.4).lpf(2800);
+const orbitArp = cat(...[0, 45, 90, 135, 180, 225, 270, 315].map((a) => arpNotes.surround(a)));
+
+// Hand-built channels() spotlights — gains in CHANNEL_ORDER: FL FR C LFE SL SR RL RR.
+const sideRiser = sound('white').slow(2) // a 2-cycle swell in the sides (SL+SR) only
+  .attack(3.2).decay(0.3).sustain(0.5).release(0.4)
+  .gain(0.2).lpf(3500)
+  .channels([0, 0, 0, 0, 1, 1, 0, 0]);
+const rearZap = note('~ ~ ~ a5').sound('square') // answers beat 4 from dead behind (RL+RR)
+  .attack(0.001).decay(0.08).sustain(0).release(0.1)
+  .gain(0.3).slide(0.12)
+  .channels([0, 0, 0, 0, 0, 0, 0.9, 0.9]);
+
+// Intro -> build -> drop -> outro; each arrange() section restarts its own cycles at 0.
+return arrange(
+  [2, stack(pad, orbitArp.gain(0.2))],
+  [4, stack(pad, bass, hats, orbitArp, sideRiser)],
+  [8, stack(kick, snare, hats, bass, pad, lead, orbitArp, rearZap)],
+  [2, stack(pad, arpNotes.gain(0.25).surround(180))] // the arp parks dead-behind to close
+);`
       }
     ]
   }
@@ -751,11 +961,15 @@ export function initComposer(): void {
   }
 
   function loadScript(example: ComposerExample, autoLoop: boolean): void {
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: example.code } });
+    // dispatch() above triggers the updateListener below, which schedules its
+    // own debounced rebuild via scheduleRebuild() — clear it or it fires
+    // ~300ms later and restarts the loop we're about to start ourselves,
+    // sounding like every example (worst on short one-shots) plays twice.
     if (rebuildTimer !== undefined) {
       window.clearTimeout(rebuildTimer);
       rebuildTimer = undefined;
     }
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: example.code } });
     loopHandle?.stop();
     loopHandle = undefined;
     if (example.bpm !== undefined) {
