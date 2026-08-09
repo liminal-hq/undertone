@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -163,7 +163,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: npm-package
-          path: "*.tgz"
+          path: '*.tgz'
           if-no-files-found: error
 
   publish-release:
@@ -203,7 +203,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          registry-url: "https://registry.npmjs.org"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish package
         env:
