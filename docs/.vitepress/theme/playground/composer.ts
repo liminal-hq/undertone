@@ -744,6 +744,971 @@ return arrange(
 );`
       }
     ]
+  },
+  {
+    label: 'Songs',
+    examples: [
+      {
+        label: 'Velvet Basement',
+        bpm: 86,
+        code: `// "Velvet Basement" — cinematic trip-hop/downtempo, 80 bars.
+// A full port of a real song sketch onto the real API: chord()/.voicing()
+// for the harmonic bed, n()/.scale() for two melody motifs, s()/.bank()
+// sample playback over a tiny procedurally-generated placeholder drum kit
+// (undertone ships no bundled samples), and arrange() for the structure.
+
+// A decaying noise burst stands in for a real drum sample — the
+// AudioBuffer constructor form needs no AudioContext, so this can just
+// run inline instead of waiting for a play/loop button.
+function decayingNoiseBuffer(length, decay) {
+  const buffer = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: 44100 });
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-decay * (i / length));
+    }
+  }
+  return buffer;
+}
+
+registerSamples({
+  RolandTR707_bd: { buffer: decayingNoiseBuffer(4410, 4) },
+  RolandTR707_sd: { buffer: decayingNoiseBuffer(3000, 6) },
+  RolandTR707_hh: { buffer: decayingNoiseBuffer(800, 10) },
+  RolandTR707_rim: { buffer: decayingNoiseBuffer(500, 12) },
+  RolandTR909_oh: { buffer: decayingNoiseBuffer(2500, 5) }
+});
+
+// ATMOSPHERE — a barely-there filtered noise bed, just enough room tone.
+const air = s('pink').lpf(1600).attack(0.4).release(1).gain(0.018);
+
+// HARMONIC BED — chord() + .voicing().
+const chords = chord('<Dm9 BbM7 Gm9 A7sus>')
+  .voicing()
+  .sound('triangle')
+  .attack(0.35)
+  .release(1.4)
+  .lpf(1450)
+  .gain(0.16)
+  .room(0.55)
+  .roomsize(6)
+  .orbit(1);
+
+const chordsOpen = chord('<Dm9 BbM7 Gm9 A7sus>')
+  .voicing()
+  .sound('sawtooth')
+  .attack(0.3)
+  .release(1.2)
+  .lpf(2400)
+  .gain(0.11)
+  .room(0.65)
+  .roomsize(6)
+  .orbit(1);
+
+// BASS — patterned gain across the four-note pattern.
+const bass = note(
+  \`<
+    [d2 ~ d2 a1]
+    [bb1 ~ f2 a1]
+    [g1 ~ d2 f2]
+    [a1 ~ e2 g2]
+  >\`
+)
+  .sound('sawtooth')
+  .release(0.3)
+  .lpf(1050)
+  .gain('.68 .5 .6 .55');
+
+// MAIN BREAK — s()/.bank() sample playback.
+const breakbeat = stack(
+  s('bd ~ [~ bd] ~').bank('RolandTR707').gain(0.72),
+  s('~ sd ~ sd').bank('RolandTR707').gain(0.58).room(0.08).orbit(2),
+  s('hh [~ hh] hh [hh ~]').bank('RolandTR707').gain(0.19).late(0.008),
+  s('~ ~ rim ~').bank('RolandTR707').gain(0.1).late(0.018)
+);
+
+const breakbeatOpen = stack(
+  s('bd ~ [~ bd] [bd ~]').bank('RolandTR707').gain(0.75),
+  s('~ sd ~ sd').bank('RolandTR707').gain(0.61).room(0.1).orbit(2),
+  s('hh*8').bank('RolandTR707').gain(0.16).late(0.009),
+  s('~ rim [~ rim] ~').bank('RolandTR707').gain(0.09).late(0.02),
+  s('~ ~ ~ oh').bank('RolandTR909').gain(0.075)
+);
+
+// "FOUND MEMORY" MOTIF — n()/.scale().
+const memory = n(
+  \`<
+    [0 ~ 4 2]
+    [~ 3 ~ 1]
+    [0 2 ~ 5]
+    [~ 1 4 ~]
+  >\`
+)
+  .scale('D5:minor')
+  .sound('triangle')
+  .decay(0.13)
+  .sustain(0)
+  .gain(0.15)
+  .room(0.78)
+  .roomsize(8)
+  .delay(0.22)
+  .delaytime(0.28)
+  .delayfeedback(0.4)
+  .orbit(3);
+
+const memoryGhost = n(
+  \`<
+    [0 ~ ~ 2]
+    [~ 3 ~ ~]
+    [0 ~ ~ 5]
+    [~ ~ 4 ~]
+  >\`
+)
+  .scale('D6:minor')
+  .sound('triangle')
+  .decay(0.08)
+  .sustain(0)
+  .gain(0.055)
+  .room(0.9)
+  .roomsize(9)
+  .orbit(3);
+
+// MUTED GUITAR FRAGMENTS — hpf.
+const guitar = note(
+  \`<
+    [d4 ~ ~ a3]
+    [~ f4 ~ ~]
+    [g3 ~ d4 ~]
+    [~ e4 ~ a3]
+  >\`
+)
+  .sound('square')
+  .release(0.12)
+  .hpf(300)
+  .lpf(1900)
+  .gain(0.16)
+  .room(0.3)
+  .delay(0.15)
+  .orbit(4);
+
+// COUNTERLINE — n()/.scale() again, plus a phaser for texture.
+const counter = n(
+  \`<
+    [~ 4 ~ 3]
+    [2 ~ ~ 4]
+    [~ 1 2 ~]
+    [3 ~ 1 ~]
+  >\`
+)
+  .scale('D4:minor')
+  .sound('sine')
+  .attack(0.08)
+  .release(0.6)
+  .phaser(0.4)
+  .gain(0.11)
+  .room(0.55)
+  .orbit(1);
+
+// SECTIONS
+const intro = stack(air, chords, memory);
+const bodyA = stack(air, chords, bass, breakbeat, memory);
+const lift = stack(air, chords, chordsOpen, bass, breakbeatOpen, memory, memoryGhost, guitar);
+const bodyB = stack(air, chords, bass, breakbeat, memory, guitar, counter);
+const breakdown = stack(air, chords, memoryGhost, guitar);
+const returnFull = stack(
+  air,
+  chords,
+  chordsOpen,
+  bass,
+  breakbeatOpen,
+  memory,
+  memoryGhost,
+  guitar,
+  counter
+);
+const outro = stack(air, chords, memory);
+
+// ARRANGEMENT — 80 bars, matching the original sketch's structure exactly.
+return arrange(
+  [8, intro],
+  [16, bodyA],
+  [8, lift],
+  [16, bodyB],
+  [8, breakdown],
+  [16, returnFull],
+  [8, outro]
+);`
+      },
+      {
+        label: 'Velvet Procession',
+        bpm: 72,
+        code: `// "Velvet Procession II" — acoustic/orchestral/electronic trip-hop, 63 bars.
+// A full port: dry plucked strings up front, a wobbling string bed and
+// piano-synth pulse behind, resonant bass, restrained drums, and distant
+// vocal texture — all synthesized (no bundled samples), arranged so the
+// opening evolves every 1-2 bars instead of holding a static intro.
+
+function decayingNoiseBuffer(length, decay) {
+  const buffer = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: 44100 });
+  for (let channel = 0; channel < 2; channel++) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-decay * (i / length));
+    }
+  }
+  return buffer;
+}
+
+registerSamples({
+  RolandTR707_bd: { buffer: decayingNoiseBuffer(4410, 4) },
+  RolandTR707_sd: { buffer: decayingNoiseBuffer(3000, 6) },
+  RolandTR707_hh: { buffer: decayingNoiseBuffer(800, 10) },
+  RolandTR707_rim: { buffer: decayingNoiseBuffer(500, 12) },
+  RolandTR707_oh: { buffer: decayingNoiseBuffer(2500, 5) }
+});
+
+// AIR — almost subliminal room tone, not "noise texture".
+const air = s('pink').hpf(3400).lpf(7800).gain(0.0045).room(0.48).roomsize(5).orbit(30);
+
+// PLUCKED STRING FRONT — short attack, common tones carried between chords.
+const pizz = note(
+  \`<
+    [a3 e4 a4 c5 e5 c5]
+    [a3 e4 a4 c5 e5 a4]
+    [g3 e4 g4 c5 e5 g4]
+    [g3 d4 g4 a4 d5 a4]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.002)
+  .release(0.32)
+  .hpf(180)
+  .lpf(5000)
+  .gain('.155 .12 .145 .12 .16 .115')
+  .room(0.15)
+  .orbit(1);
+
+// PLUCK TONAL TAIL — the "taaah..." after the pluck's "TAK".
+const pizzTail = note(
+  \`<
+    [a4 e5 c5 e5]
+    [a4 e5 c5 e5]
+    [g4 e5 c5 e5]
+    [g4 d5 a4 d5]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.008)
+  .release(0.48)
+  .hpf(400)
+  .lpf(2800)
+  .gain(0.032)
+  .room(0.46)
+  .roomsize(4.5)
+  .orbit(31);
+
+// PLUCK ROOM — a few plucks get a separate distant reflection.
+const pizzRoom = note(
+  \`<
+    [~ ~ a5 ~ ~ c5]
+    [~ ~ ~ ~ e5 ~]
+    [~ e5 ~ ~ ~ g5]
+    [~ ~ g5 ~ d5 ~]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.002)
+  .release(0.65)
+  .hpf(650)
+  .lpf(4300)
+  .gain(0.027)
+  .room(0.86)
+  .roomsize(8)
+  .delay(0.12)
+  .pan('<-0.5 0.44 -0.24 0.34>')
+  .orbit(32);
+
+// LOW PLUCK
+const pizzLow = note(
+  \`<
+    [a2 ~ e3 ~]
+    [f2 ~ c3 ~]
+    [c3 ~ g2 ~]
+    [g2 ~ d3 ~]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.002)
+  .release(0.38)
+  .lpf(2200)
+  .gain(0.1)
+  .room(0.17)
+  .orbit(2);
+
+// WOBBLING VIOLIN BED — a continuously breathing ensemble behind the plucks.
+const violins = chord('<Amadd9 Fmaj7 C6 Gsus2>')
+  .voicing()
+  .sound('sawtooth')
+  .attack(0.32)
+  .release(1.15)
+  .lpf(2600)
+  .gain(0.052)
+  .phaser(1.6)
+  .room(0.54)
+  .roomsize(6)
+  .orbit(3);
+
+// WOBBLING SHADOW — a slightly delayed second ensemble for motion.
+const violinsShadow = chord('<Amadd9 Fmaj7 C6 Gsus2>')
+  .voicing()
+  .sound('sawtooth')
+  .attack(0.42)
+  .release(1.2)
+  .hpf(420)
+  .lpf(3400)
+  .gain(0.02)
+  .late(0.014)
+  .phaser(0.9)
+  .room(0.72)
+  .roomsize(7.5)
+  .pan('<-0.36 0.36>')
+  .orbit(4);
+
+// ACOUSTIC GUITAR — human/wooden rhythmic element between the plucks.
+const guitar = note(
+  \`<
+    [a3 ~ e4 ~ c4 e4]
+    [f3 ~ c4 ~ a3 c4]
+    [c4 ~ g3 ~ e4 g4]
+    [g3 ~ d4 ~ b3 d4]
+  >\`
+)
+  .sound('square')
+  .attack(0.002)
+  .release(0.24)
+  .hpf(100)
+  .lpf(5400)
+  .gain(0.19)
+  .room(0.09)
+  .orbit(5);
+
+const guitarBody = note(
+  \`<
+    [a2 ~ ~ e3]
+    [f2 ~ ~ c3]
+    [c3 ~ ~ g2]
+    [g2 ~ d3 ~]
+  >\`
+)
+  .sound('square')
+  .attack(0.004)
+  .release(0.38)
+  .lpf(2300)
+  .gain(0.09)
+  .room(0.16)
+  .orbit(5);
+
+// FAKE PICK NOISE — a tiny physical "tk/sk/chk" under selected notes.
+const pickNoise = s(
+  \`<
+    [white ~ white ~ [white white] ~]
+    [white ~ ~ white ~ white]
+    [white ~ white ~ ~ white]
+    [white ~ [white white] ~ white ~]
+  >\`
+)
+  .attack(0.001)
+  .decay(0.009)
+  .sustain(0)
+  .release(0.012)
+  .hpf(4300)
+  .lpf(8500)
+  .gain('.010 .006 .012 .007')
+  .pan('<-0.16 0.16 -0.08 0.08>')
+  .orbit(33);
+
+// GUITAR ROOM THROW
+const guitarRoom = note(
+  \`<
+    ~
+    [~ ~ ~ ~ c4 ~]
+    ~
+    [~ d4 ~ ~ ~ ~]
+  >\`
+)
+  .sound('square')
+  .attack(0.003)
+  .release(0.62)
+  .hpf(450)
+  .lpf(3900)
+  .gain(0.031)
+  .room(0.89)
+  .roomsize(8)
+  .delay(0.15)
+  .pan('<-0.46 0.46>')
+  .orbit(34);
+
+// PIANO-SYNTH PULSE — the layer pulling the song along.
+const pianoPulse = note(
+  \`<
+    [a3 ~ e4 ~]
+    [f3 ~ c4 ~]
+    [c4 ~ g3 ~]
+    [g3 ~ d4 ~]
+  >\`
+)
+  .sound('sine')
+  .attack(0.008)
+  .release(0.62)
+  .hpf(150)
+  .lpf(3500)
+  .gain(0.16)
+  .phaser(0.7)
+  .room(0.3)
+  .roomsize(3.8)
+  .orbit(6);
+
+// PIANO UPPER SHIMMER — a faint upper component.
+const pianoGlow = note(
+  \`<
+    [e5 ~ c5 ~]
+    [e5 ~ c5 ~]
+    [e5 ~ g4 ~]
+    [d5 ~ a4 ~]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.012)
+  .release(0.58)
+  .hpf(800)
+  .lpf(3900)
+  .gain(0.025)
+  .room(0.68)
+  .roomsize(6)
+  .delay(0.09)
+  .orbit(35);
+
+// ACOUSTIC/UPRIGHT BASS — enters early, pulls the harmony forward.
+const bass = note(
+  \`<
+    [a2 ~ e3 a2]
+    [f2 ~ c3 a2]
+    [c3 ~ g2 e3]
+    [g2 d3 e3 g2]
+  >\`
+)
+  .sound('sawtooth')
+  .attack(0.009)
+  .release(0.68)
+  .lpf(1550)
+  .gain('.44 .39 .42 .37')
+  .room(0.12)
+  .orbit(7);
+
+const bassBody = note('<a1 f1 c2 g1>')
+  .sound('sine')
+  .attack(0.035)
+  .release(1.35)
+  .lpf(235)
+  .gain(0.105)
+  .room(0.23)
+  .roomsize(4)
+  .orbit(36);
+
+// BASS ROOM HARMONICS — reverb the upper body only, not the sub-bass.
+const bassRoom = note(
+  \`<
+    [a2 ~ ~ e3]
+    [f2 ~ ~ c3]
+    [c3 ~ ~ g2]
+    [g2 ~ d3 ~]
+  >\`
+)
+  .sound('sawtooth')
+  .attack(0.01)
+  .release(0.82)
+  .hpf(170)
+  .lpf(1150)
+  .gain(0.05)
+  .room(0.62)
+  .roomsize(6)
+  .orbit(37);
+
+const bassTurn = note(
+  \`<
+    ~
+    ~
+    ~
+    [~ d3 e3 g3]
+  >\`
+)
+  .sound('sawtooth')
+  .attack(0.008)
+  .release(0.24)
+  .lpf(1800)
+  .gain(0.18)
+  .room(0.14)
+  .orbit(7);
+
+// DRUMS — sparse, providing weight and transitions rather than a groove.
+const kick = s(
+  \`<
+    [bd ~ ~ ~]
+    [bd ~ ~ bd]
+    [bd ~ ~ ~]
+    [bd ~ [~ bd] ~]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain(0.48)
+  .orbit(8);
+
+const snare = s(
+  \`<
+    [~ sd ~ ~]
+    [~ sd ~ ~]
+    [~ sd ~ ~]
+    [~ sd ~ sd]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain(0.34)
+  .hpf(520)
+  .room(0.045)
+  .orbit(8);
+
+const snareRoom = s(
+  \`<
+    [~ sd ~ ~]
+    [~ sd ~ ~]
+    [~ sd ~ ~]
+    [~ sd ~ sd]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain(0.05)
+  .hpf(850)
+  .lpf(6100)
+  .room(0.88)
+  .roomsize(7.5)
+  .orbit(38);
+
+const drumGhost = s(
+  \`<
+    [~ ~ [sd ~] ~]
+    [~ rim ~ ~]
+    [~ ~ [sd ~] ~]
+    [~ rim [~ sd] ~]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain(0.065)
+  .hpf(1150)
+  .room(0.19)
+  .orbit(9);
+
+const hats = s(
+  \`<
+    ~
+    ~
+    ~
+    [~ hh [hh hh] oh]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain('.065 .08 .055 .06')
+  .hpf(4800)
+  .room(0.19)
+  .orbit(10);
+
+const drumTurn = s(
+  \`<
+    ~
+    ~
+    ~
+    [~ rim [sd rim] [sd sd]]
+  >\`
+)
+  .bank('RolandTR707')
+  .gain(0.092)
+  .hpf(1050)
+  .room(0.25)
+  .roomsize(3)
+  .orbit(11);
+
+const drums = stack(kick, snare, snareRoom, drumGhost, hats, drumTurn);
+
+const drumsOpen = stack(
+  kick,
+  snare,
+  snareRoom,
+  drumGhost,
+  hats,
+  drumTurn,
+  s(
+    \`<
+      ~
+      [~ ~ rim ~]
+      ~
+      [~ rim ~ rim]
+    >\`
+  )
+    .bank('RolandTR707')
+    .gain(0.047)
+    .hpf(1900)
+    .pan('<-0.44 0.44>')
+);
+
+// HIGH PIZZICATO DETAIL — introduced later, makes the orchestration feel larger.
+const pizzHigh = note(
+  \`<
+    [~ e5 ~ c5]
+    [~ e5 ~ a4]
+    [g5 ~ e5 ~]
+    [~ d5 ~ a4]
+  >\`
+)
+  .sound('triangle')
+  .attack(0.002)
+  .release(0.26)
+  .hpf(650)
+  .lpf(5800)
+  .gain(0.06)
+  .room(0.35)
+  .pan('<0.4 -0.4 0.26 -0.26>')
+  .orbit(12);
+
+// STRING PHRASE LIFT — a brief rise at the transition.
+const stringLift = note(
+  \`<
+    ~
+    ~
+    ~
+    [a4 c5 e5 a5]
+  >\`
+)
+  .sound('sawtooth')
+  .attack(0.1)
+  .release(0.72)
+  .hpf(380)
+  .lpf(4100)
+  .gain(0.064)
+  .room(0.69)
+  .roomsize(7)
+  .orbit(13);
+
+// DISTANT "LA LA" SUBSTITUTE — human voice as soundscape, not constant.
+const ghostVox = note(
+  \`<
+    ~
+    [~ e5 ~ a4]
+    ~
+    [~ d5 e5 ~]
+  >\`
+)
+  .sound('sine')
+  .attack(0.22)
+  .release(1.05)
+  .hpf(520)
+  .lpf(3100)
+  .gain(0.029)
+  .room(0.93)
+  .roomsize(9)
+  .delay(0.17)
+  .pan('<0.4 -0.4 0.24 -0.24>')
+  .orbit(14);
+
+const ghostVoxFar = note(
+  \`<
+    ~
+    ~
+    [~ ~ c6 ~]
+    ~
+  >\`
+)
+  .sound('sine')
+  .attack(0.35)
+  .release(1.4)
+  .hpf(900)
+  .lpf(2900)
+  .gain(0.01)
+  .late(0.017)
+  .room(0.97)
+  .roomsize(10)
+  .delay(0.29)
+  .orbit(15);
+
+// LITTLE ELECTRONIC DETAIL — one small synthetic object wandering the room.
+const glassTick = note(
+  \`<
+    ~
+    [~ ~ ~ e6]
+    ~
+    [~ b5 ~ ~]
+  >\`
+)
+  .sound('triangle')
+  .decay(0.038)
+  .sustain(0)
+  .hpf(1700)
+  .lpf(5100)
+  .gain(0.022)
+  .delay(0.19)
+  .room(0.46)
+  .pan('<-0.48 0.5>')
+  .orbit(16);
+
+// SECTIONS — the opening deliberately evolves every 1-2 bars.
+const seed = stack(air, pizz, pizzTail, guitar, pickNoise);
+
+const bloom = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins
+);
+
+const pulse = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow
+);
+
+// Low end arrives; drums begin quietly.
+const foundation = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bass,
+  bassBody,
+  bassRoom,
+  drums,
+  glassTick
+);
+
+const verseA = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzLow,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  pianoPulse,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drums,
+  glassTick
+);
+
+const liftA = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  pizzHigh,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drumsOpen,
+  stringLift,
+  ghostVox,
+  glassTick
+);
+
+// Pull density back for verse B, but retain memories of the lift.
+const verseB = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzLow,
+  pizzHigh,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  pianoPulse,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drums,
+  ghostVoxFar,
+  glassTick
+);
+
+const liftB = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  pizzHigh,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drumsOpen,
+  stringLift,
+  ghostVox,
+  ghostVoxFar,
+  glassTick
+);
+
+// Drums vanish but piano/pluck/guitar stay in motion — don't stop the song.
+const suspended = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  guitar,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bassBody,
+  bassRoom,
+  ghostVox,
+  ghostVoxFar
+);
+
+// Bass attack + drums reappear.
+const returnSection = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  pizzHigh,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drumsOpen,
+  stringLift,
+  ghostVox,
+  glassTick
+);
+
+// Biggest soundscape: front (guitar/pluck/drums), middle (piano/bass/tails),
+// back (violin wobble/reverb/voices).
+const finalLift = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  pizzLow,
+  pizzHigh,
+  guitar,
+  guitarBody,
+  pickNoise,
+  guitarRoom,
+  violins,
+  violinsShadow,
+  pianoPulse,
+  pianoGlow,
+  bass,
+  bassBody,
+  bassRoom,
+  bassTurn,
+  drumsOpen,
+  stringLift,
+  ghostVox,
+  ghostVoxFar,
+  glassTick
+);
+
+// Pull the obvious beat away; leave the room ringing.
+const outro = stack(
+  air,
+  pizz,
+  pizzTail,
+  pizzRoom,
+  guitar,
+  pickNoise,
+  guitarRoom,
+  violinsShadow,
+  pianoGlow,
+  bassBody,
+  bassRoom,
+  ghostVoxFar
+);
+
+// ARRANGEMENT — 63 bars total.
+return arrange(
+  [1, seed],
+  [1, bloom],
+  [2, pulse],
+  [4, foundation],
+  [8, verseA],
+  [8, liftA],
+  [8, verseB],
+  [8, liftB],
+  [4, suspended],
+  [8, returnSection],
+  [8, finalLift],
+  [3, outro]
+);`
+      }
+    ]
   }
 ];
 
