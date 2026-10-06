@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.svg" alt="Undertone — procedural one-shot sound effects for games" width="100%">
+  <img src="assets/hero.svg" alt="Undertone — procedural sound effects, loops and songs from one pattern" width="100%">
 </p>
 
 Undertone is a procedural synth engine for games and music, built directly on the Web Audio API — one-shot sound effects, looped grooves, and full multi-section songs, all from the same pattern. Everything is a pattern: a UI blip is a pattern you play once, a melody is a pattern you loop, a whole track is patterns arranged end to end.
