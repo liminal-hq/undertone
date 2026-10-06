@@ -215,7 +215,7 @@ jobs:
             echo "No npm package tarball found in release-assets/" >&2
             exit 1
           fi
-          npm publish "${TARBALL}" --access public --provenance
+          npm publish "./${TARBALL}" --access public --provenance
 
       - name: Write summary
         run: echo "## Published ${{ needs.prepare-release.outputs.tag_name }} to npm" >> "${GITHUB_STEP_SUMMARY}"
