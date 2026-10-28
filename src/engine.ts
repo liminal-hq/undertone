@@ -144,14 +144,15 @@ function claimCutGroup(
     outputs.set(output, groups);
   }
   const previous = groups.get(group);
-  // A voice scheduled to start earlier than the current holder (out-of-order nudges)
-  // must not choke it; it only joins the group if it is the latest onset.
   if (previous && previous.startTime < handle.startTime) {
     previous.stop(handle.startTime, { fade: CUT_FADE_SECONDS });
+  } else if (previous && handle.startTime < previous.startTime) {
+    // Booked out of order: the later voice already holds the group, so the earlier
+    // one is choked at the holder's onset and the holder stays the group's owner.
+    handle.stop(previous.startTime, { fade: CUT_FADE_SECONDS });
+    return;
   }
-  if (!previous || previous.startTime <= handle.startTime) {
-    groups.set(group, handle);
-  }
+  groups.set(group, handle);
 }
 
 /** Combines several playbacks into one handle covering all of them. */
