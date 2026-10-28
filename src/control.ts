@@ -50,7 +50,7 @@ export function sound(input: SoundType | string): Pattern<ControlPatch> {
 
 /**
  * Starts a pattern of synth voices or registered samples: a word matching one
- * of the seven synth SoundTypes behaves exactly like sound(); any other word
+ * of the ten synth SoundTypes behaves exactly like sound(); any other word
  * becomes a sample name (see samples.ts's registerSample()), validated
  * against the registry at play time rather than here, since registration can
  * happen after the pattern is built. Accepts a mini-notation string

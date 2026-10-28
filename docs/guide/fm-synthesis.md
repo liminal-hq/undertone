@@ -60,13 +60,13 @@ Three more waveforms are cut from a sine, and they work both as a voice's sound 
 
 - `halfsine`: the positive half of a sine, then silence. A hollow, reedy tone.
 - `abssine`: both halves of the sine flipped positive. It sounds an octave up and buzzier, because the shape repeats twice per cycle.
-- `pulsesine`: a short pulse of sine at the start of each half-cycle. Thin and nasal.
+- `pulsesine`: a short pulse of sine at the start of each half-cycle. Thin and nasal, and like `abssine` it repeats twice per cycle, so it also sounds an octave up.
 
 ```ts
 note('c3 e3 g3 e3').sound('abssine').fm(1.5).fmh(2).fmwave('halfsine').loop();
 ```
 
-They are band-limited to 64 harmonics, so they stay clean at ordinary pitches, and like any waveform without a DC offset they will not shift the pitch of whatever they modulate. As a modulator a shaped wave modulates the frequency directly, the same as `triangle` or `square` does. A sample registered under one of these three names is shadowed by the waveform, and a context without `createPeriodicWave` plays them as a sine.
+They are band-limited to 64 harmonics, so they stay clean at ordinary pitches, and like any waveform without a DC offset they will not shift the pitch of whatever they modulate. As a modulator a shaped wave modulates the frequency directly, the same as `triangle` or `square` does. Because `abssine` and `pulsesine` repeat twice per cycle, using either as the _modulator_ doubles its effective ratio, and since the depth is worked out from `fmh` and the note's frequency, it also halves the effective index. Raise `.fm()` or halve `.fmh()` to compensate if you want the sound you had with a sine. A sample registered under one of these three names is shadowed by the waveform, and a context without `createPeriodicWave` plays them as a sine.
 
 ## Where to go next
 

@@ -129,7 +129,7 @@ sample that isn't decoded yet is silently skipped for that one onset (with a onc
 console warning) and picked up by later onsets once decoding finishes.
 
 `s(input)` (and the chainable `.s(name)`) work like `sound()`, except any word that isn't one of
-the seven synth types becomes a sample name instead of throwing — `s("bd sd hh")`,
+the ten synth types (four oscillators, three shaped sines, three noise colours) becomes a sample name instead of throwing — `s("bd sd hh")`,
 `note('c3').s('gm_acoustic_bass')`. `.bank(name)` is a lookup convention, not a loader: it tries
 `` `${name}_${sampleName}` `` before falling back to the bare sample name, so registering
 `registerSample('RolandTR707_bd', ...)` lets `s('bd').bank('RolandTR707')` find it.
