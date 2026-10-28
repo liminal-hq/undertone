@@ -6,7 +6,8 @@
 export { chord, n, note, s, sound } from './control.js';
 export { playParams, resolveParams } from './engine.js';
 export { buildImpulseResponse, getOrbitBus } from './effects.js';
-export { drift, seededRandom } from './drift.js';
+export { drift } from './drift.js';
+export { seededRandom } from './random.js';
 export { fmPresets, fmVoice, layer } from './instruments.js';
 export { createMasterBus } from './masterBus.js';
 export { createMonoFold } from './monoFold.js';

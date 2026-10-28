@@ -5,7 +5,8 @@
 
 import { describe, expect, it } from 'vitest';
 import { note } from './control';
-import { drift, seededRandom } from './drift';
+import { drift } from './drift';
+import { seededRandom } from './random';
 import { Fraction } from './fraction';
 import { fmPresets, fmVoice, layer } from './instruments';
 import { createMonoFold } from './monoFold';
