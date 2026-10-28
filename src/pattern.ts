@@ -371,6 +371,66 @@ export class Pattern<T> {
   }
 
   /**
+   * Explicit gate length in seconds: the envelopes hold at their sustain level
+   * for this long, then release — independent of the event's length in the
+   * pattern, and also in a one-shot play(). Needs a sustain above 0 to hold.
+   * Accepts a mini-notation string to pattern it.
+   */
+  duration(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('duration', seconds, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`duration() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Gate length as a fraction of each event's own length (`.legato(0.5)` holds
+   * half of it, `.legato(1)` all of it). Gates even in a one-shot play(), and
+   * is overridden by an explicit duration(). Accepts a mini-notation string to
+   * pattern it.
+   */
+  legato(this: Pattern<ControlPatch>, fraction: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('legato', fraction, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`legato() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Note strength: multiplies the peak amplitude only, so one instrument keeps
+   * its timbre from a ghost note (0.3) to an accent (1). Accepts a
+   * mini-notation string to pattern it.
+   */
+  velocity(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('velocity', level, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`velocity() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Cut group (Strudel/Tidal `cut`): a new event in the same group stops the
+   * previous one with a very short fade — a closed hi-hat choking an open one,
+   * or a monophonic line retriggering. The same number on different patterns
+   * shares one group. Not patternable, like orbit().
+   */
+  cut(this: Pattern<ControlPatch>, group: number): Pattern<ControlPatch> {
+    if (!Number.isInteger(group) || group < 0) {
+      throw new Error(`cut() must be a non-negative integer, got ${group}`);
+    }
+    return this.withPatch({ cutGroup: group });
+  }
+
+  /**
    * Start-time offset in seconds applied to every event when played. Accepts a
    * mini-notation string to pattern it.
    */

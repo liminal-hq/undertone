@@ -84,6 +84,26 @@ export interface VoiceParams {
    * undefined. The scheduler sets this from each event's pattern duration.
    */
   duration?: number;
+  /**
+   * Gate length as a fraction of the event's own length in the pattern (1 = the
+   * whole event, 0.5 = half of it). Applied by the pattern scheduler when it
+   * turns events into voices, and forces a gate even in an ungated play().
+   * Ignored when an explicit `duration` is set, and by playParams() (which has
+   * no event lengths).
+   */
+  legato?: number;
+  /**
+   * Strength of this note, multiplying the peak amplitude only (not the
+   * envelope shape or any other control). Lets one instrument keep its
+   * identity from a ghost note to an accent. Default 1.
+   */
+  velocity?: number;
+  /**
+   * Cut group: a new voice in the same (context, output, group) stops the
+   * previous voice in it with a very short fade, like a hi-hat choke or a
+   * monophonic channel retriggering.
+   */
+  cutGroup?: number;
 }
 
 /**

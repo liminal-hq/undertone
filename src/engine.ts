@@ -75,6 +75,7 @@ const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper no
 const PHASER_CENTER_HZ = 1000;
 const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the centre
 const DEFAULT_STOP_FADE_SECONDS = 0.01; // short enough to feel immediate, long enough to avoid a click
+const CUT_FADE_SECONDS = 0.005; // fast enough to feel like a choke, slow enough not to click
 const STOP_FADE_TIME_CONSTANTS = 5; // setTargetAtTime reaches ~99% of the way after five time constants
 
 /** Options for stopping a playing voice (or a whole playback) early. */
@@ -110,6 +111,41 @@ export interface OutputOptions {
 
 interface Stoppable {
   stop(when?: number): void;
+}
+
+// The most recent voice per cut group, per (context, output). WeakMap on the
+// context so a discarded context takes its registry with it.
+const cutGroupsByContext = new WeakMap<
+  AudioContextLike,
+  Map<AudioNodeLike, Map<number, PlaybackHandle>>
+>();
+
+/** Stops the previous voice in `group` at `at`, then records `handle` as the group's current voice. */
+function claimCutGroup(
+  ctx: AudioContextLike,
+  output: AudioNodeLike,
+  group: number,
+  handle: PlaybackHandle
+): void {
+  let outputs = cutGroupsByContext.get(ctx);
+  if (!outputs) {
+    outputs = new Map();
+    cutGroupsByContext.set(ctx, outputs);
+  }
+  let groups = outputs.get(output);
+  if (!groups) {
+    groups = new Map();
+    outputs.set(output, groups);
+  }
+  const previous = groups.get(group);
+  // A voice scheduled to start earlier than the current holder (out-of-order nudges)
+  // must not choke it; it only joins the group if it is the latest onset.
+  if (previous && previous.startTime < handle.startTime) {
+    previous.stop(handle.startTime, { fade: CUT_FADE_SECONDS });
+  }
+  if (!previous || previous.startTime <= handle.startTime) {
+    groups.set(group, handle);
+  }
 }
 
 /** Combines several playbacks into one handle covering all of them. */
@@ -242,7 +278,7 @@ export function playVoice(
     gainNode.gain,
     voiceStart,
     0,
-    params.gainLevel,
+    params.gainLevel * (params.velocity ?? 1),
     params.attack,
     params.decay,
     params.sustain,
@@ -334,7 +370,7 @@ export function playVoice(
   source.start(voiceStart);
   source.stop(voiceEnd);
 
-  return {
+  const handle: PlaybackHandle = {
     startTime: voiceStart,
     endTime: voiceEnd,
     stop(when = ctx.currentTime, stopOptions = {}) {
@@ -364,6 +400,11 @@ export function playVoice(
       }
     }
   };
+
+  if (params.cutGroup !== undefined) {
+    claimCutGroup(ctx, output, params.cutGroup, handle);
+  }
+  return handle;
 }
 
 /**

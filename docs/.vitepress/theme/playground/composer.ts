@@ -305,6 +305,22 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.early(seconds: number) => Pattern<ControlPatch>',
     doc: 'Signed alias of .nudge() — moves every event seconds earlier.'
   },
+  duration: {
+    signature: '.duration(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Explicit gate: hold the envelopes at their sustain level for seconds, then release. Needs a sustain above 0.'
+  },
+  legato: {
+    signature: '.legato(fraction: number) => Pattern<ControlPatch>',
+    doc: "Gate as a fraction of each event's own length. Gates even a one-shot; .duration() overrides it."
+  },
+  velocity: {
+    signature: '.velocity(level: number) => Pattern<ControlPatch>',
+    doc: 'Note strength: multiplies the peak amplitude only, so one instrument keeps its timbre from ghost note to accent.'
+  },
+  cut: {
+    signature: '.cut(group: number) => Pattern<ControlPatch>',
+    doc: 'Cut group: a new event in the same group stops the previous one with a very short fade. A non-negative integer, not patternable.'
+  },
   pan: {
     signature: '.pan(position: number) => Pattern<ControlPatch>',
     doc: 'Stereo position, -1 (hard left) to 1 (hard right).'
@@ -361,6 +377,10 @@ const METHOD_NAMES = [
   'nudge',
   'late',
   'early',
+  'duration',
+  'legato',
+  'velocity',
+  'cut',
   'pan',
   'channels',
   'surround',

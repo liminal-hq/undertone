@@ -163,9 +163,16 @@ function scheduleSpan(
       continue; // a tail overlapping the window, not an onset — already scheduled
     }
     const startTime = patternStartTime + hap.whole.begin.toNumber() * cycleSeconds;
-    const patch = gated
-      ? { duration: hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds, ...hap.value }
-      : hap.value;
+    const eventSeconds = hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds;
+    // An explicit .duration() wins; .legato() scales the event's own length and
+    // gates even a one-shot; otherwise a gated span holds for the whole event.
+    const legato = hap.value.legato;
+    const patch =
+      legato !== undefined
+        ? { duration: eventSeconds * legato, ...hap.value }
+        : gated
+          ? { duration: eventSeconds, ...hap.value }
+          : hap.value;
     handles.push(playVoice(ctx, resolveParams(patch), startTime, output));
   }
   return handles;
