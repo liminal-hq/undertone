@@ -21,7 +21,7 @@ note('e5 b5 g5 d6').fm(1.4).fmh(3.5).attack(0.002).decay(0.6).release(0.8).gain(
 | `.fmh(ratio)`                                                    | Harmonicity: modulator frequency ÷ note frequency. Whole numbers sound like a harmonic, richer note; fractions (3.5, 2.76) sound like bells and metal.   |
 | `.fmattack(s)` `.fmdecay(s)` `.fmsustain(level)` `.fmrelease(s)` | An envelope on the modulator's depth, separate from the amplitude envelope: a quick-decaying modulator is a bright attack that settles into a soft tone. |
 | `.fmenv('lin' \| 'exp')`                                         | Whether those envelope stages ramp exponentially (default, as in Strudel) or linearly.                                                                   |
-| `.fmwave(type)`                                                  | The modulator's waveform: `sine` (default), `triangle`, `square` or `sawtooth`.                                                                          |
+| `.fmwave(type)`                                                  | The modulator's waveform: `sine` (default), `triangle`, `square`, `sawtooth` or a [shaped wave](#shaped-waveforms).                                      |
 
 Every numeric FM control accepts a mini-notation string, like the rest of the controls, so `.fm('1 3 2 6')` changes the index per note. `.fmenv()` and `.fmwave()` are chosen once for the pattern.
 
@@ -53,6 +53,20 @@ A decay on its own falls toward silence, as in Strudel; add `.fmsustain()` to se
 ```ts
 note('a3').fm(3).fmh(2).penv(-12).pdecay(0.25).decay(0.3).play();
 ```
+
+## Shaped waveforms
+
+Three more waveforms are cut from a sine, and they work both as a voice's sound and as the modulator. They give FM a wider palette of starting timbres than a plain sine, triangle, square or sawtooth:
+
+- `halfsine`: the positive half of a sine, then silence. A hollow, reedy tone.
+- `abssine`: both halves of the sine flipped positive. It sounds an octave up and buzzier, because the shape repeats twice per cycle.
+- `pulsesine`: a short pulse of sine at the start of each half-cycle. Thin and nasal.
+
+```ts
+note('c3 e3 g3 e3').sound('abssine').fm(1.5).fmh(2).fmwave('halfsine').loop();
+```
+
+They are band-limited to 64 harmonics, so they stay clean at ordinary pitches, and like any waveform without a DC offset they will not shift the pitch of whatever they modulate. As a modulator a shaped wave modulates the frequency directly, the same as `triangle` or `square` does. A sample registered under one of these three names is shadowed by the waveform, and a context without `createPeriodicWave` plays them as a sine.
 
 ## Where to go next
 

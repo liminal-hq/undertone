@@ -4,8 +4,10 @@
 // SPDX-License-Identifier: MIT
 
 export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
+/** Waveforms cut from a sine: a half-wave rectified sine, a full-wave rectified (absolute) sine, and a pulsed sine. */
+export type ShapedWaveType = 'halfsine' | 'abssine' | 'pulsesine';
 export type NoiseType = 'white' | 'pink' | 'brown';
-export type SoundType = OscType | NoiseType;
+export type SoundType = OscType | ShapedWaveType | NoiseType;
 
 /** Runtime companion to SoundType, for code that needs to check membership (s()/.s()/.bank()). */
 export const SOUND_TYPES: readonly SoundType[] = [
@@ -13,6 +15,9 @@ export const SOUND_TYPES: readonly SoundType[] = [
   'triangle',
   'square',
   'sawtooth',
+  'halfsine',
+  'abssine',
+  'pulsesine',
   'white',
   'pink',
   'brown'
@@ -103,8 +108,8 @@ export interface VoiceParams {
   fmRelease?: number;
   /** Ramp shape of the modulator-depth envelope: 'exp' (default, as in Strudel) or 'lin'. */
   fmEnvCurve?: 'lin' | 'exp';
-  /** Modulator waveform. Default 'sine'. */
-  fmWave?: OscType;
+  /** Modulator waveform — any oscillator or shaped waveform. Default 'sine'. */
+  fmWave?: OscType | ShapedWaveType;
   /** Start-time offset in seconds, relative to the pattern's shared start time. */
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */
@@ -197,9 +202,14 @@ export interface OscillatorNodeLike extends AudioNodeLike {
   /** Loosely typed (not OscType) so a real OscillatorNode — whose `type` also allows "custom" — still satisfies this structurally. */
   type: string;
   frequency: AudioParamLike;
+  /** Optional: only needed for shaped waveforms. Setting a wave makes a real OscillatorNode's `type` "custom". */
+  setPeriodicWave?(wave: PeriodicWaveLike): void;
   start(when?: number): void;
   stop(when?: number): void;
 }
+
+/** Opaque handle to a custom waveform; a real PeriodicWave satisfies it. */
+export type PeriodicWaveLike = object;
 
 export interface GainNodeLike extends AudioNodeLike {
   gain: AudioParamLike;
@@ -251,6 +261,12 @@ export interface AudioContextLike {
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
   createConvolver(): ConvolverNodeLike;
   createDelay(maxDelayTime?: number): DelayNodeLike;
+  /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
+  createPeriodicWave?(
+    real: Float32Array,
+    imag: Float32Array,
+    constraints?: { disableNormalization?: boolean }
+  ): PeriodicWaveLike;
   /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
   decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
 }

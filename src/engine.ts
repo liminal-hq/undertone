@@ -10,12 +10,15 @@ import type {
   ControlPatch,
   GainNodeLike,
   OscillatorNodeLike,
+  OscType,
+  ShapedWaveType,
   VoiceParams
 } from './types.js';
 import { getOrbitBus } from './effects.js';
 import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
+import { getShapedWave, isShapedWave } from './waves.js';
 import { getSampleBaseNote, getSampleBuffer } from './samples.js';
 import { foldChannelGains, MAX_CHANNELS } from './surround.js';
 
@@ -249,6 +252,28 @@ function scheduleEnvelope(
   };
 }
 
+/**
+ * Gives an oscillator its waveform: a native type directly, a shaped waveform
+ * through a cached PeriodicWave. A context that cannot make periodic waves gets
+ * a sine (warned once) so the voice still sounds, as with a missing sample.
+ */
+function setOscillatorWave(
+  ctx: AudioContextLike,
+  oscillator: OscillatorNodeLike,
+  type: OscType | ShapedWaveType
+): void {
+  if (!isShapedWave(type)) {
+    oscillator.type = type;
+    return;
+  }
+  const wave = oscillator.setPeriodicWave ? getShapedWave(ctx, type) : undefined;
+  if (wave && oscillator.setPeriodicWave) {
+    oscillator.setPeriodicWave(wave);
+  } else {
+    oscillator.type = 'sine';
+  }
+}
+
 function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' | 'pink' | 'brown' {
   return soundType === 'white' || soundType === 'pink' || soundType === 'brown';
 }
@@ -325,7 +350,7 @@ export function playVoice(
     bufferSource.loop = audibleSeconds > bufferDuration;
   } else {
     const oscillator = source as ReturnType<AudioContextLike['createOscillator']>;
-    oscillator.type = params.soundType;
+    setOscillatorWave(ctx, oscillator, params.soundType as OscType | ShapedWaveType);
     const targetFreq =
       params.pitch !== undefined ? noteToFrequency(params.pitch) : DEFAULT_OSCILLATOR_FREQUENCY;
     const curve = buildPitchCurve(params, voiceStart);
@@ -447,7 +472,7 @@ function connectFm(
   const index = params.fmIndex as number;
 
   const modulator = ctx.createOscillator();
-  modulator.type = params.fmWave ?? 'sine';
+  setOscillatorWave(ctx, modulator, params.fmWave ?? 'sine');
   applyPitchCurve(modulator.frequency, carrierHz * harmonicity, curve);
 
   const depth = ctx.createGain();

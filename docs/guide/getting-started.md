@@ -29,7 +29,7 @@ note('c5').sound('triangle').decay(0.1).gain(0.5).play();
 Line by line:
 
 - `note('c5')` builds a pattern containing a single pitched event per cycle — C in the fifth octave. Note names are letter + optional `#`/`b` accidental + octave (`'c2'`, `'f#3'`, `'bb3'`); a raw Hz number works too (`note(440)`).
-- `.sound('triangle')` picks the oscillator waveform. The choices are `'sine'` (the default), `'triangle'`, `'square'`, `'sawtooth'`, plus three noise colours `'white' | 'pink' | 'brown'`.
+- `.sound('triangle')` picks the oscillator waveform. The choices are `'sine'` (the default), `'triangle'`, `'square'`, `'sawtooth'`, three shaped sines (`'halfsine'`, `'abssine'`, `'pulsesine'`, see the [FM guide](/guide/fm-synthesis#shaped-waveforms)), plus three noise colours `'white' | 'pink' | 'brown'`.
 - `.decay(0.1)` shapes the amplitude envelope. The defaults are already percussive (fast attack, short decay, sustain 0), so a one-shot sounds like a blip without any envelope calls at all — this just shortens it.
 - `.gain(0.5)` sets peak amplitude, 0 to 1.
 - `.play()` schedules one cycle's worth of events on an `AudioContext` and returns immediately.

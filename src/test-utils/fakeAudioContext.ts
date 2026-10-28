@@ -15,6 +15,7 @@ import type {
   DelayNodeLike,
   GainNodeLike,
   OscillatorNodeLike,
+  PeriodicWaveLike,
   StereoPannerNodeLike,
   AudioBufferSourceNodeLike
 } from '../types';
@@ -81,8 +82,15 @@ class FakeNode implements AudioNodeLike {
 export class FakeOscillatorNode extends FakeNode implements OscillatorNodeLike {
   type: OscillatorNodeLike['type'] = 'sine';
   frequency = new FakeAudioParam();
+  /** The wave last passed to setPeriodicWave(), if any. A real node's `type` becomes "custom" then. */
+  periodicWave: PeriodicWaveLike | undefined;
   started: number[] = [];
   stopped: number[] = [];
+
+  setPeriodicWave(wave: PeriodicWaveLike): void {
+    this.periodicWave = wave;
+    this.type = 'custom';
+  }
 
   start(when = 0): void {
     this.started.push(when);
@@ -119,6 +127,15 @@ export class FakeConvolverNode extends FakeNode implements ConvolverNodeLike {
 
 export class FakeDelayNode extends FakeNode implements DelayNodeLike {
   delayTime = new FakeAudioParam();
+}
+
+/** A recorded createPeriodicWave() result. */
+export class FakePeriodicWave {
+  constructor(
+    readonly real: Float32Array,
+    readonly imag: Float32Array,
+    readonly constraints: { disableNormalization?: boolean } | undefined
+  ) {}
 }
 
 export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
@@ -168,7 +185,12 @@ export class FakeAudioContext implements AudioContextLike {
    * optional cancelScheduledValues/setTargetAtTime — used to prove the engine
    * still works, falling back gracefully, on such contexts.
    */
-  constructor(private readonly options: { bareParams?: boolean } = {}) {}
+  constructor(private readonly options: { bareParams?: boolean; noPeriodicWave?: boolean } = {}) {
+    if (options.noPeriodicWave) {
+      // A wrapper context from before shaped waveforms: the method simply is not there.
+      (this as { createPeriodicWave?: unknown }).createPeriodicWave = undefined;
+    }
+  }
 
   private bare<T extends { gain?: FakeAudioParam; frequency?: FakeAudioParam }>(
     node: T,
@@ -194,6 +216,7 @@ export class FakeAudioContext implements AudioContextLike {
   readonly bufferSources: FakeAudioBufferSourceNode[] = [];
   readonly convolvers: FakeConvolverNode[] = [];
   readonly delays: FakeDelayNode[] = [];
+  readonly periodicWaves: FakePeriodicWave[] = [];
 
   createOscillator(): FakeOscillatorNode {
     const node = this.bare(new FakeOscillatorNode(), 'frequency');
@@ -241,6 +264,16 @@ export class FakeAudioContext implements AudioContextLike {
     const node = new FakeDelayNode();
     this.delays.push(node);
     return node;
+  }
+
+  createPeriodicWave(
+    real: Float32Array,
+    imag: Float32Array,
+    constraints?: { disableNormalization?: boolean }
+  ): FakePeriodicWave {
+    const wave = new FakePeriodicWave(real, imag, constraints);
+    this.periodicWaves.push(wave);
+    return wave;
   }
 
   createBuffer(numChannels: number, length: number): AudioBufferLike {

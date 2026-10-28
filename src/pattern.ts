@@ -21,9 +21,17 @@ import {
 } from './scheduler.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
-import type { ControlPatch, OscType, SoundType, VoiceParams } from './types.js';
+import type { ControlPatch, OscType, ShapedWaveType, SoundType, VoiceParams } from './types.js';
 
-const OSC_TYPES: readonly OscType[] = ['sine', 'triangle', 'square', 'sawtooth'];
+const MODULATOR_WAVES: readonly (OscType | ShapedWaveType)[] = [
+  'sine',
+  'triangle',
+  'square',
+  'sawtooth',
+  'halfsine',
+  'abssine',
+  'pulsesine'
+];
 
 /** A half-open span of cycle time [begin, end). */
 export interface TimeSpan {
@@ -436,10 +444,12 @@ export class Pattern<T> {
     return this.withPatch({ fmEnvCurve: curve });
   }
 
-  /** The modulator's waveform: sine (default), triangle, square or sawtooth. Not patternable. */
-  fmwave(this: Pattern<ControlPatch>, type: OscType): Pattern<ControlPatch> {
-    if (!(OSC_TYPES as readonly string[]).includes(type)) {
-      throw new Error(`fmwave() must be one of ${OSC_TYPES.join(', ')}, got "${String(type)}"`);
+  /** The modulator's waveform: sine (default), triangle, square, sawtooth, or a shaped wave (halfsine, abssine, pulsesine). Not patternable. */
+  fmwave(this: Pattern<ControlPatch>, type: OscType | ShapedWaveType): Pattern<ControlPatch> {
+    if (!(MODULATOR_WAVES as readonly string[]).includes(type)) {
+      throw new Error(
+        `fmwave() must be one of ${MODULATOR_WAVES.join(', ')}, got "${String(type)}"`
+      );
     }
     return this.withPatch({ fmWave: type });
   }

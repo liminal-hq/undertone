@@ -295,7 +295,7 @@ const API_DOCS: Record<string, ApiDoc> = {
   },
   fmwave: {
     signature:
-      ".fmwave(type: 'sine' | 'triangle' | 'square' | 'sawtooth') => Pattern<ControlPatch>",
+      ".fmwave(type: 'sine' | 'triangle' | 'square' | 'sawtooth' | 'halfsine' | 'abssine' | 'pulsesine') => Pattern<ControlPatch>",
     doc: "The modulator's waveform. Default sine. Not patternable."
   },
   penv: {

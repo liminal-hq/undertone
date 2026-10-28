@@ -20,6 +20,7 @@ export {
   timecat
 } from './pattern.js';
 export { Fraction } from './fraction.js';
+export { SHAPED_WAVE_TYPES, isShapedWave } from './waves.js';
 export { midiToFrequency, noteToFrequency, noteToMidi } from './pitch.js';
 export {
   clearSamples,
@@ -55,6 +56,8 @@ export type {
   ControlPatch,
   NoiseType,
   OscType,
+  PeriodicWaveLike,
+  ShapedWaveType,
   SoundType,
   VoiceParams
 } from './types.js';
