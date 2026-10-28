@@ -130,6 +130,56 @@ describe('layer', () => {
   });
 });
 
+describe('layer composes with the notes it layers', () => {
+  it('adds the stagger to nudges the notes already carry, and keeps them when stagger is 0', () => {
+    const ctx = new FakeAudioContext();
+    const humanised = note('a4').nudge(0.01);
+
+    layer(humanised, [{}, {}], { stagger: 0.002 }).play({ ctx, when: 0 });
+    layer(humanised, [{}]).play({ ctx, when: 0 });
+
+    expect(ctx.oscillators.map((o) => o.started[0])).toEqual([
+      expect.closeTo(0.01, 10),
+      expect.closeTo(0.012, 10),
+      expect.closeTo(0.01, 10)
+    ]);
+  });
+
+  it('keeps timing from drift() when wrapped around it', () => {
+    const drifted = drift(note('a4'), { seed: 'x', timing: 0.02 });
+    const expected = drifted.query({ begin: Fraction.from(0), end: Fraction.from(1) })[0].value
+      .nudgeTime as number;
+    const ctx = new FakeAudioContext();
+
+    layer(drifted, [{ soundType: 'square' }]).play({ ctx, when: 1 });
+
+    expect(ctx.oscillators[0].started[0]).toBeCloseTo(1 + expected, 10);
+  });
+
+  it("multiplies the notes' own velocity by the layer level", () => {
+    const ctx = new FakeAudioContext();
+
+    layer(note('a4 a4').velocity('1 0.25').gain(1), [{}, {}], { levels: [1, 0.5] }).play({
+      ctx,
+      when: 0
+    });
+
+    const peaks = ctx.gains.map(
+      (g) => g.gain.calls.find((c) => c.method === 'linearRampToValueAtTime')?.value
+    );
+    // Playback order is layer by layer: layer 0 (x1), then layer 1 (x0.5).
+    expect(peaks).toEqual([1, 0.25, 0.5, 0.125]);
+  });
+
+  it('lets a layer voice override the notes, but inherits what it does not set', () => {
+    const ctx = new FakeAudioContext();
+
+    layer(note('a4').sound('sawtooth'), [{ soundType: 'square' }, {}]).play({ ctx, when: 0 });
+
+    expect(ctx.oscillators.map((o) => o.type)).toEqual(['square', 'sawtooth']);
+  });
+});
+
 describe('score', () => {
   const cue = {
     ticksPerSecond: 560,

@@ -142,9 +142,9 @@ export interface LayerOptions {
    * an echo. Default 0.
    */
   stagger?: number;
-  /** Per-layer strength (the `velocity` control), so a pluck can lead and a sustained partner fill in. Default 1 each. */
+  /** Per-layer strength, multiplying each note's own `velocity`, so a pluck can lead and a sustained partner fill in. Default 1 each. */
   levels?: readonly number[];
-  /** Per-layer stereo position, -1 to 1. A layer's own `pan` is used when this entry is missing. */
+  /** Per-layer stereo position, -1 to 1, replacing any pan on the notes. A layer's own `pan` is used when this entry is missing. */
   pans?: readonly number[];
 }
 
@@ -153,8 +153,11 @@ export interface LayerOptions {
  * a thicker sound from a small synth. Each entry of `voices` is a plain
  * patch (an `fmVoice()` result, a preset, or any `ControlPatch`); the layers
  * are stacked, with an optional start stagger, level balance and pans.
- * Layering sets each layer's `nudge`, `velocity` and `pan`, overriding those
- * controls on the incoming pattern.
+ * Stagger adds to any `nudge` already on the notes and levels multiply their
+ * `velocity`, so layering composes with `drift()` and with scored accents; a
+ * layer `pans` entry replaces the notes' pan. A layer voice also keeps any
+ * control the notes carry that its own patch does not set (a waveform or
+ * filter from the incoming pattern, say), so set those in the voice patch.
  */
 export function layer(
   notes: Pattern<ControlPatch>,
@@ -169,13 +172,18 @@ export function layer(
     throw new Error(`layer() stagger must not be negative, got ${stagger}`);
   }
   return stack(
-    ...voices.map((voice, index) => {
-      const patch: ControlPatch = { ...voice, nudgeTime: index * stagger };
-      const level = options.levels?.[index];
-      if (level !== undefined) patch.velocity = level;
-      const pan = options.pans?.[index];
-      if (pan !== undefined) patch.pan = pan;
-      return notes.voice(patch);
-    })
+    ...voices.map((voice, index) =>
+      notes.fmap((value): ControlPatch => {
+        const layered: ControlPatch = { ...value, ...voice };
+        // Stagger adds to any nudge the notes already carry (from drift(), say), and a
+        // layer level scales the note's own velocity, so accents survive layering.
+        layered.nudgeTime = (value.nudgeTime ?? 0) + index * stagger;
+        const level = options.levels?.[index];
+        if (level !== undefined) layered.velocity = (value.velocity ?? 1) * level;
+        const pan = options.pans?.[index];
+        if (pan !== undefined) layered.pan = pan;
+        return layered;
+      })
+    )
   );
 }

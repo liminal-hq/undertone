@@ -45,6 +45,8 @@ layer(note('e5 g5 b5 a5'), [fmPresets.pluck, fmPresets.softPad], {
 }).loop({ bpm: 100 });
 ```
 
+Layering composes with the notes you give it. The stagger adds to any `nudge` they already carry (so `layer(drift(...), ...)` keeps its humanising), and `levels` multiply each note's own `velocity` (so scored accents survive). A `pans` entry replaces the notes' pan. A layer voice also keeps any control the notes carry that its own patch leaves unset, such as a waveform or filter from the incoming pattern, so put those in the voice patch.
+
 ## Scores with exact timing
 
 A pattern is built on a grid of equal steps. Music played in by hand is not, and quantising it loses much of the feel. `score()` takes events at whole **ticks** (any rate you choose, such as AdLib's 560 per second) and compiles them to a pattern that keeps every event exactly where you put it:
