@@ -44,6 +44,8 @@ note('a3')
   .play();
 ```
 
+A filter envelope is also a good stand-in for the decaying modulator of an FM voice: it gives the same bright attack that mellows as the note settles. See [richer voices with the controls you already have](/recipes#richer-voices-with-the-controls-you-already-have).
+
 **Highpass and phaser.** `.hpf(hz)` is a static highpass in series after the lowpass — thin out a pad or keep a noise layer out of the bass. `.phaser(rateHz)` inserts four allpass stages swept together by one LFO at the given rate; try `0.5`–`2` Hz on a sustained voice.
 
 **Reverb and delay are sends, not inserts.** `.room(level)` and `.delay(level)` (both 0–1) control how much of the voice is _sent_ to a shared bus; the dry signal always reaches the destination at full strength. The bus itself is configured by `.roomsize(size)` (decay character, roughly 1 short to 10 long — it procedurally regenerates the reverb's impulse response, only when the value actually changes) and `.delaytime(s)`/`.delayfeedback(amount)` for the delay line. Sends branch off _after_ placement, so the wet signal follows the voice's pan.
