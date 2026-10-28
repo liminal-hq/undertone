@@ -19,15 +19,40 @@ afterEach(() => {
 });
 
 describe('createMasterBus', () => {
-  it('connects gain -> limiter -> destination, creating nothing else', () => {
+  it('connects gain -> limiter -> makeup compensation -> destination, creating nothing else', () => {
     const ctx = new FakeAudioContext();
 
     const bus = createMasterBus(ctx);
 
-    expect(ctx.gains).toEqual([bus.input]);
+    const [, makeup] = ctx.gains;
+    expect(ctx.gains).toHaveLength(2);
+    expect(ctx.gains[0]).toBe(bus.input);
     expect(ctx.compressors).toEqual([bus.compressor]);
     expect(bus.input.connectedTo).toEqual([bus.compressor]);
-    expect(bus.compressor?.connectedTo).toEqual([ctx.destination]);
+    expect(bus.compressor?.connectedTo).toEqual([makeup]);
+    expect(makeup.connectedTo).toEqual([ctx.destination]);
+  });
+
+  it("takes back the compressor's automatic makeup gain, so peaks are not pushed up", () => {
+    const ctx = new FakeAudioContext();
+
+    createMasterBus(ctx); // threshold -2 dB, ratio 20: a full-scale input leaves at -1.9 dB
+
+    // makeup = (1 / 10^(-1.9/20)) ^ 0.6 ~ 1.1405, so the compensation is its reciprocal.
+    expect(firstValue(ctx.gains[1].gain)).toBeCloseTo(1 / 1.1405, 3);
+  });
+
+  it('computes compensation from the tuned threshold and ratio, and can be turned off', () => {
+    const tuned = new FakeAudioContext();
+    const off = new FakeAudioContext();
+
+    createMasterBus(tuned, { limiter: { threshold: -12, ratio: 4 } });
+    const bus = createMasterBus(off, { limiter: { compensate: false } });
+
+    // -12 dB threshold, ratio 4: full scale leaves at -9 dB; makeup = (10^(9/20)) ^ 0.6.
+    expect(firstValue(tuned.gains[1].gain)).toBeCloseTo(10 ** ((-9 / 20) * 0.6) * 1, 3);
+    expect(off.gains).toEqual([bus.input]);
+    expect(bus.compressor?.connectedTo).toEqual([off.destination]);
   });
 
   it('applies the default limiter settings at the current time', () => {
@@ -55,7 +80,7 @@ describe('createMasterBus', () => {
     });
 
     expect(firstValue(input.gain)).toBe(0.6);
-    expect(compressor?.connectedTo).toEqual([out]);
+    expect(ctx.gains.at(-1)?.connectedTo).toEqual([out]); // via the makeup compensation
     expect(firstValue(compressor?.threshold)).toBe(-6);
     expect(firstValue(compressor?.ratio)).toBe(10);
     expect(firstValue(compressor?.release)).toBe(0.3);
@@ -109,7 +134,7 @@ describe('createMasterBus', () => {
 
     note('a4').play({ ctx, when: 0, output: bus.input });
 
-    expect(ctx.gains[1].connectedTo).toEqual([bus.input]);
+    expect(ctx.gains[2].connectedTo).toEqual([bus.input]);
     expect(ctx.destination.connectedTo).toEqual([]);
   });
 });

@@ -23,6 +23,15 @@ export interface LimiterOptions {
   attack?: number;
   /** Seconds the limiter takes to let go afterwards. Default 0.1. */
   release?: number;
+  /**
+   * Browsers' dynamics compressors add automatic makeup gain, which would
+   * otherwise make the limited mix louder and push peaks back toward full
+   * scale. With this on (the default) a gain stage after the compressor takes
+   * that makeup back out, so the threshold really is near the ceiling. The
+   * compensation is worked out for a hard knee at full-scale input, so it is
+   * approximate when `knee` is above 0. Set `false` to keep the makeup.
+   */
+  compensate?: boolean;
 }
 
 export interface MasterBusOptions {
@@ -46,8 +55,23 @@ const DEFAULTS: Required<LimiterOptions> = {
   knee: 0,
   ratio: 20,
   attack: 0.003,
-  release: 0.1
+  release: 0.1,
+  compensate: true
 };
+
+// A compressor's automatic makeup gain, as implemented in WebKit/Blink and Gecko: the reciprocal of
+// the gain a full-scale (0 dB) input would be left with, raised to 0.6.
+const MAKEUP_EXPONENT = 0.6;
+
+/** The linear gain that cancels the compressor's automatic makeup for a hard knee. */
+function makeupCompensation(thresholdDb: number, ratio: number): number {
+  if (!(thresholdDb < 0) || !(ratio > 1)) {
+    return 1; // nothing above the threshold is reduced, so no makeup is added
+  }
+  const fullScaleOutDb = thresholdDb + (0 - thresholdDb) / ratio;
+  const fullScaleGain = 10 ** (fullScaleOutDb / 20);
+  return (1 / fullScaleGain) ** -MAKEUP_EXPONENT;
+}
 
 /**
  * Creates a master bus: voices play into `bus.input`, pass a gain stage and a
@@ -104,6 +128,16 @@ export function createMasterBus(ctx: AudioContextLike, options: MasterBusOptions
   compressor.attack.setValueAtTime(settings.attack, ctx.currentTime);
   compressor.release.setValueAtTime(settings.release, ctx.currentTime);
   input.connect(compressor);
-  compressor.connect(output);
+  if (settings.compensate) {
+    const makeup = ctx.createGain();
+    makeup.gain.setValueAtTime(
+      makeupCompensation(settings.threshold, settings.ratio),
+      ctx.currentTime
+    );
+    compressor.connect(makeup);
+    makeup.connect(output);
+  } else {
+    compressor.connect(output);
+  }
   return { input, compressor };
 }

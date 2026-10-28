@@ -355,4 +355,4 @@ const music = stack(
 music.loop({ ctx, output: bus.input });
 ```
 
-The bus is an ordinary object you hold, so a game can make one for music and another for effects. The limiter steps aside above two output channels (a compressor would fold surround to stereo), and the gain stage keeps working.
+Browsers' compressors add automatic makeup gain, which would make a limited mix louder and push peaks back up. The bus takes that makeup back out (`limiter: { compensate: false }` keeps it), so the threshold, -2 dB by default, is close to the ceiling. It is a fast compressor rather than a true brick-wall limiter, so brief peaks can still pass the threshold. The bus is an ordinary object you hold, so a game can make one for music and another for effects. The limiter steps aside above two output channels (a compressor would fold surround to stereo), and the gain stage keeps working.
