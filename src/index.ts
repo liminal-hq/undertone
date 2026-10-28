@@ -6,7 +6,10 @@
 export { chord, n, note, s, sound } from './control.js';
 export { playParams, resolveParams } from './engine.js';
 export { buildImpulseResponse, getOrbitBus } from './effects.js';
+export { drift, seededRandom } from './drift.js';
+export { fmPresets, fmVoice, layer } from './instruments.js';
 export { createMasterBus } from './masterBus.js';
+export { createMonoFold } from './monoFold.js';
 export { mini } from './mini.js';
 export {
   Pattern,
@@ -32,6 +35,7 @@ export {
   registerSample,
   registerSamples
 } from './samples.js';
+export { score } from './score.js';
 export { resetTempo, setcpm } from './scheduler.js';
 export {
   CHANNEL_ORDER,
@@ -40,6 +44,9 @@ export {
   foldToStereo,
   surroundGains
 } from './surround.js';
+export type { DriftOptions } from './drift.js';
+export type { EnvelopeDefinition, FmVoiceDefinition, LayerOptions } from './instruments.js';
+export type { Score, ScoreDefinition, ScoreEvent } from './score.js';
 export type { Hap, TimeSpan } from './pattern.js';
 export type { LimiterOptions, MasterBus, MasterBusOptions } from './masterBus.js';
 export type { OrbitBus } from './effects.js';

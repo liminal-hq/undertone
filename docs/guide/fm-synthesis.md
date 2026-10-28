@@ -71,5 +71,6 @@ They are band-limited to 64 harmonics, so they stay clean at ordinary pitches, a
 ## Where to go next
 
 - A filter envelope is a cheaper stand-in for a decaying modulator; the [recipes](/recipes#richer-voices-with-the-controls-you-already-have) show when it is enough.
+- [Instruments and scores](/guide/instruments-and-scores) show how to keep an FM voice as plain data, layer it, and write music with explicit timing.
 - [Gate, velocity and cut groups](/guide/patterned-parameters) keep one FM instrument consistent from soft notes to accents.
 - If you are used to Tone.js, [coming from Strudel](/coming-from-strudel#fm-synthesis) has a table mapping `harmonicity`, `modulationIndex` and `modulationEnvelope` onto these controls.

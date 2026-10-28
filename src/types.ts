@@ -185,6 +185,10 @@ export interface AudioNodeLike {
   connect(destination: AudioNodeLike | AudioParamLike, output?: number, input?: number): void;
   /** Optional: a real AudioNode has it; the engine never needs it, but consumers' output nodes may use it. */
   disconnect?(): void;
+  /** Optional channel configuration, set by createMonoFold(); a real AudioNode has these. */
+  channelCount?: number;
+  channelCountMode?: string;
+  channelInterpretation?: string;
 }
 
 /**

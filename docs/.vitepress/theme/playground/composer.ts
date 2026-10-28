@@ -34,11 +34,22 @@ let teardownPreviousComposer: (() => void) | undefined;
 // few that don't fit this specific surface: setcpm()/resetTempo() would be
 // silently inert (the Once/Loop buttons always pass an explicit bpm from the
 // tempo slider, and an explicit bpm always wins), and buildImpulseResponse()/
-// getOrbitBus() are effects-internals rather than composition primitives.
+// getOrbitBus() are effects-internals rather than composition primitives, and
+// playParams()/createMasterBus()/createMonoFold() need a context the script never holds.
 // Derived from the `api` namespace (rather than hand-listed) so a future
 // export is included automatically instead of silently missing from both the
 // eval sandbox and autocomplete until someone remembers to add it here too.
-const SCOPE_EXCLUDED = new Set(['setcpm', 'resetTempo', 'buildImpulseResponse', 'getOrbitBus']);
+const SCOPE_EXCLUDED = new Set([
+  'setcpm',
+  'resetTempo',
+  'buildImpulseResponse',
+  'getOrbitBus',
+  // These need an AudioContext the script does not have; the playground owns its own context.
+  'playParams',
+  'resolveParams',
+  'createMasterBus',
+  'createMonoFold'
+]);
 const SCOPE: Record<string, unknown> = Object.fromEntries(
   Object.entries(api).filter(([name]) => !SCOPE_EXCLUDED.has(name))
 );
@@ -298,6 +309,37 @@ const API_DOCS: Record<string, ApiDoc> = {
       ".fmwave(type: 'sine' | 'triangle' | 'square' | 'sawtooth' | 'halfsine' | 'abssine' | 'pulsesine') => Pattern<ControlPatch>",
     doc: "The modulator's waveform. Default sine. Not patternable."
   },
+  voice: {
+    signature: '.voice(patch: ControlPatch) => Pattern<ControlPatch>',
+    doc: 'Applies a whole instrument (an fmVoice() result, an fmPresets entry, or saved voice data) to every event. Chain per-note controls after it so they win.'
+  },
+  fmVoice: {
+    signature: 'fmVoice(definition: FmVoiceDefinition) => ControlPatch',
+    doc: 'Builds an FM instrument as plain data from a Tone.js FMSynth-shaped definition (harmonicity, modulationIndex, oscillator, modulation, envelope, modulationEnvelope). Apply it with .voice().'
+  },
+  fmPresets: {
+    signature: 'fmPresets: { glassBell, roundBass, softPad, pluck, lead }',
+    doc: "Readable FM instruments as plain data: note('e5 g5').voice(fmPresets.glassBell)."
+  },
+  layer: {
+    signature:
+      'layer(notes: Pattern, voices: ControlPatch[], options?: { stagger?, levels?, pans? }) => Pattern',
+    doc: 'Plays one pattern on several voices at once, with an optional start stagger (seconds), per-layer levels and pans.'
+  },
+  score: {
+    signature:
+      'score({ ticksPerSecond, lengthTicks, events, seam? }) => { pattern, cps, seconds, loop, play }',
+    doc: 'Compiles tick-timed events into a looping pattern whose seam is exact. Events are { tick, note | midi, gate?, level?, pan?, voice? }.'
+  },
+  drift: {
+    signature:
+      'drift(pattern: Pattern, options: { seed, timing?, level?, cents?, pan?, push?, cyclesPerPass? }) => Pattern',
+    doc: 'Seeded, deterministic humanisation. The same seed gives the same result everywhere; each loop pass varies differently.'
+  },
+  seededRandom: {
+    signature: 'seededRandom(seed: number | string) => () => number',
+    doc: 'A repeatable random generator (mulberry32), separate from Math.random.'
+  },
   penv: {
     signature: '.penv(semitones: number) => Pattern<ControlPatch>',
     doc: 'Pitch envelope depth in semitones: each note starts that far from its pitch (negative = below, so it rises) and returns over .pdecay().'
@@ -428,6 +470,7 @@ const METHOD_NAMES = [
   'fmrelease',
   'fmenv',
   'fmwave',
+  'voice',
   'penv',
   'pattack',
   'pdecay',

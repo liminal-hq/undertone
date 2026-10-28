@@ -183,6 +183,16 @@ export class Pattern<T> {
   }
 
   /**
+   * Applies a whole instrument at once: merges a plain `ControlPatch` (such as
+   * one from fmVoice() or fmPresets, or loaded from saved data) into every
+   * event. Fields the patch sets overwrite the events', so call it before the
+   * per-note controls you want to win — `note('e5 g5').voice(bell).gain(0.2)`.
+   */
+  voice(this: Pattern<ControlPatch>, patch: ControlPatch): Pattern<ControlPatch> {
+    return this.withPatch(patch);
+  }
+
+  /**
    * Merges a control whose value may itself be patterned in time: `input` is
    * either a plain number (applied uniformly, like withPatch) or a
    * mini-notation string sampled per event. Structure comes from `this` —
