@@ -13,7 +13,7 @@ import {
 } from './engine.js';
 import { Fraction } from './fraction.js';
 import type { Hap, TimeSpan } from './pattern.js';
-import type { AudioContextLike, ControlPatch } from './types.js';
+import type { AudioContextLike, ControlPatch, VoiceParams } from './types.js';
 
 /** The minimal pattern surface the scheduler needs (avoids a runtime import cycle). */
 interface PatternLike {
@@ -121,7 +121,7 @@ export function resetTempo(): void {
   defaultCyclesPerMinute = undefined;
 }
 
-function cycleSecondsFor(bpm: number | undefined, cps?: number): number {
+export function cycleSecondsFor(bpm: number | undefined, cps?: number): number {
   if (cps !== undefined) {
     if (bpm !== undefined) {
       throw new Error('Pass either bpm or cps, not both');
@@ -143,21 +143,26 @@ function cycleSecondsFor(bpm: number | undefined, cps?: number): number {
   return SECONDS_PER_CYCLE_AT_1_BPM / DEFAULT_BPM;
 }
 
+/** A voice that is ready to play: where it starts and what it sounds like. */
+export interface PendingVoice {
+  startTime: number;
+  params: VoiceParams;
+}
+
 /**
- * Realizes every event onset in `span` as a voice on the context's clock.
- * When `gated`, each voice's envelope holds until its event's share of the
- * cycle ends (note length); otherwise envelopes run their percussive course.
+ * Turns every event onset in `span` into a pending voice without touching the
+ * audio context, so a caller can inspect or reorder them before booking. When
+ * `gated`, each voice's envelope holds until its event's share of the cycle
+ * ends (note length); otherwise envelopes run their percussive course.
  */
-function scheduleSpan(
-  ctx: AudioContextLike,
+export function collectOnsets(
   pattern: PatternLike,
   span: TimeSpan,
   patternStartTime: number,
   cycleSeconds: number,
-  gated: boolean,
-  output: OutputOptions
-): PlaybackHandle[] {
-  const handles: PlaybackHandle[] = [];
+  gated: boolean
+): PendingVoice[] {
+  const voices: PendingVoice[] = [];
   for (const hap of pattern.query(span)) {
     if (!hap.whole || !hap.whole.begin.eq(hap.part.begin)) {
       continue; // a tail overlapping the window, not an onset — already scheduled
@@ -173,9 +178,24 @@ function scheduleSpan(
         : gated
           ? { duration: eventSeconds, ...hap.value }
           : hap.value;
-    handles.push(playVoice(ctx, resolveParams(patch), startTime, output));
+    voices.push({ startTime, params: resolveParams(patch) });
   }
-  return handles;
+  return voices;
+}
+
+/** Realizes every event onset in `span` as a voice on the context's clock. */
+function scheduleSpan(
+  ctx: AudioContextLike,
+  pattern: PatternLike,
+  span: TimeSpan,
+  patternStartTime: number,
+  cycleSeconds: number,
+  gated: boolean,
+  output: OutputOptions
+): PlaybackHandle[] {
+  return collectOnsets(pattern, span, patternStartTime, cycleSeconds, gated).map((voice) =>
+    playVoice(ctx, voice.params, voice.startTime, output)
+  );
 }
 
 /**
