@@ -3,13 +3,15 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import type { RandomSource } from './random.js';
 import type { AudioBufferLike, AudioContextLike, NoiseType } from './types.js';
 
 /** Generates a single-channel noise buffer of the given type and duration. */
 export function buildNoiseBuffer(
   ctx: AudioContextLike,
   type: NoiseType,
-  durationSeconds: number
+  durationSeconds: number,
+  random: RandomSource = Math.random
 ): AudioBufferLike {
   const length = Math.max(1, Math.round(ctx.sampleRate * durationSeconds));
   const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
@@ -17,7 +19,7 @@ export function buildNoiseBuffer(
 
   if (type === 'white') {
     for (let i = 0; i < length; i++) {
-      data[i] = Math.random() * 2 - 1;
+      data[i] = random() * 2 - 1;
     }
   } else if (type === 'pink') {
     // Paul Kellet's refined pink noise filter (economy variant).
@@ -29,7 +31,7 @@ export function buildNoiseBuffer(
     let b5 = 0;
     let b6 = 0;
     for (let i = 0; i < length; i++) {
-      const white = Math.random() * 2 - 1;
+      const white = random() * 2 - 1;
       b0 = 0.99886 * b0 + white * 0.0555179;
       b1 = 0.99332 * b1 + white * 0.0750759;
       b2 = 0.969 * b2 + white * 0.153852;
@@ -44,7 +46,7 @@ export function buildNoiseBuffer(
     // Brown noise: a leaky random walk (integrated white noise).
     let last = 0;
     for (let i = 0; i < length; i++) {
-      const white = Math.random() * 2 - 1;
+      const white = random() * 2 - 1;
       last = (last + 0.02 * white) / 1.02;
       data[i] = last * 3.5;
     }
