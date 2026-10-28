@@ -9,10 +9,11 @@ import type {
   AudioParamLike,
   ControlPatch,
   GainNodeLike,
+  OscillatorNodeLike,
   VoiceParams
 } from './types.js';
 import { getOrbitBus } from './effects.js';
-import { applyPitchCurve, buildPitchCurve } from './pitchCurve.js';
+import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
 import { getSampleBaseNote, getSampleBuffer } from './samples.js';
@@ -75,6 +76,7 @@ const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper no
 const PHASER_CENTER_HZ = 1000;
 const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the centre
 const DEFAULT_STOP_FADE_SECONDS = 0.01; // short enough to feel immediate, long enough to avoid a click
+const EXP_RAMP_FLOOR = 1e-4; // lowest level an exponential envelope ramps to; effectively silent
 const CUT_FADE_SECONDS = 0.005; // fast enough to feel like a choke, slow enough not to click
 const STOP_FADE_TIME_CONSTANTS = 5; // setTargetAtTime reaches ~99% of the way after five time constants
 
@@ -191,34 +193,43 @@ function scheduleEnvelope(
   decay: number,
   sustainFraction: number,
   release: number,
-  gateEnd?: number
+  gateEnd?: number,
+  curve: 'lin' | 'exp' = 'lin'
 ): EnvelopeShape {
   const sustainValue = base + (peak - base) * sustainFraction;
 
-  param.setValueAtTime(base, startTime);
+  // Exponential ramps are undefined at or below 0, so an 'exp' envelope floors
+  // its levels just above silence instead.
+  const level = (v: number): number => (curve === 'exp' ? Math.max(v, EXP_RAMP_FLOOR) : v);
+  const ramp = (v: number, t: number): unknown =>
+    curve === 'exp'
+      ? param.exponentialRampToValueAtTime(level(v), t)
+      : param.linearRampToValueAtTime(v, t);
+
+  param.setValueAtTime(level(base), startTime);
 
   const attackEnd = startTime + attack;
   if (attack > 0) {
-    param.linearRampToValueAtTime(peak, attackEnd);
+    ramp(peak, attackEnd);
   } else {
-    param.setValueAtTime(peak, startTime);
+    param.setValueAtTime(level(peak), startTime);
   }
 
   const decayEnd = attackEnd + decay;
   if (decay > 0) {
-    param.linearRampToValueAtTime(sustainValue, decayEnd);
+    ramp(sustainValue, decayEnd);
   } else {
-    param.setValueAtTime(sustainValue, decayEnd);
+    param.setValueAtTime(level(sustainValue), decayEnd);
   }
 
   const releaseStart = gateEnd !== undefined ? Math.max(decayEnd, gateEnd) : decayEnd;
   if (releaseStart > decayEnd) {
-    param.setValueAtTime(sustainValue, releaseStart);
+    param.setValueAtTime(level(sustainValue), releaseStart);
   }
 
   const releaseEnd = releaseStart + release;
   if (release > 0) {
-    param.linearRampToValueAtTime(base, releaseEnd);
+    ramp(base, releaseEnd);
   }
 
   const lerp = (from: number, to: number, t: number, t0: number, t1: number): number =>
@@ -288,6 +299,7 @@ export function playVoice(
   const gainReleaseEnd = gainEnvelope.end;
 
   let filterReleaseEnd = gainReleaseEnd;
+  let fmModulator: OscillatorNodeLike | undefined;
 
   const source =
     usingSample || isNoiseType(params.soundType)
@@ -316,7 +328,11 @@ export function playVoice(
     oscillator.type = params.soundType;
     const targetFreq =
       params.pitch !== undefined ? noteToFrequency(params.pitch) : DEFAULT_OSCILLATOR_FREQUENCY;
-    applyPitchCurve(oscillator.frequency, targetFreq, buildPitchCurve(params, voiceStart));
+    const curve = buildPitchCurve(params, voiceStart);
+    applyPitchCurve(oscillator.frequency, targetFreq, curve);
+    if (params.fmIndex !== undefined && params.fmIndex > 0) {
+      fmModulator = connectFm(ctx, oscillator, targetFreq, curve, params, voiceStart);
+    }
   }
 
   let tail: AudioNodeLike = source;
@@ -353,6 +369,9 @@ export function playVoice(
   }
 
   const stoppables: Stoppable[] = [source];
+  if (fmModulator) {
+    stoppables.push(fmModulator);
+  }
   if (params.phaserRate !== undefined) {
     tail = connectPhaser(ctx, tail, params.phaserRate, voiceStart, voiceEnd, stoppables);
   }
@@ -364,6 +383,10 @@ export function playVoice(
 
   source.start(voiceStart);
   source.stop(voiceEnd);
+  if (fmModulator) {
+    fmModulator.start(voiceStart);
+    fmModulator.stop(voiceEnd);
+  }
 
   const handle: PlaybackHandle = {
     startTime: voiceStart,
@@ -400,6 +423,65 @@ export function playVoice(
     claimCutGroup(ctx, output, params.cutGroup, handle);
   }
   return handle;
+}
+
+/**
+ * Adds an FM modulator to a carrier oscillator: a second oscillator at
+ * `fmHarmonicity` × the carrier's frequency feeds a depth gain whose output is
+ * added to the carrier's frequency. The depth is index × modulator frequency in
+ * Hz, so brightness follows pitch, and it follows the carrier's pitch curve
+ * (slide, pitch envelope, steps) exactly because all three are driven by the
+ * same ratios. An optional envelope gain shapes the depth over the note. The
+ * returned modulator still has to be started and stopped by the caller, with
+ * the carrier's own window.
+ */
+function connectFm(
+  ctx: AudioContextLike,
+  carrier: OscillatorNodeLike,
+  carrierHz: number,
+  curve: CurveEvent[],
+  params: VoiceParams,
+  voiceStart: number
+): OscillatorNodeLike {
+  const harmonicity = params.fmHarmonicity ?? 1;
+  const index = params.fmIndex as number;
+
+  const modulator = ctx.createOscillator();
+  modulator.type = params.fmWave ?? 'sine';
+  applyPitchCurve(modulator.frequency, carrierHz * harmonicity, curve);
+
+  const depth = ctx.createGain();
+  applyPitchCurve(depth.gain, carrierHz * harmonicity * index, curve);
+  modulator.connect(depth);
+
+  const hasEnvelope =
+    params.fmAttack !== undefined ||
+    params.fmDecay !== undefined ||
+    params.fmSustain !== undefined ||
+    params.fmRelease !== undefined;
+  if (hasEnvelope) {
+    // Strudel's rule: a decay with no sustain falls toward silence; otherwise the depth holds.
+    const sustain = params.fmSustain ?? (params.fmDecay !== undefined ? 0 : 1);
+    const envelope = ctx.createGain();
+    scheduleEnvelope(
+      envelope.gain,
+      voiceStart,
+      0,
+      1,
+      params.fmAttack ?? 0,
+      params.fmDecay ?? 0,
+      sustain,
+      params.fmRelease ?? 0,
+      // The modulator holds for the gate on its own sustain, independent of the carrier's.
+      params.duration !== undefined && sustain > 0 ? voiceStart + params.duration : undefined,
+      params.fmEnvCurve ?? 'exp'
+    );
+    depth.connect(envelope);
+    envelope.connect(carrier.frequency);
+  } else {
+    depth.connect(carrier.frequency);
+  }
+  return modulator;
 }
 
 /**

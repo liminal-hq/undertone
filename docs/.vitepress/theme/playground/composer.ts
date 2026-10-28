@@ -261,6 +261,43 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.slide(seconds: number) => Pattern<ControlPatch>',
     doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
   },
+  fm: {
+    signature: '.fm(index: number) => Pattern<ControlPatch>',
+    doc: 'FM modulation index: the modulator swings the pitch by index × modulator frequency, so brightness follows the note. 0 is off.'
+  },
+  fmi: {
+    signature: '.fmi(index: number) => Pattern<ControlPatch>',
+    doc: "Alias of .fm() under Strudel's fmi name."
+  },
+  fmh: {
+    signature: '.fmh(ratio: number) => Pattern<ControlPatch>',
+    doc: "FM harmonicity: the modulator's frequency as a multiple of the note's. Fractions such as 3.5 give bells and metal."
+  },
+  fmattack: {
+    signature: '.fmattack(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to reach the full index.'
+  },
+  fmdecay: {
+    signature: '.fmdecay(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to fall to .fmsustain() × the index; with no .fmsustain() it falls toward silence.'
+  },
+  fmsustain: {
+    signature: '.fmsustain(level: number) => Pattern<ControlPatch>',
+    doc: 'Fraction (0-1) of the index the FM depth settles to. Default 1, or 0 when only .fmdecay() is set.'
+  },
+  fmrelease: {
+    signature: '.fmrelease(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to fall to 0 after the gate closes.'
+  },
+  fmenv: {
+    signature: ".fmenv(curve: 'lin' | 'exp') => Pattern<ControlPatch>",
+    doc: 'Ramp shape of the FM depth envelope: exp (default, as in Strudel) or lin. Not patternable.'
+  },
+  fmwave: {
+    signature:
+      ".fmwave(type: 'sine' | 'triangle' | 'square' | 'sawtooth') => Pattern<ControlPatch>",
+    doc: "The modulator's waveform. Default sine. Not patternable."
+  },
   penv: {
     signature: '.penv(semitones: number) => Pattern<ControlPatch>',
     doc: 'Pitch envelope depth in semitones: each note starts that far from its pitch (negative = below, so it rises) and returns over .pdecay().'
@@ -382,6 +419,15 @@ const METHOD_NAMES = [
   'lps',
   'lpr',
   'slide',
+  'fm',
+  'fmi',
+  'fmh',
+  'fmattack',
+  'fmdecay',
+  'fmsustain',
+  'fmrelease',
+  'fmenv',
+  'fmwave',
   'penv',
   'pattack',
   'pdecay',

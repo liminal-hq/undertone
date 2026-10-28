@@ -4,7 +4,7 @@ title: Patterned Parameters
 
 # Patterned parameters
 
-Almost every numeric control accepts a mini-notation string instead of a scalar — `attack`, `decay`, `sustain`, `release`, `gain`, `lpf`, `lpenv`, `lpa`, `lpd`, `lps`, `lpr`, `hpf`, `phaser`, `room`, `roomsize`, `delay`, `delaytime`, `delayfeedback`, `slide`, `penv`, `pattack`, `pdecay`, `nudge`/`late`/`early`, `duration`, `legato`, `velocity`, and `pan` all do. The control string is its own little pattern: at each event's onset, whichever control step covers that instant supplies the value.
+Almost every numeric control accepts a mini-notation string instead of a scalar — `attack`, `decay`, `sustain`, `release`, `gain`, `lpf`, `lpenv`, `lpa`, `lpd`, `lps`, `lpr`, `hpf`, `phaser`, `room`, `roomsize`, `delay`, `delaytime`, `delayfeedback`, `slide`, `fm`/`fmi`, `fmh`, `fmattack`, `fmdecay`, `fmsustain`, `fmrelease`, `penv`, `pattack`, `pdecay`, `nudge`/`late`/`early`, `duration`, `legato`, `velocity`, and `pan` all do. The control string is its own little pattern: at each event's onset, whichever control step covers that instant supplies the value.
 
 Before — a flat hi-hat line:
 

@@ -85,6 +85,26 @@ export interface VoiceParams {
   pitchSteps?: number[];
   /** Frames per second for `pitchSteps`. Default 140 (the frame rate of classic AdLib effects). */
   pitchStepRate?: number;
+  /**
+   * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
+   * frequency by index × modulator frequency, so the sound stays equally bright
+   * as the pitch changes. 0 or unset adds no FM nodes. Synth voices only.
+   */
+  fmIndex?: number;
+  /** FM harmonicity (Strudel's `fmh`): modulator frequency ÷ carrier frequency. Non-integers give bell and metallic tones. Default 1. */
+  fmHarmonicity?: number;
+  /** Modulator-depth envelope (reaches the full index after `fmAttack`). Without any of the four envelope fields the index is constant. Default 0. */
+  fmAttack?: number;
+  /** Seconds for the modulator depth to fall to `fmSustain` × the index. Default 0. */
+  fmDecay?: number;
+  /** Fraction (0-1) of the index the modulator depth settles to. Default 1, or 0 when only `fmDecay` is set (as in Strudel). */
+  fmSustain?: number;
+  /** Seconds for the modulator depth to fall to 0 after the gate closes. Default 0. */
+  fmRelease?: number;
+  /** Ramp shape of the modulator-depth envelope: 'exp' (default, as in Strudel) or 'lin'. */
+  fmEnvCurve?: 'lin' | 'exp';
+  /** Modulator waveform. Default 'sine'. */
+  fmWave?: OscType;
   /** Start-time offset in seconds, relative to the pattern's shared start time. */
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */

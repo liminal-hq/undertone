@@ -21,7 +21,9 @@ import {
 } from './scheduler.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
-import type { ControlPatch, SoundType, VoiceParams } from './types.js';
+import type { ControlPatch, OscType, SoundType, VoiceParams } from './types.js';
+
+const OSC_TYPES: readonly OscType[] = ['sine', 'triangle', 'square', 'sawtooth'];
 
 /** A half-open span of cycle time [begin, end). */
 export interface TimeSpan {
@@ -368,6 +370,78 @@ export class Pattern<T> {
    */
   slide(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
     return this.withControlPattern('slideTime', seconds);
+  }
+
+  /**
+   * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
+   * frequency by index × the modulator's frequency, so the sound is equally
+   * bright at every pitch. 0 turns it off. Synth voices only. Accepts a
+   * mini-notation string to pattern it.
+   */
+  fm(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmIndex', index, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`fm() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** Alias of fm() under Strudel's `fmi` name. */
+  fmi(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+    return this.fm(index);
+  }
+
+  /**
+   * FM harmonicity (Strudel's `fmh`): the modulator's frequency as a multiple of
+   * the carrier's. Whole numbers give harmonic tones; fractions such as 3.5 or
+   * 2.76 give bells and metal. Accepts a mini-notation string to pattern it.
+   */
+  fmh(this: Pattern<ControlPatch>, ratio: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmHarmonicity', ratio, {
+      validate: (v) => {
+        if (!(v > 0)) {
+          throw new Error(`fmh() must be positive, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** Seconds for the FM depth to reach the full index. Accepts a mini-notation string. */
+  fmattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmAttack', seconds);
+  }
+
+  /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a mini-notation string. */
+  fmdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmDecay', seconds);
+  }
+
+  /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a mini-notation string. */
+  fmsustain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmSustain', level);
+  }
+
+  /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a mini-notation string. */
+  fmrelease(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmRelease', seconds);
+  }
+
+  /** Ramp shape of the FM depth envelope: 'exp' (default, as in Strudel) or 'lin'. Not patternable. */
+  fmenv(this: Pattern<ControlPatch>, curve: 'lin' | 'exp'): Pattern<ControlPatch> {
+    if (curve !== 'lin' && curve !== 'exp') {
+      throw new Error(`fmenv() must be 'lin' or 'exp', got "${String(curve)}"`);
+    }
+    return this.withPatch({ fmEnvCurve: curve });
+  }
+
+  /** The modulator's waveform: sine (default), triangle, square or sawtooth. Not patternable. */
+  fmwave(this: Pattern<ControlPatch>, type: OscType): Pattern<ControlPatch> {
+    if (!(OSC_TYPES as readonly string[]).includes(type)) {
+      throw new Error(`fmwave() must be one of ${OSC_TYPES.join(', ')}, got "${String(type)}"`);
+    }
+    return this.withPatch({ fmWave: type });
   }
 
   /**
