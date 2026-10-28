@@ -26,6 +26,7 @@ export {
 } from './pattern.js';
 export { Fraction } from './fraction.js';
 export { SHAPED_WAVE_TYPES, isShapedWave } from './waves.js';
+export { encodeWav } from './wav.js';
 export { midiToFrequency, noteToFrequency, noteToMidi } from './pitch.js';
 export {
   clearSamples,
@@ -60,6 +61,7 @@ export type {
 } from './scheduler.js';
 export type { OutputOptions, PlaybackHandle, PlayParamsOptions, StopOptions } from './engine.js';
 export type { SampleSource } from './samples.js';
+export type { WavOptions, WavSource } from './wav.js';
 export type {
   AudioContextLike,
   AudioDestinationNodeLike,
