@@ -9,6 +9,7 @@ import { stack } from './pattern';
 import { renderToBuffer } from './render';
 import { clearSamples, registerSample } from './samples';
 import { resetTempo } from './scheduler';
+import { score } from './score';
 import { FakeOfflineAudioContext, fakeOfflineFactory } from './test-utils/fakeAudioContext';
 
 afterEach(() => {
@@ -151,5 +152,28 @@ describe('renderToBuffer', () => {
     });
     expect(buffer.length).toBe(150);
     expect(buffer.getChannelData(0)[0]).toBe(1);
+  });
+});
+
+describe('render() shortcuts', () => {
+  it('Pattern.render() renders the pattern', async () => {
+    const context = fakeOfflineFactory();
+    const buffer = await note('c3 e3').render({ cps: 1, sampleRate: 100, context });
+    expect(buffer.length).toBe(100);
+  });
+
+  it('score().render() covers one pass at the score tempo', async () => {
+    const context = fakeOfflineFactory();
+    const cue = score({
+      ticksPerSecond: 560,
+      lengthTicks: 1120,
+      events: [
+        { tick: 0, note: 'e4', gate: 112 },
+        { tick: 280, midi: 69, gate: 28 }
+      ]
+    });
+    const buffer = await cue.render({ sampleRate: 100, master: false, context });
+    expect(buffer.length).toBe(200);
+    expect(context.contexts[0].oscillators.map((o) => o.started[0])).toEqual([0, 0.5]);
   });
 });

@@ -8,8 +8,9 @@ import { Fraction } from './fraction.js';
 import { midiToFrequency } from './pitch.js';
 import { Pattern } from './pattern.js';
 import type { Hap, TimeSpan } from './pattern.js';
+import type { RenderOptions } from './render.js';
 import type { LoopHandle, LoopOptions, PlayOptions } from './scheduler.js';
-import type { ControlPatch } from './types.js';
+import type { ControlPatch, RenderedAudioBufferLike } from './types.js';
 
 /** One note in a score. Times are whole ticks, so they stay exact. */
 export interface ScoreEvent {
@@ -55,6 +56,10 @@ export interface Score {
   loop(options?: Omit<LoopOptions, 'bpm' | 'cps'>): LoopHandle;
   /** Plays one pass of the cue. */
   play(options?: Omit<PlayOptions, 'bpm' | 'cps'>): PlaybackHandle;
+  /** Renders one pass of the cue offline at its own tempo. Add a `tail` to let releases ring out, or `wrap` it for a seamless loop. */
+  render(
+    options?: Omit<RenderOptions, 'bpm' | 'cps' | 'seconds'>
+  ): Promise<RenderedAudioBufferLike>;
 }
 
 function requireInteger(value: number, label: string, min: number): void {
@@ -132,6 +137,7 @@ export function score(definition: ScoreDefinition): Score {
     cps,
     seconds: lengthTicks / ticksPerSecond,
     loop: (options = {}) => pattern.loop({ ...options, cps }),
-    play: (options = {}) => pattern.play({ ...options, cps })
+    play: (options = {}) => pattern.play({ ...options, cps }),
+    render: (options = {}) => pattern.render({ ...options, cps })
   };
 }

@@ -19,6 +19,9 @@ import {
   type LoopOptions,
   type PlayOptions
 } from './scheduler.js';
+import { renderToBuffer } from './render.js';
+import type { RenderOptions } from './render.js';
+import type { RenderedAudioBufferLike } from './types.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
 import type { ControlPatch, OscType, ShapedWaveType, SoundType, VoiceParams } from './types.js';
@@ -717,6 +720,18 @@ export class Pattern<T> {
   /** Loops the pattern until stop() is called on the returned handle. */
   loop(this: Pattern<ControlPatch>, options: LoopOptions = {}): LoopHandle {
     return loopPattern(this, options);
+  }
+
+  /**
+   * Renders the pattern offline to an audio buffer, with no real-time clock and
+   * a seeded random source, so the same pattern gives the same samples on the
+   * same engine. Pass the result to `encodeWav` to write a file.
+   */
+  render(
+    this: Pattern<ControlPatch>,
+    options: RenderOptions = {}
+  ): Promise<RenderedAudioBufferLike> {
+    return renderToBuffer(this, options);
   }
 }
 
