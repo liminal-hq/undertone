@@ -8,6 +8,7 @@ import { voicingPitches } from './chord.js';
 // mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
 // cycle — safe here because both modules only reference each other's bindings inside function
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
+import type { PlaybackHandle } from './engine.js';
 import { mini } from './mini.js';
 import { midiToFrequency } from './pitch.js';
 import { degreeToMidi, parseScale } from './scale.js';
@@ -511,8 +512,8 @@ export class Pattern<T> {
    * lazily-created shared AudioContext when none is passed — call from a
    * user gesture the first time (autoplay policy).
    */
-  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): void {
-    playPattern(this, options);
+  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): PlaybackHandle {
+    return playPattern(this, options);
   }
 
   /** Loops the pattern until stop() is called on the returned handle. */

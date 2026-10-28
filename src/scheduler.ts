@@ -3,7 +3,14 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { playVoice, resolveParams } from './engine.js';
+import {
+  combineHandles,
+  playVoice,
+  resolveParams,
+  type OutputOptions,
+  type PlaybackHandle,
+  type StopOptions
+} from './engine.js';
 import { Fraction } from './fraction.js';
 import type { Hap, TimeSpan } from './pattern.js';
 import type { AudioContextLike, ControlPatch } from './types.js';
@@ -18,11 +25,13 @@ export interface TimerLike {
   clearInterval(handle: unknown): void;
 }
 
-export interface PlayOptions {
+export interface PlayOptions extends OutputOptions {
   /** Audio context to schedule against; a lazily-created shared AudioContext when omitted. */
   ctx?: AudioContextLike;
   /** Tempo in beats per minute, four beats to a cycle. Default 120 (2-second cycles). */
   bpm?: number;
+  /** Tempo in cycles per second — an alternative to `bpm` for scores that know their loop length in seconds. Passing both throws. */
+  cps?: number;
   /** Absolute start time on the context's clock. Default: now. */
   when?: number;
   /**
@@ -34,18 +43,33 @@ export interface PlayOptions {
   gated?: boolean;
 }
 
-export interface LoopOptions {
+export interface LoopOptions extends OutputOptions {
   /** Audio context to schedule against; a lazily-created shared AudioContext when omitted. */
   ctx?: AudioContextLike;
   /** Tempo in beats per minute, four beats to a cycle. Default 120 (2-second cycles). */
   bpm?: number;
+  /** Tempo in cycles per second — an alternative to `bpm` for scores that know their loop length in seconds. Passing both throws. */
+  cps?: number;
   /** Injectable timer (tests tick it by hand); defaults to global setInterval/clearInterval. */
   timer?: TimerLike;
 }
 
-/** Returned by loop(): call stop() to stop scheduling new cycles. Already-scheduled voices ring out. */
+/** Options for stopping a loop. */
+export interface LoopStopOptions extends StopOptions {
+  /**
+   * What happens to voices already scheduled or sounding. 'ring' (default)
+   * lets them finish naturally; 'cut' fades them out now, including notes
+   * booked into the lookahead window that have not started yet.
+   */
+  voices?: 'ring' | 'cut';
+}
+
+/**
+ * Returned by loop(): call stop() to stop scheduling new cycles. By default
+ * already-scheduled voices ring out; pass `{ voices: 'cut' }` to silence them.
+ */
 export interface LoopHandle {
-  stop(): void;
+  stop(options?: LoopStopOptions): void;
 }
 
 const DEFAULT_BPM = 120;
@@ -97,7 +121,16 @@ export function resetTempo(): void {
   defaultCyclesPerMinute = undefined;
 }
 
-function cycleSecondsFor(bpm: number | undefined): number {
+function cycleSecondsFor(bpm: number | undefined, cps?: number): number {
+  if (cps !== undefined) {
+    if (bpm !== undefined) {
+      throw new Error('Pass either bpm or cps, not both');
+    }
+    if (!(cps > 0)) {
+      throw new Error(`cps must be positive, got ${cps}`);
+    }
+    return 1 / cps;
+  }
   if (bpm !== undefined) {
     if (!(bpm > 0)) {
       throw new Error(`bpm must be positive, got ${bpm}`);
@@ -121,8 +154,10 @@ function scheduleSpan(
   span: TimeSpan,
   patternStartTime: number,
   cycleSeconds: number,
-  gated: boolean
-): void {
+  gated: boolean,
+  output: OutputOptions
+): PlaybackHandle[] {
+  const handles: PlaybackHandle[] = [];
   for (const hap of pattern.query(span)) {
     if (!hap.whole || !hap.whole.begin.eq(hap.part.begin)) {
       continue; // a tail overlapping the window, not an onset — already scheduled
@@ -131,8 +166,9 @@ function scheduleSpan(
     const patch = gated
       ? { duration: hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds, ...hap.value }
       : hap.value;
-    playVoice(ctx, resolveParams(patch), startTime);
+    handles.push(playVoice(ctx, resolveParams(patch), startTime, output));
   }
+  return handles;
 }
 
 /**
@@ -141,18 +177,24 @@ function scheduleSpan(
  * `{ gated: true }` to hold each event for its own share of the cycle, like
  * loop(), which previews exactly what one looped cycle will sound like.
  */
-export function playPattern(pattern: PatternLike, options: PlayOptions = {}): void {
+export function playPattern(pattern: PatternLike, options: PlayOptions = {}): PlaybackHandle {
   const ctx = options.ctx ?? getSharedContext();
-  const cycleSeconds = cycleSecondsFor(options.bpm);
+  const cycleSeconds = cycleSecondsFor(options.bpm, options.cps);
   const start = options.when ?? ctx.currentTime;
-  scheduleSpan(
+  const handles = scheduleSpan(
     ctx,
     pattern,
     { begin: new Fraction(0), end: new Fraction(1) },
     start,
     cycleSeconds,
-    options.gated ?? false
+    options.gated ?? false,
+    { output: options.output }
   );
+  return combineHandles(handles.length > 0 ? handles : [emptyHandle(start)]);
+}
+
+function emptyHandle(at: number): PlaybackHandle {
+  return { startTime: at, endTime: at, stop: () => undefined };
 }
 
 /**
@@ -163,10 +205,13 @@ export function playPattern(pattern: PatternLike, options: PlayOptions = {}): vo
  */
 export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): LoopHandle {
   const ctx = options.ctx ?? getSharedContext();
-  const cycleSeconds = cycleSecondsFor(options.bpm);
+  const cycleSeconds = cycleSecondsFor(options.bpm, options.cps);
   const timer = options.timer ?? defaultTimer;
   const startTime = ctx.currentTime + START_LATENCY_SECONDS;
   let scheduledUntil = new Fraction(0); // pattern time, in cycles
+  // Voices booked but possibly not finished yet, so stop({ voices: 'cut' }) can
+  // reach them. Pruned on every tick, so it stays bounded however long the loop runs.
+  let live: PlaybackHandle[] = [];
 
   const tick = (): void => {
     const horizonSeconds = ctx.currentTime + LOOKAHEAD_SECONDS - startTime;
@@ -175,18 +220,32 @@ export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): Lo
     if (horizon.lte(scheduledUntil)) {
       return;
     }
-    scheduleSpan(
-      ctx,
-      pattern,
-      { begin: scheduledUntil, end: horizon },
-      startTime,
-      cycleSeconds,
-      true
+    live = live.filter((handle) => handle.endTime > ctx.currentTime);
+    live.push(
+      ...scheduleSpan(
+        ctx,
+        pattern,
+        { begin: scheduledUntil, end: horizon },
+        startTime,
+        cycleSeconds,
+        true,
+        { output: options.output }
+      )
     );
     scheduledUntil = horizon;
   };
 
   tick();
   const handle = timer.setInterval(tick, TICK_MS);
-  return { stop: () => timer.clearInterval(handle) };
+  return {
+    stop(stopOptions = {}) {
+      timer.clearInterval(handle);
+      if (stopOptions.voices === 'cut') {
+        for (const voice of live) {
+          voice.stop(ctx.currentTime, { fade: stopOptions.fade });
+        }
+        live = [];
+      }
+    }
+  };
 }

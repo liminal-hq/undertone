@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 export { chord, n, note, s, sound } from './control.js';
+export { playParams, resolveParams } from './engine.js';
 export { buildImpulseResponse, getOrbitBus } from './effects.js';
 export { mini } from './mini.js';
 export {
@@ -39,7 +40,14 @@ export {
 } from './surround.js';
 export type { Hap, TimeSpan } from './pattern.js';
 export type { OrbitBus } from './effects.js';
-export type { LoopHandle, LoopOptions, PlayOptions, TimerLike } from './scheduler.js';
+export type {
+  LoopHandle,
+  LoopOptions,
+  LoopStopOptions,
+  PlayOptions,
+  TimerLike
+} from './scheduler.js';
+export type { OutputOptions, PlaybackHandle, PlayParamsOptions, StopOptions } from './engine.js';
 export type { SampleSource } from './samples.js';
 export type {
   AudioContextLike,

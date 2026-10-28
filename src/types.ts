@@ -111,11 +111,17 @@ export interface AudioParamLike {
   setValueAtTime(value: number, startTime: number): unknown;
   linearRampToValueAtTime(value: number, endTime: number): unknown;
   exponentialRampToValueAtTime(value: number, endTime: number): unknown;
+  /** Optional: used by playback handles to cancel automation when a voice is stopped early. A hard cut is used when absent. */
+  cancelScheduledValues?(cancelTime: number): unknown;
+  /** Optional: used by playback handles for a smooth fade-out when a voice is stopped early. */
+  setTargetAtTime?(target: number, startTime: number, timeConstant: number): unknown;
 }
 
 export interface AudioNodeLike {
   /** A destination may be another node (audio-rate signal) or a param (e.g. the phaser LFO -> each stage's frequency). */
   connect(destination: AudioNodeLike | AudioParamLike, output?: number, input?: number): void;
+  /** Optional: a real AudioNode has it; the engine never needs it, but consumers' output nodes may use it. */
+  disconnect?(): void;
 }
 
 /**

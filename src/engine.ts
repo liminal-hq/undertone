@@ -74,6 +74,67 @@ const DEFAULT_ORBIT = 0;
 const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper notches
 const PHASER_CENTER_HZ = 1000;
 const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency around the centre
+const DEFAULT_STOP_FADE_SECONDS = 0.01; // short enough to feel immediate, long enough to avoid a click
+const STOP_FADE_TIME_CONSTANTS = 5; // setTargetAtTime reaches ~99% of the way after five time constants
+
+/** Options for stopping a playing voice (or a whole playback) early. */
+export interface StopOptions {
+  /** Fade-out length in seconds before the voice is silent. Default 0.01. */
+  fade?: number;
+}
+
+/**
+ * Returned by play(), playVoices() and playParams(): the scheduled voices'
+ * time window, and a way to stop them early. Safe to call stop() any number
+ * of times, before or after the voices have started or finished.
+ */
+export interface PlaybackHandle {
+  /** Earliest start time of any voice in this playback, on the context's clock. */
+  readonly startTime: number;
+  /** Latest time any voice in this playback is still sounding (after its release), on the context's clock. */
+  readonly endTime: number;
+  /**
+   * Stops every voice at `when` (default: now) with a short fade. Voices that
+   * have not started yet never sound; voices that already finished are
+   * untouched. Without `cancelScheduledValues` on the context's params the
+   * voice is cut hard instead of faded.
+   */
+  stop(when?: number, options?: StopOptions): void;
+}
+
+/** Where a voice's output lands, and options shared by every way of playing voices. */
+export interface OutputOptions {
+  /** Node the voices (and their effects buses) connect to instead of `ctx.destination`, e.g. a game's own mix bus. */
+  output?: AudioNodeLike;
+}
+
+interface Stoppable {
+  stop(when?: number): void;
+}
+
+/** Combines several playbacks into one handle covering all of them. */
+export function combineHandles(handles: readonly PlaybackHandle[]): PlaybackHandle {
+  if (handles.length === 1) {
+    return handles[0];
+  }
+  return {
+    startTime: handles.length > 0 ? Math.min(...handles.map((h) => h.startTime)) : 0,
+    endTime: handles.length > 0 ? Math.max(...handles.map((h) => h.endTime)) : 0,
+    stop(when, options) {
+      for (const handle of handles) {
+        handle.stop(when, options);
+      }
+    }
+  };
+}
+
+/** What scheduleEnvelope() reports back: when the envelope finishes, and its level at any moment. */
+interface EnvelopeShape {
+  /** Absolute time the envelope finishes (fully released). */
+  end: number;
+  /** The level the scheduled automation is at, `t` seconds on the context's clock. */
+  valueAt(t: number): number;
+}
 
 /**
  * Schedules an attack→decay→release envelope on an AudioParam, ramping between
@@ -82,7 +143,8 @@ const PHASER_DEPTH_HZ = 600; // how far the LFO swings each stage's frequency ar
  * shape is percussive (release starts as soon as the decay lands); with it,
  * the envelope holds at its sustain level until the gate closes, which is what
  * gives pattern events their note length. Returns the absolute time the
- * envelope finishes (fully released).
+ * envelope finishes (fully released) plus a function that evaluates the shape,
+ * so a stopped voice can fade from wherever its envelope actually is.
  */
 function scheduleEnvelope(
   param: AudioParamLike,
@@ -94,7 +156,7 @@ function scheduleEnvelope(
   sustainFraction: number,
   release: number,
   gateEnd?: number
-): number {
+): EnvelopeShape {
   const sustainValue = base + (peak - base) * sustainFraction;
 
   param.setValueAtTime(base, startTime);
@@ -123,7 +185,21 @@ function scheduleEnvelope(
     param.linearRampToValueAtTime(base, releaseEnd);
   }
 
-  return releaseEnd;
+  const lerp = (from: number, to: number, t: number, t0: number, t1: number): number =>
+    from + ((to - from) * (t - t0)) / (t1 - t0);
+
+  return {
+    end: releaseEnd,
+    valueAt(t) {
+      if (t <= startTime) return base;
+      if (t < attackEnd) return lerp(base, peak, t, startTime, attackEnd);
+      if (t < decayEnd) return lerp(peak, sustainValue, t, attackEnd, decayEnd);
+      if (t < releaseStart) return sustainValue;
+      if (release > 0 && t < releaseEnd)
+        return lerp(sustainValue, base, t, releaseStart, releaseEnd);
+      return release > 0 ? base : sustainValue;
+    }
+  };
 }
 
 function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' | 'pink' | 'brown' {
@@ -137,13 +213,20 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
  * warns once per name; call loadSamples() up front to avoid skipped voices on
  * the first play.
  */
-export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime: number): void {
+export function playVoice(
+  ctx: AudioContextLike,
+  params: VoiceParams,
+  startTime: number,
+  options: OutputOptions = {}
+): PlaybackHandle {
+  const output = options.output ?? ctx.destination;
   const usingSample = params.sampleName !== undefined;
   const sampleBuffer = usingSample
     ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
     : undefined;
   if (usingSample && sampleBuffer === undefined) {
-    return;
+    const skippedAt = Math.max(startTime + params.nudgeTime, 0);
+    return { startTime: skippedAt, endTime: skippedAt, stop: () => undefined };
   }
 
   // Clamp to the context's origin — real AudioParams/sources throw RangeError on negative times.
@@ -155,7 +238,7 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     params.duration !== undefined && params.sustain > 0 ? voiceStart + params.duration : undefined;
 
   const gainNode = ctx.createGain();
-  const gainReleaseEnd = scheduleEnvelope(
+  const gainEnvelope = scheduleEnvelope(
     gainNode.gain,
     voiceStart,
     0,
@@ -166,6 +249,7 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     params.release,
     gateEnd
   );
+  const gainReleaseEnd = gainEnvelope.end;
 
   let filterReleaseEnd = gainReleaseEnd;
 
@@ -219,7 +303,7 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
       params.filterSustain,
       params.filterRelease,
       gateEnd
-    );
+    ).end;
     tail.connect(filter);
     tail = filter;
   }
@@ -237,17 +321,49 @@ export function playVoice(ctx: AudioContextLike, params: VoiceParams, startTime:
     tail = hpf;
   }
 
+  const stoppables: Stoppable[] = [source];
   if (params.phaserRate !== undefined) {
-    tail = connectPhaser(ctx, tail, params.phaserRate, voiceStart, voiceEnd);
+    tail = connectPhaser(ctx, tail, params.phaserRate, voiceStart, voiceEnd, stoppables);
   }
 
   tail.connect(gainNode);
 
-  const finalNode = connectOutput(ctx, gainNode, params, voiceStart);
-  connectEffectSends(ctx, finalNode, params, voiceStart);
+  const finalNode = connectOutput(ctx, output, gainNode, params, voiceStart);
+  connectEffectSends(ctx, output, finalNode, params, voiceStart);
 
   source.start(voiceStart);
   source.stop(voiceEnd);
+
+  return {
+    startTime: voiceStart,
+    endTime: voiceEnd,
+    stop(when = ctx.currentTime, stopOptions = {}) {
+      const stopAt = Math.max(when, 0);
+      if (stopAt >= voiceEnd) {
+        return;
+      }
+      const fade = Math.max(stopOptions.fade ?? DEFAULT_STOP_FADE_SECONDS, 0);
+      const gain = gainNode.gain;
+      let silentAt = stopAt;
+      if (gain.cancelScheduledValues) {
+        gain.cancelScheduledValues(stopAt);
+        gain.setValueAtTime(gainEnvelope.valueAt(stopAt), stopAt);
+        if (fade > 0 && gain.setTargetAtTime) {
+          gain.setTargetAtTime(0, stopAt, fade / STOP_FADE_TIME_CONSTANTS);
+          silentAt = stopAt + fade;
+        } else if (fade > 0) {
+          gain.linearRampToValueAtTime(0, stopAt + fade);
+          silentAt = stopAt + fade;
+        } else {
+          gain.setValueAtTime(0, stopAt);
+        }
+      }
+      // Calling stop() again on a source replaces the earlier stop time.
+      for (const stoppable of stoppables) {
+        stoppable.stop(Math.min(silentAt, voiceEnd));
+      }
+    }
+  };
 }
 
 /**
@@ -260,7 +376,8 @@ function connectPhaser(
   input: AudioNodeLike,
   rateHz: number,
   voiceStart: number,
-  voiceEnd: number
+  voiceEnd: number,
+  stoppables: Stoppable[]
 ): AudioNodeLike {
   const lfo = ctx.createOscillator();
   lfo.type = 'sine';
@@ -282,6 +399,7 @@ function connectPhaser(
 
   lfo.start(voiceStart);
   lfo.stop(voiceEnd);
+  stoppables.push(lfo);
   return tail;
 }
 
@@ -307,6 +425,7 @@ function connectSend(
  */
 function connectEffectSends(
   ctx: AudioContextLike,
+  output: AudioNodeLike,
   finalNode: AudioNodeLike,
   params: VoiceParams,
   voiceStart: number
@@ -317,7 +436,7 @@ function connectEffectSends(
     return;
   }
 
-  const bus = getOrbitBus(ctx, params.orbit ?? DEFAULT_ORBIT);
+  const bus = getOrbitBus(ctx, params.orbit ?? DEFAULT_ORBIT, output);
 
   if (hasRoom) {
     bus.setRoomSize(params.roomSize);
@@ -340,11 +459,12 @@ function connectEffectSends(
  */
 function connectOutput(
   ctx: AudioContextLike,
+  output: AudioNodeLike,
   gainNode: GainNodeLike,
   params: VoiceParams,
   voiceStart: number
 ): AudioNodeLike {
-  const available = ctx.destination.channelCount ?? 2;
+  const available = (output as { channelCount?: number }).channelCount ?? 2;
   let placement = params.channelGains?.slice(0, MAX_CHANNELS);
   if (placement !== undefined && placement.length === 0) {
     placement = undefined;
@@ -354,13 +474,13 @@ function connectOutput(
     const panner = ctx.createStereoPanner();
     panner.pan.setValueAtTime(params.pan, voiceStart);
     gainNode.connect(panner);
-    panner.connect(ctx.destination);
+    panner.connect(output);
     return panner;
   }
 
   if (placement === undefined) {
     if (available <= 2) {
-      gainNode.connect(ctx.destination);
+      gainNode.connect(output);
       return gainNode;
     }
     placement = [1, 1]; // centred stereo image, matching the spec's mono->stereo up-mix
@@ -379,13 +499,39 @@ function connectOutput(
       channelGain.connect(merger, 0, channel);
     }
   });
-  merger.connect(ctx.destination);
+  merger.connect(output);
   return merger;
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */
-export function playVoices(ctx: AudioContextLike, voicesParams: VoiceParams[], when: number): void {
-  for (const params of voicesParams) {
-    playVoice(ctx, params, when);
-  }
+export function playVoices(
+  ctx: AudioContextLike,
+  voicesParams: VoiceParams[],
+  when: number,
+  options: OutputOptions = {}
+): PlaybackHandle {
+  return combineHandles(voicesParams.map((params) => playVoice(ctx, params, when, options)));
+}
+
+/** Options for playParams(). */
+export interface PlayParamsOptions extends OutputOptions {
+  /** Absolute start time on the context's clock. Default: now. */
+  when?: number;
+}
+
+/**
+ * Plays plain voice data — an array of (partial) VoiceParams, e.g. loaded from
+ * a save file or built by an in-game sound editor — with no patterns involved.
+ * Missing fields take the same defaults as a pattern event; the returned
+ * handle can stop every voice early.
+ */
+export function playParams(
+  ctx: AudioContextLike,
+  voices: readonly ControlPatch[],
+  options: PlayParamsOptions = {}
+): PlaybackHandle {
+  const when = options.when ?? ctx.currentTime;
+  return combineHandles(
+    voices.map((patch) => playVoice(ctx, resolveParams(patch), when, { output: options.output }))
+  );
 }
