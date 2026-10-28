@@ -13,6 +13,7 @@ import type {
   ChannelMergerNodeLike,
   ConvolverNodeLike,
   DelayNodeLike,
+  DynamicsCompressorNodeLike,
   GainNodeLike,
   OscillatorNodeLike,
   PeriodicWaveLike,
@@ -138,6 +139,14 @@ export class FakePeriodicWave {
   ) {}
 }
 
+export class FakeDynamicsCompressorNode extends FakeNode implements DynamicsCompressorNodeLike {
+  threshold = new FakeAudioParam();
+  knee = new FakeAudioParam();
+  ratio = new FakeAudioParam();
+  attack = new FakeAudioParam();
+  release = new FakeAudioParam();
+}
+
 export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
   maxChannelCount = 2;
   channelCount = 2;
@@ -185,7 +194,16 @@ export class FakeAudioContext implements AudioContextLike {
    * optional cancelScheduledValues/setTargetAtTime — used to prove the engine
    * still works, falling back gracefully, on such contexts.
    */
-  constructor(private readonly options: { bareParams?: boolean; noPeriodicWave?: boolean } = {}) {
+  constructor(
+    private readonly options: {
+      bareParams?: boolean;
+      noPeriodicWave?: boolean;
+      noCompressor?: boolean;
+    } = {}
+  ) {
+    if (options.noCompressor) {
+      (this as { createDynamicsCompressor?: unknown }).createDynamicsCompressor = undefined;
+    }
     if (options.noPeriodicWave) {
       // A wrapper context from before shaped waveforms: the method simply is not there.
       (this as { createPeriodicWave?: unknown }).createPeriodicWave = undefined;
@@ -217,6 +235,7 @@ export class FakeAudioContext implements AudioContextLike {
   readonly convolvers: FakeConvolverNode[] = [];
   readonly delays: FakeDelayNode[] = [];
   readonly periodicWaves: FakePeriodicWave[] = [];
+  readonly compressors: FakeDynamicsCompressorNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
     const node = this.bare(new FakeOscillatorNode(), 'frequency');
@@ -263,6 +282,12 @@ export class FakeAudioContext implements AudioContextLike {
   createDelay(): FakeDelayNode {
     const node = new FakeDelayNode();
     this.delays.push(node);
+    return node;
+  }
+
+  createDynamicsCompressor(): FakeDynamicsCompressorNode {
+    const node = new FakeDynamicsCompressorNode();
+    this.compressors.push(node);
     return node;
   }
 

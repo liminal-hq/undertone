@@ -336,3 +336,23 @@ import { note } from '@liminal-hq/undertone';
 
 const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
 ```
+
+### Keeping a dense mix in range
+
+Undertone writes straight to the speakers, so a busy cue can peak at or above full scale. `createMasterBus()` puts a gain stage and a limiter in front of the destination; pass its `input` as the `output` of everything that should share it.
+
+```ts
+import { createMasterBus, note, stack } from '@liminal-hq/undertone';
+
+const ctx = new AudioContext();
+const bus = createMasterBus(ctx, { gain: 0.9 }); // limiter on by default
+
+const music = stack(
+  note('<a2 e2>(3,8)').sound('sawtooth').lpf(600).gain(0.5),
+  note('e5 g5 b5 d6').fm(1.2).fmh(3.5).decay(0.4).gain(0.3)
+);
+
+music.loop({ ctx, output: bus.input });
+```
+
+The bus is an ordinary object you hold, so a game can make one for music and another for effects. The limiter steps aside above two output channels (a compressor would fold surround to stereo), and the gain stage keeps working.

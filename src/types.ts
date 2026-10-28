@@ -221,6 +221,14 @@ export interface BiquadFilterNodeLike extends AudioNodeLike {
   Q: AudioParamLike;
 }
 
+export interface DynamicsCompressorNodeLike extends AudioNodeLike {
+  threshold: AudioParamLike;
+  knee: AudioParamLike;
+  ratio: AudioParamLike;
+  attack: AudioParamLike;
+  release: AudioParamLike;
+}
+
 export interface StereoPannerNodeLike extends AudioNodeLike {
   pan: AudioParamLike;
 }
@@ -261,6 +269,8 @@ export interface AudioContextLike {
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
   createConvolver(): ConvolverNodeLike;
   createDelay(maxDelayTime?: number): DelayNodeLike;
+  /** Optional: needed for createMasterBus()'s limiter; without it the bus is gain only. */
+  createDynamicsCompressor?(): DynamicsCompressorNodeLike;
   /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
   createPeriodicWave?(
     real: Float32Array,

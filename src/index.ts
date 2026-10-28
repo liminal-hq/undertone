@@ -6,6 +6,7 @@
 export { chord, n, note, s, sound } from './control.js';
 export { playParams, resolveParams } from './engine.js';
 export { buildImpulseResponse, getOrbitBus } from './effects.js';
+export { createMasterBus } from './masterBus.js';
 export { mini } from './mini.js';
 export {
   Pattern,
@@ -40,6 +41,7 @@ export {
   surroundGains
 } from './surround.js';
 export type { Hap, TimeSpan } from './pattern.js';
+export type { LimiterOptions, MasterBus, MasterBusOptions } from './masterBus.js';
 export type { OrbitBus } from './effects.js';
 export type {
   LoopHandle,
@@ -54,6 +56,7 @@ export type {
   AudioContextLike,
   AudioDestinationNodeLike,
   ControlPatch,
+  DynamicsCompressorNodeLike,
   NoiseType,
   OscType,
   PeriodicWaveLike,
