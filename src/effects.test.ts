@@ -162,6 +162,18 @@ describe('OrbitBus.setDelay', () => {
     expect(ctx.gains[3].gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.35, time: 0 }]);
   });
 
+  it('applies the change at the given time instead of now', () => {
+    const ctx = new FakeAudioContext();
+    const bus = getOrbitBus(ctx, 0);
+
+    bus.setDelay(0.3, 0.35, 2.5);
+
+    expect(ctx.delays[0].delayTime.calls).toEqual([
+      { method: 'setValueAtTime', value: 0.3, time: 2.5 }
+    ]);
+    expect(ctx.gains[3].gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.35, time: 2.5 }]);
+  });
+
   it('skips redundant automation calls when time and feedback are unchanged', () => {
     const ctx = new FakeAudioContext();
     const bus = getOrbitBus(ctx, 0);

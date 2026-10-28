@@ -593,7 +593,7 @@ function connectEffectSends(
   }
 
   if (hasDelay) {
-    bus.setDelay(params.delayTime, params.delayFeedback);
+    bus.setDelay(params.delayTime, params.delayFeedback, Math.max(voiceStart, ctx.currentTime));
     connectSend(ctx, finalNode, bus.delayInput, params.delayLevel as number, voiceStart);
   }
 }

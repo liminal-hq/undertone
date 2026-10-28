@@ -55,8 +55,12 @@ export interface OrbitBus {
   readonly delayInput: GainNodeLike;
   /** Regenerates the shared impulse response when `size` differs from what's already loaded. */
   setRoomSize(size: number): void;
-  /** Updates the shared delay/feedback when they differ from what's already set. */
-  setDelay(time: number, feedback: number): void;
+  /**
+   * Updates the shared delay/feedback when they differ from what's already set.
+   * Changes land at `when` (default: now), so a booked voice's delay takes
+   * effect at its onset rather than when it was scheduled.
+   */
+  setDelay(time: number, feedback: number, when?: number): void;
 }
 
 interface MutableOrbitBus extends OrbitBus {
@@ -104,14 +108,14 @@ function createOrbitBus(
         keyedRandom(ctx, `ir|${orbit}|${size}`)
       );
     },
-    setDelay(time, feedbackAmount) {
+    setDelay(time, feedbackAmount, when = ctx.currentTime) {
       if (bus.lastDelayTime !== time) {
         bus.lastDelayTime = time;
-        delayNode.delayTime.setValueAtTime(time, ctx.currentTime);
+        delayNode.delayTime.setValueAtTime(time, when);
       }
       if (bus.lastDelayFeedback !== feedbackAmount) {
         bus.lastDelayFeedback = feedbackAmount;
-        feedback.gain.setValueAtTime(feedbackAmount, ctx.currentTime);
+        feedback.gain.setValueAtTime(feedbackAmount, when);
       }
     }
   };
