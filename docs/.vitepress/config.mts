@@ -22,6 +22,7 @@ const guideSidebar = [
       { text: 'Patterned Parameters', link: '/guide/patterned-parameters' },
       { text: 'Arranging Songs', link: '/guide/arranging-songs' },
       { text: 'Stereo & Surround', link: '/guide/stereo-and-surround' },
+      { text: 'Rendering & Export', link: '/guide/rendering-and-export' },
       { text: 'Troubleshooting', link: '/guide/troubleshooting' }
     ]
   },
