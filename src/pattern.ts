@@ -371,6 +371,50 @@ export class Pattern<T> {
   }
 
   /**
+   * Pitch envelope depth in semitones (Strudel's `penv`): each note starts that
+   * far from its pitch (negative = below) and returns to it over pdecay().
+   * Rising and falling sweeps alike. Synth voices only. Accepts a
+   * mini-notation string to pattern it.
+   */
+  penv(this: Pattern<ControlPatch>, semitones: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchEnvAmount', semitones);
+  }
+
+  /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a mini-notation string. */
+  pattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchAttack', seconds);
+  }
+
+  /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a mini-notation string. */
+  pdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchDecay', seconds);
+  }
+
+  /**
+   * A frame-stepped pitch curve: semitone offsets from each note, one per frame
+   * at `rateHz` (default 140, the frame rate of classic AdLib effects), holding
+   * the last offset. Falling and rising sweeps, wobbles and trills are all
+   * just arrays of numbers. Plain data, not patternable. Overrides penv()
+   * and slide().
+   */
+  pitchsteps(
+    this: Pattern<ControlPatch>,
+    semitones: readonly number[],
+    rateHz?: number
+  ): Pattern<ControlPatch> {
+    if (semitones.length === 0 || !semitones.every((v) => Number.isFinite(v))) {
+      throw new Error('pitchsteps() needs a non-empty array of finite semitone offsets');
+    }
+    if (rateHz !== undefined && !(rateHz > 0)) {
+      throw new Error(`pitchsteps() rate must be positive, got ${rateHz}`);
+    }
+    return this.withPatch({
+      pitchSteps: [...semitones],
+      ...(rateHz !== undefined ? { pitchStepRate: rateHz } : {})
+    });
+  }
+
+  /**
    * Explicit gate length in seconds: the envelopes hold at their sustain level
    * for this long, then release — independent of the event's length in the
    * pattern, and also in a one-shot play(). Needs a sustain above 0 to hold.

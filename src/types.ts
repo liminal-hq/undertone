@@ -67,6 +67,24 @@ export interface VoiceParams {
   orbit?: number;
   /** Pitch glide (portamento) time in seconds; starts an octave above the target and slides down. */
   slideTime: number;
+  /**
+   * Pitch envelope depth in semitones (negative for a falling start): the
+   * pitch moves from the note to this offset over `pitchAttack`, then returns
+   * to the note over `pitchDecay`. Synth voices only. Unset or 0 means none.
+   */
+  pitchEnvAmount?: number;
+  /** Seconds the pitch envelope takes to reach its offset (0 = starts there). Default 0. */
+  pitchAttack?: number;
+  /** Seconds the pitch envelope takes to return to the note. Default 0.1. */
+  pitchDecay?: number;
+  /**
+   * A stepped pitch curve as semitone offsets from the note, one per frame:
+   * the pitch jumps to each offset in turn and holds the last. Plain data, so
+   * a sound editor can store and replay it. Takes priority over the envelope and slide.
+   */
+  pitchSteps?: number[];
+  /** Frames per second for `pitchSteps`. Default 140 (the frame rate of classic AdLib effects). */
+  pitchStepRate?: number;
   /** Start-time offset in seconds, relative to the pattern's shared start time. */
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */

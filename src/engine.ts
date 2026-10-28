@@ -12,6 +12,7 @@ import type {
   VoiceParams
 } from './types.js';
 import { getOrbitBus } from './effects.js';
+import { applyPitchCurve, buildPitchCurve } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
 import { getSampleBaseNote, getSampleBuffer } from './samples.js';
@@ -68,7 +69,6 @@ export function resolveParams(patch: ControlPatch): VoiceParams {
 const DEFAULT_OSCILLATOR_FREQUENCY = 440;
 const DEFAULT_SAMPLE_BASE_NOTE = 'c4'; // the pitch an unregistered-baseNote sample is assumed to sound at
 const MAX_NOISE_BUFFER_SECONDS = 2; // longer gates loop the buffer instead of growing it
-const SLIDE_START_MULTIPLIER = 2; // an octave above the target — matches a percussive downward "thunk"
 const STOP_TAIL_SECONDS = 0.02; // headroom past the last ramp so the ramp actually completes before stop()
 const DEFAULT_ORBIT = 0;
 const PHASER_STAGE_COUNT = 4; // series allpass filters; more stages = deeper notches
@@ -316,12 +316,7 @@ export function playVoice(
     oscillator.type = params.soundType;
     const targetFreq =
       params.pitch !== undefined ? noteToFrequency(params.pitch) : DEFAULT_OSCILLATOR_FREQUENCY;
-    if (params.slideTime > 0) {
-      oscillator.frequency.setValueAtTime(targetFreq * SLIDE_START_MULTIPLIER, voiceStart);
-      oscillator.frequency.exponentialRampToValueAtTime(targetFreq, voiceStart + params.slideTime);
-    } else {
-      oscillator.frequency.setValueAtTime(targetFreq, voiceStart);
-    }
+    applyPitchCurve(oscillator.frequency, targetFreq, buildPitchCurve(params, voiceStart));
   }
 
   let tail: AudioNodeLike = source;

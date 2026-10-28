@@ -261,6 +261,22 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.slide(seconds: number) => Pattern<ControlPatch>',
     doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
   },
+  penv: {
+    signature: '.penv(semitones: number) => Pattern<ControlPatch>',
+    doc: 'Pitch envelope depth in semitones: each note starts that far from its pitch (negative = below, so it rises) and returns over .pdecay().'
+  },
+  pattack: {
+    signature: '.pattack(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds the pitch envelope takes to sweep out to its .penv() offset. Default 0: it starts there.'
+  },
+  pdecay: {
+    signature: '.pdecay(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds the pitch envelope takes to return to the note. Default 0.1.'
+  },
+  pitchsteps: {
+    signature: '.pitchsteps(semitones: number[], rateHz?: number) => Pattern<ControlPatch>',
+    doc: 'Frame-stepped pitch curve: semitone offsets, one per frame at rateHz (default 140), holding the last. Overrides .penv() and .slide().'
+  },
   hpf: {
     signature: '.hpf(hz: number) => Pattern<ControlPatch>',
     doc: 'Static highpass filter, in series after .lpf(). Omit entirely to skip it.'
@@ -366,6 +382,10 @@ const METHOD_NAMES = [
   'lps',
   'lpr',
   'slide',
+  'penv',
+  'pattack',
+  'pdecay',
+  'pitchsteps',
   'hpf',
   'phaser',
   'room',
