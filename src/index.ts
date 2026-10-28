@@ -26,6 +26,7 @@ export {
 } from './pattern.js';
 export { Fraction } from './fraction.js';
 export { SHAPED_WAVE_TYPES, isShapedWave } from './waves.js';
+export { renderToBuffer } from './render.js';
 export { encodeWav } from './wav.js';
 export { midiToFrequency, noteToFrequency, noteToMidi } from './pitch.js';
 export {
@@ -61,6 +62,7 @@ export type {
 } from './scheduler.js';
 export type { OutputOptions, PlaybackHandle, PlayParamsOptions, StopOptions } from './engine.js';
 export type { SampleSource } from './samples.js';
+export type { OfflineContextInit, RenderOptions } from './render.js';
 export type { WavOptions, WavSource } from './wav.js';
 export type {
   AudioContextLike,
@@ -68,8 +70,10 @@ export type {
   ControlPatch,
   DynamicsCompressorNodeLike,
   NoiseType,
+  OfflineAudioContextLike,
   OscType,
   PeriodicWaveLike,
+  RenderedAudioBufferLike,
   ShapedWaveType,
   SoundType,
   VoiceParams
