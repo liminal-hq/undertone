@@ -15,8 +15,10 @@ import type {
   DelayNodeLike,
   DynamicsCompressorNodeLike,
   GainNodeLike,
+  OfflineAudioContextLike,
   OscillatorNodeLike,
   PeriodicWaveLike,
+  RenderedAudioBufferLike,
   StereoPannerNodeLike,
   AudioBufferSourceNodeLike
 } from '../types';
@@ -169,15 +171,18 @@ export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSo
   }
 }
 
-class FakeAudioBuffer implements AudioBufferLike {
+class FakeAudioBuffer implements RenderedAudioBufferLike {
   /** One independent array per channel — a per-channel reverb IR needs its channels to actually differ. */
   private readonly channels: Float32Array[];
+  readonly numberOfChannels: number;
 
-  constructor(numChannels: number, length: number) {
-    this.channels = Array.from(
-      { length: Math.max(numChannels, 1) },
-      () => new Float32Array(length)
-    );
+  constructor(
+    numChannels: number,
+    readonly length: number,
+    readonly sampleRate = 44100
+  ) {
+    this.numberOfChannels = Math.max(numChannels, 1);
+    this.channels = Array.from({ length: this.numberOfChannels }, () => new Float32Array(length));
   }
 
   getChannelData(channel: number): Float32Array {
@@ -301,12 +306,78 @@ export class FakeAudioContext implements AudioContextLike {
     return wave;
   }
 
-  createBuffer(numChannels: number, length: number): AudioBufferLike {
-    return new FakeAudioBuffer(numChannels, length);
+  createBuffer(numChannels: number, length: number, sampleRate?: number): AudioBufferLike {
+    return new FakeAudioBuffer(numChannels, length, sampleRate);
   }
 
   /** Decodes to a silent mono buffer sized from the input — tests assert on registration/routing, not on decoded audio content. */
   decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike> {
     return Promise.resolve(new FakeAudioBuffer(1, Math.max(data.byteLength, 1)));
   }
+}
+
+export interface FakeOfflineOptions {
+  numberOfChannels: number;
+  length: number;
+  sampleRate: number;
+  /** Fills each rendered channel; the default leaves silence. */
+  fill?: (channel: number, data: Float32Array) => void;
+}
+
+/** A fake OfflineAudioContext: records nodes like FakeAudioContext, then "renders" a buffer on demand. */
+export class FakeOfflineAudioContext extends FakeAudioContext implements OfflineAudioContextLike {
+  readonly length: number;
+  readonly numberOfChannels: number;
+  /** Total nodes created before startRendering() was called. */
+  nodeCountAtRender = -1;
+  rendered = false;
+
+  constructor(private readonly offline: FakeOfflineOptions) {
+    super();
+    this.sampleRate = offline.sampleRate;
+    this.length = offline.length;
+    this.numberOfChannels = offline.numberOfChannels;
+    this.destination.channelCount = offline.numberOfChannels;
+    this.destination.maxChannelCount = offline.numberOfChannels;
+  }
+
+  private nodeCount(): number {
+    return (
+      this.oscillators.length +
+      this.gains.length +
+      this.filters.length +
+      this.panners.length +
+      this.mergers.length +
+      this.bufferSources.length +
+      this.convolvers.length +
+      this.delays.length +
+      this.compressors.length
+    );
+  }
+
+  startRendering(): Promise<RenderedAudioBufferLike> {
+    this.nodeCountAtRender = this.nodeCount();
+    this.rendered = true;
+    const buffer = new FakeAudioBuffer(this.numberOfChannels, this.length, this.sampleRate);
+    for (let c = 0; c < this.numberOfChannels; c++) {
+      this.offline.fill?.(c, buffer.getChannelData(c));
+    }
+    return Promise.resolve(buffer);
+  }
+}
+
+/** A factory producing FakeOfflineAudioContexts, collecting each one created in `contexts`. */
+export function fakeOfflineFactory(spy?: (ctx: FakeOfflineAudioContext) => void): {
+  (opts: FakeOfflineOptions): FakeOfflineAudioContext;
+  contexts: FakeOfflineAudioContext[];
+} {
+  const contexts: FakeOfflineAudioContext[] = [];
+  const factory = (opts: FakeOfflineOptions): FakeOfflineAudioContext => {
+    const ctx = new FakeOfflineAudioContext(opts);
+    contexts.push(ctx);
+    spy?.(ctx);
+    return ctx;
+  };
+  factory.contexts = contexts;
+  return factory;
 }

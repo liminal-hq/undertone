@@ -596,6 +596,18 @@ describe('reverb/delay sends and orbit buses', () => {
     expect(send!.gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.4, time: 0 }]);
   });
 
+  it("applies each voice's delay change at its own onset", () => {
+    const ctx = new FakeAudioContext();
+
+    playVoice(ctx, resolveParams({ pitch: 'a4', delayLevel: 0.2, delayTime: 0.25 }), 1);
+    playVoice(ctx, resolveParams({ pitch: 'a4', delayLevel: 0.2, delayTime: 0.5 }), 2);
+
+    expect(ctx.delays[0].delayTime.calls).toEqual([
+      { method: 'setValueAtTime', value: 0.25, time: 1 },
+      { method: 'setValueAtTime', value: 0.5, time: 2 }
+    ]);
+  });
+
   it('sends to the delay bus as well when delayLevel is set, using delayTime/delayFeedback', () => {
     const ctx = new FakeAudioContext();
     const bus = getOrbitBus(ctx, 0);

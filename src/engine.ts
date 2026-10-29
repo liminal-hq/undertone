@@ -18,6 +18,7 @@ import { getOrbitBus } from './effects.js';
 import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
+import { contextRandom } from './random.js';
 import { getShapedWave, isShapedWave } from './waves.js';
 import { getSampleBaseNote, getSampleBuffer } from './samples.js';
 import { foldChannelGains, MAX_CHANNELS } from './surround.js';
@@ -143,14 +144,15 @@ function claimCutGroup(
     outputs.set(output, groups);
   }
   const previous = groups.get(group);
-  // A voice scheduled to start earlier than the current holder (out-of-order nudges)
-  // must not choke it; it only joins the group if it is the latest onset.
   if (previous && previous.startTime < handle.startTime) {
     previous.stop(handle.startTime, { fade: CUT_FADE_SECONDS });
+  } else if (previous && handle.startTime < previous.startTime) {
+    // Booked out of order: the later voice already holds the group, so the earlier
+    // one is choked at the holder's onset and the holder stays the group's owner.
+    handle.stop(previous.startTime, { fade: CUT_FADE_SECONDS });
+    return;
   }
-  if (!previous || previous.startTime <= handle.startTime) {
-    groups.set(group, handle);
-  }
+  groups.set(group, handle);
 }
 
 /** Combines several playbacks into one handle covering all of them. */
@@ -346,7 +348,12 @@ export function playVoice(
     // buffers on the main thread every cycle.
     const audibleSeconds = Math.max(gainReleaseEnd - voiceStart, 0.05);
     const bufferDuration = Math.min(audibleSeconds, MAX_NOISE_BUFFER_SECONDS);
-    bufferSource.buffer = buildNoiseBuffer(ctx, params.soundType, bufferDuration);
+    bufferSource.buffer = buildNoiseBuffer(
+      ctx,
+      params.soundType,
+      bufferDuration,
+      contextRandom(ctx, `noise|${params.soundType}|${startTime}`)
+    );
     bufferSource.loop = audibleSeconds > bufferDuration;
   } else {
     const oscillator = source as ReturnType<AudioContextLike['createOscillator']>;
@@ -587,7 +594,7 @@ function connectEffectSends(
   }
 
   if (hasDelay) {
-    bus.setDelay(params.delayTime, params.delayFeedback);
+    bus.setDelay(params.delayTime, params.delayFeedback, Math.max(voiceStart, ctx.currentTime));
     connectSend(ctx, finalNode, bus.delayInput, params.delayLevel as number, voiceStart);
   }
 }

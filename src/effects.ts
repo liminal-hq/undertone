@@ -3,6 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import { keyedRandom, type RandomSource } from './random.js';
 import type { AudioBufferLike, AudioContextLike, AudioNodeLike, GainNodeLike } from './types.js';
 
 const ROOM_SIZE_MIN_SECONDS = 0.3;
@@ -29,7 +30,11 @@ function roomSizeToSeconds(size: number): number {
  * decaying noise, the standard textbook algorithmic-reverb technique — not
  * derived from any sampled room or Strudel's own IR data.
  */
-export function buildImpulseResponse(ctx: AudioContextLike, seconds: number): AudioBufferLike {
+export function buildImpulseResponse(
+  ctx: AudioContextLike,
+  seconds: number,
+  random: RandomSource = Math.random
+): AudioBufferLike {
   const length = Math.max(1, Math.round(ctx.sampleRate * seconds));
   const buffer = ctx.createBuffer(IR_CHANNELS, length, ctx.sampleRate);
   const decayRate = -Math.log(IR_DECAY_FLOOR);
@@ -37,7 +42,7 @@ export function buildImpulseResponse(ctx: AudioContextLike, seconds: number): Au
     const data = buffer.getChannelData(channel);
     for (let i = 0; i < length; i++) {
       const envelope = Math.exp(-decayRate * (i / length));
-      data[i] = (Math.random() * 2 - 1) * envelope;
+      data[i] = (random() * 2 - 1) * envelope;
     }
   }
   return buffer;
@@ -50,8 +55,12 @@ export interface OrbitBus {
   readonly delayInput: GainNodeLike;
   /** Regenerates the shared impulse response when `size` differs from what's already loaded. */
   setRoomSize(size: number): void;
-  /** Updates the shared delay/feedback when they differ from what's already set. */
-  setDelay(time: number, feedback: number): void;
+  /**
+   * Updates the shared delay/feedback when they differ from what's already set.
+   * Changes land at `when` (default: now), so a booked voice's delay takes
+   * effect at its onset rather than when it was scheduled.
+   */
+  setDelay(time: number, feedback: number, when?: number): void;
 }
 
 interface MutableOrbitBus extends OrbitBus {
@@ -60,7 +69,11 @@ interface MutableOrbitBus extends OrbitBus {
   lastDelayFeedback: number | undefined;
 }
 
-function createOrbitBus(ctx: AudioContextLike, output: AudioNodeLike): MutableOrbitBus {
+function createOrbitBus(
+  ctx: AudioContextLike,
+  output: AudioNodeLike,
+  orbit: number
+): MutableOrbitBus {
   const reverbInput = ctx.createGain();
   const convolver = ctx.createConvolver();
   reverbInput.connect(convolver);
@@ -89,16 +102,20 @@ function createOrbitBus(ctx: AudioContextLike, output: AudioNodeLike): MutableOr
         return;
       }
       bus.lastRoomSize = size;
-      convolver.buffer = buildImpulseResponse(ctx, roomSizeToSeconds(size));
+      convolver.buffer = buildImpulseResponse(
+        ctx,
+        roomSizeToSeconds(size),
+        keyedRandom(ctx, `ir|${orbit}|${size}`)
+      );
     },
-    setDelay(time, feedbackAmount) {
+    setDelay(time, feedbackAmount, when = ctx.currentTime) {
       if (bus.lastDelayTime !== time) {
         bus.lastDelayTime = time;
-        delayNode.delayTime.setValueAtTime(time, ctx.currentTime);
+        delayNode.delayTime.setValueAtTime(time, when);
       }
       if (bus.lastDelayFeedback !== feedbackAmount) {
         bus.lastDelayFeedback = feedbackAmount;
-        feedback.gain.setValueAtTime(feedbackAmount, ctx.currentTime);
+        feedback.gain.setValueAtTime(feedbackAmount, when);
       }
     }
   };
@@ -137,7 +154,7 @@ export function getOrbitBus(
   }
   let bus = busesForOutput.get(orbit);
   if (!bus) {
-    bus = createOrbitBus(ctx, output);
+    bus = createOrbitBus(ctx, output, orbit);
     busesForOutput.set(orbit, bus);
   }
   return bus;

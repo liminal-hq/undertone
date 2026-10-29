@@ -5,8 +5,9 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { note, sound } from './control';
+import { Fraction } from './fraction';
 import { stack } from './pattern';
-import { resetTempo, setcpm } from './scheduler';
+import { collectOnsets, cycleSecondsFor, resetTempo, setcpm } from './scheduler';
 import type { TimerLike } from './scheduler';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
 
@@ -228,5 +229,37 @@ describe('resetTempo', () => {
     resetTempo();
     note('c3 e3').play({ ctx, when: 0 });
     expect(ctx.oscillators.map((osc) => osc.started[0])).toEqual([0, 1]);
+  });
+});
+
+describe('collectOnsets', () => {
+  const span = { begin: Fraction.from(0), end: Fraction.from(1) };
+
+  it('returns each onset with its start time and gated duration, without touching a context', () => {
+    const voices = collectOnsets(note('c3 e3'), span, 10, 2, true);
+    expect(voices.map((v) => v.startTime)).toEqual([10, 11]);
+    expect(voices.map((v) => v.params.duration)).toEqual([1, 1]);
+  });
+
+  it('leaves the duration unset for an ungated span and honours legato', () => {
+    const plain = collectOnsets(note('c3 e3'), span, 0, 2, false);
+    expect(plain.map((v) => v.params.duration)).toEqual([undefined, undefined]);
+    const legato = collectOnsets(note('c3 e3').legato(0.5), span, 0, 2, false);
+    expect(legato.map((v) => v.params.duration)).toEqual([0.5, 0.5]);
+  });
+
+  it('skips tails of events that began before the span', () => {
+    const later = { begin: new Fraction(1, 2), end: Fraction.from(1) };
+    const voices = collectOnsets(note('c3*1'), later, 0, 2, true);
+    expect(voices).toEqual([]);
+  });
+});
+
+describe('cycleSecondsFor', () => {
+  afterEach(() => resetTempo());
+
+  it('converts cps and bpm to seconds per cycle and rejects both together', () => {
+    expect(cycleSecondsFor(undefined, 2)).toBe(0.5);
+    expect(() => cycleSecondsFor(120, 1)).toThrow('either bpm or cps');
   });
 });

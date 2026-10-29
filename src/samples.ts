@@ -72,8 +72,11 @@ export function registerSamples(map: Record<string, RegisteredSource>): void {
   }
 }
 
-/** `.bank(name)` is a lookup convention, not a loader: prefer `${bank}_${name}`, fall back to `name`. */
-function resolveRegisteredKey(name: string, bank?: string): string | undefined {
+/**
+ * `.bank(name)` is a lookup convention, not a loader: prefer `${bank}_${name}`, fall back to `name`.
+ * Exported for the offline renderer, which preloads the keys a pattern uses; not part of the public API.
+ */
+export function resolveRegisteredKey(name: string, bank?: string): string | undefined {
   if (bank !== undefined) {
     const banked = `${bank}_${name}`;
     if (registry.has(banked)) {

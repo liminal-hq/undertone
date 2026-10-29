@@ -284,3 +284,14 @@ export interface AudioContextLike {
   /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
   decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
 }
+
+export interface RenderedAudioBufferLike extends AudioBufferLike {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+}
+
+export interface OfflineAudioContextLike extends AudioContextLike {
+  readonly length: number;
+  startRendering(): Promise<RenderedAudioBufferLike>;
+}

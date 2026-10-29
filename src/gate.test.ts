@@ -174,14 +174,33 @@ describe('cut()', () => {
     expect(other.oscillators[0].stopped).toHaveLength(1);
   });
 
-  it('does not let an earlier-starting voice choke a later one', () => {
+  it('chokes an earlier-booked voice at the onset of a later one that already holds the group', () => {
     const ctx = new FakeAudioContext();
     const params = resolveParams({ pitch: 'a4', release: 2, cutGroup: 1 });
 
     playVoice(ctx, params, 2);
     playVoice(ctx, params, 1);
 
+    // The later voice is untouched; the earlier one fades out at 2.005 (its stop at the holder's start).
     expect(ctx.oscillators[0].stopped).toHaveLength(1);
+    expect(ctx.oscillators[1].stopped).toHaveLength(2);
+    expect(ctx.oscillators[1].stopped.at(-1)).toBeCloseTo(2.005);
+    expect(ctx.gains[1].gain.calls.slice(-3)[0]).toEqual({
+      method: 'cancelScheduledValues',
+      time: 2
+    });
+  });
+
+  it('keeps the later voice as owner, so the next voice chokes it rather than the earlier one', () => {
+    const ctx = new FakeAudioContext();
+    const params = resolveParams({ pitch: 'a4', release: 2, cutGroup: 1 });
+
+    playVoice(ctx, params, 2);
+    playVoice(ctx, params, 1);
+    playVoice(ctx, params, 3);
+
+    expect(ctx.oscillators[0].stopped.at(-1)).toBeCloseTo(3.005);
+    expect(ctx.oscillators[1].stopped).toHaveLength(2);
   });
 
   it('works with unpitched sounds and rejects bad groups', () => {

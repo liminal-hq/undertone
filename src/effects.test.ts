@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { buildImpulseResponse, getOrbitBus } from './effects';
+import { seedContext } from './random';
 import { FakeAudioContext } from './test-utils/fakeAudioContext';
 
 function averageAbs(data: Float32Array, from: number, to: number): number {
@@ -161,6 +162,18 @@ describe('OrbitBus.setDelay', () => {
     expect(ctx.gains[3].gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.35, time: 0 }]);
   });
 
+  it('applies the change at the given time instead of now', () => {
+    const ctx = new FakeAudioContext();
+    const bus = getOrbitBus(ctx, 0);
+
+    bus.setDelay(0.3, 0.35, 2.5);
+
+    expect(ctx.delays[0].delayTime.calls).toEqual([
+      { method: 'setValueAtTime', value: 0.3, time: 2.5 }
+    ]);
+    expect(ctx.gains[3].gain.calls).toEqual([{ method: 'setValueAtTime', value: 0.35, time: 2.5 }]);
+  });
+
   it('skips redundant automation calls when time and feedback are unchanged', () => {
     const ctx = new FakeAudioContext();
     const bus = getOrbitBus(ctx, 0);
@@ -179,5 +192,51 @@ describe('OrbitBus.setDelay', () => {
     bus.setDelay(0.5, 0.35);
 
     expect(ctx.delays[0].delayTime.calls).toHaveLength(2);
+  });
+});
+
+describe('seeded impulse responses', () => {
+  function irFor(ctx: FakeAudioContext, convolverIndex: number): number[][] {
+    const buffer = ctx.convolvers[convolverIndex].buffer!;
+    return [Array.from(buffer.getChannelData(0)), Array.from(buffer.getChannelData(1))];
+  }
+
+  it('depends on seed, orbit and size, not on build order', () => {
+    const build = (order: number[]) => {
+      const ctx = new FakeAudioContext();
+      seedContext(ctx, 11);
+      const byOrbit = new Map<number, number>();
+      for (const orbit of order) {
+        getOrbitBus(ctx, orbit).setRoomSize(3);
+        byOrbit.set(orbit, ctx.convolvers.length - 1);
+      }
+      return (orbit: number) => irFor(ctx, byOrbit.get(orbit) as number);
+    };
+    const forward = build([1, 0]);
+    const reverse = build([0, 1]);
+    expect(forward(0)).toEqual(reverse(0));
+    expect(forward(1)).toEqual(reverse(1));
+    expect(forward(0)).not.toEqual(forward(1));
+  });
+
+  it('rebuilding the same orbit and size reproduces the same impulse response', () => {
+    const ctx = new FakeAudioContext();
+    seedContext(ctx, 5);
+    const bus = getOrbitBus(ctx, 0);
+    bus.setRoomSize(3);
+    const first = irFor(ctx, 0);
+    bus.setRoomSize(8);
+    bus.setRoomSize(3);
+    expect(irFor(ctx, 0)).toEqual(first);
+  });
+
+  it('differs between seeds', () => {
+    const make = (seed: number) => {
+      const ctx = new FakeAudioContext();
+      seedContext(ctx, seed);
+      getOrbitBus(ctx, 0).setRoomSize(3);
+      return irFor(ctx, 0);
+    };
+    expect(make(1)).not.toEqual(make(2));
   });
 });
