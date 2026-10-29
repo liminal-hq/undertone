@@ -34,11 +34,22 @@ let teardownPreviousComposer: (() => void) | undefined;
 // few that don't fit this specific surface: setcpm()/resetTempo() would be
 // silently inert (the Once/Loop buttons always pass an explicit bpm from the
 // tempo slider, and an explicit bpm always wins), and buildImpulseResponse()/
-// getOrbitBus() are effects-internals rather than composition primitives.
+// getOrbitBus() are effects-internals rather than composition primitives, and
+// playParams()/createMasterBus()/createMonoFold() need a context the script never holds.
 // Derived from the `api` namespace (rather than hand-listed) so a future
 // export is included automatically instead of silently missing from both the
 // eval sandbox and autocomplete until someone remembers to add it here too.
-const SCOPE_EXCLUDED = new Set(['setcpm', 'resetTempo', 'buildImpulseResponse', 'getOrbitBus']);
+const SCOPE_EXCLUDED = new Set([
+  'setcpm',
+  'resetTempo',
+  'buildImpulseResponse',
+  'getOrbitBus',
+  // These need an AudioContext the script does not have; the playground owns its own context.
+  'playParams',
+  'resolveParams',
+  'createMasterBus',
+  'createMonoFold'
+]);
 const SCOPE: Record<string, unknown> = Object.fromEntries(
   Object.entries(api).filter(([name]) => !SCOPE_EXCLUDED.has(name))
 );
@@ -261,6 +272,90 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.slide(seconds: number) => Pattern<ControlPatch>',
     doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
   },
+  fm: {
+    signature: '.fm(index: number) => Pattern<ControlPatch>',
+    doc: 'FM modulation index: the modulator swings the pitch by index × modulator frequency, so brightness follows the note. 0 is off.'
+  },
+  fmi: {
+    signature: '.fmi(index: number) => Pattern<ControlPatch>',
+    doc: "Alias of .fm() under Strudel's fmi name."
+  },
+  fmh: {
+    signature: '.fmh(ratio: number) => Pattern<ControlPatch>',
+    doc: "FM harmonicity: the modulator's frequency as a multiple of the note's. Fractions such as 3.5 give bells and metal."
+  },
+  fmattack: {
+    signature: '.fmattack(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to reach the full index.'
+  },
+  fmdecay: {
+    signature: '.fmdecay(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to fall to .fmsustain() × the index; with no .fmsustain() it falls toward silence.'
+  },
+  fmsustain: {
+    signature: '.fmsustain(level: number) => Pattern<ControlPatch>',
+    doc: 'Fraction (0-1) of the index the FM depth settles to. Default 1, or 0 when only .fmdecay() is set.'
+  },
+  fmrelease: {
+    signature: '.fmrelease(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds for the FM depth to fall to 0 after the gate closes.'
+  },
+  fmenv: {
+    signature: ".fmenv(curve: 'lin' | 'exp') => Pattern<ControlPatch>",
+    doc: 'Ramp shape of the FM depth envelope: exp (default, as in Strudel) or lin. Not patternable.'
+  },
+  fmwave: {
+    signature:
+      ".fmwave(type: 'sine' | 'triangle' | 'square' | 'sawtooth' | 'halfsine' | 'abssine' | 'pulsesine') => Pattern<ControlPatch>",
+    doc: "The modulator's waveform. Default sine. Not patternable."
+  },
+  voice: {
+    signature: '.voice(patch: ControlPatch) => Pattern<ControlPatch>',
+    doc: 'Applies a whole instrument (an fmVoice() result, an fmPresets entry, or saved voice data) to every event. Chain per-note controls after it so they win.'
+  },
+  fmVoice: {
+    signature: 'fmVoice(definition: FmVoiceDefinition) => ControlPatch',
+    doc: 'Builds an FM instrument as plain data from a Tone.js FMSynth-shaped definition (harmonicity, modulationIndex, oscillator, modulation, envelope, modulationEnvelope). Apply it with .voice().'
+  },
+  fmPresets: {
+    signature: 'fmPresets: { glassBell, roundBass, softPad, pluck, lead }',
+    doc: "Readable FM instruments as plain data: note('e5 g5').voice(fmPresets.glassBell)."
+  },
+  layer: {
+    signature:
+      'layer(notes: Pattern, voices: ControlPatch[], options?: { stagger?, levels?, pans? }) => Pattern',
+    doc: 'Plays one pattern on several voices at once, with an optional start stagger (seconds), per-layer levels and pans.'
+  },
+  score: {
+    signature:
+      'score({ ticksPerSecond, lengthTicks, events, seam? }) => { pattern, cps, seconds, loop, play }',
+    doc: 'Compiles tick-timed events into a looping pattern whose seam is exact. Events are { tick, note | midi, gate?, level?, pan?, voice? }.'
+  },
+  drift: {
+    signature:
+      'drift(pattern: Pattern, options: { seed, timing?, level?, cents?, pan?, push?, cyclesPerPass? }) => Pattern',
+    doc: 'Seeded, deterministic humanisation. The same seed gives the same result everywhere; each loop pass varies differently.'
+  },
+  seededRandom: {
+    signature: 'seededRandom(seed: number | string) => () => number',
+    doc: 'A repeatable random generator (mulberry32), separate from Math.random.'
+  },
+  penv: {
+    signature: '.penv(semitones: number) => Pattern<ControlPatch>',
+    doc: 'Pitch envelope depth in semitones: each note starts that far from its pitch (negative = below, so it rises) and returns over .pdecay().'
+  },
+  pattack: {
+    signature: '.pattack(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds the pitch envelope takes to sweep out to its .penv() offset. Default 0: it starts there.'
+  },
+  pdecay: {
+    signature: '.pdecay(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Seconds the pitch envelope takes to return to the note. Default 0.1.'
+  },
+  pitchsteps: {
+    signature: '.pitchsteps(semitones: number[], rateHz?: number) => Pattern<ControlPatch>',
+    doc: 'Frame-stepped pitch curve: semitone offsets, one per frame at rateHz (default 140), holding the last. Overrides .penv() and .slide().'
+  },
   hpf: {
     signature: '.hpf(hz: number) => Pattern<ControlPatch>',
     doc: 'Static highpass filter, in series after .lpf(). Omit entirely to skip it.'
@@ -304,6 +399,22 @@ const API_DOCS: Record<string, ApiDoc> = {
   early: {
     signature: '.early(seconds: number) => Pattern<ControlPatch>',
     doc: 'Signed alias of .nudge() — moves every event seconds earlier.'
+  },
+  duration: {
+    signature: '.duration(seconds: number) => Pattern<ControlPatch>',
+    doc: 'Explicit gate: hold the envelopes at their sustain level for seconds, then release. Needs a sustain above 0.'
+  },
+  legato: {
+    signature: '.legato(fraction: number) => Pattern<ControlPatch>',
+    doc: "Gate as a fraction of each event's own length. Gates even a one-shot; .duration() overrides it."
+  },
+  velocity: {
+    signature: '.velocity(level: number) => Pattern<ControlPatch>',
+    doc: 'Note strength: multiplies the peak amplitude only, so one instrument keeps its timbre from ghost note to accent.'
+  },
+  cut: {
+    signature: '.cut(group: number) => Pattern<ControlPatch>',
+    doc: 'Cut group: a new event in the same group stops the previous one with a very short fade. A non-negative integer, not patternable.'
   },
   pan: {
     signature: '.pan(position: number) => Pattern<ControlPatch>',
@@ -350,6 +461,20 @@ const METHOD_NAMES = [
   'lps',
   'lpr',
   'slide',
+  'fm',
+  'fmi',
+  'fmh',
+  'fmattack',
+  'fmdecay',
+  'fmsustain',
+  'fmrelease',
+  'fmenv',
+  'fmwave',
+  'voice',
+  'penv',
+  'pattack',
+  'pdecay',
+  'pitchsteps',
   'hpf',
   'phaser',
   'room',
@@ -361,6 +486,10 @@ const METHOD_NAMES = [
   'nudge',
   'late',
   'early',
+  'duration',
+  'legato',
+  'velocity',
+  'cut',
   'pan',
   'channels',
   'surround',

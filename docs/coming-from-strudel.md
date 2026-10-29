@@ -72,7 +72,25 @@ const pluck = n('0 4 2 7').scale('d4:minor').delay(0.3).delaytime(0.25).orbit(2)
 
 Unlike Strudel's `orbit` control, undertone's `.orbit(n)` takes a plain non-negative integer and is the one voice control that is **not patternable** — it selects a bus rather than shaping a value. The reverb's impulse response is procedurally generated from `roomsize` (no IR files), regenerated only when that orbit's size actually changes.
 
-The per-voice effect roster is intentionally small: lowpass with a full ADSR filter envelope (`lpf`/`lpenv`/`lpa`/`lpd`/`lps`/`lpr`), static highpass (`hpf`), a 4-stage phaser, pitch `slide`, and the orbit sends. No distortion, bit-crush, vowel filter, `chop`, or the rest of the superdough rack.
+The per-voice effect roster is intentionally small: lowpass with a full ADSR filter envelope (`lpf`/`lpenv`/`lpa`/`lpd`/`lps`/`lpr`), static highpass (`hpf`), a 4-stage phaser, pitch `slide`/`penv`/`pitchsteps`, FM, and the orbit sends. No distortion, bit-crush, vowel filter, `chop`, or the rest of the superdough rack.
+
+`.lpenv()` is an amount in Hz _added_ to `.lpf()` (the filter peaks at `lpf + lpenv`), so scale the value accordingly when porting an envelope depth from Strudel.
+
+## FM synthesis
+
+The FM controls use Strudel's names: `fm`/`fmi` (the modulation index) and `fmh` (the harmonicity), with `fmattack`/`fmdecay`/`fmsustain`/`fmrelease` for the modulator's own envelope, `fmenv` for its ramp shape and `fmwave` for its waveform. Gate and expression use `duration`, `legato` and `velocity`, a cut group uses `cut`, and a pitch envelope uses `penv`/`pattack`/`pdecay`. The FM envelope defaults match Strudel's (exponential ramps; a bare decay falls toward silence). Undertone's pitch envelope is simpler than Strudel's: it starts at the `penv` offset (after `pattack` seconds, if set) and returns to the note over `pdecay`, with no sustain or anchor stages. If you are coming from Tone.js instead, `FMSynth` maps like this:
+
+| Tone.js `FMSynth`                  | Undertone                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `harmonicity`                      | `.fmh(ratio)`                                                                       |
+| `modulationIndex`                  | `.fm(index)`; Tone's index is relative to the _carrier_, so divide by `harmonicity` |
+| `modulationEnvelope`               | `.fmattack()` `.fmdecay()` `.fmsustain()` `.fmrelease()`                            |
+| `oscillator.type`                  | `.sound(type)`                                                                      |
+| `modulation.type`                  | `.fmwave(type)`                                                                     |
+| `envelope`                         | `.attack()` `.decay()` `.sustain()` `.release()`                                    |
+| `triggerAttackRelease(note, time)` | `.duration(time)` or `.legato(fraction)`                                            |
+
+The one deliberate difference from Tone is the unit of the index, which follows Strudel: the pitch swings by `index × modulator frequency`. Undertone does not model operator feedback. See the [FM guide](/guide/fm-synthesis).
 
 ## `.pan()` runs −1..1, not 0..1
 
@@ -88,10 +106,10 @@ Not supported: `?` (degrade), `|` (random choice), `{a b c}%n` (polymeter), and 
 
 ## Tempo
 
-`play()`/`loop()` take `{ bpm }`, counting four beats per cycle — the default 120 bpm means 2-second cycles, which lands at the same speed as Strudel's default (0.5 cycles per second). `setcpm(cyclesPerMinute)` sets a default for calls that omit `bpm` (an explicit `bpm` always wins), and `resetTempo()` clears it. There's no `.cps()` or per-pattern tempo — tempo belongs to the `play()`/`loop()` call, not the pattern.
+`play()`/`loop()` take `{ bpm }`, counting four beats per cycle — the default 120 bpm means 2-second cycles, which lands at the same speed as Strudel's default (0.5 cycles per second). `setcpm(cyclesPerMinute)` sets a default for calls that omit `bpm` (an explicit `bpm` always wins), and `resetTempo()` clears it. There's no per-pattern tempo — tempo belongs to the `play()`/`loop()` call, not the pattern (`{ cps }` sets cycles per second there directly, instead of `bpm`).
 
 ## The shape of what's missing
 
-Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, `chunk`, `add`, or signal modulation, you'll be reformulating rather than porting. Synth sources are four oscillator waveforms plus three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
+Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, `chunk`, `add`, or signal modulation, you'll be reformulating rather than porting. Synth sources are four oscillator waveforms, three shaped sines and three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `halfsine`, `abssine`, `pulsesine`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
 
 What you get in trade: a dependency-free, tree-shakeable MIT library with exact rational timing, eager validation, first-class one-shots, surround placement, and a [fully unit-tested](https://github.com/liminal-hq/undertone) audio graph — built to be shipped inside something, not performed in. Start with [getting started](/guide/getting-started), or go straight to the [recipes](/recipes) and the [API reference](/api/).

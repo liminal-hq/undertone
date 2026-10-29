@@ -8,6 +8,7 @@ import { voicingPitches } from './chord.js';
 // mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
 // cycle — safe here because both modules only reference each other's bindings inside function
 // bodies (never at top-level module evaluation), same reasoning as scheduler.ts's PatternLike cut.
+import type { PlaybackHandle } from './engine.js';
 import { mini } from './mini.js';
 import { midiToFrequency } from './pitch.js';
 import { degreeToMidi, parseScale } from './scale.js';
@@ -20,7 +21,17 @@ import {
 } from './scheduler.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
-import type { ControlPatch, SoundType, VoiceParams } from './types.js';
+import type { ControlPatch, OscType, ShapedWaveType, SoundType, VoiceParams } from './types.js';
+
+const MODULATOR_WAVES: readonly (OscType | ShapedWaveType)[] = [
+  'sine',
+  'triangle',
+  'square',
+  'sawtooth',
+  'halfsine',
+  'abssine',
+  'pulsesine'
+];
 
 /** A half-open span of cycle time [begin, end). */
 export interface TimeSpan {
@@ -169,6 +180,16 @@ export class Pattern<T> {
 
   private withPatch(this: Pattern<ControlPatch>, patch: ControlPatch): Pattern<ControlPatch> {
     return this.fmap((value) => ({ ...value, ...patch }));
+  }
+
+  /**
+   * Applies a whole instrument at once: merges a plain `ControlPatch` (such as
+   * one from fmVoice() or fmPresets, or loaded from saved data) into every
+   * event. Fields the patch sets overwrite the events', so call it before the
+   * per-note controls you want to win — `note('e5 g5').voice(bell).gain(0.2)`.
+   */
+  voice(this: Pattern<ControlPatch>, patch: ControlPatch): Pattern<ControlPatch> {
+    return this.withPatch(patch);
   }
 
   /**
@@ -370,6 +391,184 @@ export class Pattern<T> {
   }
 
   /**
+   * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
+   * frequency by index × the modulator's frequency, so the sound is equally
+   * bright at every pitch. 0 turns it off. Synth voices only. Accepts a
+   * mini-notation string to pattern it.
+   */
+  fm(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmIndex', index, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`fm() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** Alias of fm() under Strudel's `fmi` name. */
+  fmi(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+    return this.fm(index);
+  }
+
+  /**
+   * FM harmonicity (Strudel's `fmh`): the modulator's frequency as a multiple of
+   * the carrier's. Whole numbers give harmonic tones; fractions such as 3.5 or
+   * 2.76 give bells and metal. Accepts a mini-notation string to pattern it.
+   */
+  fmh(this: Pattern<ControlPatch>, ratio: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmHarmonicity', ratio, {
+      validate: (v) => {
+        if (!(v > 0)) {
+          throw new Error(`fmh() must be positive, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** Seconds for the FM depth to reach the full index. Accepts a mini-notation string. */
+  fmattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmAttack', seconds);
+  }
+
+  /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a mini-notation string. */
+  fmdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmDecay', seconds);
+  }
+
+  /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a mini-notation string. */
+  fmsustain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmSustain', level);
+  }
+
+  /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a mini-notation string. */
+  fmrelease(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('fmRelease', seconds);
+  }
+
+  /** Ramp shape of the FM depth envelope: 'exp' (default, as in Strudel) or 'lin'. Not patternable. */
+  fmenv(this: Pattern<ControlPatch>, curve: 'lin' | 'exp'): Pattern<ControlPatch> {
+    if (curve !== 'lin' && curve !== 'exp') {
+      throw new Error(`fmenv() must be 'lin' or 'exp', got "${String(curve)}"`);
+    }
+    return this.withPatch({ fmEnvCurve: curve });
+  }
+
+  /** The modulator's waveform: sine (default), triangle, square, sawtooth, or a shaped wave (halfsine, abssine, pulsesine). Not patternable. */
+  fmwave(this: Pattern<ControlPatch>, type: OscType | ShapedWaveType): Pattern<ControlPatch> {
+    if (!(MODULATOR_WAVES as readonly string[]).includes(type)) {
+      throw new Error(
+        `fmwave() must be one of ${MODULATOR_WAVES.join(', ')}, got "${String(type)}"`
+      );
+    }
+    return this.withPatch({ fmWave: type });
+  }
+
+  /**
+   * Pitch envelope depth in semitones (Strudel's `penv`): each note starts that
+   * far from its pitch (negative = below) and returns to it over pdecay().
+   * Rising and falling sweeps alike. Synth voices only. Accepts a
+   * mini-notation string to pattern it.
+   */
+  penv(this: Pattern<ControlPatch>, semitones: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchEnvAmount', semitones);
+  }
+
+  /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a mini-notation string. */
+  pattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchAttack', seconds);
+  }
+
+  /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a mini-notation string. */
+  pdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchDecay', seconds);
+  }
+
+  /**
+   * A frame-stepped pitch curve: semitone offsets from each note, one per frame
+   * at `rateHz` (default 140, the frame rate of classic AdLib effects), holding
+   * the last offset. Falling and rising sweeps, wobbles and trills are all
+   * just arrays of numbers. Plain data, not patternable. Overrides penv()
+   * and slide().
+   */
+  pitchsteps(
+    this: Pattern<ControlPatch>,
+    semitones: readonly number[],
+    rateHz?: number
+  ): Pattern<ControlPatch> {
+    if (semitones.length === 0 || !semitones.every((v) => Number.isFinite(v))) {
+      throw new Error('pitchsteps() needs a non-empty array of finite semitone offsets');
+    }
+    if (rateHz !== undefined && !(rateHz > 0)) {
+      throw new Error(`pitchsteps() rate must be positive, got ${rateHz}`);
+    }
+    return this.withPatch({
+      pitchSteps: [...semitones],
+      ...(rateHz !== undefined ? { pitchStepRate: rateHz } : {})
+    });
+  }
+
+  /**
+   * Explicit gate length in seconds: the envelopes hold at their sustain level
+   * for this long, then release — independent of the event's length in the
+   * pattern, and also in a one-shot play(). Needs a sustain above 0 to hold.
+   * Accepts a mini-notation string to pattern it.
+   */
+  duration(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('duration', seconds, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`duration() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Gate length as a fraction of each event's own length (`.legato(0.5)` holds
+   * half of it, `.legato(1)` all of it). Gates even in a one-shot play(), and
+   * is overridden by an explicit duration(). Accepts a mini-notation string to
+   * pattern it.
+   */
+  legato(this: Pattern<ControlPatch>, fraction: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('legato', fraction, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`legato() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Note strength: multiplies the peak amplitude only, so one instrument keeps
+   * its timbre from a ghost note (0.3) to an accent (1). Accepts a
+   * mini-notation string to pattern it.
+   */
+  velocity(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('velocity', level, {
+      validate: (v) => {
+        if (v < 0) {
+          throw new Error(`velocity() must not be negative, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Cut group (Strudel/Tidal `cut`): a new event in the same group stops the
+   * previous one with a very short fade — a closed hi-hat choking an open one,
+   * or a monophonic line retriggering. The same number on different patterns
+   * shares one group. Not patternable, like orbit().
+   */
+  cut(this: Pattern<ControlPatch>, group: number): Pattern<ControlPatch> {
+    if (!Number.isInteger(group) || group < 0) {
+      throw new Error(`cut() must be a non-negative integer, got ${group}`);
+    }
+    return this.withPatch({ cutGroup: group });
+  }
+
+  /**
    * Start-time offset in seconds applied to every event when played. Accepts a
    * mini-notation string to pattern it.
    */
@@ -511,8 +710,8 @@ export class Pattern<T> {
    * lazily-created shared AudioContext when none is passed — call from a
    * user gesture the first time (autoplay policy).
    */
-  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): void {
-    playPattern(this, options);
+  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): PlaybackHandle {
+    return playPattern(this, options);
   }
 
   /** Loops the pattern until stop() is called on the returned handle. */

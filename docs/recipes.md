@@ -261,3 +261,98 @@ const handle = song.loop({ bpm: 112 });
 ```
 
 Each section restarts its own cycle count when its span begins, so the `<Am9 FM7 CM7 G6>` alternation always opens on `Am9` no matter where the section sits in the arrangement — you can develop a section standalone with `.loop()` and slot it in unchanged. And since `arrange()` returns an ordinary pattern, it composes: `stack(arrange(...), drums)` keeps drums running under every section, and `.fast(2)` halves the whole song's length. More in [arranging songs](/guide/arranging-songs).
+
+## Richer voices with the controls you already have
+
+You don't need FM to get most of the way to a rich, FM-flavoured sound. These four techniques use only the controls Undertone already has, and they make a good baseline to compare against when more synthesis options arrive.
+
+### A filter envelope as a stand-in for a decaying modulator
+
+In a two-operator FM voice, a quick-decaying modulator gives a bright attack that mellows as the note settles. A lowpass with a filter envelope does the same job: it opens at the attack and closes as the note sustains. Remember that `.lpenv()` is added on top of `.lpf()`, so the filter peaks at `lpf + lpenv`.
+
+```ts
+import { note } from '@liminal-hq/undertone';
+
+const pluck = note('e4 g4 b4 a4')
+  .sound('sawtooth')
+  .attack(0.004)
+  .decay(0.2)
+  .sustain(0.3)
+  .release(0.15)
+  .lpf(500)
+  .lpenv(3500)
+  .lpa(0.002)
+  .lpd(0.18)
+  .lps(0.1)
+  .lpr(0.12)
+  .gain(0.4);
+
+pluck.loop({ bpm: 100 });
+```
+
+### Layering: a pluck over a sustained partner
+
+Two voices on the same notes, with a different waveform, more sustain, a few milliseconds of `.nudge()` and opposite `.pan()` positions, sound much fuller than either alone. The tiny start offset reads as width rather than as an echo.
+
+```ts
+import { note, stack } from '@liminal-hq/undertone';
+
+const melody = 'e5 g5 b5 a5';
+
+const lead = stack(
+  note(melody).sound('square').sustain(0.2).decay(0.08).lpf(2400).pan(-0.4).gain(0.3),
+  note(melody).sound('triangle').sustain(0.6).decay(0.3).nudge(0.002).pan(0.4).gain(0.25)
+);
+
+lead.loop({ bpm: 110 });
+```
+
+### Gate versus release
+
+A note's gate (how long the key is held) and its release (how long it rings afterwards) are separate ideas. In a looped pattern each event is held for its own share of the cycle, then released, so a long `.release()` gives a short hit with a ringing body. For drums, use very short notes with a fast decay and a `.slide()`.
+
+```ts
+import { note } from '@liminal-hq/undertone';
+
+// Short notes, long ring-out: a mallet-like tone.
+const mallet = note('c5 e5 g5 e5*2')
+  .sound('sine')
+  .attack(0.002)
+  .decay(0.05)
+  .sustain(0.3)
+  .release(0.6)
+  .gain(0.35);
+
+// A tom: a very short note with a quick downward slide.
+const tom = note('a2 ~ ~ ~').sound('sine').decay(0.15).release(0.05).slide(0.08).gain(0.7);
+```
+
+### Dynamics in `.gain()`
+
+Keep one instrument definition and put the expression in the gain pattern, so a ghost note and an accent are the same instrument at different levels rather than two different sounds.
+
+```ts
+import { note } from '@liminal-hq/undertone';
+
+const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
+```
+
+### Keeping a dense mix in range
+
+Undertone writes straight to the speakers, so a busy cue can peak at or above full scale. `createMasterBus()` puts a gain stage and a limiter in front of the destination; pass its `input` as the `output` of everything that should share it.
+
+```ts
+import { createMasterBus, note, stack } from '@liminal-hq/undertone';
+
+const ctx = new AudioContext();
+const bus = createMasterBus(ctx, { gain: 0.9 }); // limiter on by default
+
+const music = stack(
+  note('<a2 e2>(3,8)').sound('sawtooth').lpf(600).gain(0.5),
+  note('e5 g5 b5 d6').fm(1.2).fmh(3.5).decay(0.4).gain(0.3)
+);
+
+music.loop({ ctx, output: bus.input });
+```
+
+Browsers' compressors add automatic makeup gain, which would make a limited mix louder and push peaks back up. The bus takes that makeup back out (`limiter: { compensate: false }` keeps it), so the threshold, -2 dB by default, is close to the ceiling. It is a fast compressor rather than a true brick-wall limiter, so brief peaks can still pass the threshold. The bus is an ordinary object you hold, so a game can make one for music and another for effects. The limiter steps aside above two output channels (a compressor would fold surround to stereo), and the gain stage keeps working.

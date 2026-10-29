@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import type { AudioBufferLike, AudioContextLike, GainNodeLike } from './types.js';
+import type { AudioBufferLike, AudioContextLike, AudioNodeLike, GainNodeLike } from './types.js';
 
 const ROOM_SIZE_MIN_SECONDS = 0.3;
 const ROOM_SIZE_MAX_SECONDS = 4;
@@ -60,11 +60,11 @@ interface MutableOrbitBus extends OrbitBus {
   lastDelayFeedback: number | undefined;
 }
 
-function createOrbitBus(ctx: AudioContextLike): MutableOrbitBus {
+function createOrbitBus(ctx: AudioContextLike, output: AudioNodeLike): MutableOrbitBus {
   const reverbInput = ctx.createGain();
   const convolver = ctx.createConvolver();
   reverbInput.connect(convolver);
-  convolver.connect(ctx.destination);
+  convolver.connect(output);
 
   const delayInput = ctx.createGain();
   const delayNode = ctx.createDelay(DELAY_MAX_SECONDS);
@@ -72,7 +72,7 @@ function createOrbitBus(ctx: AudioContextLike): MutableOrbitBus {
   const feedback = ctx.createGain();
   delayInput.connect(delayNode);
   delayNode.connect(delayOutput);
-  delayOutput.connect(ctx.destination);
+  delayOutput.connect(output);
   delayNode.connect(feedback);
   feedback.connect(delayNode);
 
@@ -105,27 +105,40 @@ function createOrbitBus(ctx: AudioContextLike): MutableOrbitBus {
   return bus;
 }
 
-const busesByContext = new WeakMap<AudioContextLike, Map<number, OrbitBus>>();
+const busesByContext = new WeakMap<AudioContextLike, Map<AudioNodeLike, Map<number, OrbitBus>>>();
 
 /**
  * The shared reverb/delay bus for one orbit number on `ctx`, created lazily on
- * first use. Every voice sending to the same (ctx, orbit) pair shares one
- * convolver and one delay line — the songs this was built for stack 15-20
+ * first use. Every voice sending to the same (ctx, output, orbit) triple shares
+ * one convolver and one delay line — the songs this was built for stack 15-20
  * simultaneous voices, and a convolver per voice would be unshippable.
  * setRoomSize()/setDelay() are last-writer-wins across every voice sharing the
  * orbit, which is exactly why a track gives each distinct room size its own
  * orbit number.
+ *
+ * `output` is where the bus's wet signal lands (default `ctx.destination`).
+ * Buses are keyed by it too, so a game that plays through its own mix node
+ * gets one bus per node, not a fresh convolver on every sound.
  */
-export function getOrbitBus(ctx: AudioContextLike, orbit: number): OrbitBus {
+export function getOrbitBus(
+  ctx: AudioContextLike,
+  orbit: number,
+  output: AudioNodeLike = ctx.destination
+): OrbitBus {
   let busesForContext = busesByContext.get(ctx);
   if (!busesForContext) {
     busesForContext = new Map();
     busesByContext.set(ctx, busesForContext);
   }
-  let bus = busesForContext.get(orbit);
+  let busesForOutput = busesForContext.get(output);
+  if (!busesForOutput) {
+    busesForOutput = new Map();
+    busesForContext.set(output, busesForOutput);
+  }
+  let bus = busesForOutput.get(orbit);
   if (!bus) {
-    bus = createOrbitBus(ctx);
-    busesForContext.set(orbit, bus);
+    bus = createOrbitBus(ctx, output);
+    busesForOutput.set(orbit, bus);
   }
   return bus;
 }

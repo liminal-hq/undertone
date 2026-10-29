@@ -4,8 +4,10 @@
 // SPDX-License-Identifier: MIT
 
 export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
+/** Waveforms cut from a sine: a half-wave rectified sine, a full-wave rectified (absolute) sine, and a pulsed sine. */
+export type ShapedWaveType = 'halfsine' | 'abssine' | 'pulsesine';
 export type NoiseType = 'white' | 'pink' | 'brown';
-export type SoundType = OscType | NoiseType;
+export type SoundType = OscType | ShapedWaveType | NoiseType;
 
 /** Runtime companion to SoundType, for code that needs to check membership (s()/.s()/.bank()). */
 export const SOUND_TYPES: readonly SoundType[] = [
@@ -13,6 +15,9 @@ export const SOUND_TYPES: readonly SoundType[] = [
   'triangle',
   'square',
   'sawtooth',
+  'halfsine',
+  'abssine',
+  'pulsesine',
   'white',
   'pink',
   'brown'
@@ -67,6 +72,44 @@ export interface VoiceParams {
   orbit?: number;
   /** Pitch glide (portamento) time in seconds; starts an octave above the target and slides down. */
   slideTime: number;
+  /**
+   * Pitch envelope depth in semitones (negative for a falling start): the
+   * pitch moves from the note to this offset over `pitchAttack`, then returns
+   * to the note over `pitchDecay`. Synth voices only. Unset or 0 means none.
+   */
+  pitchEnvAmount?: number;
+  /** Seconds the pitch envelope takes to reach its offset (0 = starts there). Default 0. */
+  pitchAttack?: number;
+  /** Seconds the pitch envelope takes to return to the note. Default 0.1. */
+  pitchDecay?: number;
+  /**
+   * A stepped pitch curve as semitone offsets from the note, one per frame:
+   * the pitch jumps to each offset in turn and holds the last. Plain data, so
+   * a sound editor can store and replay it. Takes priority over the envelope and slide.
+   */
+  pitchSteps?: number[];
+  /** Frames per second for `pitchSteps`. Default 140 (the frame rate of classic AdLib effects). */
+  pitchStepRate?: number;
+  /**
+   * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
+   * frequency by index × modulator frequency, so the sound stays equally bright
+   * as the pitch changes. 0 or unset adds no FM nodes. Synth voices only.
+   */
+  fmIndex?: number;
+  /** FM harmonicity (Strudel's `fmh`): modulator frequency ÷ carrier frequency. Non-integers give bell and metallic tones. Default 1. */
+  fmHarmonicity?: number;
+  /** Modulator-depth envelope (reaches the full index after `fmAttack`). Without any of the four envelope fields the index is constant. Default 0. */
+  fmAttack?: number;
+  /** Seconds for the modulator depth to fall to `fmSustain` × the index. Default 0. */
+  fmDecay?: number;
+  /** Fraction (0-1) of the index the modulator depth settles to. Default 1, or 0 when only `fmDecay` is set (as in Strudel). */
+  fmSustain?: number;
+  /** Seconds for the modulator depth to fall to 0 after the gate closes. Default 0. */
+  fmRelease?: number;
+  /** Ramp shape of the modulator-depth envelope: 'exp' (default, as in Strudel) or 'lin'. */
+  fmEnvCurve?: 'lin' | 'exp';
+  /** Modulator waveform — any oscillator or shaped waveform. Default 'sine'. */
+  fmWave?: OscType | ShapedWaveType;
   /** Start-time offset in seconds, relative to the pattern's shared start time. */
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */
@@ -84,6 +127,26 @@ export interface VoiceParams {
    * undefined. The scheduler sets this from each event's pattern duration.
    */
   duration?: number;
+  /**
+   * Gate length as a fraction of the event's own length in the pattern (1 = the
+   * whole event, 0.5 = half of it). Applied by the pattern scheduler when it
+   * turns events into voices, and forces a gate even in an ungated play().
+   * Ignored when an explicit `duration` is set, and by playParams() (which has
+   * no event lengths).
+   */
+  legato?: number;
+  /**
+   * Strength of this note, multiplying the peak amplitude only (not the
+   * envelope shape or any other control). Lets one instrument keep its
+   * identity from a ghost note to an accent. Default 1.
+   */
+  velocity?: number;
+  /**
+   * Cut group: a new voice in the same (context, output, group) stops the
+   * previous voice in it with a very short fade, like a hi-hat choke or a
+   * monophonic channel retriggering.
+   */
+  cutGroup?: number;
 }
 
 /**
@@ -111,11 +174,21 @@ export interface AudioParamLike {
   setValueAtTime(value: number, startTime: number): unknown;
   linearRampToValueAtTime(value: number, endTime: number): unknown;
   exponentialRampToValueAtTime(value: number, endTime: number): unknown;
+  /** Optional: used by playback handles to cancel automation when a voice is stopped early. A hard cut is used when absent. */
+  cancelScheduledValues?(cancelTime: number): unknown;
+  /** Optional: used by playback handles for a smooth fade-out when a voice is stopped early. */
+  setTargetAtTime?(target: number, startTime: number, timeConstant: number): unknown;
 }
 
 export interface AudioNodeLike {
   /** A destination may be another node (audio-rate signal) or a param (e.g. the phaser LFO -> each stage's frequency). */
   connect(destination: AudioNodeLike | AudioParamLike, output?: number, input?: number): void;
+  /** Optional: a real AudioNode has it; the engine never needs it, but consumers' output nodes may use it. */
+  disconnect?(): void;
+  /** Optional channel configuration, set by createMonoFold(); a real AudioNode has these. */
+  channelCount?: number;
+  channelCountMode?: string;
+  channelInterpretation?: string;
 }
 
 /**
@@ -133,9 +206,14 @@ export interface OscillatorNodeLike extends AudioNodeLike {
   /** Loosely typed (not OscType) so a real OscillatorNode — whose `type` also allows "custom" — still satisfies this structurally. */
   type: string;
   frequency: AudioParamLike;
+  /** Optional: only needed for shaped waveforms. Setting a wave makes a real OscillatorNode's `type` "custom". */
+  setPeriodicWave?(wave: PeriodicWaveLike): void;
   start(when?: number): void;
   stop(when?: number): void;
 }
+
+/** Opaque handle to a custom waveform; a real PeriodicWave satisfies it. */
+export type PeriodicWaveLike = object;
 
 export interface GainNodeLike extends AudioNodeLike {
   gain: AudioParamLike;
@@ -145,6 +223,14 @@ export interface BiquadFilterNodeLike extends AudioNodeLike {
   type: string;
   frequency: AudioParamLike;
   Q: AudioParamLike;
+}
+
+export interface DynamicsCompressorNodeLike extends AudioNodeLike {
+  threshold: AudioParamLike;
+  knee: AudioParamLike;
+  ratio: AudioParamLike;
+  attack: AudioParamLike;
+  release: AudioParamLike;
 }
 
 export interface StereoPannerNodeLike extends AudioNodeLike {
@@ -187,6 +273,14 @@ export interface AudioContextLike {
   createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
   createConvolver(): ConvolverNodeLike;
   createDelay(maxDelayTime?: number): DelayNodeLike;
+  /** Optional: needed for createMasterBus()'s limiter; without it the bus is gain only. */
+  createDynamicsCompressor?(): DynamicsCompressorNodeLike;
+  /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
+  createPeriodicWave?(
+    real: Float32Array,
+    imag: Float32Array,
+    constraints?: { disableNormalization?: boolean }
+  ): PeriodicWaveLike;
   /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
   decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
 }

@@ -17,6 +17,8 @@ const guideSidebar = [
       { text: 'Melody & Harmony', link: '/guide/melody-and-harmony' },
       { text: 'Samples', link: '/guide/samples' },
       { text: 'Effects & Filters', link: '/guide/effects' },
+      { text: 'FM Synthesis', link: '/guide/fm-synthesis' },
+      { text: 'Instruments & Scores', link: '/guide/instruments-and-scores' },
       { text: 'Patterned Parameters', link: '/guide/patterned-parameters' },
       { text: 'Arranging Songs', link: '/guide/arranging-songs' },
       { text: 'Stereo & Surround', link: '/guide/stereo-and-surround' },
