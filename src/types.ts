@@ -3,6 +3,15 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import type { Pattern } from './pattern.js';
+
+/**
+ * What a patternable control accepts: a number (every event), a mini-notation
+ * string of numbers, or a pattern of numbers such as `sine.range(200, 2000)`
+ * (a signal is read at each event's onset).
+ */
+export type ControlInput = number | string | Pattern<number>;
+
 export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
 /** Waveforms cut from a sine: a half-wave rectified sine, a full-wave rectified (absolute) sine, and a pulsed sine. */
 export type ShapedWaveType = 'halfsine' | 'abssine' | 'pulsesine';

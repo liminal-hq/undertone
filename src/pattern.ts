@@ -26,7 +26,9 @@ import type { RenderOptions } from './render.js';
 import type { RenderedAudioBufferLike } from './types.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
+import { warnOnce } from './warn.js';
 import type {
+  ControlInput,
   ControlPatch,
   OscType,
   PanPoint,
@@ -411,22 +413,31 @@ export class Pattern<T> {
 
   /**
    * Merges a control whose value may itself be patterned in time: `input` is
-   * either a plain number (applied uniformly, like withPatch) or a
-   * mini-notation string sampled per event. Structure comes from `this` —
-   * for each of its haps, the control is queried at the hap's own onset time
-   * and whichever control step covers that instant supplies the value; a rest
-   * (`~`) in the control at that instant leaves the key unset for that hap.
-   * `validate`/`transform` run once per distinct literal in the control
-   * string, at build time (same eager-validation timing as note()'s pitch
-   * parsing), before any query happens.
+   * a plain number (applied uniformly, like withPatch), a mini-notation
+   * string sampled per event, or a `Pattern<number>`. Structure comes from
+   * `this` — for each of its haps, the control is read at the hap's own onset
+   * time. A number or string keeps the covering-step search: whichever
+   * control step covers that instant supplies the value, and a rest (`~`)
+   * leaves the key unset for that hap. `validate`/`transform` run once per
+   * distinct literal in a string, at build time (same eager-validation timing
+   * as note()'s pitch parsing), before any query happens.
+   *
+   * A pattern with a sampler (a signal) is read at each onset with
+   * sampleAt(), so the value depends only on the onset and never on how the
+   * query was cut up; a pattern without one uses the same batched covering
+   * search as a string. Values a pattern gives are sanitised and never
+   * throw (see sanitiseControl()).
    */
   private withControlPattern(
     this: Pattern<ControlPatch>,
     key: keyof VoiceParams,
-    input: number | string,
-    options?: { validate?: (v: number) => void; transform?: (v: number) => number }
+    input: ControlInput,
+    options?: ControlOptions
   ): Pattern<ControlPatch> {
     const transform = options?.transform ?? ((v: number) => v);
+    if (input instanceof Pattern) {
+      return this.withControlSignal(key, input, options);
+    }
     const control = numberPattern(input, options?.validate).fmap(transform);
     return new Pattern((span) => {
       const haps = this.query(span);
@@ -451,6 +462,46 @@ export class Pattern<T> {
         return covering === undefined
           ? hap
           : { ...hap, value: { ...hap.value, [key]: covering.value } };
+      });
+    });
+  }
+
+  /** The Pattern branch of withControlPattern(): reads `input` per event, sanitising what it gives. */
+  private withControlSignal(
+    this: Pattern<ControlPatch>,
+    key: keyof VoiceParams,
+    input: Pattern<number>,
+    options?: ControlOptions
+  ): Pattern<ControlPatch> {
+    const transform = options?.transform ?? ((v: number) => v);
+    const apply = (hap: Hap<ControlPatch>, raw: unknown): Hap<ControlPatch> => {
+      const value = sanitiseControl(raw, options);
+      return value === undefined
+        ? hap
+        : { ...hap, value: { ...hap.value, [key]: transform(value) } };
+    };
+    if (input.sample) {
+      return new Pattern((span) =>
+        this.query(span).map((hap) => apply(hap, input.sampleAt(onsetOf(hap))))
+      );
+    }
+    return new Pattern((span) => {
+      const haps = this.query(span);
+      if (haps.length === 0) {
+        return haps;
+      }
+      let minT = onsetOf(haps[0]);
+      let maxT = minT;
+      for (const hap of haps) {
+        const t = onsetOf(hap);
+        if (t.lt(minT)) minT = t;
+        if (t.gt(maxT)) maxT = t;
+      }
+      const controlHaps = input.query({ begin: minT, end: maxT.add(ONE) });
+      return haps.map((hap) => {
+        const t = onsetOf(hap);
+        const covering = controlHaps.find((c) => c.part.begin.lte(t) && t.lt(c.part.end));
+        return covering === undefined ? hap : apply(hap, covering.value);
       });
     });
   }
@@ -535,86 +586,88 @@ export class Pattern<T> {
     );
   }
 
-  /** Amplitude envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */
-  attack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('attack', seconds);
+  /** Amplitude envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  attack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('attack', seconds, { name: 'attack' });
   }
 
-  /** Amplitude envelope decay time, in seconds. Accepts a mini-notation string to pattern it. */
-  decay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('decay', seconds);
+  /** Amplitude envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  decay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('decay', seconds, { name: 'decay' });
   }
 
   /**
    * Fraction (0-1) of gain the decay stage settles to before release.
-   * Accepts a mini-notation string to pattern it.
+   * Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  sustain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('sustain', level);
+  sustain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('sustain', level, { name: 'sustain' });
   }
 
-  /** Amplitude envelope release time, in seconds. Accepts a mini-notation string to pattern it. */
-  release(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('release', seconds);
+  /** Amplitude envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  release(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('release', seconds, { name: 'release' });
   }
 
-  /** Peak amplitude (0-1). Accepts a mini-notation string to pattern it. */
-  gain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('gainLevel', level);
+  /** Peak amplitude (0-1). Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  gain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('gainLevel', level, { name: 'gain' });
   }
 
   /**
    * Base lowpass cutoff in Hz. Creates a filter stage; omit entirely to skip
-   * filtering. Accepts a mini-notation string to pattern it.
+   * filtering. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  lpf(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterCutoff', hz);
+  lpf(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterCutoff', hz, { name: 'lpf' });
   }
 
-  /** Hz the filter envelope adds on top of lpf() at its peak. Accepts a mini-notation string. */
-  lpenv(this: Pattern<ControlPatch>, hzAmount: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterEnvAmount', hzAmount);
+  /** Hz the filter envelope adds on top of lpf() at its peak. Accepts a number, a mini-notation string or a pattern. */
+  lpenv(this: Pattern<ControlPatch>, hzAmount: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterEnvAmount', hzAmount, { name: 'lpenv' });
   }
 
-  /** Filter envelope attack time, in seconds. Accepts a mini-notation string to pattern it. */
-  lpa(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterAttack', seconds);
+  /** Filter envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpa(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterAttack', seconds, { name: 'lpa' });
   }
 
-  /** Filter envelope decay time, in seconds. Accepts a mini-notation string to pattern it. */
-  lpd(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterDecay', seconds);
+  /** Filter envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpd(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterDecay', seconds, { name: 'lpd' });
   }
 
   /**
    * Fraction (0-1) between lpf() and its envelope peak the decay stage settles
-   * to. Accepts a mini-notation string to pattern it.
+   * to. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  lps(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterSustain', level);
+  lps(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterSustain', level, { name: 'lps' });
   }
 
-  /** Filter envelope release time, in seconds. Accepts a mini-notation string to pattern it. */
-  lpr(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('filterRelease', seconds);
+  /** Filter envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpr(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('filterRelease', seconds, { name: 'lpr' });
   }
 
   /**
    * Pitch glide (portamento): starts an octave above the target note and
-   * slides down. Accepts a mini-notation string to pattern it.
+   * slides down. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  slide(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('slideTime', seconds);
+  slide(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('slideTime', seconds, { name: 'slide' });
   }
 
   /**
    * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
    * frequency by index × the modulator's frequency, so the sound is equally
    * bright at every pitch. 0 turns it off. Synth voices only. Accepts a
-   * mini-notation string to pattern it.
+   * number, a mini-notation string or a pattern.
    */
-  fm(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+  fm(this: Pattern<ControlPatch>, index: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('fmIndex', index, {
+      name: 'fm',
+      unset: { when: (v) => v < 0, needs: '0 or more' },
       validate: (v) => {
         if (v < 0) {
           throw new Error(`fm() must not be negative, got ${v}`);
@@ -624,17 +677,19 @@ export class Pattern<T> {
   }
 
   /** Alias of fm() under Strudel's `fmi` name. */
-  fmi(this: Pattern<ControlPatch>, index: number | string): Pattern<ControlPatch> {
+  fmi(this: Pattern<ControlPatch>, index: ControlInput): Pattern<ControlPatch> {
     return this.fm(index);
   }
 
   /**
    * FM harmonicity (Strudel's `fmh`): the modulator's frequency as a multiple of
    * the carrier's. Whole numbers give harmonic tones; fractions such as 3.5 or
-   * 2.76 give bells and metal. Accepts a mini-notation string to pattern it.
+   * 2.76 give bells and metal. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  fmh(this: Pattern<ControlPatch>, ratio: number | string): Pattern<ControlPatch> {
+  fmh(this: Pattern<ControlPatch>, ratio: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('fmHarmonicity', ratio, {
+      name: 'fmh',
+      unset: { when: (v) => !(v > 0), needs: 'more than 0' },
       validate: (v) => {
         if (!(v > 0)) {
           throw new Error(`fmh() must be positive, got ${v}`);
@@ -643,28 +698,29 @@ export class Pattern<T> {
     });
   }
 
-  /** Seconds for the FM depth to reach the full index. Accepts a mini-notation string. */
-  fmattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('fmAttack', seconds);
+  /** Seconds for the FM depth to reach the full index. Accepts a number, a mini-notation string or a pattern. */
+  fmattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('fmAttack', seconds, { name: 'fmattack' });
   }
 
-  /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a mini-notation string. */
-  fmdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('fmDecay', seconds);
+  /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a number, a mini-notation string or a pattern. */
+  fmdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('fmDecay', seconds, { name: 'fmdecay' });
   }
 
-  /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a mini-notation string. */
-  fmsustain(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('fmSustain', level);
+  /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a number, a mini-notation string or a pattern. */
+  fmsustain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('fmSustain', level, { name: 'fmsustain' });
   }
 
-  /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a mini-notation string. */
-  fmrelease(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('fmRelease', seconds);
+  /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a number, a mini-notation string or a pattern. */
+  fmrelease(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('fmRelease', seconds, { name: 'fmrelease' });
   }
 
   /** Ramp shape of the FM depth envelope: 'exp' (default, as in Strudel) or 'lin'. Not patternable. */
   fmenv(this: Pattern<ControlPatch>, curve: 'lin' | 'exp'): Pattern<ControlPatch> {
+    rejectPattern('fmenv', curve);
     if (curve !== 'lin' && curve !== 'exp') {
       throw new Error(`fmenv() must be 'lin' or 'exp', got "${String(curve)}"`);
     }
@@ -673,6 +729,7 @@ export class Pattern<T> {
 
   /** The modulator's waveform: sine (default), triangle, square, sawtooth, or a shaped wave (halfsine, abssine, pulsesine). Not patternable. */
   fmwave(this: Pattern<ControlPatch>, type: OscType | ShapedWaveType): Pattern<ControlPatch> {
+    rejectPattern('fmwave', type);
     if (!(MODULATOR_WAVES as readonly string[]).includes(type)) {
       throw new Error(
         `fmwave() must be one of ${MODULATOR_WAVES.join(', ')}, got "${String(type)}"`
@@ -685,20 +742,20 @@ export class Pattern<T> {
    * Pitch envelope depth in semitones (Strudel's `penv`): each note starts that
    * far from its pitch (negative = below) and returns to it over pdecay().
    * Rising and falling sweeps alike. Synth voices only. Accepts a
-   * mini-notation string to pattern it.
+   * number, a mini-notation string or a pattern.
    */
-  penv(this: Pattern<ControlPatch>, semitones: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('pitchEnvAmount', semitones);
+  penv(this: Pattern<ControlPatch>, semitones: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchEnvAmount', semitones, { name: 'penv' });
   }
 
-  /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a mini-notation string. */
-  pattack(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('pitchAttack', seconds);
+  /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a number, a mini-notation string or a pattern. */
+  pattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchAttack', seconds, { name: 'pattack' });
   }
 
-  /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a mini-notation string. */
-  pdecay(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('pitchDecay', seconds);
+  /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a number, a mini-notation string or a pattern. */
+  pdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('pitchDecay', seconds, { name: 'pdecay' });
   }
 
   /**
@@ -713,6 +770,7 @@ export class Pattern<T> {
     semitones: readonly number[],
     rateHz?: number
   ): Pattern<ControlPatch> {
+    rejectPattern('pitchsteps', semitones);
     if (semitones.length === 0 || !semitones.every((v) => Number.isFinite(v))) {
       throw new Error('pitchsteps() needs a non-empty array of finite semitone offsets');
     }
@@ -729,10 +787,12 @@ export class Pattern<T> {
    * Explicit gate length in seconds: the envelopes hold at their sustain level
    * for this long, then release — independent of the event's length in the
    * pattern, and also in a one-shot play(). Needs a sustain above 0 to hold.
-   * Accepts a mini-notation string to pattern it.
+   * Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
-  duration(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
+  duration(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('duration', seconds, {
+      name: 'duration',
+      unset: { when: (v) => v < 0, needs: '0 or more' },
       validate: (v) => {
         if (v < 0) {
           throw new Error(`duration() must not be negative, got ${v}`);
@@ -747,8 +807,10 @@ export class Pattern<T> {
    * is overridden by an explicit duration(). Accepts a mini-notation string to
    * pattern it.
    */
-  legato(this: Pattern<ControlPatch>, fraction: number | string): Pattern<ControlPatch> {
+  legato(this: Pattern<ControlPatch>, fraction: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('legato', fraction, {
+      name: 'legato',
+      unset: { when: (v) => v < 0, needs: '0 or more' },
       validate: (v) => {
         if (v < 0) {
           throw new Error(`legato() must not be negative, got ${v}`);
@@ -760,10 +822,12 @@ export class Pattern<T> {
   /**
    * Note strength: multiplies the peak amplitude only, so one instrument keeps
    * its timbre from a ghost note (0.3) to an accent (1). Accepts a
-   * mini-notation string to pattern it.
+   * number, a mini-notation string or a pattern.
    */
-  velocity(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
+  velocity(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('velocity', level, {
+      name: 'velocity',
+      unset: { when: (v) => v < 0, needs: '0 or more' },
       validate: (v) => {
         if (v < 0) {
           throw new Error(`velocity() must not be negative, got ${v}`);
@@ -779,6 +843,7 @@ export class Pattern<T> {
    * shares one group. Not patternable, like orbit().
    */
   cut(this: Pattern<ControlPatch>, group: number): Pattern<ControlPatch> {
+    rejectPattern('cut', group);
     if (!Number.isInteger(group) || group < 0) {
       throw new Error(`cut() must be a non-negative integer, got ${group}`);
     }
@@ -787,28 +852,33 @@ export class Pattern<T> {
 
   /**
    * Start-time offset in seconds applied to every event when played. Accepts a
-   * mini-notation string to pattern it.
+   * number, a mini-notation string or a pattern.
    */
-  nudge(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('nudgeTime', seconds);
+  nudge(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds, { name: 'nudge' });
   }
 
   /** Delays every event by `seconds` — an alias of nudge() under Strudel's name. */
-  late(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('nudgeTime', seconds);
+  late(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds, { name: 'late' });
   }
 
   /** Moves every event `seconds` earlier — the negative of late()/nudge(). */
-  early(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('nudgeTime', seconds, { transform: (v) => -v });
+  early(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('nudgeTime', seconds, {
+      name: 'early',
+      transform: (v) => -v
+    });
   }
 
   /**
    * Stereo position, -1 (hard left) to 1 (hard right). Accepts a mini-notation
    * string to pattern it; every literal in the string is range-checked.
    */
-  pan(this: Pattern<ControlPatch>, position: number | string): Pattern<ControlPatch> {
+  pan(this: Pattern<ControlPatch>, position: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('pan', position, {
+      name: 'pan',
+      clamp: [-1, 1],
       validate: (v) => {
         if (v < -1 || v > 1) {
           throw new Error(`pan() position must be between -1 and 1, got ${v}`);
@@ -820,19 +890,22 @@ export class Pattern<T> {
   /**
    * Pan slide (the pan's own slide()): each note starts at pan `from` and
    * moves linearly to its pan (the centre without one) over `seconds`, or over
-   * the note's attack when omitted. Accepts a mini-notation string for `from`;
+   * the note's attack when omitted. Accepts a number, a mini-notation string or a pattern for `from` (clamped to -1 to 1);
    * `seconds` is scalar. A panpath() takes precedence.
    */
   panslide(
     this: Pattern<ControlPatch>,
-    from: number | string,
+    from: ControlInput,
     seconds?: number
   ): Pattern<ControlPatch> {
+    rejectPattern('panslide', seconds);
     if (seconds !== undefined && !(seconds >= 0 && Number.isFinite(seconds))) {
       throw new Error(`panslide() time must be zero or more seconds, got ${seconds}`);
     }
     const timed = seconds === undefined ? this : this.withPatch({ panSlideTime: seconds });
     return timed.withControlPattern('panSlideFrom', from, {
+      name: 'panslide',
+      clamp: [-1, 1],
       validate: (v) => {
         if (v < -1 || v > 1) {
           throw new Error(`panslide() start must be between -1 and 1, got ${v}`);
@@ -846,10 +919,12 @@ export class Pattern<T> {
    * (or its panpath() or panslide()), from the onset through the release, as
    * a real oscillator on the panner, not booked points. Shape it with
    * autopandepth(), autopanshape() and autopanphase(). Accepts a
-   * mini-notation string to pattern it.
+   * number, a mini-notation string or a pattern.
    */
-  autopan(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
+  autopan(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('autopan', hz, {
+      name: 'autopan',
+      unset: { when: (v) => !(v > 0), needs: 'more than 0' },
       validate: (v) => {
         if (!(v > 0) || !Number.isFinite(v)) {
           throw new Error(`autopan() rate must be positive, got ${v}`);
@@ -858,9 +933,11 @@ export class Pattern<T> {
     });
   }
 
-  /** How far autopan() swings either side of the pan, 0 to 1 (default 1). Accepts a mini-notation string. */
-  autopandepth(this: Pattern<ControlPatch>, depth: number | string): Pattern<ControlPatch> {
+  /** How far autopan() swings either side of the pan, 0 to 1 (default 1). Accepts a number, a mini-notation string or a pattern. */
+  autopandepth(this: Pattern<ControlPatch>, depth: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('autopanDepth', depth, {
+      name: 'autopandepth',
+      clamp: [0, 1],
       validate: (v) => {
         if (!(v >= 0 && v <= 1)) {
           throw new Error(`autopandepth() must be between 0 and 1, got ${v}`);
@@ -874,6 +951,7 @@ export class Pattern<T> {
     this: Pattern<ControlPatch>,
     shape: 'sine' | 'triangle' | 'square'
   ): Pattern<ControlPatch> {
+    rejectPattern('autopanshape', shape);
     if (!AUTOPAN_SHAPES.includes(shape)) {
       throw new Error(`autopanshape() must be sine, triangle or square, got ${String(shape)}`);
     }
@@ -883,13 +961,20 @@ export class Pattern<T> {
   /**
    * Where in its cycle autopan() starts, 0 to 1 of a cycle (default 0: a sine
    * or triangle starts at the pan moving right, a square on the right; 0.5
-   * starts the other way). Not patternable.
+   * starts the other way). Accepts a number, a mini-notation string or a
+   * pattern, so a note's LFO can start where the last one left off:
+   * `.autopanphase(saw.slow(4))`. A pattern's values are clamped to 0 to 1.
    */
-  autopanphase(this: Pattern<ControlPatch>, phase: number): Pattern<ControlPatch> {
-    if (!(phase >= 0 && phase <= 1)) {
-      throw new Error(`autopanphase() must be between 0 and 1, got ${phase}`);
-    }
-    return this.withPatch({ autopanPhase: phase });
+  autopanphase(this: Pattern<ControlPatch>, phase: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('autopanPhase', phase, {
+      name: 'autopanphase',
+      clamp: [0, 1],
+      validate: (v) => {
+        if (!(v >= 0 && v <= 1)) {
+          throw new Error(`autopanphase() must be between 0 and 1, got ${v}`);
+        }
+      }
+    });
   }
 
   /**
@@ -905,6 +990,7 @@ export class Pattern<T> {
     path: readonly number[] | readonly PanPoint[],
     rateHz?: number
   ): Pattern<ControlPatch> {
+    rejectPattern('panpath', path);
     if (path.length === 0) {
       throw new Error('panpath() needs a non-empty array of pans or { time, pan } points');
     }
@@ -953,6 +1039,7 @@ export class Pattern<T> {
    * that are panned (pan() or a panPath). Scalar only, like orbit().
    */
   panlaw(this: Pattern<ControlPatch>, db: number): Pattern<ControlPatch> {
+    rejectPattern('panlaw', db);
     if (!Number.isFinite(db) || db < -6 || db > 0) {
       throw new Error(`panlaw() must be between -6 and 0 dB, got ${db}`);
     }
@@ -961,26 +1048,26 @@ export class Pattern<T> {
 
   /**
    * Static highpass cutoff in Hz, in series after lpf(). Creates a filter
-   * stage; omit entirely to skip it. Accepts a mini-notation string.
+   * stage; omit entirely to skip it. Accepts a number, a mini-notation string or a pattern.
    */
-  hpf(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('hpfCutoff', hz);
+  hpf(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('hpfCutoff', hz, { name: 'hpf' });
   }
 
   /**
    * LFO rate in Hz driving a 4-stage allpass phaser. Creates the phaser stage;
-   * omit entirely to skip it. Accepts a mini-notation string.
+   * omit entirely to skip it. Accepts a number, a mini-notation string or a pattern.
    */
-  phaser(this: Pattern<ControlPatch>, rateHz: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('phaserRate', rateHz);
+  phaser(this: Pattern<ControlPatch>, rateHz: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('phaserRate', rateHz, { name: 'phaser' });
   }
 
   /**
    * Reverb send level (0-1) to this voice's orbit bus (see orbit()). No send
-   * at all when omitted. Accepts a mini-notation string.
+   * at all when omitted. Accepts a number, a mini-notation string or a pattern.
    */
-  room(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('roomLevel', level);
+  room(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('roomLevel', level, { name: 'room' });
   }
 
   /**
@@ -988,26 +1075,26 @@ export class Pattern<T> {
    * 10 (long) — see effects.ts's getOrbitBus(). Accepts a mini-notation
    * string.
    */
-  roomsize(this: Pattern<ControlPatch>, size: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('roomSize', size);
+  roomsize(this: Pattern<ControlPatch>, size: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('roomSize', size, { name: 'roomsize' });
   }
 
   /**
    * Delay send level (0-1) to this voice's orbit bus (see orbit()). No send
-   * at all when omitted. Accepts a mini-notation string.
+   * at all when omitted. Accepts a number, a mini-notation string or a pattern.
    */
-  delay(this: Pattern<ControlPatch>, level: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('delayLevel', level);
+  delay(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('delayLevel', level, { name: 'delay' });
   }
 
-  /** Delay time in seconds for the orbit's shared delay bus. Accepts a mini-notation string. */
-  delaytime(this: Pattern<ControlPatch>, seconds: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('delayTime', seconds);
+  /** Delay time in seconds for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
+  delaytime(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('delayTime', seconds, { name: 'delaytime' });
   }
 
-  /** Feedback (0-1) for the orbit's shared delay bus. Accepts a mini-notation string. */
-  delayfeedback(this: Pattern<ControlPatch>, amount: number | string): Pattern<ControlPatch> {
-    return this.withControlPattern('delayFeedback', amount);
+  /** Feedback (0-1) for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
+  delayfeedback(this: Pattern<ControlPatch>, amount: ControlInput): Pattern<ControlPatch> {
+    return this.withControlPattern('delayFeedback', amount, { name: 'delayfeedback' });
   }
 
   /**
@@ -1018,6 +1105,7 @@ export class Pattern<T> {
    * neighbours. Scalar only — not a mini-notation-patterned control.
    */
   orbit(this: Pattern<ControlPatch>, n: number): Pattern<ControlPatch> {
+    rejectPattern('orbit', n);
     if (!Number.isInteger(n) || n < 0) {
       throw new Error(`orbit() must be a non-negative integer, got ${n}`);
     }
@@ -1031,6 +1119,7 @@ export class Pattern<T> {
    * enableMultichannel()), the voice folds down to stereo automatically.
    */
   channels(this: Pattern<ControlPatch>, gains: number[]): Pattern<ControlPatch> {
+    rejectPattern('channels', gains);
     if (gains.length < 1 || gains.length > MAX_CHANNELS) {
       throw new Error(`channels() takes 1-${MAX_CHANNELS} gains, got ${gains.length}`);
     }
@@ -1048,6 +1137,7 @@ export class Pattern<T> {
    * panned between the two nearest speakers. Sugar for channels(surroundGains(angle)).
    */
   surround(this: Pattern<ControlPatch>, angleDegrees: number): Pattern<ControlPatch> {
+    rejectPattern('surround', angleDegrees);
     return this.withPatch({ channelGains: surroundGains(angleDegrees) });
   }
 
@@ -1121,6 +1211,69 @@ function parseNumberWord(word: string): number {
     throw new Error(`Invalid number in pattern: "${word}"`);
   }
   return Number(word);
+}
+
+/** Options for withControlPattern(): the control's name for messages, build-time checks for literals, and the rule for what a pattern may give. */
+interface ControlOptions {
+  /** The method's name, for warnings: `pan` reads as `pan()`. */
+  name: string;
+  /** Build-time check of each literal in a number or string (throws). */
+  validate?: (v: number) => void;
+  transform?: (v: number) => number;
+  /** A bounded range: a value a pattern gives outside it is clamped, with one warning. */
+  clamp?: readonly [number, number];
+  /** An open bound: a value a pattern gives that matches `when` leaves the key unset, with one warning saying what `needs`. */
+  unset?: { when: (v: number) => boolean; needs: string };
+}
+
+/**
+ * The value a pattern gives a control, made safe: reading a pattern must never
+ * throw (a throw would end a loop's tick), so a bad value is dealt with and
+ * warned about once per control and kind of problem. A rest (`undefined`)
+ * leaves the key unset silently; NaN, Infinity and anything that is not a
+ * number leave it unset with a warning; a bounded control clamps; an open
+ * bound (`unset`) leaves the key unset. Returns undefined for "leave unset".
+ */
+function sanitiseControl(raw: unknown, options?: ControlOptions): number | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  const name = options?.name ?? 'control';
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+    warnOnce(
+      `signal-nan-${name}`,
+      `undertone: ${name}() got ${String(raw)} from a pattern; left unset.`
+    );
+    return undefined;
+  }
+  if (options?.clamp) {
+    const [lo, hi] = options.clamp;
+    const clamped = Math.min(hi, Math.max(lo, raw));
+    if (clamped !== raw) {
+      warnOnce(
+        `signal-range-${name}`,
+        `undertone: ${name}() got ${raw} from a pattern; clamped to ${clamped}.`
+      );
+    }
+    return clamped;
+  }
+  if (options?.unset?.when(raw)) {
+    warnOnce(
+      `signal-range-${name}`,
+      `undertone: ${name}() got ${raw} from a pattern; it needs ${options.unset.needs}, so it is left unset.`
+    );
+    return undefined;
+  }
+  return raw;
+}
+
+/** Throws a clear error when a scalar-only control is given a pattern. */
+function rejectPattern(name: string, value: unknown): void {
+  if (value instanceof Pattern) {
+    throw new Error(
+      `${name}() takes a plain value, not a pattern; it cannot change from event to event`
+    );
+  }
 }
 
 /**
