@@ -18,13 +18,19 @@ defaults:
   run:
     shell: bash
 
+# Jobs run in the shared images from liminal-hq/.github (public), pinned by digest.
+# The digests come from docs/reference/recommended-image-pins.md there (last updated 2026-11-10); bump them on purpose.
+#   ci-web:  Node 24.22.2, pnpm 10.32.1, Bun 1.4.4 (satisfies package.json engines: node >=20, bun >=1.2)
+#   ci-rust: Rust 1.98.0 (matches rust-toolchain.toml), rustfmt, Clippy, cargo-nextest, cargo-deny, git, jq; no wasm32 target, no Node
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Build library
         run: bun run build
@@ -35,9 +41,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Run tests
         run: bun run test
@@ -48,9 +55,10 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: ESLint
         run: bun run lint
@@ -61,9 +69,10 @@ jobs:
   format:
     name: Format
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Prettier check
         run: bun run format:check
@@ -74,9 +83,10 @@ jobs:
   docs:
     name: Docs (build + typecheck)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Typecheck docs theme
         run: bun run typecheck:docs
@@ -86,9 +96,6 @@ jobs:
         if: always()
         run: echo "## Docs" >> "${GITHUB_STEP_SUMMARY}"
 
-  # The Rust jobs run in the shared ci-rust image from liminal-hq/.github (public; pinned by digest).
-  # It provides Rust 1.98.0 (matching rust-toolchain.toml), rustfmt, Clippy, cargo-nextest, cargo-deny, git, and jq.
-  # Update the digest from docs/reference/recommended-image-pins.md in liminal-hq/.github.
   rust-fmt:
     name: Rust format
     runs-on: ubuntu-24.04
