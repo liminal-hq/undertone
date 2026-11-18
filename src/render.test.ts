@@ -150,6 +150,40 @@ describe('renderToBuffer', () => {
     expect(data[50]).toBe(1);
   });
 
+  it('keeps the folded tail under the master ceiling', async () => {
+    const ceiling = -3;
+    const level = 10 ** (ceiling / 20);
+    const buffer = await renderToBuffer(note('c3'), {
+      cps: 1,
+      tail: 0.5,
+      wrap: true,
+      sampleRate: 100,
+      master: { ceiling },
+      // Each sample is under the ceiling alone; the first half of the pass has the tail folded onto it.
+      context: (init) =>
+        new FakeOfflineAudioContext({ ...init, fill: (_channel, data) => data.fill(0.7) })
+    });
+    expect(0.7).toBeLessThan(level);
+    expect(buffer.length).toBe(100);
+    const data = buffer.getChannelData(0);
+    expect(Math.max(...Array.from(data).map(Math.abs))).toBeLessThanOrEqual(level);
+    expect(data[0]).toBeGreaterThan(0.7); // clipped to the ceiling, not left at the 0.7 of the unfolded part
+    expect(data[50]).toBeCloseTo(0.7, 5); // the unfolded part is untouched
+  });
+
+  it('leaves a folded tail alone when there is no ceiling', async () => {
+    const buffer = await renderToBuffer(note('c3'), {
+      cps: 1,
+      tail: 0.5,
+      wrap: true,
+      sampleRate: 100,
+      master: false,
+      context: (init) =>
+        new FakeOfflineAudioContext({ ...init, fill: (_channel, data) => data.fill(0.7) })
+    });
+    expect(buffer.getChannelData(0)[0]).toBeCloseTo(1.4, 5);
+  });
+
   it('leaves the tail on the end when wrap is not set', async () => {
     const buffer = await renderToBuffer(note('c3'), {
       cps: 1,
