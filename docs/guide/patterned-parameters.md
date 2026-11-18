@@ -39,7 +39,7 @@ sound('white*8')
   .loop({ bpm: 120 });
 ```
 
-A pattern is never allowed to stop the music. A bounded control clamps what a pattern gives it (`pan` and the start of `panslide` to -1 to 1, `autopandepth` and `autopanphase` to 0 to 1), an open bound leaves the control unset (`autopan` and `fmh` at or below 0, a negative `fm`, `duration`, `legato` or `velocity`), and NaN, Infinity or a missing value leave it unset like a rest. Each case warns once in the console. The [Signals guide](/guide/signals#what-a-control-does-with-a-bad-value) has the table. A few controls only take plain values and throw if given a pattern: `fmenv`, `fmwave`, `autopanshape`, `cut`, `orbit`, `panlaw`, `channels`, `surround`, `panpath()` and `pitchsteps()`.
+A pattern is never allowed to stop the music. A bounded control clamps what a pattern gives it (`pan` and the start of `panslide` to -1 to 1, `autopandepth` and `autopanphase` to 0 to 1), an open bound leaves the control unset (`autopan` and `fmh` at or below 0, a negative `fm`, `duration`, `legato` or `velocity`, or a negative time such as `attack`, `decay`, `release`, `lpa`, `slide` or `delaytime`), and NaN, Infinity or a missing value leave it unset like a rest. Each case warns once in the console. The [Signals guide](/guide/signals#what-a-control-does-with-a-bad-value) has the table. A few controls only take plain values and throw if given a pattern: `fmenv`, `fmwave`, `autopanshape`, `cut`, `orbit`, `panlaw`, `channels`, `surround`, `panpath()` and `pitchsteps()`.
 
 ## Cheap motion
 

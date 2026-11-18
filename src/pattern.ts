@@ -596,12 +596,12 @@ export class Pattern<T> {
 
   /** Amplitude envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   attack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('attack', seconds, { name: 'attack' });
+    return this.withControlPattern('attack', seconds, { name: 'attack', unset: NOT_NEGATIVE });
   }
 
   /** Amplitude envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   decay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('decay', seconds, { name: 'decay' });
+    return this.withControlPattern('decay', seconds, { name: 'decay', unset: NOT_NEGATIVE });
   }
 
   /**
@@ -614,7 +614,7 @@ export class Pattern<T> {
 
   /** Amplitude envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   release(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('release', seconds, { name: 'release' });
+    return this.withControlPattern('release', seconds, { name: 'release', unset: NOT_NEGATIVE });
   }
 
   /** Peak amplitude (0-1). Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
@@ -637,12 +637,12 @@ export class Pattern<T> {
 
   /** Filter envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   lpa(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('filterAttack', seconds, { name: 'lpa' });
+    return this.withControlPattern('filterAttack', seconds, { name: 'lpa', unset: NOT_NEGATIVE });
   }
 
   /** Filter envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   lpd(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('filterDecay', seconds, { name: 'lpd' });
+    return this.withControlPattern('filterDecay', seconds, { name: 'lpd', unset: NOT_NEGATIVE });
   }
 
   /**
@@ -655,7 +655,7 @@ export class Pattern<T> {
 
   /** Filter envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
   lpr(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('filterRelease', seconds, { name: 'lpr' });
+    return this.withControlPattern('filterRelease', seconds, { name: 'lpr', unset: NOT_NEGATIVE });
   }
 
   /**
@@ -663,7 +663,7 @@ export class Pattern<T> {
    * slides down. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
    */
   slide(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('slideTime', seconds, { name: 'slide' });
+    return this.withControlPattern('slideTime', seconds, { name: 'slide', unset: NOT_NEGATIVE });
   }
 
   /**
@@ -708,12 +708,12 @@ export class Pattern<T> {
 
   /** Seconds for the FM depth to reach the full index. Accepts a number, a mini-notation string or a pattern. */
   fmattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('fmAttack', seconds, { name: 'fmattack' });
+    return this.withControlPattern('fmAttack', seconds, { name: 'fmattack', unset: NOT_NEGATIVE });
   }
 
   /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a number, a mini-notation string or a pattern. */
   fmdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('fmDecay', seconds, { name: 'fmdecay' });
+    return this.withControlPattern('fmDecay', seconds, { name: 'fmdecay', unset: NOT_NEGATIVE });
   }
 
   /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a number, a mini-notation string or a pattern. */
@@ -723,7 +723,10 @@ export class Pattern<T> {
 
   /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a number, a mini-notation string or a pattern. */
   fmrelease(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('fmRelease', seconds, { name: 'fmrelease' });
+    return this.withControlPattern('fmRelease', seconds, {
+      name: 'fmrelease',
+      unset: NOT_NEGATIVE
+    });
   }
 
   /** Ramp shape of the FM depth envelope: 'exp' (default, as in Strudel) or 'lin'. Not patternable. */
@@ -758,12 +761,15 @@ export class Pattern<T> {
 
   /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a number, a mini-notation string or a pattern. */
   pattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('pitchAttack', seconds, { name: 'pattack' });
+    return this.withControlPattern('pitchAttack', seconds, {
+      name: 'pattack',
+      unset: NOT_NEGATIVE
+    });
   }
 
   /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a number, a mini-notation string or a pattern. */
   pdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('pitchDecay', seconds, { name: 'pdecay' });
+    return this.withControlPattern('pitchDecay', seconds, { name: 'pdecay', unset: NOT_NEGATIVE });
   }
 
   /**
@@ -1097,7 +1103,10 @@ export class Pattern<T> {
 
   /** Delay time in seconds for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
   delaytime(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch> {
-    return this.withControlPattern('delayTime', seconds, { name: 'delaytime' });
+    return this.withControlPattern('delayTime', seconds, {
+      name: 'delaytime',
+      unset: NOT_NEGATIVE
+    });
   }
 
   /** Feedback (0-1) for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
@@ -1233,6 +1242,15 @@ interface ControlOptions {
   /** An open bound: a value a pattern gives that matches `when` leaves the key unset, with one warning saying what `needs`. */
   unset?: { when: (v: number) => boolean; needs: string };
 }
+
+/**
+ * The rule for every control that is a duration in seconds: a negative value
+ * from a pattern leaves the key unset (with a warning). A negative time would
+ * schedule an automation event before the note starts, which Web Audio rejects
+ * with a RangeError. Zero is a valid, instant time. `nudge`, `late` and
+ * `early` are signed by design and do not use it.
+ */
+const NOT_NEGATIVE = { when: (v: number) => v < 0, needs: '0 or more' } as const;
 
 /**
  * The value a pattern gives a control, made safe: reading a pattern must never

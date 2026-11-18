@@ -324,6 +324,96 @@ describe('mixed continuous and discrete compositions', () => {
   });
 });
 
+describe('a bad time from a signal', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const bad = (value: number) => signal(() => value);
+
+  beforeEach(() => {
+    warn.mockClear();
+  });
+
+  /** Every duration control, set on a voice that uses its envelope (the filter and FM ones need a filter or FM to book anything). */
+  const TIMES: [
+    string,
+    string,
+    (p: Pattern<ControlPatch>, x: Pattern<number>) => Pattern<ControlPatch>
+  ][] = [
+    ['attack', 'attack', (p, x) => p.attack(x)],
+    ['decay', 'decay', (p, x) => p.decay(x)],
+    ['release', 'release', (p, x) => p.release(x)],
+    ['lpa', 'lpa', (p, x) => p.lpf(500).lpenv(2000).lpa(x)],
+    ['lpd', 'lpd', (p, x) => p.lpf(500).lpenv(2000).lpd(x)],
+    ['lpr', 'lpr', (p, x) => p.lpf(500).lpenv(2000).lpr(x)],
+    ['slide', 'slide', (p, x) => p.slide(x)],
+    ['fmattack', 'fmattack', (p, x) => p.fm(2).fmattack(x)],
+    ['fmdecay', 'fmdecay', (p, x) => p.fm(2).fmdecay(x)],
+    ['fmrelease', 'fmrelease', (p, x) => p.fm(2).fmrelease(x)],
+    ['pattack', 'pattack', (p, x) => p.penv(7).pattack(x)],
+    ['pdecay', 'pdecay', (p, x) => p.penv(7).pdecay(x)],
+    ['delaytime', 'delaytime', (p, x) => p.delay(0.3).delaytime(x)]
+  ];
+
+  const run = (pat: Pattern<ControlPatch>) => {
+    const ctx = new FakeAudioContext({ strictTimes: true });
+    const timer = new FakeTimer();
+    loopPattern(pat, { ctx, timer, bpm: 120 });
+    for (let i = 0; i < 12; i += 1) {
+      ctx.currentTime += 0.1;
+      timer.callback?.();
+    }
+    return ctx;
+  };
+
+  it('the strict fake rejects a negative automation time, as Web Audio does', () => {
+    const ctx = new FakeAudioContext({ strictTimes: true });
+    expect(() => ctx.createGain().gain.setValueAtTime(1, -0.9)).toThrow(RangeError);
+    expect(() => ctx.createOscillator().start(-1)).toThrow(RangeError);
+    expect(() => new FakeAudioContext().createGain().gain.setValueAtTime(1, -0.9)).not.toThrow();
+  });
+
+  it.each(TIMES)(
+    '%s: a negative value leaves it unset, warns once and books the voice',
+    (_n, name, apply) => {
+      const ctx = run(apply(note('c4*2'), bad(-1)));
+
+      expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        `undertone: ${name}() got -1 from a pattern; it needs 0 or more, so it is left unset.`
+      );
+    }
+  );
+
+  it.each(TIMES)('%s: zero is a valid time and warns of nothing', (_n, _name, apply) => {
+    const ctx = run(apply(note('c4*2'), bad(0)));
+
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('a loop tick with a bad signal still books the other events', () => {
+    const ctx = run(stack(note('c4*2').attack(bad(-1)).decay(bad(-2)), note('e4*2').pan(0.5)));
+
+    // Two bad-signal notes and two good ones every cycle; the cycle is 2 s at 120 BPM.
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(4);
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves a very large time alone: it is a long envelope, and nothing throws', () => {
+    const ctx = run(note('c4*2').attack(bad(1e300)).decay(bad(1e300)).release(bad(1e300)));
+
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('keeps nudge, late and early signed: they move an event by design', () => {
+    expect(onsets(note('c4').nudge(bad(-0.05)))[0].nudgeTime).toBe(-0.05);
+    expect(onsets(note('c4').late(bad(-0.05)))[0].nudgeTime).toBe(-0.05);
+    expect(onsets(note('c4').early(bad(-0.05)))[0].nudgeTime).toBe(0.05);
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
+
 describe('what a pattern may give a control', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

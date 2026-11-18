@@ -35,31 +35,44 @@ export type AutomationCall =
 export class FakeAudioParam implements AudioParamLike {
   value = 0;
   readonly calls: AutomationCall[] = [];
+  /** Rejects a negative or non-finite time with a RangeError, as a real AudioParam does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
+  private check(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
+  }
 
   setValueAtTime(value: number, time: number): this {
+    this.check('setValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'setValueAtTime', value, time });
     return this;
   }
 
   linearRampToValueAtTime(value: number, time: number): this {
+    this.check('linearRampToValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'linearRampToValueAtTime', value, time });
     return this;
   }
 
   exponentialRampToValueAtTime(value: number, time: number): this {
+    this.check('exponentialRampToValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'exponentialRampToValueAtTime', value, time });
     return this;
   }
 
   cancelScheduledValues(time: number): this {
+    this.check('cancelScheduledValues', time);
     this.calls.push({ method: 'cancelScheduledValues', time });
     return this;
   }
 
   setTargetAtTime(value: number, time: number, timeConstant: number): this {
+    this.check('setTargetAtTime', time);
     this.value = value;
     this.calls.push({ method: 'setTargetAtTime', value, time, timeConstant });
     return this;
@@ -96,12 +109,23 @@ export class FakeOscillatorNode extends FakeNode implements OscillatorNodeLike {
     this.type = 'custom';
   }
 
+  /** Rejects a negative or non-finite time, as a real source node does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
   start(when = 0): void {
+    this.checkTime('start', when);
     this.started.push(when);
   }
 
   stop(when = 0): void {
+    this.checkTime('stop', when);
     this.stopped.push(when);
+  }
+
+  private checkTime(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
   }
 }
 
@@ -183,12 +207,23 @@ export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSo
   started: number[] = [];
   stopped: number[] = [];
 
+  /** Rejects a negative or non-finite time, as a real source node does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
   start(when = 0): void {
+    this.checkTime('start', when);
     this.started.push(when);
   }
 
   stop(when = 0): void {
+    this.checkTime('stop', when);
     this.stopped.push(when);
+  }
+
+  private checkTime(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
   }
 }
 
@@ -226,6 +261,8 @@ export class FakeAudioContext implements AudioContextLike {
       noPeriodicWave?: boolean;
       noCompressor?: boolean;
       noWaveShaper?: boolean;
+      /** Makes every param automation call and start()/stop() throw a RangeError for a negative or non-finite time, as Web Audio does. */
+      strictTimes?: boolean;
     } = {}
   ) {
     if (options.noWaveShaper) {
@@ -238,6 +275,21 @@ export class FakeAudioContext implements AudioContextLike {
       // A wrapper context from before shaped waveforms: the method simply is not there.
       (this as { createPeriodicWave?: unknown }).createPeriodicWave = undefined;
     }
+  }
+
+  /** Switches on time checking for a new node's params (and its start/stop) when `strictTimes` is set. */
+  private strict<T extends object>(node: T): T {
+    if (this.options.strictTimes) {
+      for (const value of Object.values(node)) {
+        if (value instanceof FakeAudioParam) {
+          value.strictTimes = true;
+        }
+      }
+      if ('strictTimes' in node) {
+        (node as { strictTimes: boolean }).strictTimes = true;
+      }
+    }
+    return node;
   }
 
   private bare<T extends { gain?: FakeAudioParam; frequency?: FakeAudioParam }>(
@@ -269,25 +321,25 @@ export class FakeAudioContext implements AudioContextLike {
   readonly waveShapers: FakeWaveShaperNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
-    const node = this.bare(new FakeOscillatorNode(), 'frequency');
+    const node = this.strict(this.bare(new FakeOscillatorNode(), 'frequency'));
     this.oscillators.push(node);
     return node;
   }
 
   createGain(): FakeGainNode {
-    const node = this.bare(new FakeGainNode(), 'gain');
+    const node = this.strict(this.bare(new FakeGainNode(), 'gain'));
     this.gains.push(node);
     return node;
   }
 
   createBiquadFilter(): FakeBiquadFilterNode {
-    const node = new FakeBiquadFilterNode();
+    const node = this.strict(new FakeBiquadFilterNode());
     this.filters.push(node);
     return node;
   }
 
   createStereoPanner(): FakeStereoPannerNode {
-    const node = new FakeStereoPannerNode();
+    const node = this.strict(new FakeStereoPannerNode());
     this.panners.push(node);
     return node;
   }
@@ -299,7 +351,7 @@ export class FakeAudioContext implements AudioContextLike {
   }
 
   createBufferSource(): FakeAudioBufferSourceNode {
-    const node = new FakeAudioBufferSourceNode();
+    const node = this.strict(new FakeAudioBufferSourceNode());
     this.bufferSources.push(node);
     return node;
   }
@@ -311,13 +363,13 @@ export class FakeAudioContext implements AudioContextLike {
   }
 
   createDelay(): FakeDelayNode {
-    const node = new FakeDelayNode();
+    const node = this.strict(new FakeDelayNode());
     this.delays.push(node);
     return node;
   }
 
   createDynamicsCompressor(): FakeDynamicsCompressorNode {
-    const node = new FakeDynamicsCompressorNode();
+    const node = this.strict(new FakeDynamicsCompressorNode());
     this.compressors.push(node);
     return node;
   }
