@@ -139,6 +139,7 @@ The pattern combinators work on signals and move the signal in time the way they
 - `every(n, fn)` picks the transformed signal on cycles 0, n, 2n, and the plain one otherwise.
 - `cat(...)` and `arrange(...)` play one signal per cycle (or per section), each experiencing its own consecutive cycles, exactly as for events.
 - `seq(...)` and `timecat(...)` squeeze each signal into its share of the cycle: `seq(saw, sine)` runs a whole `saw` in the first half of each cycle and a whole `sine` in the second.
+- A mix of signals and ordinary patterns works in `cat`, `seq`, `timecat`, `stack`, `arrange` and `every`: a control reads the child that is active at the event's onset, the signal at its exact value and the ordinary pattern at the event covering that instant (a rest leaves the control unset). `cat(saw, pure(0))` is a rising saw in one cycle and 0 in the next, and gives the same values however the playback is cut into windows. In a `stack`, overlapping layers have no single value, so the first layer with a value wins. A pattern that holds a signal anywhere is treated as a signal by `euclid` and `segment`.
 - `stack(...)` of signals reads the first signal when sampled at a point; stacking is mostly useful once each layer has its own rhythm.
 - `euclid(pulses, steps, rotation)` on a signal gives the events of the rhythm, each holding the signal's value at its onset (a structure, like Strudel's `struct`). On an ordinary pattern it still squeezes the pattern into each pulse.
 

@@ -6,7 +6,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { note } from './control';
 import { Fraction } from './fraction';
-import { Pattern, cat, hasOnset, pure, seq } from './pattern';
+import { Pattern, arrange, cat, hasOnset, pure, seq, stack, timecat } from './pattern';
+import { mini } from './mini';
 import { loopPattern } from './scheduler';
 import type { TimerLike } from './scheduler';
 import { saw, saw2, signal, sine, sine2 } from './signal';
@@ -256,6 +257,70 @@ describe('signals as control values under the combinators', () => {
     expect(cutoffs[1]).toBeCloseTo(2000, 6);
     expect(cutoffs[2]).toBeCloseTo(1100, 6);
     expect(cutoffs[3]).toBeCloseTo(200, 6);
+  });
+});
+
+describe('mixed continuous and discrete compositions', () => {
+  const half = (): Pattern<number> => mini<number>('0 0.5', Number);
+  const mixed: [string, () => Pattern<number>][] = [
+    ['cat(saw2, pure)', () => cat(saw2, pure(0))],
+    ['cat(pure, saw2)', () => cat(pure(0.2), saw2)],
+    ['cat(saw2, mini)', () => cat(saw2, half())],
+    ['seq(saw2, pure, isaw)', () => seq(saw2, pure(0.5), saw2.rev())],
+    [
+      'timecat(saw2, pure)',
+      () =>
+        timecat([
+          [1, saw2],
+          [2, pure(0.25)]
+        ])
+    ],
+    ['stack(pure, saw2)', () => stack(pure(0.3), saw2)],
+    ['stack(rest, saw2)', () => stack(mini<number>('~', Number), saw2)],
+    ['arrange(saw2, pure)', () => arrange([1, saw2], [2, pure(0)])],
+    ['every(discrete)', () => saw2.every(2, () => pure(0))],
+    ['every(from discrete)', () => pure(0.4).every(2, () => saw2)],
+    [
+      'nested',
+      () =>
+        seq(cat(saw2, pure(0)), sine2)
+          .fast(2)
+          .rev()
+    ]
+  ];
+  const quarterNote = () => note('c4*8');
+
+  /** The pan at every onset in cycles 0-3, read through the given query windows. */
+  const read = (pat: Pattern<number>, windows: number): (number | undefined)[] => {
+    const control = quarterNote().pan(pat);
+    const values: [number, number | undefined][] = [];
+    const step = new Fraction(1, windows);
+    for (let k = 0; k < 4 * windows; k++) {
+      const begin = step.mul(new Fraction(k));
+      for (const hap of control.query({ begin, end: begin.add(step) }).filter(hasOnset)) {
+        values.push([hap.part.begin.toNumber(), hap.value.pan]);
+      }
+    }
+    return values.sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+  };
+
+  it.each(mixed)('%s: one window and many small windows give the same values', (_n, make) => {
+    const whole = read(make(), 1);
+    expect(whole).toHaveLength(32);
+    for (const windows of [2, 3, 8, 16]) {
+      expect(read(make(), windows)).toEqual(whole);
+    }
+  });
+
+  it('cat(saw2, pure) keeps the saw moving through its cycle', () => {
+    expect(onsets(note('c4*4').pan(cat(saw2, pure(0)))).map((v) => v.pan)).toEqual([
+      -1, -0.5, 0, 0.5
+    ]);
+  });
+
+  it('a rest in a discrete child leaves the key unset', () => {
+    const pans = onsets(note('c4*4').pan(cat(mini<number>('~ 0.5', Number), saw2)), 0);
+    expect(pans.map((v) => v.pan)).toEqual([undefined, undefined, 0.5, 0.5]);
   });
 });
 

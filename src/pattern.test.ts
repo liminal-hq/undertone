@@ -354,7 +354,9 @@ describe('sampler and query agree', () => {
       [1, clock],
       [1, silence as Pattern<number>]
     ]);
-    expect(half.sample).toBeUndefined(); // silence has no sampler, so neither does the whole
+    expect(half.sample).toBeDefined(); // one continuous part is enough
+    expect(half.sampleAt(new Fraction(1, 4))).toBe(0.5);
+    expect(half.sampleAt(new Fraction(3, 4))).toBeUndefined(); // the silent half has no value
     const windowed = seq(clock, clock);
     expect(windowed.sampleAt(new Fraction(1, 2))).toBe(0); // the second half restarts the clock
   });
@@ -381,9 +383,9 @@ describe('rev on a signal', () => {
 });
 
 describe('stack of signals', () => {
-  it('has no sampler and reads the first layer covering the instant', () => {
+  it('has a sampler that reads the first layer with a value at the instant', () => {
     const layered = stack(clock, clock.fast(2));
-    expect(layered.sample).toBeUndefined();
+    expect(layered.sample).toBeDefined();
     expect(layered.sampleAt(new Fraction(1, 4))).toBe(0.25);
   });
 });

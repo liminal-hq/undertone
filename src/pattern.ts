@@ -130,10 +130,18 @@ export type Sampler<T> = (t: Fraction) => T | undefined;
  * the old query, so a partially-built pattern is always safe to branch or reuse.
  *
  * A continuous pattern (a signal: `sine`, `rand`, ...) also carries a point
- * `sample`r, its exact value at one instant. A combinator passes a sampler on
- * only when every child it queries has one, mapping time the same way its
- * query does; discrete patterns never carry one, so their behaviour is
- * exactly the query's. See sampleAt().
+ * `sample`r, its exact value at one instant. A discrete pattern carries none.
+ * A single-child combinator (fast, rev, range, ...) passes its child's sampler
+ * on, mapping time the same way its query does. A combinator over several
+ * children (cat, seq, timecat, stack, arrange, every) carries a sampler when
+ * any child has one, and at an instant reads the child that is active there
+ * through its sampleAt(): a continuous child gives its exact value, a
+ * discrete child the value of the event covering the instant (undefined in a
+ * rest). So a mixed composition reads the same at an instant however a query
+ * is cut up. Only a few things are not point-defined and stay query-only: a
+ * discrete pattern's structure (a signal's `euclid()` and `segment()` read it
+ * at each onset instead), and stack() of overlapping layers, which reads the
+ * first layer with a value. See sampleAt().
  */
 export class Pattern<T> {
   constructor(
@@ -253,13 +261,13 @@ export class Pattern<T> {
     }
     const transformed = fn(this);
     const pick = (cycle: number) => (((cycle % n) + n) % n === 0 ? transformed : this);
-    const [plain, changed] = [this.sample, transformed.sample];
     return new Pattern(
       (span) =>
         splitIntoCycles(span).flatMap((cycleSpan) =>
           pick(cycleSpan.begin.floor()).query(cycleSpan)
         ),
-      plain && changed && ((t) => (pick(t.floor()) === this ? plain(t) : changed(t)))
+      // Either side being continuous makes the result readable at a point.
+      (this.sample || transformed.sample) && ((t) => pick(t.floor()).sampleAt(t))
     );
   }
 
@@ -1332,11 +1340,25 @@ function compress<T>(winBegin: Fraction, winEnd: Fraction, pat: Pattern<T>): Pat
 
 /**
  * Plays all patterns simultaneously (polyphony: chords, layers, parallel
- * lines). It carries no sampler: sampleAt() falls back to the first layer
- * whose event covers the instant.
+ * lines). When any layer is continuous it carries a sampler that reads the
+ * first layer with a value at the instant (overlapping layers have no single
+ * value, so the first one wins, as sampleAt() always did for a stack).
  */
 export function stack<T>(...pats: Pattern<T>[]): Pattern<T> {
-  return new Pattern((span) => pats.flatMap((pat) => pat.query(span)));
+  return new Pattern(
+    (span) => pats.flatMap((pat) => pat.query(span)),
+    pats.some((pat) => pat.sample)
+      ? (t) => {
+          for (const pat of pats) {
+            const value = pat.sampleAt(t);
+            if (value !== undefined) {
+              return value;
+            }
+          }
+          return undefined;
+        }
+      : undefined
+  );
 }
 
 /**
@@ -1360,20 +1382,9 @@ export function timecat<T>(pairs: [number, Pattern<T>][]): Pattern<T> {
     pos = pos.add(w);
     return compress(begin, pos.div(total), pat);
   });
-  const layered = stack(...parts);
-  if (!parts.every((part) => part.sample)) {
-    return layered;
-  }
-  // The windows never overlap, so at most one part has a value at any instant.
-  return new Pattern(layered.query, (t) => {
-    for (const part of parts) {
-      const value = part.sample?.(t);
-      if (value !== undefined) {
-        return value;
-      }
-    }
-    return undefined;
-  });
+  // The windows never overlap, so at most one part has a value at any instant,
+  // and stack() reading the first part with a value is exact.
+  return stack(...parts);
 }
 
 /** Plays the given patterns one after another within each single cycle. */
@@ -1400,10 +1411,10 @@ export function cat<T>(...pats: Pattern<T>[]): Pattern<T> {
         const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
         return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
       }),
-    pats.every((pat) => pat.sample)
+    pats.some((pat) => pat.sample)
       ? (t) => {
           const { pat, offset } = choose(t.floor());
-          return pat.sample?.(t.sub(offset));
+          return pat.sampleAt(t.sub(offset));
         }
       : undefined
   );
@@ -1447,10 +1458,10 @@ export function arrange<T>(...sections: [cycles: number, pat: Pattern<T>][]): Pa
         const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
         return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
       }),
-    sections.every(([, pat]) => pat.sample)
+    sections.some(([, pat]) => pat.sample)
       ? (t) => {
           const { pat, offset } = sectionAt(t.floor());
-          return pat.sample?.(t.sub(offset));
+          return pat.sampleAt(t.sub(offset));
         }
       : undefined
   );
