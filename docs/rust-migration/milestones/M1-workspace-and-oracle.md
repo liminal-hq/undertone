@@ -90,7 +90,8 @@ The orchestrator assigns Sonnet agents. RF-03 first; RF-04 and RF-06 can follow 
 
 ## Status log
 
-| Date       | Entry                                                                                                                                              |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-18 | Not started                                                                                                                                        |
-| 2026-11-18 | RF-04 used the public `ci-rust` image, pinned by digest, in place of `dtolnay/rust-toolchain`; CI behaviour unverified until the pull request runs |
+| Date       | Entry                                                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-11-18 | Not started                                                                                                                                                                                            |
+| 2026-11-18 | RF-04 used the public `ci-rust` image, pinned by digest, in place of `dtolnay/rust-toolchain`; CI behaviour unverified until the pull request runs                                                     |
+| 2026-11-18 | Set up `liminal-hq-labs/pr-results` v0.4.1: JUnit from nextest and vitest, a publisher workflow, and `.github/pr-results.toml` (pull request to be linked later); it cannot post until it is on `main` |

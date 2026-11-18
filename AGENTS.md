@@ -70,6 +70,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 - Run `bun run test`, `bun run lint`, `bun run format:check`, and `bun run build` before considering work complete.
 - Run the Rust checks CI runs, with a shared target directory: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --locked -- -D warnings`, `cargo nextest run --workspace --locked`, `cargo test --doc --workspace --locked`, `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked`, `cargo deny check`, and `scripts/check-layering.sh`.
+- CI posts test results to pull requests through `pr-results` (`.github/workflows/publish-test-results.yml`, settings in `.github/pr-results.toml`); nextest uses the `ci` profile from `.config/nextest.toml` and CI runs `bun run test:ci` for vitest JUnit. Locally, plain `bun run test` and `cargo nextest run` are unchanged. Keep the `job` names in the settings in step with the job `name:` fields in `ci.yml`.
 - Run `bun run typecheck:docs` and `bun run docs:build` when `docs/.vitepress/theme/` or `docs/playground.md` changes.
 - Engine/synthesis changes need a test against the fake `AudioContext` in `src/test-utils/fakeAudioContext.ts` asserting the resulting node graph and automation calls — not just that the code runs.
 - Engine changes in the Rust crates need a conformance corpus case (once `conformance/` exists); a change to synthesis needs a recorded-graph or render test.
