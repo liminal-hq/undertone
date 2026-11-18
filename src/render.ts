@@ -1,4 +1,4 @@
-// Offline rendering: books a whole pattern up front on an OfflineAudioContext and returns the audio
+// Offline rendering: books a whole pattern on an OfflineAudioContext, up front or in windows, and returns the audio
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -19,6 +19,7 @@ import type {
   OfflineAudioContextLike,
   RenderedAudioBufferLike
 } from './types.js';
+import { warnOnce } from './warn.js';
 
 /** The minimal pattern surface a render needs (avoids a runtime import cycle). */
 interface RenderablePattern {
@@ -54,11 +55,26 @@ export interface RenderOptions {
   gated?: boolean;
   /** Route through the master bus and its limiter (default), tune it with an object, or `false` for the raw mix. */
   master?: boolean | Omit<MasterBusOptions, 'output'>;
+  /**
+   * Books the voices in windows of this many seconds instead of all up front:
+   * the render pauses (`suspend()`) a window ahead of each window's first
+   * onset, books that window's voices, and resumes. The audio is the same as
+   * booking up front; a renderer that processes every node from the moment it
+   * is made does far less work this way. Must cover at least two render quanta
+   * (256 frames). On a context without `suspend()` and `resume()` everything
+   * is booked up front, with a warning. Default: off, every voice is booked
+   * before the render starts.
+   */
+  bookingWindow?: number;
   /** Builds the offline context. Defaults to the global `OfflineAudioContext`; supply this outside a browser. */
   context?: (init: OfflineContextInit) => OfflineAudioContextLike;
 }
 
 const DEFAULT_SAMPLE_RATE = 48000;
+/** Frames in one Web Audio render quantum, the unit `suspend()` times are quantized to. */
+const RENDER_QUANTUM_FRAMES = 128;
+/** The orbit a voice without one sends to, as in the engine. */
+const DEFAULT_ORBIT = 0;
 const CHANNEL_COUNTS: readonly number[] = [1, 2, 4, 6, 8];
 
 function defaultContext(init: OfflineContextInit): OfflineAudioContextLike {
@@ -107,11 +123,116 @@ function foldTail(
   return folded;
 }
 
+/** The voices to book at one pause of the render, and when that pause is. */
+interface BookingWindow {
+  /** Seconds on the render's clock; 0 means before the render starts. */
+  suspendAt: number;
+  voices: PendingVoice[];
+}
+
+/**
+ * Gives every reverb voice on an orbit the room size the orbit's last booked
+ * voice has. Booked up front, the last size booked on an orbit replaces the
+ * impulse response for the whole render; booked in windows, a later size would
+ * only replace it part way through. With this the windowed render builds the
+ * same impulse response, from the same seeded key, once.
+ */
+function lastRoomSizes(voices: readonly PendingVoice[]): PendingVoice[] {
+  const sendsRoom = ({ params }: PendingVoice) =>
+    params.roomLevel !== undefined && params.roomLevel > 0;
+  const last = new Map<number, number>();
+  for (const voice of voices) {
+    if (sendsRoom(voice)) {
+      last.set(voice.params.orbit ?? DEFAULT_ORBIT, voice.params.roomSize);
+    }
+  }
+  return voices.map((voice) => {
+    const size = last.get(voice.params.orbit ?? DEFAULT_ORBIT);
+    return !sendsRoom(voice) || size === undefined || size === voice.params.roomSize
+      ? voice
+      : { ...voice, params: { ...voice.params, roomSize: size } };
+  });
+}
+
+/**
+ * Splits voices, already in booking order, into windows of `seconds` by their
+ * onset (nudge included). The voices of window k are booked at a pause at the
+ * start of window k - 1, a whole window ahead, so a pause quantized up to the
+ * next render quantum still comes before any of them sound. Windows 0 and 1
+ * are booked before the render starts. A pause never falls within two render
+ * quanta of the end (`lastPause`, in seconds), where a context would refuse
+ * it: voices nudged that late are booked at the last pause before it.
+ */
+function bookingWindows(
+  voices: readonly PendingVoice[],
+  seconds: number,
+  lastPause: number
+): BookingWindow[] {
+  const lastIndex = Math.max(Math.floor(lastPause / seconds), 0);
+  const windows: BookingWindow[] = [];
+  for (const voice of voices) {
+    const onset = Math.max(voice.startTime + voice.params.nudgeTime, 0);
+    const index = Math.min(Math.max(Math.floor(onset / seconds) - 1, 0), lastIndex);
+    const suspendAt = index * seconds;
+    const current = windows.at(-1);
+    if (current && current.suspendAt === suspendAt) {
+      current.voices.push(voice);
+    } else {
+      windows.push({ suspendAt, voices: [voice] });
+    }
+  }
+  return windows;
+}
+
+/** Renders with each window's voices booked at a pause of the render, then resumes it. */
+async function renderInWindows(
+  ctx: OfflineAudioContextLike & Required<Pick<OfflineAudioContextLike, 'suspend' | 'resume'>>,
+  windows: readonly BookingWindow[],
+  book: (voice: PendingVoice) => void
+): Promise<RenderedAudioBufferLike> {
+  let failure: { error: unknown } | undefined;
+  const pauses: Promise<void>[] = [];
+  for (const window of windows) {
+    if (window.suspendAt === 0) {
+      window.voices.forEach(book);
+      continue;
+    }
+    pauses.push(
+      ctx.suspend(window.suspendAt).then(
+        () => {
+          try {
+            window.voices.forEach(book);
+          } catch (error) {
+            failure ??= { error };
+          }
+          return ctx.resume();
+        },
+        (error: unknown) => {
+          failure ??= { error };
+        }
+      )
+    );
+  }
+  const rendered = await ctx.startRendering();
+  await Promise.all(pauses);
+  if (failure) {
+    throw failure.error;
+  }
+  return rendered;
+}
+
+/** Whether a context can pause and resume a render, which booking in windows needs. */
+function canSuspend(
+  ctx: OfflineAudioContextLike
+): ctx is OfflineAudioContextLike & Required<Pick<OfflineAudioContextLike, 'suspend' | 'resume'>> {
+  return typeof ctx.suspend === 'function' && typeof ctx.resume === 'function';
+}
+
 /**
  * Renders a pattern to an audio buffer with no real-time clock: every event is
- * booked up front on an offline context, so the same pattern, tempo and `seed`
- * give the same samples on the same engine. Pass the result to `encodeWav` to
- * write a file.
+ * booked on an offline context, up front by default or in windows with
+ * `bookingWindow`, so the same pattern, tempo and `seed` give the same samples
+ * on the same engine. Pass the result to `encodeWav` to write a file.
  *
  * Room size is fixed per orbit for the whole render (the last one booked wins),
  * because a reverb's impulse response cannot be scheduled.
@@ -132,6 +253,15 @@ export async function renderToBuffer(
   const tail = options.tail ?? 0;
   if (!(tail >= 0) || !Number.isFinite(tail)) {
     throw new Error(`tail must be zero or more seconds, got ${tail}`);
+  }
+  const bookingWindow = options.bookingWindow;
+  if (bookingWindow !== undefined) {
+    requirePositive('bookingWindow', bookingWindow);
+    if (bookingWindow * sampleRate < 2 * RENDER_QUANTUM_FRAMES) {
+      throw new Error(
+        `bookingWindow must cover at least ${2 * RENDER_QUANTUM_FRAMES} frames (${(2 * RENDER_QUANTUM_FRAMES) / sampleRate} s at ${sampleRate} Hz), got ${bookingWindow}`
+      );
+    }
   }
   const cycleSeconds = cycleSecondsFor(options.bpm, options.cps);
 
@@ -191,10 +321,28 @@ export async function renderToBuffer(
 
   // Book in time order, so cut groups choke the voice that really played before.
   voices.sort((a, b) => a.startTime + a.params.nudgeTime - (b.startTime + b.params.nudgeTime));
-  for (const voice of voices) {
-    playVoice(ctx, voice.params, voice.startTime, { output });
-  }
+  const book = (voice: PendingVoice) => playVoice(ctx, voice.params, voice.startTime, { output });
 
-  const rendered = await ctx.startRendering();
+  let rendered: RenderedAudioBufferLike;
+  if (bookingWindow !== undefined && canSuspend(ctx)) {
+    rendered = await renderInWindows(
+      ctx,
+      bookingWindows(
+        lastRoomSizes(voices),
+        bookingWindow,
+        (length - 2 * RENDER_QUANTUM_FRAMES) / sampleRate
+      ),
+      book
+    );
+  } else {
+    if (bookingWindow !== undefined) {
+      warnOnce(
+        'render-no-suspend',
+        'undertone: this offline context has no suspend() and resume(), so bookingWindow is ignored and every voice is booked up front.'
+      );
+    }
+    voices.forEach(book);
+    rendered = await ctx.startRendering();
+  }
   return options.wrap && tail > 0 ? foldTail(ctx, rendered, passLength) : rendered;
 }

@@ -312,4 +312,13 @@ export interface RenderedAudioBufferLike extends AudioBufferLike {
 export interface OfflineAudioContextLike extends AudioContextLike {
   readonly length: number;
   startRendering(): Promise<RenderedAudioBufferLike>;
+  /**
+   * Pauses rendering at `suspendTime` (seconds, quantized to a render quantum)
+   * and resolves once it has paused, so more nodes can be booked before
+   * `resume()`. Optional: a render that asks for a `bookingWindow` on a
+   * context without it books everything up front instead.
+   */
+  suspend?(suspendTime: number): Promise<void>;
+  /** Continues a render paused by `suspend()`. */
+  resume?(): Promise<void>;
 }

@@ -1,20 +1,29 @@
-// Tests for offline rendering: sizing, booking order, seeding, samples and tail wrapping
+// Tests for offline rendering: sizing, booking order, booking in windows, seeding, samples and tail wrapping
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { note, s, sound } from './control';
 import { stack } from './pattern';
 import { renderToBuffer } from './render';
 import { clearSamples, registerSample } from './samples';
 import { resetTempo } from './scheduler';
 import { score } from './score';
-import { FakeOfflineAudioContext, fakeOfflineFactory } from './test-utils/fakeAudioContext';
+import type { ScoreEvent } from './score';
+import {
+  FakeOfflineAudioContext,
+  fakeOfflineFactory,
+  recordedGraph
+} from './test-utils/fakeAudioContext';
+import type { FakeOfflineOptions } from './test-utils/fakeAudioContext';
+import { resetWarnings } from './warn';
 
 afterEach(() => {
   clearSamples();
   resetTempo();
+  resetWarnings();
+  vi.restoreAllMocks();
 });
 
 describe('renderToBuffer', () => {
@@ -175,5 +184,164 @@ describe('render() shortcuts', () => {
     const buffer = await cue.render({ sampleRate: 100, master: false, context });
     expect(buffer.length).toBe(200);
     expect(context.contexts[0].oscillators.map((o) => o.started[0])).toEqual([0, 0.5]);
+  });
+});
+
+/**
+ * Six seconds of a busy cue at 100 ticks a second: FM notes, noise hats that choke each other,
+ * room sends whose size changes on one orbit, a delay, a nudge that reorders booking, and a pan
+ * path. Everything a window boundary could get wrong.
+ */
+function busyCue() {
+  const events: ScoreEvent[] = [];
+  for (let tick = 0; tick < 600; tick += 25) {
+    events.push({
+      tick,
+      midi: 48 + ((tick / 25) % 12),
+      gate: 40,
+      level: 0.8,
+      pan: ((tick / 25) % 5) / 2 - 1,
+      voice: {
+        soundType: 'sine',
+        fmIndex: 2,
+        sustain: 0.5,
+        roomLevel: 0.3,
+        roomSize: tick < 300 ? 2 : 6,
+        delayLevel: tick % 100 === 0 ? 0.2 : undefined
+      }
+    });
+    events.push({
+      tick: tick + 12,
+      note: 'c6',
+      voice: { soundType: 'white', cutGroup: 1, release: 0.4, nudgeTime: tick === 200 ? -0.2 : 0 }
+    });
+  }
+  events.push({
+    tick: 150,
+    note: 'a2',
+    gate: 300,
+    voice: { soundType: 'sawtooth', sustain: 0.7, roomLevel: 0.2, orbit: 1, roomSize: 4 },
+    panPath: [
+      { tick: 0, pan: -1 },
+      { tick: 300, pan: 1 }
+    ]
+  });
+  return score({ ticksPerSecond: 100, lengthTicks: 600, events });
+}
+
+// 1280 Hz makes a second exactly ten render quanta, so pause times stay round.
+describe('booking in windows', () => {
+  it('pauses a window ahead of each window and books only what is due by then', async () => {
+    const context = fakeOfflineFactory();
+    await busyCue().render({ sampleRate: 1280, tail: 1, bookingWindow: 1, context });
+    const ctx = context.contexts[0];
+
+    // Windows 0 and 1 are booked before the render; window k at a pause at the start of window k - 1.
+    expect(ctx.suspensions.map((pause) => pause.time)).toEqual([1, 2, 3, 4]);
+    for (const pause of ctx.suspensions) {
+      // Everything booked by then starts before the next window ends, and nothing in it is missing.
+      expect(Math.max(...pause.startsBooked)).toBeLessThan(pause.time + 1);
+      const all = [...ctx.oscillators, ...ctx.bufferSources].map((node) => node.started[0]);
+      expect(all.filter((start) => start < pause.time + 1)).toHaveLength(pause.startsBooked.length);
+    }
+    const counts = [ctx.nodeCountAtRender, ...ctx.suspensions.map((pause) => pause.nodeCount)];
+    expect(counts).toEqual([...counts].sort((a, b) => a - b));
+    expect(ctx.nodeCountAtRender).toBeLessThan(ctx.nodeCount() / 2);
+  });
+
+  it('builds exactly the graph that booking up front builds', async () => {
+    const upFront = fakeOfflineFactory();
+    const windowed = fakeOfflineFactory();
+    const cue = busyCue();
+
+    await cue.render({ sampleRate: 1280, tail: 1, context: upFront });
+    await cue.render({ sampleRate: 1280, tail: 1, bookingWindow: 0.5, context: windowed });
+
+    expect(windowed.contexts[0].suspensions.length).toBeGreaterThan(5);
+    expect(recordedGraph(windowed.contexts[0])).toEqual(recordedGraph(upFront.contexts[0]));
+  });
+
+  it("keeps each orbit's last booked room size, as booking up front does", async () => {
+    const windowed = fakeOfflineFactory();
+    await busyCue().render({ sampleRate: 1280, bookingWindow: 1, context: windowed });
+    const upFront = fakeOfflineFactory();
+    await busyCue().render({ sampleRate: 1280, context: upFront });
+
+    // The size-6 room of the second half is the one heard throughout; the size-2 room is never built.
+    const reverb = (ctx: FakeOfflineAudioContext) => ctx.convolvers[0].buffer;
+    expect(reverb(windowed.contexts[0])?.length).toBe(reverb(upFront.contexts[0])?.length);
+    expect(reverb(windowed.contexts[0])?.length).toBe(Math.round(1280 * (0.3 + (5 * 3.7) / 9)));
+  });
+
+  it('books a voice nudged past the end at the last pause, which the context accepts', async () => {
+    const context = fakeOfflineFactory();
+    const cue = score({
+      ticksPerSecond: 100,
+      lengthTicks: 400,
+      events: [
+        { tick: 0, note: 'c3' },
+        { tick: 350, note: 'e3', voice: { nudgeTime: 2 } }
+      ]
+    });
+    await cue.render({ sampleRate: 1280, bookingWindow: 1, context });
+    const ctx = context.contexts[0];
+    expect(ctx.suspensions.map((pause) => pause.time)).toEqual([3]);
+    expect(ctx.oscillators.map((o) => o.started[0])).toEqual([0, 5.5]);
+  });
+
+  it('books everything up front, warning once, on a context that cannot pause', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const plain = fakeOfflineFactory();
+    const noSuspend = (init: FakeOfflineOptions) =>
+      plain({ ...init, noSuspend: true }) as FakeOfflineAudioContext;
+    const upFront = fakeOfflineFactory();
+
+    await busyCue().render({ sampleRate: 1280, bookingWindow: 1, context: noSuspend });
+    await busyCue().render({ sampleRate: 1280, bookingWindow: 1, context: noSuspend });
+    await busyCue().render({ sampleRate: 1280, context: upFront });
+
+    const ctx = plain.contexts[0];
+    expect(ctx.suspensions).toEqual([]);
+    expect(ctx.nodeCountAtRender).toBe(ctx.nodeCount());
+    expect(recordedGraph(ctx)).toEqual(recordedGraph(upFront.contexts[0]));
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('bookingWindow is ignored');
+  });
+
+  it('rejects a window that is not positive or shorter than two render quanta', async () => {
+    const context = fakeOfflineFactory();
+    await expect(note('c3').render({ bookingWindow: 0, context })).rejects.toThrow(
+      'bookingWindow must be positive'
+    );
+    await expect(note('c3').render({ bookingWindow: Number.NaN, context })).rejects.toThrow(
+      'bookingWindow must be positive'
+    );
+    await expect(
+      note('c3').render({ bookingWindow: 0.005, sampleRate: 48000, context })
+    ).rejects.toThrow('at least 256 frames');
+    expect(context.contexts).toHaveLength(0);
+  });
+
+  it('rejects the render when the context refuses a pause', async () => {
+    class Refusing extends FakeOfflineAudioContext {
+      override suspend(): Promise<void> {
+        return Promise.reject(new Error('no pause for you'));
+      }
+    }
+    await expect(
+      busyCue().render({
+        sampleRate: 1280,
+        bookingWindow: 1,
+        context: (init) => new Refusing(init)
+      })
+    ).rejects.toThrow('no pause for you');
+  });
+
+  it('leaves the default render booking everything up front', async () => {
+    const context = fakeOfflineFactory();
+    await busyCue().render({ sampleRate: 1280, context });
+    const ctx = context.contexts[0];
+    expect(ctx.suspensions).toEqual([]);
+    expect(ctx.nodeCountAtRender).toBe(ctx.nodeCount());
   });
 });
