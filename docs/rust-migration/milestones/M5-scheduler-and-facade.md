@@ -21,7 +21,7 @@ A new `undertone-sched` crate books and plays patterns against a clock, and the 
 - **Owner:** A. **Size:** M. **Depends on:** RF-15 to RF-22.
 - **Objective:** the crate a Rust user depends on: re-exports of the pattern, engine, and scheduler crates under one idiomatic API (a prelude, builders, errors as `Result<_, undertone::Error>`), `render` and `play` entry points, and a guide in rustdoc with runnable examples matching the TypeScript guide's examples.
 - **Steps:** (1) `crates/undertone/src/lib.rs` with `pub mod prelude`; (2) one example per guide page under `crates/undertone/examples/` that renders to a WAV; (3) `cargo doc` clean, every public item documented; (4) the layer 4 runner `crates/undertone/tests/corpus_render.rs` over the whole corpus.
-- **Acceptance:** every group in [API-MAPPING.md](../API-MAPPING.md) marked done; `cargo run --example getting_started` writes a WAV; corpus green on Rust in full.
+- **Acceptance:** every group in [API-MAPPING.md](../API-MAPPING.md) marked done; `cargo run --example getting_started` writes a WAV; corpus green on Rust in full; `Engine` and `Player` are `Send` (compile-time assertions in a test), shutdown is explicit and idempotent, and a test holds one in shared state across threads. These let a host such as a Tauri plugin keep an engine in managed state across async commands ([HANDOFFS.md](../HANDOFFS.md), TAU-01).
 
 ### The Rust documentation (this milestone's documentation package, per D-20)
 
