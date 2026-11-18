@@ -73,8 +73,8 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: "Pattern of unpitched voices — the entry point for noise ('white' | 'pink' | 'brown'), also accepts mini-notation. Chainable as .sound(type) to set a voice's waveform or noise type."
   },
   n: {
-    signature: 'n(input: string | number) => Pattern<ControlPatch>',
-    doc: 'Scale-degree pattern — input is an integer or mini-notation string of them, resolved into real pitches by .scale("d5:minor").'
+    signature: 'n(input: string | number | Pattern<number>) => Pattern<ControlPatch>',
+    doc: 'Scale-degree pattern — input is an integer, a mini-notation string of them, or a pattern with events such as n(saw.range(0, 8).segment(8)) (floored), resolved into real pitches by .scale("d5:minor").'
   },
   chord: {
     signature: 'chord(input: string) => Pattern<ControlPatch>',
@@ -192,6 +192,54 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: 'surroundGains(angleDegrees: number) => number[]',
     doc: 'Computes per-speaker gains for an angle on the 7.1 speaker ring — what surround() uses internally.'
   },
+  sine: {
+    signature: 'sine: Pattern<number>',
+    doc: 'A signal: 0.5 + 0.5·sin of the cycle phase, from 0 to 1, read at the onset of each event that reads it. Give it a rhythm with .segment(n), or pass it to a control: .lpf(sine.range(400, 4000)). Also cosine, saw, isaw, tri and square, each with a -1..1 form (sine2, ...).'
+  },
+  sine2: {
+    signature: 'sine2: Pattern<number>',
+    doc: 'The bipolar sine, from -1 to 1: use it for pan, which runs -1 to 1: .pan(sine2). Also cosine2, saw2, isaw2, tri2 and square2.'
+  },
+  saw: {
+    signature: 'saw: Pattern<number>',
+    doc: 'A signal rising from 0 to 1 once a cycle. Also isaw (falling), tri, square and cosine; saw2 etc. run -1 to 1.'
+  },
+  signal: {
+    signature: 'signal(fn: (t: number) => number) => Pattern<number>',
+    doc: 'Makes your own signal: fn receives the cycle time as a number (3.25 at cycle 3 and a quarter) and returns the value.'
+  },
+  rand: {
+    signature: 'rand: Pattern<number>',
+    doc: 'A random signal from 0 up to 1: a repeatable value for each point in time. .seed(n) goes directly on it (rand.seed(7).range(200, 2000)). Also rand2 (-1 to 1), irand(n), choose(...), brand and brandBy(p).'
+  },
+  perlin: {
+    signature: 'perlin: Pattern<number>',
+    doc: 'Smooth random motion from 0 to 1: Perlin-style value noise, passing through a random value at each whole cycle. .seed(n) goes directly on it.'
+  },
+  irand: {
+    signature: 'irand(n: number) => Pattern<number>',
+    doc: 'A random whole number from 0 to n - 1, repeatable for each point in time.'
+  },
+  choose: {
+    signature: 'choose(...values: T[]) => Pattern<T>',
+    doc: 'One of the values picked at random for each point in time: choose(-1, 0, 1).'
+  },
+  segment: {
+    signature: '.segment(n: number) => Pattern<T>',
+    doc: 'Gives a pattern n evenly spaced events per cycle, each holding the pattern value at its onset: how a signal becomes events, as in n(sine.segment(8).range(0, 7)).'
+  },
+  range: {
+    signature: '.range(lo: number, hi: number) => Pattern<number>',
+    doc: 'Maps a 0..1 pattern to lo..hi, linearly. .range2 maps -1..1; .rangex is exponential (the right curve for frequencies, both bounds above 0). A range does not clamp.'
+  },
+  seed: {
+    signature: '.seed(n: number | string) => Pattern<number>',
+    doc: 'Chooses the seed of a random signal (default 0). Only directly on rand, rand2, perlin, irand(), choose() or brand: call it before range() or segment().'
+  },
+  add: {
+    signature: '.add(x: number | Pattern<number>) => Pattern<number>',
+    doc: 'Adds a number or a pattern read at each onset (structure from the left). Also .sub, .mul and .div; .round() and .floor() round each value.'
+  },
   fast: {
     signature: '.fast(factor: number) => Pattern<T>',
     doc: 'Speeds the whole pattern up: fast(2) squeezes two cycles into every one.'
@@ -225,79 +273,79 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: 'A sample-lookup prefix: tries `${name}_${sampleName}` before falling back to the bare sample name.'
   },
   attack: {
-    signature: '.attack(seconds: number) => Pattern<ControlPatch>',
+    signature: '.attack(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Amplitude envelope attack time.'
   },
   decay: {
-    signature: '.decay(seconds: number) => Pattern<ControlPatch>',
+    signature: '.decay(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Amplitude envelope decay time.'
   },
   sustain: {
-    signature: '.sustain(level: number) => Pattern<ControlPatch>',
+    signature: '.sustain(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "Fraction (0-1) of gain the decay stage settles to before release. In loop() (and play({gated: true})), the envelope holds at this level until the event's gate closes."
   },
   release: {
-    signature: '.release(seconds: number) => Pattern<ControlPatch>',
+    signature: '.release(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Amplitude envelope release time.'
   },
   gain: {
-    signature: '.gain(level: number) => Pattern<ControlPatch>',
+    signature: '.gain(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Peak amplitude (0-1).'
   },
   lpf: {
-    signature: '.lpf(hz: number) => Pattern<ControlPatch>',
+    signature: '.lpf(hz: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Base lowpass filter cutoff in Hz. Omit entirely to skip filtering.'
   },
   lpenv: {
-    signature: '.lpenv(hzAmount: number) => Pattern<ControlPatch>',
+    signature: '.lpenv(hzAmount: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Hz the filter envelope adds on top of lpf() at its peak.'
   },
   lpa: {
-    signature: '.lpa(seconds: number) => Pattern<ControlPatch>',
+    signature: '.lpa(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Filter envelope attack time.'
   },
   lpd: {
-    signature: '.lpd(seconds: number) => Pattern<ControlPatch>',
+    signature: '.lpd(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Filter envelope decay time.'
   },
   lps: {
-    signature: '.lps(level: number) => Pattern<ControlPatch>',
+    signature: '.lps(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Fraction (0-1) between lpf() and its envelope peak the decay stage settles to.'
   },
   lpr: {
-    signature: '.lpr(seconds: number) => Pattern<ControlPatch>',
+    signature: '.lpr(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Filter envelope release time.'
   },
   slide: {
-    signature: '.slide(seconds: number) => Pattern<ControlPatch>',
+    signature: '.slide(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Pitch glide (portamento): starts an octave above the target note and slides down over seconds.'
   },
   fm: {
-    signature: '.fm(index: number) => Pattern<ControlPatch>',
+    signature: '.fm(index: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'FM modulation index: the modulator swings the pitch by index × modulator frequency, so brightness follows the note. 0 is off.'
   },
   fmi: {
-    signature: '.fmi(index: number) => Pattern<ControlPatch>',
+    signature: '.fmi(index: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "Alias of .fm() under Strudel's fmi name."
   },
   fmh: {
-    signature: '.fmh(ratio: number) => Pattern<ControlPatch>',
+    signature: '.fmh(ratio: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "FM harmonicity: the modulator's frequency as a multiple of the note's. Fractions such as 3.5 give bells and metal."
   },
   fmattack: {
-    signature: '.fmattack(seconds: number) => Pattern<ControlPatch>',
+    signature: '.fmattack(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Seconds for the FM depth to reach the full index.'
   },
   fmdecay: {
-    signature: '.fmdecay(seconds: number) => Pattern<ControlPatch>',
+    signature: '.fmdecay(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Seconds for the FM depth to fall to .fmsustain() × the index; with no .fmsustain() it falls toward silence.'
   },
   fmsustain: {
-    signature: '.fmsustain(level: number) => Pattern<ControlPatch>',
+    signature: '.fmsustain(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Fraction (0-1) of the index the FM depth settles to. Default 1, or 0 when only .fmdecay() is set.'
   },
   fmrelease: {
-    signature: '.fmrelease(seconds: number) => Pattern<ControlPatch>',
+    signature: '.fmrelease(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Seconds for the FM depth to fall to 0 after the gate closes.'
   },
   fmenv: {
@@ -341,15 +389,15 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: 'A repeatable random generator (mulberry32), separate from Math.random.'
   },
   penv: {
-    signature: '.penv(semitones: number) => Pattern<ControlPatch>',
+    signature: '.penv(semitones: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Pitch envelope depth in semitones: each note starts that far from its pitch (negative = below, so it rises) and returns over .pdecay().'
   },
   pattack: {
-    signature: '.pattack(seconds: number) => Pattern<ControlPatch>',
+    signature: '.pattack(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Seconds the pitch envelope takes to sweep out to its .penv() offset. Default 0: it starts there.'
   },
   pdecay: {
-    signature: '.pdecay(seconds: number) => Pattern<ControlPatch>',
+    signature: '.pdecay(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Seconds the pitch envelope takes to return to the note. Default 0.1.'
   },
   pitchsteps: {
@@ -357,31 +405,31 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: 'Frame-stepped pitch curve: semitone offsets, one per frame at rateHz (default 140), holding the last. Overrides .penv() and .slide().'
   },
   hpf: {
-    signature: '.hpf(hz: number) => Pattern<ControlPatch>',
+    signature: '.hpf(hz: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Static highpass filter, in series after .lpf(). Omit entirely to skip it.'
   },
   phaser: {
-    signature: '.phaser(rateHz: number) => Pattern<ControlPatch>',
+    signature: '.phaser(rateHz: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'A 4-stage allpass phaser at rateHz. Omit entirely to skip it.'
   },
   room: {
-    signature: '.room(level: number) => Pattern<ControlPatch>',
+    signature: '.room(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "Reverb send (0-1) to the voice's orbit bus. See roomsize()/orbit()."
   },
   roomsize: {
-    signature: '.roomsize(size: number) => Pattern<ControlPatch>',
+    signature: '.roomsize(size: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "The shared orbit bus's reverb decay character (roughly 1-10) — last-writer-wins across every voice on that orbit."
   },
   delay: {
-    signature: '.delay(level: number) => Pattern<ControlPatch>',
+    signature: '.delay(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "Delay send (0-1) to the voice's orbit bus. See delaytime()/delayfeedback()/orbit()."
   },
   delaytime: {
-    signature: '.delaytime(seconds: number) => Pattern<ControlPatch>',
+    signature: '.delaytime(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "The shared orbit bus's delay time — last-writer-wins across every voice on that orbit."
   },
   delayfeedback: {
-    signature: '.delayfeedback(amount: number) => Pattern<ControlPatch>',
+    signature: '.delayfeedback(amount: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "The shared orbit bus's delay feedback amount."
   },
   orbit: {
@@ -389,27 +437,27 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: "Which shared reverb/delay bus the voice's room()/delay() sends target. Default 0, a non-negative integer, not patternable."
   },
   nudge: {
-    signature: '.nudge(seconds: number) => Pattern<ControlPatch>',
+    signature: '.nudge(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Start-time offset in seconds applied to every event. .late()/.early() are signed aliases.'
   },
   late: {
-    signature: '.late(seconds: number) => Pattern<ControlPatch>',
+    signature: '.late(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Signed alias of .nudge() — delays every event by seconds.'
   },
   early: {
-    signature: '.early(seconds: number) => Pattern<ControlPatch>',
+    signature: '.early(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Signed alias of .nudge() — moves every event seconds earlier.'
   },
   duration: {
-    signature: '.duration(seconds: number) => Pattern<ControlPatch>',
+    signature: '.duration(seconds: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Explicit gate: hold the envelopes at their sustain level for seconds, then release. Needs a sustain above 0.'
   },
   legato: {
-    signature: '.legato(fraction: number) => Pattern<ControlPatch>',
+    signature: '.legato(fraction: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "Gate as a fraction of each event's own length. Gates even a one-shot; .duration() overrides it."
   },
   velocity: {
-    signature: '.velocity(level: number) => Pattern<ControlPatch>',
+    signature: '.velocity(level: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'Note strength: multiplies the peak amplitude only, so one instrument keeps its timbre from ghost note to accent.'
   },
   cut: {
@@ -417,8 +465,8 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: 'Cut group: a new event in the same group stops the previous one with a very short fade. A non-negative integer, not patternable.'
   },
   pan: {
-    signature: '.pan(position: number) => Pattern<ControlPatch>',
-    doc: 'Stereo position, -1 (hard left) to 1 (hard right).'
+    signature: '.pan(position: number | string | Pattern<number>) => Pattern<ControlPatch>',
+    doc: 'Stereo position, -1 (hard left) to 1 (hard right). Takes a number, a string or a pattern: .pan(sine2) places each note by the sine at its onset. Values outside -1..1 from a pattern are clamped.'
   },
   channels: {
     signature: '.channels(gains: number[]) => Pattern<ControlPatch>',
@@ -434,15 +482,15 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: 'Pan automation inside each note. An array of pans is frame-stepped at rateHz (default 140), holding the last; { time, pan } points (seconds from the onset) ramp linearly. Replaces .pan(). Not patternable.'
   },
   panslide: {
-    signature: '.panslide(from: number, seconds?: number) => Pattern<ControlPatch>',
+    signature: '.panslide(from: ControlInput, seconds?: number) => Pattern<ControlPatch>',
     doc: "Pan slide: each note starts at pan from and moves linearly to its own pan (the centre without one) over seconds, or over the note's attack when omitted. A .panpath() takes precedence."
   },
   autopan: {
-    signature: '.autopan(hz: number) => Pattern<ControlPatch>',
+    signature: '.autopan(hz: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: "An LFO at hz swings each note's pan either side of its pan (or its panpath or panslide) from the onset through the release. Shape it with .autopandepth(), .autopanshape() and .autopanphase()."
   },
   autopandepth: {
-    signature: '.autopandepth(depth: number) => Pattern<ControlPatch>',
+    signature: '.autopandepth(depth: number | string | Pattern<number>) => Pattern<ControlPatch>',
     doc: 'How far .autopan() swings either side of the pan, 0 to 1. Default 1.'
   },
   autopanshape: {
@@ -450,8 +498,8 @@ const API_DOCS: Record<string, ApiDoc> = {
     doc: "The .autopan() LFO's wave. Default sine; a square jumps between the two sides. Not patternable."
   },
   autopanphase: {
-    signature: '.autopanphase(phase: number) => Pattern<ControlPatch>',
-    doc: 'Where in its cycle .autopan() starts, 0 to 1 (default 0; 0.5 starts the other way). Not patternable.'
+    signature: '.autopanphase(phase: number | string | Pattern<number>) => Pattern<ControlPatch>',
+    doc: 'Where in its cycle .autopan() starts, 0 to 1 (default 0; 0.5 starts the other way). Takes a number, a string or a pattern, so .autopanphase(saw.slow(4)) carries the phase from note to note. Clamped to 0 to 1.'
   },
   panlaw: {
     signature: '.panlaw(db: number) => Pattern<ControlPatch>',
@@ -484,6 +532,17 @@ const API_DOCS: Record<string, ApiDoc> = {
 };
 
 const METHOD_NAMES = [
+  'segment',
+  'range',
+  'range2',
+  'rangex',
+  'seed',
+  'add',
+  'sub',
+  'mul',
+  'div',
+  'round',
+  'floor',
   'fast',
   'slow',
   'rev',

@@ -10,9 +10,10 @@ import { fullTracksExamples } from './fullTracks';
 import { songsExamples } from './songs';
 import { voicesExamples } from './voices';
 import { movingPanExamples } from './movingPan';
+import { signalsExamples } from './signals';
 
 // Ordered simple to advanced: one-shot SFX, then mini-notation patterns,
-// then full multi-layer tracks, then real songs. The two newer groups sit at the end so the
+// then full multi-layer tracks, then real songs. The newer groups sit at the end so the
 // default example (the third group's first) keeps its place.
 export const EXAMPLE_GROUPS: ExampleGroup[] = [
   { label: 'Game SFX', examples: gameSfxExamples },
@@ -20,5 +21,6 @@ export const EXAMPLE_GROUPS: ExampleGroup[] = [
   { label: 'Full tracks', examples: fullTracksExamples },
   { label: 'Songs', examples: songsExamples },
   { label: 'Voices and scores', examples: voicesExamples },
-  { label: 'Moving the pan', examples: movingPanExamples }
+  { label: 'Moving the pan', examples: movingPanExamples },
+  { label: 'Signals', examples: signalsExamples }
 ];
