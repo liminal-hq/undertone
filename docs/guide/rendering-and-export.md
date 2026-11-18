@@ -26,6 +26,27 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 - **Seamless loops:** `wrap: true` folds the tail back onto the start, so the file is exactly one pass long and loops without a gap or a cut-off tail. The folded tail was limited separately from the start, so the sum can exceed the limiter's ceiling.
 - **Gating:** notes are gated by their event length like `loop()`. Pass `gated: false` for a percussive one-shot like `play()`.
 - **Master bus:** the render goes through the same limiter as `createMasterBus`, so the file matches what a listener hears. Pass `master: false` for the raw mix, or an object to tune it.
+- **Booking in windows:** `bookingWindow: seconds` books the voices a window at a time instead of all before the render starts. See below. Off by default.
+
+## Booking in windows
+
+By default every voice is booked on the offline context before the render starts. That is the simplest thing and it is what a browser is built for, but some renderers process every node from the moment it is made, whether or not it has started yet, so their cost grows with the number of notes times the length of the piece. `bookingWindow` books the score in windows of that many seconds instead:
+
+```ts
+const buffer = await song.render({ tail: 2, bookingWindow: 1 });
+```
+
+- **How:** the voices are split by onset (nudge included) into windows of `bookingWindow` seconds. Windows 0 and 1 are booked before the render starts. The render then pauses with `suspend()` at the start of each window k − 1, books window k (a whole window ahead, so a pause rounded to the next render quantum is still early), and calls `resume()`. A voice nudged past the end of the render is booked at the last pause.
+- **Same audio:** voices are booked in the same order with the same parameters, so the graph is the one booking up front builds. One thing is done for you: each orbit's reverb gets the last room size booked on it from the start, which is what booking up front ends with, rather than changing part way through.
+- **Window size:** at least two render quanta (256 frames, about 5 ms at 48 kHz); a second or so is a good start.
+- **Fallback:** on a context without `suspend()` and `resume()`, everything is booked up front, with a warning, and the render is otherwise unchanged.
+- **Errors:** if the context refuses a pause, or booking a window throws, the render still runs to the end and then rejects with that error.
+
+What was measured, so you can judge it for your own renderer:
+
+- **On the test fake** (`src/render.test.ts`), a six-second cue booked with a one-second window pauses at 1, 2, 3 and 4 s, and at each pause exactly the voices starting before the next window ends have been made. The recorded graph (every node, connection, automation call, buffer, and the impulse response heard on each orbit) is identical to booking up front.
+- **On `node-web-audio-api` 2.2.0** (a Rust implementation of Web Audio, under Bun on a 16-core Linux machine), a 75-second score of 2,325 FM, bass and noise voices with reverb and delay took 85.6 s booked up front and 8.7 s and 11.2 s with `bookingWindow: 1.2`. Peak and RMS agreed to four places; individual samples differed by at most 3 × 10⁻⁷ (about −130 dBFS), and by different amounts from run to run, which is that renderer's rounding when it sums inputs, not a change to the graph. Two renders booked up front were bit-identical.
+- **Not measured:** any browser. How much a browser's `OfflineAudioContext` gains, if anything, is untested.
 
 ## Reproducible renders
 
@@ -35,7 +56,7 @@ Noise and reverb impulse responses are random, so unseeded renders differ slight
 
 - **Room size is fixed per orbit.** A reverb's impulse response cannot be scheduled, so when a pattern changes `.room` size over time, the last one booked on each orbit applies to the whole render.
 - **Samples are decoded for you.** Registered samples a pattern uses are decoded on the offline context before the render starts. Sample-rate differences between a file and the render are resampled by the browser.
-- **Memory.** The whole render lives in memory, and every event is booked up front. A stereo render is about 23 MB per minute at 48 kHz in 32-bit float, before the nodes the events create. Long pieces may need to be rendered in sections.
+- **Memory.** The whole render lives in memory, and every event is booked up front unless `bookingWindow` is set. A stereo render is about 23 MB per minute at 48 kHz in 32-bit float, before the nodes the events create. Long pieces may need to be rendered in sections.
 - **It blocks the page.** Web Audio is not available in Workers, so a heavy render runs on the page that asks for it.
 - **Outside a browser.** There is no built-in `OfflineAudioContext` in Node. Pass a `context` factory (for example one built on a Web Audio implementation you choose) that takes `{ numberOfChannels, length, sampleRate }`. Undertone adds no dependency for this.
 
