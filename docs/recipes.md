@@ -365,7 +365,7 @@ Why a clip and not a look-ahead limiter: a look-ahead limiter delays the signal 
 
 Four ways to move a sound across the stereo field, from the smallest change to the most control. Each one is an example in the [playground](/playground) under "Moving the pan". The [stereo guide](/guide/stereo-and-surround#moving-the-pan-panpath-panslide-and-autopan) has the full reference.
 
-A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds.
+A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds (it is in hertz, so it does not follow `bpm`).
 
 ```ts
 import { chord } from '@liminal-hq/undertone';
@@ -387,14 +387,18 @@ chord('<Dm9 Gm9 Bbmaj7 A7>')
 A lead that flies in from the left: `.panslide(from, seconds)` is `.slide()` for the pan. Each note starts at `from` and moves to its own `.pan()`.
 
 ```ts
+import { note } from '@liminal-hq/undertone';
+
 note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop({ bpm: 100 });
 ```
 
 A melody with a path inside each note: `{ time, pan }` points ramp, and an array of pans steps frame by frame.
 
 ```ts
+import { cat, note } from '@liminal-hq/undertone';
+
 // A sweep from hard right to hard left over half a second, every note.
-note('a2 e3 a3 c4')
+const sweep = note('a2 e3 a3 c4')
   .sound('sawtooth')
   .legato(1)
   .panpath([
@@ -403,15 +407,24 @@ note('a2 e3 a3 c4')
   ]);
 
 // A flutter, 30 frames a second, that settles in the centre.
-note('c4 e4 g4 e4').sound('square').legato(1).panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+const flutter = note('c4 e4 g4 e4')
+  .sound('square')
+  .legato(1)
+  .panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+
+// One cycle of each, over and over.
+cat(sweep, flutter).loop({ bpm: 100 });
 ```
 
 Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
 
 ```ts
+import { cat, note } from '@liminal-hq/undertone';
+
 const crossing = note('c3 e3 g3 e3 c4 e4 g4 e4')
   .sound('triangle')
   .pan('-1 -0.5 0 0.5 1 0.5 0 -0.5');
+
 cat(crossing.panlaw(-6), crossing.panlaw(-3), crossing.panlaw(0)).loop({ bpm: 100 });
 ```
 
