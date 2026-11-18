@@ -360,3 +360,106 @@ Browsers' compressors add automatic makeup gain, which would make a limited mix 
 When a file or a stream must never pass a level, add a `ceiling` in dBFS: `createMasterBus(ctx, { ceiling: -0.3 })`, or `render({ master: { ceiling: -0.3 } })`. It is a hard clip after everything else on the bus: samples below the ceiling pass unchanged, and a sample above it is set to the ceiling. The limiter still does the work of keeping the mix down; the clip only catches what its 3 ms attack lets through, so it should touch a few samples, not the music. It is off by default, and without it the bus is exactly the gain stage and limiter above.
 
 Why a clip and not a look-ahead limiter: a look-ahead limiter delays the signal and turns the gain down before a peak arrives, which needs the level of the signal ahead of the playhead. Web Audio's built-in nodes cannot measure a level and drive a gain from it (the compressor's detector is not exposed), so it would need an `AudioWorklet`, which Undertone does not use. A wave shaper is a built-in node, costs one node per bus and no latency, and guarantees the ceiling for every sample. The price is that an over that does reach it is clipped, which is distortion; keep the limiter's threshold below the ceiling so that is rare. It bounds sample values, not the peaks a DAC reconstructs between samples, so leave a fraction of a dB for those.
+
+## Moving the pan
+
+Four ways to move a sound across the stereo field, from the smallest change to the most control. Each one is an example in the [playground](/playground) under "Moving the pan". The [stereo guide](/guide/stereo-and-surround#moving-the-pan-panpath-panslide-and-autopan) has the full reference.
+
+A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds.
+
+```ts
+import { chord } from '@liminal-hq/undertone';
+
+chord('<Dm9 Gm9 Bbmaj7 A7>')
+  .voicing()
+  .sound('triangle')
+  .attack(0.4)
+  .sustain(0.8)
+  .release(1)
+  .lpf(1800)
+  .gain(0.25)
+  .room(0.4)
+  .autopan(0.25)
+  .autopandepth(0.7)
+  .loop({ bpm: 70 });
+```
+
+A lead that flies in from the left: `.panslide(from, seconds)` is `.slide()` for the pan. Each note starts at `from` and moves to its own `.pan()`.
+
+```ts
+note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop({ bpm: 100 });
+```
+
+A melody with a path inside each note: `{ time, pan }` points ramp, and an array of pans steps frame by frame.
+
+```ts
+// A sweep from hard right to hard left over half a second, every note.
+note('a2 e3 a3 c4')
+  .sound('sawtooth')
+  .legato(1)
+  .panpath([
+    { time: 0, pan: 1 },
+    { time: 0.5, pan: -1 }
+  ]);
+
+// A flutter, 30 frames a second, that settles in the centre.
+note('c4 e4 g4 e4').sound('square').legato(1).panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+```
+
+Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
+
+```ts
+const crossing = note('c3 e3 g3 e3 c4 e4 g4 e4')
+  .sound('triangle')
+  .pan('-1 -0.5 0 0.5 1 0.5 0 -0.5');
+cat(crossing.panlaw(-6), crossing.panlaw(-3), crossing.panlaw(0)).loop({ bpm: 100 });
+```
+
+A path, a slide and an autopan can be combined: the path or slide sets the centre of the swing and the LFO adds to it. `.channels()` and `.surround()` take precedence over all of them.
+
+## Safe loud mixes
+
+A busy cue can peak above full scale, and a file you render should not clip when somebody plays it. Use the limiter to keep the mix down and the ceiling as the last guarantee. The same options work live, on a master bus, and offline, in `render()`:
+
+```ts
+import { createMasterBus, encodeWav, note, stack } from '@liminal-hq/undertone';
+
+const loud = stack(
+  note('[c3,e3,g3,b3,d4]').sound('sawtooth').gain(0.9),
+  note('[c4,e4,g4,b4,d5]').sound('square').gain(0.9),
+  note('c2*4').sound('square').gain(0.9)
+);
+
+// Offline: the limiter alone can let a sharp transient past full scale.
+const limited = await loud.render({ cycles: 4, tail: 1 });
+
+// With a ceiling, no sample is louder than -0.3 dBFS.
+const safe = await loud.render({ cycles: 4, tail: 1, master: { ceiling: -0.3 } });
+const bytes = encodeWav(safe, { bitDepth: 24 });
+
+// Live, the same ceiling on a bus:
+const ctx = new AudioContext();
+const bus = createMasterBus(ctx, { ceiling: -0.3 });
+loud.loop({ ctx, output: bus.input });
+```
+
+The ceiling is a hard clip, so keep the limiter's threshold under it and let the clip catch only a few samples; if it is clipping often, turn the voices down. It bounds sample values, not the peaks a DAC reconstructs between samples, so leave a fraction of a dB. The playground has no export control or level meter, so these are for your own code. See [keeping a dense mix in range](#keeping-a-dense-mix-in-range) for the reasoning.
+
+## Long renders
+
+By default `render()` books every voice on the offline context before it starts. For a short cue that is the simplest thing, but a long score with thousands of notes can be slow on a renderer that processes every node from the moment it is made. `bookingWindow` books the score a window of seconds at a time, pausing the render between windows:
+
+```ts
+import { encodeWav } from '@liminal-hq/undertone';
+
+// `song` is any pattern or score() cue you have built.
+const buffer = await song.render({
+  tail: 2,
+  seed: 7, // the same seed, tempo and sample rate give the same samples
+  bookingWindow: 1, // book one second of notes at a time
+  master: { ceiling: -0.3 }
+});
+const wav = encodeWav(buffer, { bitDepth: 24 });
+```
+
+The audio is the same as booking up front: same voices, same order, same parameters. The window must be at least two render quanta (about 5 ms); a second or so is a good start. A context without `suspend()` and `resume()` falls back to booking everything up front, with a warning. It was measured on a Rust implementation of Web Audio, where it cut a 75-second score from 85 s to under 12 s; no browser has been measured. The whole render still lives in memory, so very long pieces may need to be rendered in sections. See [Rendering and export](/guide/rendering-and-export#booking-in-windows).
