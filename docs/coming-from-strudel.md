@@ -52,7 +52,7 @@ There's no `mode`, no `dict`, no voicing-dictionary system — `{ anchor }` is t
 
 Strudel gives you a default sample map and soundfonts from its CDN. Undertone ships **nothing** and fetches **nothing** by default — not Strudel's CDN, not anyone's:
 
-```ts
+```ts standalone
 import { loadSamples, registerSamples, s } from '@liminal-hq/undertone';
 
 registerSamples({ bd: '/audio/kick.wav', sd: '/audio/snare.wav' });
@@ -67,7 +67,7 @@ s('bd sd').loop({ ctx, bpm: 120 });
 
 Reverb and delay are sends to per-orbit buses, not per-voice inserts — undertone builds a fresh node graph per onset, and a convolver per voice would be unshippable. `.room(level)`/`.delay(level)` set the send; `.roomsize()`, `.delaytime()`, `.delayfeedback()` configure the _shared bus_, last-writer-wins across every voice on that orbit. When two layers need genuinely different rooms, give them different orbits:
 
-```ts
+```ts standalone
 import { chord, n, stack } from '@liminal-hq/undertone';
 
 const pad = chord('<Dm9 Gm9>').voicing().sound('sine').sustain(0.8).room(0.5).roomsize(8).orbit(1);

@@ -6,11 +6,13 @@ title: Recipes
 
 Complete patterns to copy, run, and bend into your own. Each one works as written — the synth-only recipes need no assets at all. Two ground rules apply to all of them: the first `play()` or `loop()` in your app must happen inside a user gesture (click, tap, keypress — browser autoplay policy), and every `loop()` returns a handle whose `stop()` ends it.
 
+A code block marked `ts standalone` runs as written: it imports everything it uses, defines everything it refers to, and plays or renders what it builds. The test suite executes every such block against the library on a fake `AudioContext` (`src/docSnippets.test.ts`), on this page, the guides and the README, so a missing import or a pattern that is built but never played fails the build. A plain `ts` block is a fragment that depends on its surroundings, and says so.
+
 ## A drum machine, no samples required
 
 Kick, snare, and hats synthesized from scratch: the kick is a low sine with a downward pitch `slide` (the classic thump), the snare is highpassed white noise over a short tone, and the hats are eighth-note white noise with a patterned gain for accents.
 
-```ts
+```ts standalone
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 const kick = note('c1 ~ [~ c1] ~')
@@ -39,7 +41,7 @@ Things to bend: swap the kick's rhythm for a euclidean `note('c1(3,8)')`, push t
 
 If you have recordings, register them and let `s()` drive the same rhythms. `.bank('TR808')` makes `bd` look up `TR808_bd` first, so swapping kits is a one-word change.
 
-```ts
+```ts standalone
 import { loadSamples, registerSamples, s, stack } from '@liminal-hq/undertone';
 
 registerSamples({
@@ -62,7 +64,7 @@ Undertone bundles no samples — see the [samples guide](/guide/samples) for reg
 
 Three slow layers on a 4-second cycle (`bpm: 60`): a chord progression voiced into real pitches, a filtered sawtooth drone with a slow phaser, and a sparse pentatonic shimmer echoing through a delay. The pad and drone share reverb on orbit 1; the shimmer gets its own delay bus on orbit 2 so the two effect characters don't fight (see [effects](/guide/effects) for why orbits exist).
 
-```ts
+```ts standalone
 import { chord, n, note, stack } from '@liminal-hq/undertone';
 
 const pad = chord('<Am9 FM7 CM7 G6>')
@@ -112,7 +114,7 @@ The long attacks only work because `loop()` gates each envelope by its event's l
 
 One-shots want the opposite envelope: near-zero attack, short decay, `sustain: 0`. Build the patterns once at module scope, then call `.play()` whenever the game event fires — patterns are immutable, so one object serves unlimited plays. These four are adapted from the [playground](/playground)'s "Game SFX" examples:
 
-```ts
+```ts standalone
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 // Menu click / toggle: a bright sine tick with a tiny noise transient.
@@ -192,7 +194,7 @@ Two one-shot habits worth building: `nudge(seconds)` is how you arpeggiate insid
 
 A sawtooth line where the movement comes from patterned parameters: the resting cutoff walks between values per cycle via a `<...>` alternation in `.lpf()`, a filter envelope snaps each note open, and `jux(rev)` plays the reversed line hard right against the original hard left.
 
-```ts
+```ts standalone
 import { note, rev } from '@liminal-hq/undertone';
 
 const acid = note('a1 [a1 a2] c2 <e2 g1>')
@@ -219,7 +221,7 @@ Every numeric control takes a mini-notation string like that `.lpf()` — see [p
 
 `arrange()` plays each `[cycles, pattern]` entry for its span of whole cycles, then loops the whole thing. Build sections from shared parts, then lay them out — this reuses the drum machine from the first recipe:
 
-```ts
+```ts standalone
 import { arrange, chord, n, note, sound, stack } from '@liminal-hq/undertone';
 
 // The drum machine from the first recipe, condensed.
@@ -273,7 +275,7 @@ You don't need FM to get most of the way to a rich, FM-flavoured sound. These fo
 
 In a two-operator FM voice, a quick-decaying modulator gives a bright attack that mellows as the note settles. A lowpass with a filter envelope does the same job: it opens at the attack and closes as the note sustains. Remember that `.lpenv()` is added on top of `.lpf()`, so the filter peaks at `lpf + lpenv`.
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 const pluck = note('e4 g4 b4 a4')
@@ -297,7 +299,7 @@ pluck.loop({ bpm: 100 });
 
 Two voices on the same notes, with a different waveform, more sustain, a few milliseconds of `.nudge()` and opposite `.pan()` positions, sound much fuller than either alone. The tiny start offset reads as width rather than as an echo.
 
-```ts
+```ts standalone
 import { note, stack } from '@liminal-hq/undertone';
 
 const melody = 'e5 g5 b5 a5';
@@ -314,7 +316,7 @@ lead.loop({ bpm: 110 });
 
 A note's gate (how long the key is held) and its release (how long it rings afterwards) are separate ideas. In a looped pattern each event is held for its own share of the cycle, then released, so a long `.release()` gives a short hit with a ringing body. For drums, use very short notes with a fast decay and a `.slide()`.
 
-```ts
+```ts standalone
 import { note, stack } from '@liminal-hq/undertone';
 
 // Short notes, long ring-out: a mallet-like tone.
@@ -336,7 +338,7 @@ stack(mallet, tom).loop({ bpm: 100 });
 
 Keep one instrument definition and put the expression in the gain pattern, so a ghost note and an accent are the same instrument at different levels rather than two different sounds.
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
@@ -348,7 +350,7 @@ groove.loop({ bpm: 120 });
 
 Undertone writes straight to the speakers, so a busy cue can peak at or above full scale. `createMasterBus()` puts a gain stage and a limiter in front of the destination; pass its `input` as the `output` of everything that should share it.
 
-```ts
+```ts standalone
 import { createMasterBus, note, stack } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -374,7 +376,7 @@ Four ways to move a sound across the stereo field, from the smallest change to t
 
 A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds (it is in hertz, so it does not follow `bpm`).
 
-```ts
+```ts standalone
 import { chord } from '@liminal-hq/undertone';
 
 chord('<Dm9 Gm9 Bbmaj7 A7>')
@@ -393,7 +395,7 @@ chord('<Dm9 Gm9 Bbmaj7 A7>')
 
 A lead that flies in from the left: `.panslide(from, seconds)` is `.slide()` for the pan. Each note starts at `from` and moves to its own `.pan()`.
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop({ bpm: 100 });
@@ -401,7 +403,7 @@ note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop(
 
 A melody with a path inside each note: `{ time, pan }` points ramp, and an array of pans steps frame by frame.
 
-```ts
+```ts standalone
 import { cat, note } from '@liminal-hq/undertone';
 
 // A sweep from hard right to hard left over half a second, every note.
@@ -425,7 +427,7 @@ cat(sweep, flutter).loop({ bpm: 100 });
 
 Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
 
-```ts
+```ts standalone
 import { cat, note } from '@liminal-hq/undertone';
 
 const crossing = note('c3 e3 g3 e3 c4 e4 g4 e4')
@@ -441,7 +443,7 @@ A path, a slide and an autopan can be combined: the path or slide sets the centr
 
 A busy cue can peak above full scale, and a file you render should not clip when somebody plays it. Use the limiter to keep the mix down and the ceiling as the last guarantee. The same options work live, on a master bus, and offline, in `render()`:
 
-```ts
+```ts standalone
 import { createMasterBus, encodeWav, note, stack } from '@liminal-hq/undertone';
 
 const loud = stack(
@@ -469,7 +471,7 @@ The ceiling is a hard clip, so keep the limiter's threshold under it and let the
 
 By default `render()` books every voice on the offline context before it starts. For a short cue that is the simplest thing, but a long score with thousands of notes can be slow on a renderer that processes every node from the moment it is made. `bookingWindow` books the score a window of seconds at a time, pausing the render between windows:
 
-```ts
+```ts standalone
 import { arrange, encodeWav, note, stack } from '@liminal-hq/undertone';
 
 // Any pattern will do; this is 16 cycles of a bass and a lead.
@@ -492,7 +494,7 @@ const wav = encodeWav(buffer, { bitDepth: 24 });
 
 Say the length with `cycles` (whole cycles) or `seconds`, never both; without either, a pattern renders a single cycle, which is two seconds at the default 120 bpm, whatever its `arrange()` sections add up to. A `score()` is different: its `render()` plays one pass of the whole score, which is its own length (`cue.seconds`) and can be minutes, so a long score is where `bookingWindow` matters most. It takes no `seconds` or tempo, because the score has its own (`cycles` would repeat the pass):
 
-```ts
+```ts standalone
 import { encodeWav, fmPresets, score } from '@liminal-hq/undertone';
 
 const cue = score({

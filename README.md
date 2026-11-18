@@ -32,7 +32,7 @@ bun add @liminal-hq/undertone
 
 A one-shot game sound effect (percussive, fire-and-forget):
 
-```ts
+```ts standalone
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 const placeBuilding = stack(
@@ -54,7 +54,7 @@ placeBuilding.play();
 
 Looped, polyphonic music from mini-notation:
 
-```ts
+```ts standalone
 import { note, rev, stack } from '@liminal-hq/undertone';
 
 const music = stack(
@@ -72,7 +72,7 @@ handle.stop();
 
 To bake a loop to a `.wav` file, render it offline and encode the result. The render is seeded, so the same inputs give the same samples on the same browser engine:
 
-```ts
+```ts standalone
 import { encodeWav, note } from '@liminal-hq/undertone';
 
 const music = note('c3 [e3 g3] <b3 a3> ~').sound('triangle'); // or the stack above
@@ -232,7 +232,7 @@ Output: pass `output` (any audio node) to `play()`, `loop()` or `playParams()` t
 
 **Pan law:** by default a panned voice goes through a `StereoPannerNode`, whose equal-power law leaves each side about 3 dB down at the centre. `.panlaw(db)` (or `panLaw` in voice data, or `score({ panLaw })` for every event) picks another centre level from -6 to 0 dB. Each side's gain is then min(1, √2 · 10^(law/20) · cos or sin of (pan + 1) · π/4), built from one gain per side into a two-input channel merger: at 0 dB the centre is full on both sides, at -6 dB it is half each side and a hard pan is 3 dB down. `pan` and `panPath` work as before (a path's ramps follow the curve to within 0.001 dB), and `channelGains` still takes precedence. A stereo sample is summed to mono under a custom law, as it is under `channelGains`.
 
-```ts
+```ts standalone
 import { score } from '@liminal-hq/undertone';
 
 score({

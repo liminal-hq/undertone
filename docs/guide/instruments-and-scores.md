@@ -10,7 +10,7 @@ Once a sound is worth keeping, you want to define it once and reuse it across a 
 
 `fmVoice()` takes a definition shaped like Tone.js's `FMSynth` and returns a plain object of controls. Apply it to any pattern with `.voice()`:
 
-```ts
+```ts standalone
 import { fmVoice, fmPresets, note } from '@liminal-hq/undertone';
 
 const bell = fmVoice({
@@ -35,7 +35,7 @@ The result is JSON-safe, so an in-game sound editor can store and reload it. Bec
 
 A pluck and a sustained partner on the same notes sound far fuller than either alone. `layer()` stacks voices on one pattern, with a small start stagger, a level balance and opposite pans:
 
-```ts
+```ts standalone
 import { fmPresets, layer, note } from '@liminal-hq/undertone';
 
 layer(note('e5 g5 b5 a5'), [fmPresets.pluck, fmPresets.softPad], {
@@ -51,7 +51,7 @@ Layering composes with the notes you give it. The stagger adds to any `nudge` th
 
 A pattern is built on a grid of equal steps. Music played in by hand is not, and quantising it loses much of the feel. `score()` takes events at whole **ticks** (any rate you choose, such as AdLib's 560 per second) and compiles them to a pattern that keeps every event exactly where you put it:
 
-```ts
+```ts standalone
 import { fmPresets, score } from '@liminal-hq/undertone';
 
 const cue = score({
@@ -75,7 +75,7 @@ The score's tempo is its own: `cue.cps` is `ticksPerSecond / lengthTicks` (here 
 
 A loop that sounds exactly the same every pass wears thin. `drift()` adds small per-note differences in timing, level, pitch and pan, and a constant push or pull, all from a seed:
 
-```ts
+```ts standalone
 import { drift, note } from '@liminal-hq/undertone';
 
 const groove = drift(note('c2 ~ c2 g1'), {

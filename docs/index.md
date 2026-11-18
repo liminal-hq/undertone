@@ -62,7 +62,7 @@ bun add @liminal-hq/undertone
 
 A one-shot game sound effect and a looped, polyphonic track, from the same API:
 
-```ts
+```ts standalone
 import { note, rev, stack } from '@liminal-hq/undertone';
 
 // One-shot SFX — call it from a click handler (autoplay policy):

@@ -73,6 +73,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Documentation
 
 - When the public API changes, update `README.md`'s Usage/API sections in the same change.
+- Mark a documentation code block that runs as written (its own imports, everything defined, something played or rendered) with ` ```ts standalone `. `src/docSnippets.test.ts` executes every such block in `README.md` and `docs/` against the fake `AudioContext`; a block that is only a fragment stays a plain `ts` block. It also checks that a playground example returning a `score()` pattern sets the `bpm` that matches the score's `cps` (`bpm = 240 × cps`).
 - Do not manually hard-wrap markdown prose — write each paragraph as one line and let the renderer/editor soft-wrap.
 
 ## Project Structure
