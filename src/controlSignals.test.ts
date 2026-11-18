@@ -414,6 +414,36 @@ describe('a bad time from a signal', () => {
   });
 });
 
+describe('carrying an autopan phase from note to note', () => {
+  it('saw.fast(hz * secondsPerCycle) is the phase of an LFO running under the whole loop', () => {
+    const bpm = 80;
+    const hz = 0.5;
+    const secondsPerCycle = 240 / bpm;
+    const phases = [0, 1, 2, 3, 4].map(
+      (cycle) =>
+        onsets(
+          note('c4')
+            .autopan(hz)
+            .autopanphase(saw.fast(hz * secondsPerCycle)),
+          cycle
+        )[0].autopanPhase as number
+    );
+
+    // An LFO started at time 0 has turned hz x seconds when cycle c begins.
+    const running = [0, 1, 2, 3, 4].map((cycle) => (hz * secondsPerCycle * cycle) % 1);
+    expect(phases).toEqual(running);
+    expect(phases).toEqual([0, 0.5, 0, 0.5, 0]);
+  });
+
+  it('saw.slow(4) does not: it steps a quarter turn a cycle whatever the LFO rate', () => {
+    const phases = [0, 1, 2, 3].map(
+      (cycle) =>
+        onsets(note('c4').autopan(0.5).autopanphase(saw.slow(4)), cycle)[0].autopanPhase as number
+    );
+    expect(phases).toEqual([0, 0.25, 0.5, 0.75]);
+  });
+});
+
 describe('what a pattern may give a control', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 

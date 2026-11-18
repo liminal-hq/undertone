@@ -8,8 +8,10 @@ import type { ComposerExample } from '../../exampleTypes';
 export const phaseCarry: ComposerExample = {
   label: 'Autopan phase from note to note',
   bpm: 80,
-  code: `// autopanphase takes a pattern: a slow saw steps the LFO's start phase round once every four cycles,
-// so each chord's autopan carries on a little further than where the last one began.
+  code: `// autopanphase takes a pattern. A pattern cycle is four beats, 240 / bpm seconds: 3 s at 80 BPM,
+// so a 0.5 Hz LFO turns 0.5 x 3 = 1.5 times per cycle. saw.fast(1.5) is that LFO's phase at each
+// onset (0, 0.5, 0, 0.5, ...), so every chord's autopan carries on where an LFO running under
+// the whole loop would be. Change the rate or the tempo and change the 1.5 to match.
 return chord('<Am7 Fmaj7>')
   .voicing()
   .sound('triangle')
@@ -17,5 +19,5 @@ return chord('<Am7 Fmaj7>')
   .gain(0.25)
   .autopan(0.5)
   .autopandepth(0.8)
-  .autopanphase(saw.slow(4));`
+  .autopanphase(saw.fast(1.5));`
 };

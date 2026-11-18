@@ -499,7 +499,7 @@ const API_DOCS: Record<string, ApiDoc> = {
   },
   autopanphase: {
     signature: '.autopanphase(phase: number | string | Pattern<number>) => Pattern<ControlPatch>',
-    doc: 'Where in its cycle .autopan() starts, 0 to 1 (default 0; 0.5 starts the other way). Takes a number, a string or a pattern, so .autopanphase(saw.slow(4)) carries the phase from note to note. Clamped to 0 to 1.'
+    doc: 'Where in its cycle .autopan() starts, 0 to 1 (default 0; 0.5 starts the other way). Takes a number, a string or a pattern, so .autopanphase(saw.fast(turns)) carries the phase from note to note, where turns is the LFO rate times the seconds in a cycle (0.5 Hz at 80 BPM is 1.5). Clamped to 0 to 1.'
   },
   panlaw: {
     signature: '.panlaw(db: number) => Pattern<ControlPatch>',

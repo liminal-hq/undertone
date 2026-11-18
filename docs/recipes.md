@@ -479,10 +479,18 @@ sound('white*16')
   .loop({ bpm: 120 });
 ```
 
-An autopan whose LFO carries on from where the last note left it: `.autopanphase()` takes a pattern, so a slow saw steps the phase round once every four cycles and each note's wobble starts a little further on.
+An autopan whose LFO carries on from where the last note left it, as if one LFO ran under the whole loop. `.autopanphase()` takes a pattern, and the phase a note needs at its onset is `hz × seconds` modulo 1, which is `saw` sped up to turn that many times per pattern cycle. A cycle is four beats, so at 80 BPM it lasts three seconds, and a 0.5 Hz LFO turns 1.5 times in it. `saw.fast(1.5)` then reads 0 at the first chord, 0.5 at the second, 0 at the third, and so on (the saw's own value is the fraction of a turn, and `autopanphase()` is a fraction of a turn too). Change the rate or the tempo and the phase signal follows.
 
 ```ts standalone
 import { chord, saw } from '@liminal-hq/undertone';
+
+const bpm = 80;
+const lfoHz = 0.5;
+// A pattern cycle is four beats: 240 / bpm seconds (3 s at 80 BPM).
+const secondsPerCycle = 240 / bpm;
+// Turns of the LFO in one pattern cycle: 0.5 Hz x 3 s = 1.5. The saw repeats once a cycle,
+// so speeding it up by this many gives the LFO's phase (its fraction of a turn) at any onset.
+const turnsPerCycle = lfoHz * secondsPerCycle;
 
 chord('<Am7 Fmaj7>')
   .voicing()
@@ -490,10 +498,10 @@ chord('<Am7 Fmaj7>')
   .attack(0.2)
   .sustain(0.7)
   .gain(0.25)
-  .autopan(0.5)
+  .autopan(lfoHz)
   .autopandepth(0.8)
-  .autopanphase(saw.slow(4))
-  .loop({ bpm: 80 });
+  .autopanphase(saw.fast(turnsPerCycle))
+  .loop({ bpm });
 ```
 
 ## Safe loud mixes

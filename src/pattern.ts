@@ -977,7 +977,8 @@ export class Pattern<T> {
    * or triangle starts at the pan moving right, a square on the right; 0.5
    * starts the other way). Accepts a number, a mini-notation string or a
    * pattern, so a note's LFO can start where the last one left off:
-   * `.autopanphase(saw.slow(4))`. A pattern's values are clamped to 0 to 1.
+   * `.autopanphase(saw.fast(hz * secondsPerCycle))`, which is the phase of an LFO running
+   * under the whole loop (a cycle is 240 / bpm seconds). A pattern's values are clamped to 0 to 1.
    */
   autopanphase(this: Pattern<ControlPatch>, phase: ControlInput): Pattern<ControlPatch> {
     return this.withControlPattern('autopanPhase', phase, {
