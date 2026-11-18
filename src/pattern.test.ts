@@ -336,7 +336,8 @@ describe('sampler and query agree', () => {
         .every(2, (p) => p.slow(3))
     ],
     ['add a signal', clock.add(clock.fast(2))],
-    ['add a discrete pattern', clock.add(seq(pure(10), pure(20)))]
+    ['add a discrete pattern', clock.add(seq(pure(10), pure(20)))],
+    ['range', clock.range(-1, 1)]
   ];
 
   for (const [name, pat] of cases) {

@@ -291,6 +291,25 @@ export class Pattern<T> {
 
   // --- Numeric methods (patterns of numbers, signals among them) ---
 
+  /** Maps values from 0..1 onto lo..hi, linearly (no clamping). */
+  range(this: Pattern<number>, lo: number, hi: number): Pattern<number> {
+    return this.fmap((v) => lo + v * (hi - lo));
+  }
+
+  /** Maps values from -1..1 onto lo..hi, linearly (no clamping). */
+  range2(this: Pattern<number>, lo: number, hi: number): Pattern<number> {
+    return this.fmap((v) => lo + ((v + 1) / 2) * (hi - lo));
+  }
+
+  /** Maps values from 0..1 onto lo..hi exponentially (`lo·(hi/lo)^v`), the curve for frequencies. Both bounds must be above 0. */
+  rangex(this: Pattern<number>, lo: number, hi: number): Pattern<number> {
+    if (!(lo > 0 && hi > 0 && Number.isFinite(lo) && Number.isFinite(hi))) {
+      throw new Error(`rangex() bounds must be positive, got ${lo} and ${hi}`);
+    }
+    const ratio = hi / lo;
+    return this.fmap((v) => lo * ratio ** v);
+  }
+
   /**
    * Combines each value with a number, or with a pattern read at the value's
    * onset (structure from the left; an event is dropped where the right side

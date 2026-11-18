@@ -24,6 +24,21 @@ export {
   stack,
   timecat
 } from './pattern.js';
+export {
+  cosine,
+  cosine2,
+  isaw,
+  isaw2,
+  saw,
+  saw2,
+  signal,
+  sine,
+  sine2,
+  square,
+  square2,
+  tri,
+  tri2
+} from './signal.js';
 export { Fraction } from './fraction.js';
 export { SHAPED_WAVE_TYPES, isShapedWave } from './waves.js';
 export { renderToBuffer } from './render.js';
@@ -50,7 +65,7 @@ export {
 export type { DriftOptions } from './drift.js';
 export type { EnvelopeDefinition, FmVoiceDefinition, LayerOptions } from './instruments.js';
 export type { Score, ScoreAutopan, ScoreDefinition, ScoreEvent, ScorePanPoint } from './score.js';
-export type { Hap, TimeSpan } from './pattern.js';
+export type { Hap, Sampler, TimeSpan } from './pattern.js';
 export type { LimiterOptions, MasterBus, MasterBusOptions } from './masterBus.js';
 export type { AutopanShape } from './autopan.js';
 export type { OrbitBus } from './effects.js';

@@ -28,7 +28,7 @@ Relatedly, `n()` means exactly one thing here: scale degrees, resolved by `.scal
 
 ## Patterned parameters: point-sampled at each onset, strings only
 
-Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern`, and there are no continuous signals yet (`sine`, `saw`, `rand`, `perlin`, and so `sine.range(0, 1)` as a control, don't exist). Signals are being planned; there is no date, so don't port code that depends on them. For motion inside a note, Undertone has its own controls instead (see below).
+Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern` yet. The periodic signals (`sine`, `saw`, `tri`, ...) exist from 0.4.0 and can be read with `.segment()` (see [Signals](/guide/signals)), but taking them as control inputs, as in `.lpf(sine.range(400, 4000))`, is still to come in 0.4.0. For motion inside a note, Undertone has its own controls instead (see below).
 
 The combination rule is simple and worth stating precisely, because it's the semantics everything else follows from:
 
