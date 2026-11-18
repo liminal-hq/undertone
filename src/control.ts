@@ -74,9 +74,25 @@ function parseDegreeWord(word: string): number {
 /**
  * Starts a scale-degree pattern — chain `.scale("D5:minor")` to resolve it
  * into real pitches. Accepts a raw integer degree or a mini-notation string of
- * them ("0 2 4 <1 3>").
+ * them ("0 2 4 <1 3>"), or a pattern of numbers that has events
+ * (`n(sine.segment(8).range(0, 7))`), each floored to a whole number.
  */
-export function n(input: string | number): Pattern<ControlPatch> {
+export function n(input: string | number | Pattern<number>): Pattern<ControlPatch> {
+  if (input instanceof Pattern) {
+    if (input.sample) {
+      throw new Error('n() needs events: call .segment(n) on a signal first');
+    }
+    // A degree is a whole number: floor what the pattern gives. Not finite is a rest.
+    return new Pattern((span) =>
+      input
+        .query(span)
+        .flatMap((hap) =>
+          typeof hap.value === 'number' && Number.isFinite(hap.value)
+            ? [{ ...hap, value: { degree: Math.floor(hap.value) } as ControlPatch }]
+            : []
+        )
+    );
+  }
   if (typeof input === 'number') {
     if (!Number.isInteger(input)) {
       throw new Error(`Invalid scale degree: ${input}. Expected an integer.`);
