@@ -11,10 +11,12 @@ import type {
   GainNodeLike,
   OscillatorNodeLike,
   OscType,
+  PanPoint,
   ShapedWaveType,
   VoiceParams
 } from './types.js';
 import { getOrbitBus } from './effects.js';
+import { applyPanPath, buildPanPath, stopPanPath, type PanEvent } from './panPath.js';
 import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
@@ -410,7 +412,8 @@ export function playVoice(
 
   tail.connect(gainNode);
 
-  const finalNode = connectOutput(ctx, output, gainNode, params, voiceStart);
+  const placed = connectOutput(ctx, output, gainNode, params, voiceStart);
+  const finalNode = placed.node;
   connectEffectSends(ctx, output, finalNode, params, voiceStart);
 
   source.start(voiceStart);
@@ -443,6 +446,9 @@ export function playVoice(
         } else {
           gain.setValueAtTime(0, stopAt);
         }
+      }
+      if (placed.panPath) {
+        stopPanPath(placed.panPath.param, placed.panPath.events, stopAt);
       }
       // Calling stop() again on a source replaces the earlier stop time.
       for (const stoppable of stoppables) {
@@ -599,13 +605,20 @@ function connectEffectSends(
   }
 }
 
+/** What connectOutput() made: the voice's last node, and the pan path it booked, if any, so a stop can cut it short. */
+interface Placement {
+  node: AudioNodeLike;
+  panPath?: { param: AudioParamLike; events: PanEvent[] };
+}
+
 /**
  * Routes the enveloped voice to the destination: through per-speaker gains
  * into a channel merger when channelGains is set (folded down as far as the
- * destination requires), through a stereo panner when pan is set, or straight
- * through otherwise. On a destination widened by enableMultichannel(), the
- * plain path also goes through a two-channel merger — a bare mono connect
- * would land in the front-left speaker only under discrete interpretation.
+ * destination requires), through a stereo panner when pan or panPath is set,
+ * or straight through otherwise. On a destination widened by
+ * enableMultichannel(), the plain path also goes through a two-channel merger
+ * — a bare mono connect would land in the front-left speaker only under
+ * discrete interpretation.
  */
 function connectOutput(
   ctx: AudioContextLike,
@@ -613,25 +626,33 @@ function connectOutput(
   gainNode: GainNodeLike,
   params: VoiceParams,
   voiceStart: number
-): AudioNodeLike {
+): Placement {
   const available = (output as { channelCount?: number }).channelCount ?? 2;
   let placement = params.channelGains?.slice(0, MAX_CHANNELS);
   if (placement !== undefined && placement.length === 0) {
     placement = undefined;
   }
 
-  if (placement === undefined && params.pan !== undefined) {
+  const hasPanPath = params.panPath !== undefined && params.panPath.length > 0;
+  if (placement === undefined && (params.pan !== undefined || hasPanPath)) {
     const panner = ctx.createStereoPanner();
-    panner.pan.setValueAtTime(params.pan, voiceStart);
+    let panPath: Placement['panPath'];
+    if (hasPanPath) {
+      const events = buildPanPath(params.panPath as PanPoint[], voiceStart);
+      applyPanPath(panner.pan, events);
+      panPath = { param: panner.pan, events };
+    } else {
+      panner.pan.setValueAtTime(params.pan as number, voiceStart);
+    }
     gainNode.connect(panner);
     panner.connect(output);
-    return panner;
+    return { node: panner, panPath };
   }
 
   if (placement === undefined) {
     if (available <= 2) {
       gainNode.connect(output);
-      return gainNode;
+      return { node: gainNode };
     }
     placement = [1, 1]; // centred stereo image, matching the spec's mono->stereo up-mix
   }
@@ -650,7 +671,7 @@ function connectOutput(
     }
   });
   merger.connect(output);
-  return merger;
+  return { node: merger };
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

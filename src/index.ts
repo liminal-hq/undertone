@@ -49,7 +49,7 @@ export {
 } from './surround.js';
 export type { DriftOptions } from './drift.js';
 export type { EnvelopeDefinition, FmVoiceDefinition, LayerOptions } from './instruments.js';
-export type { Score, ScoreDefinition, ScoreEvent } from './score.js';
+export type { Score, ScoreDefinition, ScoreEvent, ScorePanPoint } from './score.js';
 export type { Hap, TimeSpan } from './pattern.js';
 export type { LimiterOptions, MasterBus, MasterBusOptions } from './masterBus.js';
 export type { OrbitBus } from './effects.js';
@@ -72,6 +72,7 @@ export type {
   NoiseType,
   OfflineAudioContextLike,
   OscType,
+  PanPoint,
   PeriodicWaveLike,
   RenderedAudioBufferLike,
   ShapedWaveType,

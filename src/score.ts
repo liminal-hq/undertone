@@ -10,7 +10,15 @@ import { Pattern } from './pattern.js';
 import type { Hap, TimeSpan } from './pattern.js';
 import type { RenderOptions } from './render.js';
 import type { LoopHandle, LoopOptions, PlayOptions } from './scheduler.js';
-import type { ControlPatch, RenderedAudioBufferLike } from './types.js';
+import type { ControlPatch, PanPoint, RenderedAudioBufferLike } from './types.js';
+
+/** One point of a score event's `panPath`: a stereo position some ticks after the onset. */
+export interface ScorePanPoint {
+  /** Whole ticks from the event's onset (0 is the onset itself). */
+  tick: number;
+  /** Stereo position, -1 to 1; clamped. */
+  pan: number;
+}
 
 /** One note in a score. Times are whole ticks, so they stay exact. */
 export interface ScoreEvent {
@@ -26,6 +34,13 @@ export interface ScoreEvent {
   level?: number;
   /** Stereo position, -1 to 1. */
   pan?: number;
+  /**
+   * Pan automation inside the note, in ticks from the onset, in order. The
+   * first point is the pan at the onset (replacing `pan`); the pan moves
+   * linearly from each point to the next, jumps when two points share a tick,
+   * and holds the last value, through the release too.
+   */
+  panPath?: readonly ScorePanPoint[];
   /** Any further voice controls for this one note, such as an instrument from `fmVoice()`. */
   voice?: ControlPatch;
 }
@@ -68,6 +83,30 @@ function requireInteger(value: number, label: string, min: number): void {
   }
 }
 
+/** A score event's pan path in seconds from its onset, checked: whole ticks that never go backwards, finite pans. */
+function compilePanPath(
+  points: readonly ScorePanPoint[],
+  onset: number,
+  ticksPerSecond: number
+): PanPoint[] {
+  let previous = 0;
+  return points.map((point) => {
+    requireInteger(point.tick, 'panPath tick', 0);
+    if (point.tick < previous) {
+      throw new Error(
+        `score() panPath ticks must not go backwards, got ${point.tick} after ${previous} (event at tick ${onset})`
+      );
+    }
+    if (!Number.isFinite(point.pan)) {
+      throw new Error(
+        `score() panPath pan must be a number, got ${point.pan} (event at tick ${onset})`
+      );
+    }
+    previous = point.tick;
+    return { time: point.tick / ticksPerSecond, pan: Math.max(-1, Math.min(1, point.pan)) };
+  });
+}
+
 /**
  * Compiles explicitly timed events into a looping pattern. Pattern time stays
  * in exact fractions of the cue (`tick / lengthTicks`), so repeats land on the
@@ -105,6 +144,9 @@ export function score(definition: ScoreDefinition): Score {
     };
     if (event.level !== undefined) value.velocity = event.level;
     if (event.pan !== undefined) value.pan = event.pan;
+    if (event.panPath !== undefined && event.panPath.length > 0) {
+      value.panPath = compilePanPath(event.panPath, event.tick, ticksPerSecond);
+    }
 
     return {
       begin: new Fraction(event.tick, lengthTicks),

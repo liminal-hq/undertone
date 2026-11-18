@@ -27,6 +27,14 @@ export function isSoundType(word: string): word is SoundType {
   return (SOUND_TYPES as readonly string[]).includes(word);
 }
 
+/** One point of a voice's `panPath`: a stereo position at a time inside the note. */
+export interface PanPoint {
+  /** Seconds from the voice's start (after any nudge). */
+  time: number;
+  /** Stereo position from -1 (hard left) to 1 (hard right); clamped. */
+  pan: number;
+}
+
 export interface VoiceParams {
   soundType: SoundType;
   /** Note name ("c2", "a4", "f#3") or a raw Hz number. Ignored for noise sound types. */
@@ -114,6 +122,16 @@ export interface VoiceParams {
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */
   pan?: number;
+  /**
+   * Pan automation inside the note: points in time order, in seconds from the
+   * voice's start. The first point is the pan at the onset (replacing `pan`);
+   * the pan moves linearly from each point to the next, jumps when two points
+   * share a time, and holds the last value through the release. Pans are
+   * clamped to -1..1. Plain data, so a sound editor can store and replay it.
+   * Creates the panner even without `pan`; an empty path is no path. Like
+   * `pan`, it is ignored when `channelGains` is set.
+   */
+  panPath?: PanPoint[];
   /**
    * Per-speaker output gains for multichannel (up to 7.1) playback, in the
    * Web-Audio-conventional order FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries).
