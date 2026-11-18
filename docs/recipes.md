@@ -463,15 +463,39 @@ The ceiling is a hard clip, so keep the limiter's threshold under it and let the
 By default `render()` books every voice on the offline context before it starts. For a short cue that is the simplest thing, but a long score with thousands of notes can be slow on a renderer that processes every node from the moment it is made. `bookingWindow` books the score a window of seconds at a time, pausing the render between windows:
 
 ```ts
-import { encodeWav } from '@liminal-hq/undertone';
+import { arrange, encodeWav, note, stack } from '@liminal-hq/undertone';
 
-// `song` is any pattern or score() cue you have built.
+// Any pattern will do; this is 16 cycles of a bass and a lead.
+const song = arrange(
+  [8, stack(note('<a1 f1 c2 g1>(3,8)').sound('square').lpf(500), note('a4 c5 e5 c5').fm(1))],
+  [8, stack(note('<a1 f1 c2 g1>(3,8)').sound('square').lpf(500), note('e5 g5 b5 g5').fm(1))]
+);
+
+// A pattern renders one cycle unless you say how long: 16 cycles at 120 bpm (two seconds a cycle) is 32 s.
 const buffer = await song.render({
-  tail: 2,
+  cycles: 16,
+  bpm: 120,
+  tail: 2, // so the last release rings out
   seed: 7, // the same seed, tempo and sample rate give the same samples
   bookingWindow: 1, // book one second of notes at a time
   master: { ceiling: -0.3 }
 });
+const wav = encodeWav(buffer, { bitDepth: 24 });
+```
+
+Say the length with `cycles` (whole cycles) or `seconds`, never both; without either, a pattern renders a single cycle, which is two seconds at the default 120 bpm, whatever its `arrange()` sections add up to. A `score()` is different: its `render()` plays one pass of the whole score, which is its own length (`cue.seconds`) and can be minutes, so a long score is where `bookingWindow` matters most. It takes no `seconds` or tempo, because the score has its own (`cycles` would repeat the pass):
+
+```ts
+import { encodeWav, fmPresets, score } from '@liminal-hq/undertone';
+
+const cue = score({
+  ticksPerSecond: 560,
+  lengthTicks: 560 * 60, // a minute; a real score has thousands of events in it
+  events: [{ tick: 0, note: 'e4', gate: 560, voice: fmPresets.lead }]
+});
+
+// One pass is 60 seconds, so book it in windows.
+const buffer = await cue.render({ tail: 2, bookingWindow: 1 });
 const wav = encodeWav(buffer, { bitDepth: 24 });
 ```
 
