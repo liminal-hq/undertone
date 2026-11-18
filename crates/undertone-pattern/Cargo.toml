@@ -1,0 +1,11 @@
+[package]
+name = "undertone-pattern"
+description = "Pattern query core and mini-notation for Undertone"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
