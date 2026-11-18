@@ -16,7 +16,15 @@ import type {
   VoiceParams
 } from './types.js';
 import { getOrbitBus } from './effects.js';
-import { applyPanPath, buildPanPath, stopPanPath, type PanEvent } from './panPath.js';
+import {
+  applyPanPath,
+  buildPanPath,
+  customPanLaw,
+  panLawGains,
+  panLawPath,
+  stopPanPath,
+  type PanEvent
+} from './panPath.js';
 import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
@@ -447,8 +455,8 @@ export function playVoice(
           gain.setValueAtTime(0, stopAt);
         }
       }
-      if (placed.panPath) {
-        stopPanPath(placed.panPath.param, placed.panPath.events, stopAt);
+      for (const path of placed.panPaths ?? []) {
+        stopPanPath(path.param, path.events, stopAt);
       }
       // Calling stop() again on a source replaces the earlier stop time.
       for (const stoppable of stoppables) {
@@ -605,10 +613,10 @@ function connectEffectSends(
   }
 }
 
-/** What connectOutput() made: the voice's last node, and the pan path it booked, if any, so a stop can cut it short. */
+/** What connectOutput() made: the voice's last node, and the pan paths it booked, if any, so a stop can cut them short. */
 interface Placement {
   node: AudioNodeLike;
-  panPath?: { param: AudioParamLike; events: PanEvent[] };
+  panPaths?: { param: AudioParamLike; events: PanEvent[] }[];
 }
 
 /**
@@ -634,19 +642,23 @@ function connectOutput(
   }
 
   const hasPanPath = params.panPath !== undefined && params.panPath.length > 0;
+  const panLaw = customPanLaw(params.panLaw);
+  if (placement === undefined && (params.pan !== undefined || hasPanPath) && panLaw !== undefined) {
+    return connectPanLaw(ctx, output, gainNode, params, voiceStart, panLaw);
+  }
   if (placement === undefined && (params.pan !== undefined || hasPanPath)) {
     const panner = ctx.createStereoPanner();
-    let panPath: Placement['panPath'];
+    let panPaths: Placement['panPaths'];
     if (hasPanPath) {
       const events = buildPanPath(params.panPath as PanPoint[], voiceStart);
       applyPanPath(panner.pan, events);
-      panPath = { param: panner.pan, events };
+      panPaths = [{ param: panner.pan, events }];
     } else {
       panner.pan.setValueAtTime(params.pan as number, voiceStart);
     }
     gainNode.connect(panner);
     panner.connect(output);
-    return { node: panner, panPath };
+    return { node: panner, panPaths };
   }
 
   if (placement === undefined) {
@@ -672,6 +684,44 @@ function connectOutput(
   });
   merger.connect(output);
   return { node: merger };
+}
+
+/**
+ * Places a voice under a pan law other than the stereo panner's: one gain per
+ * side into a two-input channel merger (as `channelGains` does), each booked
+ * with the law's gain for the pan, or for every point of the pan path.
+ */
+function connectPanLaw(
+  ctx: AudioContextLike,
+  output: AudioNodeLike,
+  gainNode: GainNodeLike,
+  params: VoiceParams,
+  voiceStart: number,
+  law: number
+): Placement {
+  const merger = ctx.createChannelMerger(2);
+  const left = ctx.createGain();
+  const right = ctx.createGain();
+  let panPaths: Placement['panPaths'];
+  if (params.panPath !== undefined && params.panPath.length > 0) {
+    const sides = panLawPath(buildPanPath(params.panPath, voiceStart), law);
+    applyPanPath(left.gain, sides.left);
+    applyPanPath(right.gain, sides.right);
+    panPaths = [
+      { param: left.gain, events: sides.left },
+      { param: right.gain, events: sides.right }
+    ];
+  } else {
+    const gains = panLawGains(params.pan as number, law);
+    left.gain.setValueAtTime(gains.left, voiceStart);
+    right.gain.setValueAtTime(gains.right, voiceStart);
+  }
+  gainNode.connect(left);
+  gainNode.connect(right);
+  left.connect(merger, 0, 0);
+  right.connect(merger, 0, 1);
+  merger.connect(output);
+  return { node: merger, panPaths };
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

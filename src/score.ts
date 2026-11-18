@@ -57,6 +57,12 @@ export interface ScoreDefinition {
    * gate run on past it. Either way the instrument's release rings on.
    */
   seam?: 'cut' | 'ring';
+  /**
+   * Pan law for every event, in dB at the centre (-6 to 0), as the `panLaw`
+   * voice control; an event whose `voice` sets its own `panLaw` keeps it.
+   * Default: the stereo panner's -3 dB. Events with no pan are unaffected.
+   */
+  panLaw?: number;
 }
 
 /** A compiled score: a one-cycle pattern, the tempo that makes one cycle equal one pass, and shortcuts to play it. */
@@ -121,6 +127,10 @@ export function score(definition: ScoreDefinition): Score {
   }
   requireInteger(lengthTicks, 'lengthTicks', 1);
   const seam = definition.seam ?? 'cut';
+  const panLaw = definition.panLaw;
+  if (panLaw !== undefined && !(panLaw >= -6 && panLaw <= 0)) {
+    throw new Error(`score() panLaw must be between -6 and 0 dB, got ${panLaw}`);
+  }
 
   const compiled = definition.events.map((event) => {
     requireInteger(event.tick, 'event tick', 0);
@@ -142,6 +152,7 @@ export function score(definition: ScoreDefinition): Score {
       pitch: event.note ?? midiToFrequency(event.midi as number),
       duration: gateTicks / ticksPerSecond
     };
+    if (panLaw !== undefined && value.panLaw === undefined) value.panLaw = panLaw;
     if (event.level !== undefined) value.velocity = event.level;
     if (event.pan !== undefined) value.pan = event.pan;
     if (event.panPath !== undefined && event.panPath.length > 0) {

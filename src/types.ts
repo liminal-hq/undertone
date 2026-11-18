@@ -133,6 +133,16 @@ export interface VoiceParams {
    */
   panPath?: PanPoint[];
   /**
+   * Pan law: each side's level at the centre in dB, -6 to 0 (clamped). Unset
+   * or -3 keeps the stereo panner's equal-power law (about -3 dB each side at
+   * the centre). Any other value places a panned voice with one gain per side,
+   * min(1, √2 · 10^(law/20) · cos or sin of (pan + 1) · π/4): at 0 dB the
+   * louder side stays full like a balance control, at -6 dB a hard pan is
+   * -3 dB. Applies only to a voice with `pan` or `panPath`; ignored, like
+   * them, when `channelGains` is set.
+   */
+  panLaw?: number;
+  /**
    * Per-speaker output gains for multichannel (up to 7.1) playback, in the
    * Web-Audio-conventional order FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries).
    * Takes precedence over `pan` when set. Voices are folded down to stereo

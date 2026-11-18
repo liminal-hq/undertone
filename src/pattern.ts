@@ -604,6 +604,19 @@ export class Pattern<T> {
   }
 
   /**
+   * Pan law: each side's level at the centre in dB, from -6 to 0. The default,
+   * -3, is the stereo panner's equal-power law; 0 keeps the louder side full
+   * like a balance control, and -6 dips the centre further. Shapes only voices
+   * that are panned (pan() or a panPath). Scalar only, like orbit().
+   */
+  panlaw(this: Pattern<ControlPatch>, db: number): Pattern<ControlPatch> {
+    if (!Number.isFinite(db) || db < -6 || db > 0) {
+      throw new Error(`panlaw() must be between -6 and 0 dB, got ${db}`);
+    }
+    return this.withPatch({ panLaw: db });
+  }
+
+  /**
    * Static highpass cutoff in Hz, in series after lpf(). Creates a filter
    * stage; omit entirely to skip it. Accepts a mini-notation string.
    */
