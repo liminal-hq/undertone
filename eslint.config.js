@@ -10,7 +10,8 @@ export default tseslint.config(
       'node_modules/**',
       'docs/.vitepress/cache/**',
       'docs/api/**',
-      'target/**'
+      'target/**',
+      'test-results/**'
     ]
   },
   js.configs.recommended,

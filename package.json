@@ -21,6 +21,7 @@
     "watch": "tsc -w",
     "typecheck:docs": "tsc -p docs/.vitepress/tsconfig.json",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml",
     "test:watch": "vitest",
     "bench": "vitest bench --run",
     "lint": "eslint .",
