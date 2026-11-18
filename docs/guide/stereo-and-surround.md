@@ -23,6 +23,26 @@ On plain stereo hardware the same code still sounds right — the fold-down is a
 
 `.pan()` sets one position per note. To slide, wobble or jump the pan while a note is held, give the voice data a `panPath`: points in time order, each a stereo position. The first point is the pan at the onset (it replaces `pan`), the pan moves linearly from each point to the next, two points at the same time make a jump, and the last value holds through the release. Pans are clamped to −1..1.
 
+On a pattern, `.panpath()` gives every note the same path, as plain data in the same way `.pitchsteps()` gives a pitch curve. An array of pans is frame-stepped: one pan per frame at a rate in Hz (default 140, the frame rate of classic AdLib effects), jumping from frame to frame and holding the last. An array of `{ time, pan }` points, in seconds from the onset, ramps instead:
+
+```ts
+import { note } from '@liminal-hq/undertone';
+
+// Stepped: a fast left-right flutter, 30 frames a second, settling in the centre.
+note('c4 e4').sound('square').sustain(0.5).panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+
+// Ramped: each note sweeps from right to left over half a second.
+note('a2')
+  .sound('sawtooth')
+  .sustain(0.6)
+  .panpath([
+    { time: 0, pan: 1 },
+    { time: 0.5, pan: -1 }
+  ]);
+```
+
+Pans must be from −1 to 1 and point times must not go backwards; a rate is only taken with an array of pans. `.panpath()` is not patternable, and it replaces `.pan()`.
+
 In a `score()` event the points are in whole ticks from the onset:
 
 ```ts
