@@ -1,0 +1,3109 @@
+{
+  "corpus": 1,
+  "layer": 1,
+  "group": "signals",
+  "cases": [
+    {
+      "id": "signals-sine-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["sine"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.9330127018922194}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.8535533905932737],["1/3",0.9330127018922194],["3/4",0],["7/4",0],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-sine-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["sine"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0.5000000000000001}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.9330127018922194}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.8535533905932737],["1/3",0.9330127018922194],["3/4",0],["7/4",0],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-cosine-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["cosine"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.2500000000000001}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.8535533905932737],["1/3",0.2500000000000001],["3/4",0.4999999999999999],["7/4",0.4999999999999999],["13/2",0]]
+    },
+    {
+      "id": "signals-cosine-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["cosine"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.2500000000000001}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.8535533905932737],["1/3",0.2500000000000001],["3/4",0.4999999999999999],["7/4",0.4999999999999999],["13/2",0]]
+    },
+    {
+      "id": "signals-saw-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["saw"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.3333333333333333}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.125],["1/3",0.3333333333333333],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-saw-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["saw"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.3333333333333333}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.125],["1/3",0.3333333333333333],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-isaw-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["isaw"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.6666666666666667}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",1],["1/8",0.875],["1/3",0.6666666666666667],["3/4",0.25],["7/4",0.25],["13/2",0.5]]
+    },
+    {
+      "id": "signals-isaw-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["isaw"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.6666666666666667}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",1],["1/8",0.875],["1/3",0.6666666666666667],["3/4",0.25],["7/4",0.25],["13/2",0.5]]
+    },
+    {
+      "id": "signals-tri-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["tri"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.6666666666666666}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0.25],["1/3",0.6666666666666666],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-tri-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["tri"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.6666666666666666}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0.25],["1/3",0.6666666666666666],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-square-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["square"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0],["1/3",0],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-square-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["square"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0],["1/3",0],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-sine2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["sine2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.8660254037844388}
+        ]
+      ],
+      "samples": [["-3/2",2.220446049250313e-16],["0",0],["1/8",0.7071067811865475],["1/3",0.8660254037844388],["3/4",-1],["7/4",-1],["13/2",2.220446049250313e-16]]
+    },
+    {
+      "id": "signals-sine2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["sine2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":2.220446049250313e-16}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.8660254037844388}
+        ]
+      ],
+      "samples": [["-3/2",2.220446049250313e-16],["0",0],["1/8",0.7071067811865475],["1/3",0.8660254037844388],["3/4",-1],["7/4",-1],["13/2",2.220446049250313e-16]]
+    },
+    {
+      "id": "signals-cosine2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["cosine2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-0.4999999999999998}
+        ]
+      ],
+      "samples": [["-3/2",-1],["0",1],["1/8",0.7071067811865475],["1/3",-0.4999999999999998],["3/4",-2.220446049250313e-16],["7/4",-2.220446049250313e-16],["13/2",-1]]
+    },
+    {
+      "id": "signals-cosine2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["cosine2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-0.4999999999999998}
+        ]
+      ],
+      "samples": [["-3/2",-1],["0",1],["1/8",0.7071067811865475],["1/3",-0.4999999999999998],["3/4",-2.220446049250313e-16],["7/4",-2.220446049250313e-16],["13/2",-1]]
+    },
+    {
+      "id": "signals-saw2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["saw2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-0.33333333333333337}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",-1],["1/8",-0.75],["1/3",-0.33333333333333337],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-saw2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["saw2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-0.33333333333333337}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",-1],["1/8",-0.75],["1/3",-0.33333333333333337],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-isaw2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["isaw2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.3333333333333335}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.75],["1/3",0.3333333333333335],["3/4",-0.5],["7/4",-0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-isaw2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["isaw2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.3333333333333335}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.75],["1/3",0.3333333333333335],["3/4",-0.5],["7/4",-0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-tri2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["tri2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.33333333333333326}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-0.5],["1/3",0.33333333333333326],["3/4",0],["7/4",0],["13/2",1]]
+    },
+    {
+      "id": "signals-tri2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["tri2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.33333333333333326}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-0.5],["1/3",0.33333333333333326],["3/4",0],["7/4",0],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: have one structureless event per query, valued at the span’s begin",
+      "program": [["square2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-1],["1/3",-1],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-neg-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: repeat every cycle from the exact phase, negative cycles included",
+      "program": [["square2"]],
+      "queries": [["-3/2","-1/2"],["-1","0"],["0","2"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["-3/2","-1/2"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["-1/1","0/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","2/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-1],["1/3",-1],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-sine-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: gives n events per cycle, each holding the value at its onset",
+      "program": [["sine"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.5},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5000000000000001},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.5},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":1},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5000000000000001},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0.5},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":1},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.5000000000000001},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.5},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.5},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":1},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5000000000000001},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5000000000000001}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.5],["1/3",1],["3/4",0],["7/4",0],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-sine-range-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range maps 0..1 linearly onto lo..hi, either way up",
+      "program": [["sine"],["range",200,2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1100}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1100}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1100}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1879.422863405995}
+        ]
+      ],
+      "samples": [["-3/2",1100.0000000000002],["0",1100],["1/8",1736.3961030678927],["1/3",1879.422863405995],["3/4",200],["7/4",200],["13/2",1100.0000000000002]]
+    },
+    {
+      "id": "signals-sine-slow-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["sine"],["slow",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5000000000000001}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.75}
+        ]
+      ],
+      "samples": [["-3/2",0.14644660940672627],["0",0.5],["1/8",0.5975451610080641],["1/3",0.75],["3/4",0.9619397662556434],["7/4",0.6913417161825449],["13/2",0.14644660940672627]]
+    },
+    {
+      "id": "signals-sine-fast-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["sine"],["fast",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.8535533905932737],["1/3",0.5],["3/4",1],["7/4",1],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-sine-rev-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: mirrors each cycle point by point: c + x reads c + 1 - x",
+      "program": [["sine"],["rev"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","2/1"],"value":0.5},
+          {"whole":null,"part":["2/1","3/1"],"value":0.5},
+          {"whole":null,"part":["3/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.14644660940672616],["1/3",0.06698729810778081],["3/4",1],["7/4",1],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-saw-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: gives n events per cycle, each holding the value at its onset",
+      "program": [["saw"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.75},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.25},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.75},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.25},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.75},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.25},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.5},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.75}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.75}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.25},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.75}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.75},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.25},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0],["1/3",0.25],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-saw-range-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range maps 0..1 linearly onto lo..hi, either way up",
+      "program": [["saw"],["range",200,2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":800}
+        ]
+      ],
+      "samples": [["-3/2",1100],["0",200],["1/8",425],["1/3",800],["3/4",1550],["7/4",1550],["13/2",1100]]
+    },
+    {
+      "id": "signals-saw-slow-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["saw"],["slow",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.08333333333333333}
+        ]
+      ],
+      "samples": [["-3/2",0.625],["0",0],["1/8",0.03125],["1/3",0.08333333333333333],["3/4",0.1875],["7/4",0.4375],["13/2",0.625]]
+    },
+    {
+      "id": "signals-saw-fast-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["saw"],["fast",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.375],["1/3",0],["3/4",0.25],["7/4",0.25],["13/2",0.5]]
+    },
+    {
+      "id": "signals-saw-rev-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: mirrors each cycle point by point: c + x reads c + 1 - x",
+      "program": [["saw"],["rev"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":null,"part":["1/1","2/1"],"value":0},
+          {"whole":null,"part":["2/1","3/1"],"value":0},
+          {"whole":null,"part":["3/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/4"],"value":0.25}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.875],["1/3",0.6666666666666666],["3/4",0.25],["7/4",0.25],["13/2",0.5]]
+    },
+    {
+      "id": "signals-tri-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: gives n events per cycle, each holding the value at its onset",
+      "program": [["tri"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.5},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.5},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.5},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":1},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0],["1/3",0.5],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-tri-range-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range maps 0..1 linearly onto lo..hi, either way up",
+      "program": [["tri"],["range",200,2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":200}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1400}
+        ]
+      ],
+      "samples": [["-3/2",2000],["0",200],["1/8",650],["1/3",1400],["3/4",1100],["7/4",1100],["13/2",2000]]
+    },
+    {
+      "id": "signals-tri-slow-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["tri"],["slow",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.16666666666666666}
+        ]
+      ],
+      "samples": [["-3/2",0.75],["0",0],["1/8",0.0625],["1/3",0.16666666666666666],["3/4",0.375],["7/4",0.875],["13/2",0.75]]
+    },
+    {
+      "id": "signals-tri-fast-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["tri"],["fast",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0.75],["1/3",0],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-tri-rev-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: mirrors each cycle point by point: c + x reads c + 1 - x",
+      "program": [["tri"],["rev"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":null,"part":["1/1","2/1"],"value":0},
+          {"whole":null,"part":["2/1","3/1"],"value":0},
+          {"whole":null,"part":["3/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0.25],["1/3",0.6666666666666667],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: gives n events per cycle, each holding the value at its onset",
+      "program": [["square2"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":-1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":-1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":-1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":-1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":1},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":-1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":-1},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":-1},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":-1},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":1},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":1}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":-1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":-1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":-1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":-1},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":-1},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":-1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":-1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-1],["1/3",-1],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-range-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range maps 0..1 linearly onto lo..hi, either way up",
+      "program": [["square2"],["range",200,2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1600}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1600}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1600}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-1600}
+        ]
+      ],
+      "samples": [["-3/2",2000],["0",-1600],["1/8",-1600],["1/3",-1600],["3/4",2000],["7/4",2000],["13/2",2000]]
+    },
+    {
+      "id": "signals-square2-slow-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["square2"],["slow",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-1],["1/3",-1],["3/4",-1],["7/4",-1],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-fast-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["square2"],["fast",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",-1],["1/3",-1],["3/4",-1],["7/4",-1],["13/2",1]]
+    },
+    {
+      "id": "signals-square2-rev-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: mirrors each cycle point by point: c + x reads c + 1 - x",
+      "program": [["square2"],["rev"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1},
+          {"whole":null,"part":["1/1","2/1"],"value":-1},
+          {"whole":null,"part":["2/1","3/1"],"value":-1},
+          {"whole":null,"part":["3/1","4/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":-1},
+          {"whole":null,"part":["1/1","7/4"],"value":-1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",-1],["1/8",1],["1/3",1],["3/4",-1],["7/4",-1],["13/2",1]]
+    },
+    {
+      "id": "signals-cosine-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: gives n events per cycle, each holding the value at its onset",
+      "program": [["cosine"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.4999999999999999},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.4999999999999999},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.4999999999999999},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":1},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.5},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.4999999999999999}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.4999999999999999}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.4999999999999999}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.4999999999999999},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",1],["1/3",0.5],["3/4",0.4999999999999999],["7/4",0.4999999999999999],["13/2",0]]
+    },
+    {
+      "id": "signals-cosine-range-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range maps 0..1 linearly onto lo..hi, either way up",
+      "program": [["cosine"],["range",200,2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":2000}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":2000}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":2000}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":650.0000000000002}
+        ]
+      ],
+      "samples": [["-3/2",200],["0",2000],["1/8",1736.3961030678927],["1/3",650.0000000000002],["3/4",1099.9999999999998],["7/4",1099.9999999999998],["13/2",200]]
+    },
+    {
+      "id": "signals-cosine-slow-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["cosine"],["slow",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.9330127018922194}
+        ]
+      ],
+      "samples": [["-3/2",0.14644660940672616],["0",1],["1/8",0.9903926402016152],["1/3",0.9330127018922194],["3/4",0.6913417161825449],["7/4",0.03806023374435663],["13/2",0.14644660940672616]]
+    },
+    {
+      "id": "signals-cosine-fast-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: fast and slow move the signal in time",
+      "program": [["cosine"],["fast",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.14644660940672627],["1/3",1],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-cosine-rev-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: mirrors each cycle point by point: c + x reads c + 1 - x",
+      "program": [["cosine"],["rev"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1},
+          {"whole":null,"part":["1/1","2/1"],"value":1},
+          {"whole":null,"part":["2/1","3/1"],"value":1},
+          {"whole":null,"part":["3/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":1},
+          {"whole":null,"part":["1/1","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",1],["1/8",0.8535533905932737],["1/3",0.24999999999999978],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-saw-rev-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: reads correctly through segment()",
+      "program": [["saw"],["rev"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.75},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.25},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.75},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.25},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.75},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.25},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.75},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.5},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.25}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.75},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.25}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.75},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.25}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.75},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.25},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.75},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0],["1/3",0.75],["3/4",0.25],["7/4",0.25],["13/2",0.5]]
+    },
+    {
+      "id": "signals-saw-euclid-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: acts as a structure: the rhythm, each event read at its onset",
+      "program": [["saw"],["euclid",3,8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.375},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.375},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.75},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.375},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.75},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":0},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.375},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.75}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.375},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.375},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.75}
+        ],
+        [
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.375},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.375}
+        ]
+      ],
+      "samples": [["-3/2",null],["0",0],["1/8",null],["1/3",null],["3/4",0.75],["7/4",0.75],["13/2",null]]
+    },
+    {
+      "id": "signals-saw-euclid-rot-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rotates like the discrete form",
+      "program": [["saw"],["euclid",3,8,2]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.125},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.125},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.5},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.75},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.125},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.5},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.75},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.125},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":0.5},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.75}
+        ],
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.125},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75}
+        ],
+        [
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.125},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.5},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.75}
+        ],
+        [
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.75},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.125},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",null],["1/8",0.125],["1/3",null],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-saw-every-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: every picks the transformed signal on cycle 0 and the plain one after",
+      "program": [["saw"],["every",2,[["rev"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":null,"part":["1/1","2/1"],"value":0},
+          {"whole":null,"part":["2/1","3/1"],"value":0},
+          {"whole":null,"part":["3/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.875],["1/3",0.6666666666666666],["3/4",0.25],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-sine-rev-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: reads correctly through segment()",
+      "program": [["sine"],["rev"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.5},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5000000000000001},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":1},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.5},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5000000000000001},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0.5},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.5000000000000001},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":1}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.5},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.5},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.5000000000000001},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.5000000000000001},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.5000000000000001}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.5],["1/3",0],["3/4",1],["7/4",1],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-sine-euclid-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: acts as a structure: the rhythm, each event read at its onset",
+      "program": [["sine"],["euclid",3,8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.5},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8535533905932737},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.5},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.8535533905932737},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.5},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.8535533905932737},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":0.5},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.8535533905932737},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.5},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8535533905932737},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.5},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.8535533905932737},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0}
+        ],
+        [
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8535533905932737},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.5},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.8535533905932737}
+        ]
+      ],
+      "samples": [["-3/2",null],["0",0.5],["1/8",null],["1/3",null],["3/4",0],["7/4",0],["13/2",null]]
+    },
+    {
+      "id": "signals-sine-euclid-rot-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rotates like the discrete form",
+      "program": [["sine"],["euclid",3,8,2]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.8535533905932737},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5000000000000001},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.8535533905932737},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.5000000000000001},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.8535533905932737},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.5000000000000001},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.8535533905932737},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":0.5000000000000001},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0}
+        ],
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.8535533905932737},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5000000000000001},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0}
+        ],
+        [
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.8535533905932737},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.5000000000000001},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0}
+        ],
+        [
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.5000000000000001},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.8535533905932737},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.5000000000000001}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",null],["1/8",0.8535533905932737],["1/3",null],["3/4",0],["7/4",0],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-sine-every-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: every picks the transformed signal on cycle 0 and the plain one after",
+      "program": [["sine"],["every",2,[["rev"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","2/1"],"value":0.5},
+          {"whole":null,"part":["2/1","3/1"],"value":0.5},
+          {"whole":null,"part":["3/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5000000000000001],["0",0.5],["1/8",0.14644660940672616],["1/3",0.06698729810778081],["3/4",1],["7/4",0],["13/2",0.5000000000000001]]
+    },
+    {
+      "id": "signals-tri-rev-segment-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: reads correctly through segment()",
+      "program": [["tri"],["rev"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.5},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.5},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.5},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":1},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.5},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":1},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.5},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":1},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.5},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.5},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0],["1/3",0.5],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-tri-euclid-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: acts as a structure: the rhythm, each event read at its onset",
+      "program": [["tri"],["euclid",3,8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.75},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.75},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.5},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.75},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.5},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":0},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.75},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.5}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.75},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.75},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.5}
+        ],
+        [
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.75},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.75}
+        ]
+      ],
+      "samples": [["-3/2",null],["0",0],["1/8",null],["1/3",null],["3/4",0.5],["7/4",0.5],["13/2",null]]
+    },
+    {
+      "id": "signals-tri-euclid-rot-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rotates like the discrete form",
+      "program": [["tri"],["euclid",3,8,2]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.25},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.25},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.5},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.25},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.5},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.25},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":1},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.5}
+        ],
+        [
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.25},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5}
+        ],
+        [
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.25},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.5}
+        ],
+        [
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.5},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.25},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",null],["1/8",0.25],["1/3",null],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-tri-every-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: every picks the transformed signal on cycle 0 and the plain one after",
+      "program": [["tri"],["every",2,[["rev"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":null,"part":["1/1","2/1"],"value":0},
+          {"whole":null,"part":["2/1","3/1"],"value":0},
+          {"whole":null,"part":["3/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0],["1/8",0.25],["1/3",0.6666666666666667],["3/4",0.5],["7/4",0.5],["13/2",1]]
+    },
+    {
+      "id": "signals-range2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: range2 maps -1..1 linearly onto lo..hi",
+      "program": [["sine2"],["range2",0,10]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":9.330127018922195}
+        ]
+      ],
+      "samples": [["-3/2",5.000000000000001],["0",5],["1/8",8.535533905932738],["1/3",9.330127018922195],["3/4",0],["7/4",0],["13/2",5.000000000000001]]
+    },
+    {
+      "id": "signals-rangex-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: rangex maps exponentially, equal ratios for equal steps",
+      "program": [["saw"],["rangex",100,1600]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":100}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":100}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":100}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":251.98420997897463}
+        ]
+      ],
+      "samples": [["-3/2",400],["0",100],["1/8",141.4213562373095],["1/3",251.98420997897463],["3/4",800],["7/4",800],["13/2",400]]
+    },
+    {
+      "id": "signals-add-number-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: applies a number to every value and keeps a signal a signal",
+      "program": [["saw"],["add",1]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1.3333333333333333}
+        ]
+      ],
+      "samples": [["-3/2",1.5],["0",1],["1/8",1.125],["1/3",1.3333333333333333],["3/4",1.75],["7/4",1.75],["13/2",1.5]]
+    },
+    {
+      "id": "signals-mul-number-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: applies a number to every value and keeps a signal a signal",
+      "program": [["saw"],["mul",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1.3333333333333333}
+        ]
+      ],
+      "samples": [["-3/2",2],["0",0],["1/8",0.5],["1/3",1.3333333333333333],["3/4",3],["7/4",3],["13/2",2]]
+    },
+    {
+      "id": "signals-sub-number-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: applies a number to every value and keeps a signal a signal",
+      "program": [["sine"],["sub",0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.4330127018922194}
+        ]
+      ],
+      "samples": [["-3/2",1.1102230246251565e-16],["0",0],["1/8",0.35355339059327373],["1/3",0.4330127018922194],["3/4",-0.5],["7/4",-0.5],["13/2",1.1102230246251565e-16]]
+    },
+    {
+      "id": "signals-div-zero-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: divides by zero to Infinity",
+      "program": [["saw"],["div",0]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":{"$num":"NaN"}}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":{"$num":"NaN"}}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":{"$num":"NaN"}}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":{"$num":"Infinity"}}
+        ]
+      ],
+      "samples": [["-3/2",{"$num":"Infinity"}],["0",{"$num":"NaN"}],["1/8",{"$num":"Infinity"}],["1/3",{"$num":"Infinity"}],["3/4",{"$num":"Infinity"}],["7/4",{"$num":"Infinity"}],["13/2",{"$num":"Infinity"}]]
+    },
+    {
+      "id": "signals-add-signal-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: combines two signals point by point",
+      "program": [["saw"],["add",[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1.2663460352255527}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",0.5],["1/8",0.9785533905932737],["1/3",1.2663460352255527],["3/4",0.75],["7/4",0.75],["13/2",1]]
+    },
+    {
+      "id": "signals-add-pattern-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: reads a pattern on the right at each onset of the left: structure from the left",
+      "program": [["mini","1 2 3 4","number"],["add",[["saw"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":2.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":4.75},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":2.25},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":3.5},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":4.75},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":2.25},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":3.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":4.75},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":1},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":2.25},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":3.5},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":4.75}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":1},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":2.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":4.75}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":1},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":2.25},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":3.5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":4.75}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":2.25},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3.5},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":4.75},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":1},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":2.25},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":3.5}
+        ]
+      ],
+      "samples": [["-3/2",3.5],["0",1],["1/8",1],["1/3",2.25],["3/4",4.75],["7/4",4.75],["13/2",3.5]]
+    },
+    {
+      "id": "signals-add-rest-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: drops an event where the right side rests",
+      "program": [["mini","1 2 3 4","number"],["add",[["mini","10 ~","number"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":11},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":12},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":11},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":12},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":11},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":12},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":11},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":12}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":11},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":12}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":11},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":12}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":12},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":11},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":12}
+        ]
+      ],
+      "samples": [["-3/2",null],["0",11],["1/8",11],["1/3",12],["3/4",null],["7/4",null],["13/2",null]]
+    },
+    {
+      "id": "signals-add-bad-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rejects anything but a number or a pattern",
+      "program": [["saw"],["add","x"]],
+      "error": "add() needs a number or a pattern of numbers"
+    },
+    {
+      "id": "signals-round-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rounds and floors",
+      "program": [["saw"],["mul",8],["round"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":3}
+        ]
+      ],
+      "samples": [["-3/2",4],["0",0],["1/8",1],["1/3",3],["3/4",6],["7/4",6],["13/2",4]]
+    },
+    {
+      "id": "signals-floor-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rounds and floors",
+      "program": [["sine2"],["mul",8],["floor"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":6}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",0],["1/8",5],["1/3",6],["3/4",-8],["7/4",-8],["13/2",0]]
+    },
+    {
+      "id": "signals-segment-bad-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: rejects a count that is not positive and finite",
+      "program": [["sine"],["segment",0]],
+      "error": "segment() count must be positive, got 0"
+    },
+    {
+      "id": "signals-segment-fractional-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: takes a fractional count, like fast()",
+      "program": [["saw"],["segment",2.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","2/5"],"part":["0/1","2/5"],"value":0},
+          {"whole":["2/5","4/5"],"part":["2/5","4/5"],"value":0.4},
+          {"whole":["4/5","6/5"],"part":["4/5","6/5"],"value":0.8},
+          {"whole":["6/5","8/5"],"part":["6/5","8/5"],"value":0.2},
+          {"whole":["8/5","2/1"],"part":["8/5","2/1"],"value":0.6},
+          {"whole":["2/1","12/5"],"part":["2/1","12/5"],"value":0},
+          {"whole":["12/5","14/5"],"part":["12/5","14/5"],"value":0.4},
+          {"whole":["14/5","16/5"],"part":["14/5","16/5"],"value":0.8},
+          {"whole":["16/5","18/5"],"part":["16/5","18/5"],"value":0.2},
+          {"whole":["18/5","4/1"],"part":["18/5","4/1"],"value":0.6}
+        ],
+        [
+          {"whole":["0/1","2/5"],"part":["0/1","2/5"],"value":0},
+          {"whole":["2/5","4/5"],"part":["2/5","4/5"],"value":0.4},
+          {"whole":["4/5","6/5"],"part":["4/5","1/1"],"value":0.8}
+        ],
+        [
+          {"whole":["2/1","12/5"],"part":["2/1","12/5"],"value":0},
+          {"whole":["12/5","14/5"],"part":["12/5","14/5"],"value":0.4},
+          {"whole":["14/5","16/5"],"part":["14/5","3/1"],"value":0.8}
+        ],
+        [
+          {"whole":["0/1","2/5"],"part":["1/3","2/5"],"value":0},
+          {"whole":["2/5","4/5"],"part":["2/5","4/5"],"value":0.4},
+          {"whole":["4/5","6/5"],"part":["4/5","6/5"],"value":0.8},
+          {"whole":["6/5","8/5"],"part":["6/5","8/5"],"value":0.2},
+          {"whole":["8/5","2/1"],"part":["8/5","7/4"],"value":0.6}
+        ]
+      ],
+      "samples": [["-3/2",0.4],["0",0],["1/8",0],["1/3",0],["3/4",0.4],["7/4",0.6],["13/2",0.4]]
+    },
+    {
+      "id": "signals-rand-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: give the same values however the span is cut into queries",
+      "program": [["rand"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.31715847947634757}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.31715847947634757}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.6143742098938674}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.2358923745341599}
+        ]
+      ],
+      "samples": [["-3/2",0.3684613567311317],["0",0.31715847947634757],["1/8",0.7774257601704448],["1/3",0.2358923745341599],["3/4",0.21522417780943215],["7/4",0.17785267741419375],["13/2",0.46802502614445984]]
+    },
+    {
+      "id": "signals-rand-seed-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: defaults to 0, gives the same values for the same seed and others for another",
+      "program": [["rand"],["seed",7]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.42693395260721445}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.42693395260721445}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.1996626891195774}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.6315363370813429}
+        ]
+      ],
+      "samples": [["-3/2",0.19431472336873412],["0",0.42693395260721445],["1/8",0.8327400630805641],["1/3",0.6315363370813429],["3/4",0.3839066924992949],["7/4",0.41761286929249763],["13/2",0.8765158238820732]]
+    },
+    {
+      "id": "signals-rand-segment-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: read each value at the event onset, so a query mid-event changes nothing",
+      "program": [["rand"],["segment",8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.31715847947634757},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.7774257601704448},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.9029091894626617},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.008600961184129119},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.48836204363033175},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.1418507203925401},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.21522417780943215},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.5900440388359129},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.8954028862062842},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.754038541810587},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":0.20252206455916166},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.16546790371648967},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.14605766627937555},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.9113482965622097},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.17785267741419375},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":0.20162871037609875},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.6143742098938674},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.8760470431298018},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.8197289980016649},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.4281318362336606},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.6473975323606282},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":0.08789289090782404},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.24760202900506556},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0.25638899370096624},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":0.21811262937262654},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.872387824812904},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":0.2435662152711302},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.8936538719572127},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":0.3671630942262709},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":0.10478018852882087},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.007774065714329481},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":0.9353165510110557}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.31715847947634757},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.7774257601704448},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.9029091894626617},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.008600961184129119},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.48836204363033175},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.1418507203925401},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.21522417780943215},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.5900440388359129}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.6143742098938674},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.8760470431298018},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.8197289980016649},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.4281318362336606},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.6473975323606282},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":0.08789289090782404},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.24760202900506556},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0.25638899370096624}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":0.9029091894626617},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.008600961184129119},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.48836204363033175},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.1418507203925401},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.21522417780943215},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.5900440388359129},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.8954028862062842},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.754038541810587},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":0.20252206455916166},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.16546790371648967},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.14605766627937555},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.9113482965622097}
+        ]
+      ],
+      "samples": [["-3/2",0.3684613567311317],["0",0.31715847947634757],["1/8",0.7774257601704448],["1/3",0.9029091894626617],["3/4",0.21522417780943215],["7/4",0.17785267741419375],["13/2",0.46802502614445984]]
+    },
+    {
+      "id": "signals-rand2-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: give the same values however the span is cut into queries",
+      "program": [["rand2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-0.36568304104730487}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-0.36568304104730487}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.22874841978773475}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":-0.5282152509316802}
+        ]
+      ],
+      "samples": [["-3/2",-0.26307728653773665],["0",-0.36568304104730487],["1/8",0.5548515203408897],["1/3",-0.5282152509316802],["3/4",-0.5695516443811357],["7/4",-0.6442946451716125],["13/2",-0.06394994771108031]]
+    },
+    {
+      "id": "signals-rand2-seed-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: defaults to 0, gives the same values for the same seed and others for another",
+      "program": [["rand2"],["seed",7]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":-0.1461320947855711}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-0.1461320947855711}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-0.6006746217608452}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.26307267416268587}
+        ]
+      ],
+      "samples": [["-3/2",-0.6113705532625318],["0",-0.1461320947855711],["1/8",0.6654801261611283],["1/3",0.26307267416268587],["3/4",-0.23218661500141025],["7/4",-0.16477426141500473],["13/2",0.7530316477641463]]
+    },
+    {
+      "id": "signals-rand2-segment-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: read each value at the event onset, so a query mid-event changes nothing",
+      "program": [["rand2"],["segment",8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":-0.36568304104730487},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.5548515203408897},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.8058183789253235},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":-0.9827980776317418},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":-0.02327591273933649},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":-0.7162985592149198},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":-0.5695516443811357},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.18008807767182589},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.7908057724125683},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.5080770836211741},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":-0.5949558708816767},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":-0.6690641925670207},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":-0.7078846674412489},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.8226965931244195},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":-0.6442946451716125},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":-0.5967425792478025},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.22874841978773475},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.7520940862596035},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.6394579960033298},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":-0.14373632753267884},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.2947950647212565},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":-0.8242142181843519},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":-0.5047959419898689},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":-0.4872220125980675},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":-0.5637747412547469},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.744775649625808},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":-0.5128675694577396},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.7873077439144254},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":-0.26567381154745817},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":-0.7904396229423583},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":-0.984451868571341},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":0.8706331020221114}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":-0.36568304104730487},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.5548515203408897},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.8058183789253235},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":-0.9827980776317418},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":-0.02327591273933649},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":-0.7162985592149198},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":-0.5695516443811357},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.18008807767182589}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.22874841978773475},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.7520940862596035},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.6394579960033298},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":-0.14373632753267884},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.2947950647212565},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":-0.8242142181843519},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":-0.5047959419898689},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":-0.4872220125980675}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":0.8058183789253235},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":-0.9827980776317418},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":-0.02327591273933649},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":-0.7162985592149198},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":-0.5695516443811357},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.18008807767182589},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.7908057724125683},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.5080770836211741},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":-0.5949558708816767},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":-0.6690641925670207},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":-0.7078846674412489},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.8226965931244195}
+        ]
+      ],
+      "samples": [["-3/2",-0.26307728653773665],["0",-0.36568304104730487],["1/8",0.5548515203408897],["1/3",0.8058183789253235],["3/4",-0.5695516443811357],["7/4",-0.6442946451716125],["13/2",-0.06394994771108031]]
+    },
+    {
+      "id": "signals-perlin-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: give the same values however the span is cut into queries",
+      "program": [["perlin"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.8348063975572586}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.8348063975572586}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.6205949122086167}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.8404861542677944}
+        ]
+      ],
+      "samples": [["-3/2",0.401206816197373],["0",0.8348063975572586],["1/8",0.835240809383734],["1/3",0.8404861542677944],["3/4",0.8590673896001135],["7/4",0.6455705261628282],["13/2",0.550966766430065]]
+    },
+    {
+      "id": "signals-perlin-seed-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: defaults to 0, gives the same values for the same seed and others for another",
+      "program": [["perlin"],["seed",7]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.23642294527962804}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.23642294527962804}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.3181974720209837}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.30315003103438626}
+        ]
+      ],
+      "samples": [["-3/2",0.5497501627542078],["0",0.23642294527962804],["1/8",0.24152651514633305],["1/3",0.30315003103438626],["3/4",0.5214466494703629],["7/4",0.3426437645935039],["13/2",0.536832055891864]]
+    },
+    {
+      "id": "signals-perlin-segment-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: read each value at the event onset, so a query mid-event changes nothing",
+      "program": [["perlin"],["segment",8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.8348063975572586},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.835240809383734},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.837607775723427},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8422541653351203},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.8483375826617703},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.8544209999884202},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.8590673896001135},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.8614343559398066},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.861868767766282},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.8579957804608824},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":0.8368931538120705},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.7954683884505158},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.7412318399874493},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.6869952915243829},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":0.6455705261628282},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":0.6244678995140163},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.6205949122086167},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.6249066782910546},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.6484000653485964},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.6945179284280556},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.754899048130028},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":0.8152801678320003},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.8613980309114595},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0.8848914179690013},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":0.8892031840514392},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0.8902736312959121},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":0.8961061442287246},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0.9075554525888094},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":0.9225457841530442},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":0.937536115717279},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":0.9489854240773639},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":0.9548179370101764}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0.8348063975572586},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0.835240809383734},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0.837607775723427},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8422541653351203},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.8483375826617703},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.8544209999884202},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.8590673896001135},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.8614343559398066}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0.6205949122086167},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0.6249066782910546},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0.6484000653485964},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0.6945179284280556},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0.754899048130028},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":0.8152801678320003},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":0.8613980309114595},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0.8848914179690013}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":0.837607775723427},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":0.8422541653351203},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0.8483375826617703},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":0.8544209999884202},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":0.8590673896001135},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0.8614343559398066},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0.861868767766282},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0.8579957804608824},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":0.8368931538120705},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":0.7954683884505158},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":0.7412318399874493},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0.6869952915243829}
+        ]
+      ],
+      "samples": [["-3/2",0.401206816197373],["0",0.8348063975572586],["1/8",0.835240809383734],["1/3",0.837607775723427],["3/4",0.8590673896001135],["7/4",0.6455705261628282],["13/2",0.550966766430065]]
+    },
+    {
+      "id": "signals-brand-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: give the same values however the span is cut into queries",
+      "program": [["brand"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",1],["1/8",0],["1/3",1],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-brand-seed-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: defaults to 0, gives the same values for the same seed and others for another",
+      "program": [["brand"],["seed",7]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",1],["1/8",0],["1/3",0],["3/4",1],["7/4",1],["13/2",0]]
+    },
+    {
+      "id": "signals-brand-segment-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: read each value at the event onset, so a query mid-event changes nothing",
+      "program": [["brand"],["segment",8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":1},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":1},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":1},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":1},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":1},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":1},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":1},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":1},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":1},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":1},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":1},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":1},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":1},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":0}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":1},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":1},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":1},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":1}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":1},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":1},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":1},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",1],["0",1],["1/8",0],["1/3",0],["3/4",1],["7/4",1],["13/2",1]]
+    },
+    {
+      "id": "signals-rand-seed-string-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: takes a string seed and can be chosen again",
+      "program": [["rand"],["seed","kick"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":0.6935710853431374}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0.6935710853431374}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.03230523597449064}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":0.5714399579446763}
+        ]
+      ],
+      "samples": [["-3/2",0.04420955874957144],["0",0.6935710853431374],["1/8",0.07954431092366576],["1/3",0.5714399579446763],["3/4",0.7118647762108594],["7/4",0.34118247404694557],["13/2",0.83825489343144]]
+    },
+    {
+      "id": "signals-irand-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: cover their ranges: irand every integer, choose every value, brandBy its probability",
+      "program": [["irand",8],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":2},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":7},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":7},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":1},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":4},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":6},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":1},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":1},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":2},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":2},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":7},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":4},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":6},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":5},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":1}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":7},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":3},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":1},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":7},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":1},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":1}
+        ]
+      ],
+      "samples": [["-3/2",2],["0",2],["1/8",2],["1/3",7],["3/4",1],["7/4",1],["13/2",3]]
+    },
+    {
+      "id": "signals-irand-bad-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: validate their arguments",
+      "program": [["irand",0]],
+      "error": "irand() needs a positive integer, got 0"
+    },
+    {
+      "id": "signals-choose-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: derive rand2, irand, choose and brandBy from the rand stream",
+      "program": [["choose","a","b","c"],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":"a"},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":"c"},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":"b"},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":"a"},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":"c"},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":"a"},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":"a"},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":"a"},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":"b"},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":"c"},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":"b"},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":"a"},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":"a"},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":"a"},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":"b"},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":"a"}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":"a"},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":"c"},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":"b"},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":"a"}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":"b"},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":"c"},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":"b"},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":"a"}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":"c"},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":"b"},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":"a"},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":"c"},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":"a"},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":"a"}
+        ]
+      ],
+      "samples": [["-3/2","b"],["0","a"],["1/8","a"],["1/3","c"],["3/4","a"],["7/4","a"],["13/2","b"]]
+    },
+    {
+      "id": "signals-brandBy-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: cover their ranges: irand every integer, choose every value, brandBy its probability",
+      "program": [["brandBy",0.25],["segment",8]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":1},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":1},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":1},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":1},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":1},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":1},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":0},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":1},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":0},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":0},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":1},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":1},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":0}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":0},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":0},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":0},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":0},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":0},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":0},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":0},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":1},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":1},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":0}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":0},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":1},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":0},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":1},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":1},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":0},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":0},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":0},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":1},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":1},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":1},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",0],["1/8",0],["1/3",0],["3/4",1],["7/4",1],["13/2",0]]
+    },
+    {
+      "id": "signals-brandBy-bad-01",
+      "group": "signals",
+      "from": "src/signal.test.ts: validate their arguments",
+      "program": [["brandBy",2]],
+      "error": "brandBy() probability must be between 0 and 1, got 2"
+    },
+    {
+      "id": "signals-perlin-range-01",
+      "group": "signals",
+      "from": "docs/recipes.md: a bass with a filter that wanders on its own",
+      "program": [["perlin"],["range",300,2400]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","4/1"],"value":2053.093434870243}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":2053.093434870243}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":1603.2493156380951}
+        ],
+        [
+          {"whole":null,"part":["1/3","7/4"],"value":2065.020923962368}
+        ]
+      ],
+      "samples": [["-3/2",1142.5343140144832],["0",2053.093434870243],["1/8",2054.0056997058414],["1/3",2065.020923962368],["3/4",2104.0415181602384],["7/4",1655.6981049419392],["13/2",1457.0302095031366]]
+    },
+    {
+      "id": "signals-rand-cycles-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: arrange([1, signal]) repeats the first cycle on every cycle",
+      "program": [["arrange",[1,[["rand"],["segment",4]]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.31715847947634757},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.9029091894626617},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.48836204363033175},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.21522417780943215},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.31715847947634757},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.9029091894626617},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.48836204363033175},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.21522417780943215},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.31715847947634757},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.9029091894626617},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.48836204363033175},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.21522417780943215},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0.31715847947634757},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.9029091894626617},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.48836204363033175},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.21522417780943215}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0.31715847947634757},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.9029091894626617},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.48836204363033175},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.21522417780943215}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0.31715847947634757},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.9029091894626617},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.48836204363033175},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.21522417780943215}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.9029091894626617},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.48836204363033175},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.21522417780943215},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.31715847947634757},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.9029091894626617},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.48836204363033175}
+        ]
+      ],
+      "samples": [["-3/2",0.48836204363033175],["0",0.31715847947634757],["1/8",0.31715847947634757],["1/3",0.9029091894626617],["3/4",0.21522417780943215],["7/4",0.21522417780943215],["13/2",0.48836204363033175]]
+    },
+    {
+      "id": "signals-cat-mixed-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: cat(saw2, pure) keeps the saw moving through its cycle",
+      "program": [["cat",[["saw2"]],[["pure",0.5]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":0.5},
+          {"whole":null,"part":["2/1","3/1"],"value":-1},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":-1}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":-0.33333333333333337},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",-1],["1/8",-0.75],["1/3",-0.33333333333333337],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    },
+    {
+      "id": "signals-seq-mixed-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: seq squeezes each signal into its half of the cycle",
+      "program": [["seq",[["saw"]],[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/2"],"value":0},
+          {"whole":null,"part":["1/2","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","3/2"],"value":0},
+          {"whole":null,"part":["3/2","2/1"],"value":0.5},
+          {"whole":null,"part":["2/1","5/2"],"value":0},
+          {"whole":null,"part":["5/2","3/1"],"value":0.5},
+          {"whole":null,"part":["3/1","7/2"],"value":0},
+          {"whole":null,"part":["7/2","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/2"],"value":0},
+          {"whole":null,"part":["1/2","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["2/1","5/2"],"value":0},
+          {"whole":null,"part":["5/2","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/2"],"value":0.6666666666666666},
+          {"whole":null,"part":["1/2","1/1"],"value":0.5},
+          {"whole":null,"part":["1/1","3/2"],"value":0},
+          {"whole":null,"part":["3/2","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.25],["1/3",0.6666666666666666],["3/4",0.5000000000000001],["7/4",0.5000000000000001],["13/2",0.5]]
+    },
+    {
+      "id": "signals-stack-mixed-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: mixed continuous and discrete compositions",
+      "program": [["stack",[["saw"]],[["pure",2]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":2},
+          {"whole":null,"part":["0/1","4/1"],"value":0},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":2},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":2},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":2}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":2}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":2}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":2},
+          {"whole":null,"part":["1/3","7/4"],"value":0.3333333333333333},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":2}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.125],["1/3",0.3333333333333333],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-timecat-mixed-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: mixed continuous and discrete compositions",
+      "program": [["timecat",[[1,[["saw"]]],[3,[["pure",5]]]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/1"],"part":["1/4","1/1"],"value":5},
+          {"whole":null,"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","2/1"],"part":["5/4","2/1"],"value":5},
+          {"whole":null,"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","3/1"],"part":["9/4","3/1"],"value":5},
+          {"whole":null,"part":["3/1","13/4"],"value":0},
+          {"whole":["13/4","4/1"],"part":["13/4","4/1"],"value":5}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/1"],"part":["1/4","1/1"],"value":5}
+        ],
+        [
+          {"whole":null,"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","3/1"],"part":["9/4","3/1"],"value":5}
+        ],
+        [
+          {"whole":["1/4","1/1"],"part":["1/3","1/1"],"value":5},
+          {"whole":null,"part":["1/1","5/4"],"value":0},
+          {"whole":["5/4","2/1"],"part":["5/4","7/4"],"value":5}
+        ]
+      ],
+      "samples": [["-3/2",5],["0",0],["1/8",0.5],["1/3",5],["3/4",5],["7/4",5],["13/2",5]]
+    },
+    {
+      "id": "signals-seq-rest-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: is undefined outside a seq window, where the query has no covering event",
+      "program": [["seq",[["saw"]],[["silence"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/2"],"value":0},
+          {"whole":null,"part":["1/1","3/2"],"value":0},
+          {"whole":null,"part":["2/1","5/2"],"value":0},
+          {"whole":null,"part":["3/1","7/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","5/2"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/2"],"value":0.6666666666666666},
+          {"whole":null,"part":["1/1","3/2"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",null],["0",0],["1/8",0.25],["1/3",0.6666666666666666],["3/4",null],["7/4",null],["13/2",null]]
+    },
+    {
+      "id": "signals-every-mixed-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: every picks the transformed signal on cycle 0 and the plain one after",
+      "program": [["pure",0.5],["every",2,[["add",[["saw"]]]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":0.5},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":0.5},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":0.5},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":0.5}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":0.5}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":0.5},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":0.5}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0.5],["1/8",0.5],["1/3",0.5],["3/4",0.5],["7/4",0.5],["13/2",0.5]]
+    },
+    {
+      "id": "signals-arrange-signals-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: signals as control values under the combinators",
+      "program": [["arrange",[2,[["saw"]]],[1,[["sine"]]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0},
+          {"whole":null,"part":["1/1","2/1"],"value":0},
+          {"whole":null,"part":["2/1","3/1"],"value":0.5},
+          {"whole":null,"part":["3/1","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","3/1"],"value":0.5}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/1"],"value":0.3333333333333333},
+          {"whole":null,"part":["1/1","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0.5],["0",0],["1/8",0.125],["1/3",0.3333333333333333],["3/4",0.75],["7/4",0.75],["13/2",0.5]]
+    },
+    {
+      "id": "signals-phase-carry-01",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: saw.fast(hz * secondsPerCycle) is the phase of an LFO running under the whole loop",
+      "program": [["saw"],["fast",1.5],["segment",4]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.375},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.75},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.125},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.875},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.25},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":0.625},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.375},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.75},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.125},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":0.5},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":0.875},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":0.25},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":0.625}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":0},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":0.375},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.75},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.125}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":0},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":0.375},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":0.75},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":0.125}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":0.375},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":0.75},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":0.125},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":0.5},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":0.875},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":0.25}
+        ]
+      ],
+      "samples": [["-3/2",0.75],["0",0],["1/8",0],["1/3",0.375],["3/4",0.125],["7/4",0.625],["13/2",0.75]]
+    },
+    {
+      "id": "signals-signal-in-fast-seq-01",
+      "group": "signals",
+      "from": "src/pattern.test.ts: leaves discrete patterns without a sampler through every combinator",
+      "program": [["seq",[["saw"]],[["saw"]],[["saw"]]],["fast",2]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":null,"part":["0/1","1/6"],"value":0},
+          {"whole":null,"part":["1/6","1/3"],"value":0},
+          {"whole":null,"part":["1/3","1/2"],"value":0},
+          {"whole":null,"part":["1/2","2/3"],"value":0},
+          {"whole":null,"part":["2/3","5/6"],"value":0},
+          {"whole":null,"part":["5/6","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/6"],"value":0},
+          {"whole":null,"part":["7/6","4/3"],"value":0},
+          {"whole":null,"part":["4/3","3/2"],"value":0},
+          {"whole":null,"part":["3/2","5/3"],"value":0},
+          {"whole":null,"part":["5/3","11/6"],"value":0},
+          {"whole":null,"part":["11/6","2/1"],"value":0},
+          {"whole":null,"part":["2/1","13/6"],"value":0},
+          {"whole":null,"part":["13/6","7/3"],"value":0},
+          {"whole":null,"part":["7/3","5/2"],"value":0},
+          {"whole":null,"part":["5/2","8/3"],"value":0},
+          {"whole":null,"part":["8/3","17/6"],"value":0},
+          {"whole":null,"part":["17/6","3/1"],"value":0},
+          {"whole":null,"part":["3/1","19/6"],"value":0},
+          {"whole":null,"part":["19/6","10/3"],"value":0},
+          {"whole":null,"part":["10/3","7/2"],"value":0},
+          {"whole":null,"part":["7/2","11/3"],"value":0},
+          {"whole":null,"part":["11/3","23/6"],"value":0},
+          {"whole":null,"part":["23/6","4/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["0/1","1/6"],"value":0},
+          {"whole":null,"part":["1/6","1/3"],"value":0},
+          {"whole":null,"part":["1/3","1/2"],"value":0},
+          {"whole":null,"part":["1/2","2/3"],"value":0},
+          {"whole":null,"part":["2/3","5/6"],"value":0},
+          {"whole":null,"part":["5/6","1/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["2/1","13/6"],"value":0},
+          {"whole":null,"part":["13/6","7/3"],"value":0},
+          {"whole":null,"part":["7/3","5/2"],"value":0},
+          {"whole":null,"part":["5/2","8/3"],"value":0},
+          {"whole":null,"part":["8/3","17/6"],"value":0},
+          {"whole":null,"part":["17/6","3/1"],"value":0}
+        ],
+        [
+          {"whole":null,"part":["1/3","1/2"],"value":0},
+          {"whole":null,"part":["1/2","2/3"],"value":0},
+          {"whole":null,"part":["2/3","5/6"],"value":0},
+          {"whole":null,"part":["5/6","1/1"],"value":0},
+          {"whole":null,"part":["1/1","7/6"],"value":0},
+          {"whole":null,"part":["7/6","4/3"],"value":0},
+          {"whole":null,"part":["4/3","3/2"],"value":0},
+          {"whole":null,"part":["3/2","5/3"],"value":0},
+          {"whole":null,"part":["5/3","7/4"],"value":0}
+        ]
+      ],
+      "samples": [["-3/2",0],["0",0],["1/8",0.75],["1/3",0],["3/4",0.5],["7/4",0.5],["13/2",0]]
+    }
+  ]
+}

@@ -1,0 +1,2483 @@
+{
+  "corpus": 1,
+  "layer": 1,
+  "group": "controls",
+  "cases": [
+    {
+      "id": "controls-gain-number-01",
+      "group": "controls",
+      "from": "src/control.test.ts: merges parameter patches across all events",
+      "program": [["note","c3 e3 g3 e3"],["gain",0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-string-01",
+      "group": "controls",
+      "from": "src/control.test.ts: assigns one control step per event when the step counts match",
+      "program": [["note","c3 e3 g3 e3"],["gain","0.2 0.8"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.8,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.8,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.8,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.8,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.2,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.2,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.8,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-alternation-01",
+      "group": "controls",
+      "from": "src/control.test.ts: alternates per cycle through <...> the same way mini-notation always does",
+      "program": [["note","c3 e3 g3 e3"],["gain","<0.25 0.72>"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.72,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.72,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.72,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.72,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.25,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.72,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.72,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.72,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.72,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.25,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.25,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.25,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.25,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.72,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.72,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.72,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-rest-01",
+      "group": "controls",
+      "from": "src/control.test.ts: leaves the key unset where the control has a rest",
+      "program": [["note","c3 e3 g3 e3"],["gain","0.5 ~"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-signal-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: books the sine at each onset on the panner",
+      "program": [["note","c3 e3 g3 e3"],["gain",[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.5000000000000001,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-slow-signal-01",
+      "group": "controls",
+      "from": "docs/guide/patterned-parameters.md: Patterns and signals as controls",
+      "program": [["note","c3 e3 g3 e3"],["gain",[["saw"],["slow",4]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.375,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.4375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.6875,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.75,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.8125,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.875,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.9375,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.1875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.6875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.375,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-random-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: gives the same sequence every time it is played, but each cycle reads its own times",
+      "program": [["note","c3 e3 g3 e3"],["gain",[["rand"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.14605766627937555,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.17785267741419375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.24760202900506556,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.21811262937262654,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.2435662152711302,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.3671630942262709,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.007774065714329481,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.21522417780943215,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.24760202900506556,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.14605766627937555,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["gain",[["mini","0.1 0.9","number"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.9,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.9,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.9,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-pure-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["gain",[["pure",0.3]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0.3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-edge-zero-01",
+      "group": "controls",
+      "from": "generated: edge value zero",
+      "program": [["note","c3 e3 g3 e3"],["gain",0]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":0,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-edge-negative-01",
+      "group": "controls",
+      "from": "generated: edge value below the range",
+      "program": [["note","c3 e3 g3 e3"],["gain",-0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":-0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-gain-edge-beyond-01",
+      "group": "controls",
+      "from": "generated: edge value beyond the range",
+      "program": [["note","c3 e3 g3 e3"],["gain",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"gainLevel":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"gainLevel":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"gainLevel":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"gainLevel":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"gainLevel":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"gainLevel":3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-number-01",
+      "group": "controls",
+      "from": "src/control.test.ts: merges parameter patches across all events",
+      "program": [["note","c3 e3 g3 e3"],["lpf",2000]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":2000,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":2000,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":2000,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":2000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":2000,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-string-01",
+      "group": "controls",
+      "from": "src/control.test.ts: assigns one control step per event when the step counts match",
+      "program": [["note","c3 e3 g3 e3"],["lpf","800 3200"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3200,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":3200,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":3200,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":3200,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3200,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":3200,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3200,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3200,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":800,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":800,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":3200,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-alternation-01",
+      "group": "controls",
+      "from": "src/control.test.ts: alternates per cycle through <...> the same way mini-notation always does",
+      "program": [["note","c3 e3 g3 e3"],["lpf","<1000 2880>"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":1000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":1000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2880,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2880,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":2880,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":2880,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":1000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":1000,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":2880,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":2880,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":2880,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":2880,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":1000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":1000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":1000,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":1000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":1000,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":1000,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":1000,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":1000,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2880,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2880,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":2880,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-rest-01",
+      "group": "controls",
+      "from": "src/control.test.ts: leaves the key unset where the control has a rest",
+      "program": [["note","c3 e3 g3 e3"],["lpf","2000 ~"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":2000,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":2000,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-signal-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: books the sine at each onset on the panner",
+      "program": [["note","c3 e3 g3 e3"],["lpf",[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.5000000000000001,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-slow-signal-01",
+      "group": "controls",
+      "from": "docs/guide/patterned-parameters.md: Patterns and signals as controls",
+      "program": [["note","c3 e3 g3 e3"],["lpf",[["saw"],["slow",4]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.375,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0.4375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.6875,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0.75,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":0.8125,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0.875,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0.9375,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.1875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.6875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.375,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-random-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: gives the same sequence every time it is played, but each cycle reads its own times",
+      "program": [["note","c3 e3 g3 e3"],["lpf",[["rand"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.14605766627937555,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0.17785267741419375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.24760202900506556,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0.21811262937262654,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":0.2435662152711302,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0.3671630942262709,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0.007774065714329481,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.21522417780943215,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.24760202900506556,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.14605766627937555,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["lpf",[["mini","0.1 0.9","number"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.9,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-pure-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["lpf",[["pure",0.3]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0.3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-edge-zero-01",
+      "group": "controls",
+      "from": "generated: edge value zero",
+      "program": [["note","c3 e3 g3 e3"],["lpf",0]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":0,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-edge-negative-01",
+      "group": "controls",
+      "from": "generated: edge value below the range",
+      "program": [["note","c3 e3 g3 e3"],["lpf",-0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":-0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-lpf-edge-beyond-01",
+      "group": "controls",
+      "from": "generated: edge value beyond the range",
+      "program": [["note","c3 e3 g3 e3"],["lpf",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"filterCutoff":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"filterCutoff":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"filterCutoff":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"filterCutoff":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"filterCutoff":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"filterCutoff":3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-number-01",
+      "group": "controls",
+      "from": "src/control.test.ts: merges parameter patches across all events",
+      "program": [["note","c3 e3 g3 e3"],["pan",0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-string-01",
+      "group": "controls",
+      "from": "src/control.test.ts: assigns one control step per event when the step counts match",
+      "program": [["note","c3 e3 g3 e3"],["pan","0.2 0.8"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.8,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.8,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.8,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.8,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.8,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.8,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.2,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.2,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.8,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-alternation-01",
+      "group": "controls",
+      "from": "src/control.test.ts: alternates per cycle through <...> the same way mini-notation always does",
+      "program": [["note","c3 e3 g3 e3"],["pan","<0.25 0.72>"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.72,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.72,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.72,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.72,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.25,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.72,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.72,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.72,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.72,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.25,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.25,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.25,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.25,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.25,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.72,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.72,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.72,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-rest-01",
+      "group": "controls",
+      "from": "src/control.test.ts: leaves the key unset where the control has a rest",
+      "program": [["note","c3 e3 g3 e3"],["pan","0.5 ~"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-signal-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: books the sine at each onset on the panner",
+      "program": [["note","c3 e3 g3 e3"],["pan",[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.5000000000000001,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-slow-signal-01",
+      "group": "controls",
+      "from": "docs/guide/patterned-parameters.md: Patterns and signals as controls",
+      "program": [["note","c3 e3 g3 e3"],["pan",[["saw"],["slow",4]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.375,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.4375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.6875,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.75,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.8125,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.875,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.9375,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.1875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.6875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.375,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-random-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: gives the same sequence every time it is played, but each cycle reads its own times",
+      "program": [["note","c3 e3 g3 e3"],["pan",[["rand"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.14605766627937555,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.17785267741419375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.24760202900506556,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.21811262937262654,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.2435662152711302,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.3671630942262709,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.007774065714329481,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.21522417780943215,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.24760202900506556,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.14605766627937555,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["pan",[["mini","0.1 0.9","number"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.9,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.9,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.9,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-pure-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["pan",[["pure",0.3]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0.3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-edge-zero-01",
+      "group": "controls",
+      "from": "generated: edge value zero",
+      "program": [["note","c3 e3 g3 e3"],["pan",0]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":0,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-edge-negative-01",
+      "group": "controls",
+      "from": "generated: edge value below the range",
+      "program": [["note","c3 e3 g3 e3"],["pan",-0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pan":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pan":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pan":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pan":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pan":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pan":-0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-pan-edge-beyond-01",
+      "group": "controls",
+      "from": "generated: edge value beyond the range",
+      "program": [["note","c3 e3 g3 e3"],["pan",3]],
+      "error": "pan() position must be between -1 and 1, got 3"
+    },
+    {
+      "id": "controls-attack-number-01",
+      "group": "controls",
+      "from": "src/control.test.ts: merges parameter patches across all events",
+      "program": [["note","c3 e3 g3 e3"],["attack",0.05]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.05,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.05,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.05,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.05,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.05,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-string-01",
+      "group": "controls",
+      "from": "src/control.test.ts: assigns one control step per event when the step counts match",
+      "program": [["note","c3 e3 g3 e3"],["attack","0.020000000000000004 0.08000000000000002"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.08000000000000002,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.020000000000000004,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.020000000000000004,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.08000000000000002,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-alternation-01",
+      "group": "controls",
+      "from": "src/control.test.ts: alternates per cycle through <...> the same way mini-notation always does",
+      "program": [["note","c3 e3 g3 e3"],["attack","<0.025 0.072>"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.025,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.025,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.072,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.072,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.072,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.072,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.025,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.025,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.072,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.072,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.072,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.072,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.025,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.025,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.025,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.025,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.025,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.025,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.025,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.025,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.072,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.072,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.072,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-rest-01",
+      "group": "controls",
+      "from": "src/control.test.ts: leaves the key unset where the control has a rest",
+      "program": [["note","c3 e3 g3 e3"],["attack","0.05 ~"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.05,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.05,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-signal-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: books the sine at each onset on the panner",
+      "program": [["note","c3 e3 g3 e3"],["attack",[["sine"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.5000000000000001,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-slow-signal-01",
+      "group": "controls",
+      "from": "docs/guide/patterned-parameters.md: Patterns and signals as controls",
+      "program": [["note","c3 e3 g3 e3"],["attack",[["saw"],["slow",4]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.375,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.4375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.6875,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.75,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.8125,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.875,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.9375,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.1875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.5625,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.625,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.6875,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.0625,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.125,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.1875,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.25,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.3125,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.375,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-random-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: gives the same sequence every time it is played, but each cycle reads its own times",
+      "program": [["note","c3 e3 g3 e3"],["attack",[["rand"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.14605766627937555,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.17785267741419375,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.24760202900506556,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.21811262937262654,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.2435662152711302,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.3671630942262709,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.007774065714329481,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.31715847947634757,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.21522417780943215,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.6143742098938674,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.8197289980016649,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.6473975323606282,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.24760202900506556,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.9029091894626617,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.48836204363033175,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.21522417780943215,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.8954028862062842,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.20252206455916166,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.14605766627937555,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["attack",[["mini","0.1 0.9","number"]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.9,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.9,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.9,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.9,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.9,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.1,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.1,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.9,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-pure-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: every patternable control",
+      "program": [["note","c3 e3 g3 e3"],["attack",[["pure",0.3]]]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0.3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0.3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0.3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0.3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0.3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-edge-zero-01",
+      "group": "controls",
+      "from": "generated: edge value zero",
+      "program": [["note","c3 e3 g3 e3"],["attack",0]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":0,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":0,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":0,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":0,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":0,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-edge-negative-01",
+      "group": "controls",
+      "from": "generated: edge value below the range",
+      "program": [["note","c3 e3 g3 e3"],["attack",-0.5]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":-0.5,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":-0.5,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":-0.5,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":-0.5,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":-0.5,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-attack-edge-beyond-01",
+      "group": "controls",
+      "from": "generated: edge value beyond the range",
+      "program": [["note","c3 e3 g3 e3"],["attack",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"attack":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"attack":3,"pitch":"e3"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"attack":3,"pitch":"g3"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"attack":3,"pitch":"c3"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"attack":3,"pitch":"e3"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"attack":3,"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-string-01",
+      "group": "controls",
+      "from": "src/control.test.ts: parses mini-notation into multiple degree events, negatives included",
+      "program": [["n","0 2 4 7"],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":391.99543598174927}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-alternation-01",
+      "group": "controls",
+      "from": "src/control.test.ts: alternates per cycle through <...> the same way mini-notation always does",
+      "program": [["n","<0 3> 5"],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"pitch":440}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":440}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-signal-01",
+      "group": "controls",
+      "from": "generated: n() over a signal with events",
+      "program": [["n",[["sine"],["segment",4],["range",0,7]]],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":261.6255653005986}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":261.6255653005986}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":261.6255653005986}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":261.6255653005986}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":261.6255653005986}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":349.2282314330039}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-floor-01",
+      "group": "controls",
+      "from": "generated: n() over a signal, floored to whole degrees",
+      "program": [["n",[["saw"],["segment",4],["range",-2,9]]],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":220}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":220}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":493.8833012561241}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":220}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":493.8833012561241}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":220}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":493.8833012561241}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":220}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":493.8833012561241}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":220}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":493.8833012561241}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":220}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":261.6255653005986}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":349.2282314330039}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-number-01",
+      "group": "controls",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single degree",
+      "program": [["n",5],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":440}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-negative-01",
+      "group": "controls",
+      "from": "src/control.test.ts: parses mini-notation into multiple degree events, negatives included",
+      "program": [["n","-2 -1"],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":220}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":246.94165062806206}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":220}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"pitch":246.94165062806206}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":220}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":246.94165062806206}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"pitch":220}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"pitch":246.94165062806206}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":220}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":246.94165062806206}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":220}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":246.94165062806206}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"pitch":220}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":246.94165062806206}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":220}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"pitch":246.94165062806206}}
+        ]
+      ]
+    },
+    {
+      "id": "controls-n-unsegmented-01",
+      "group": "controls",
+      "from": "src/control.test.ts: n() needs events: call .segment(n) on a signal first",
+      "program": [["n",[["sine"]]],["scale","C4:major"]],
+      "error": "n() needs events: call .segment(n) on a signal first"
+    },
+    {
+      "id": "controls-orbit-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: controls that stay scalar",
+      "program": [["note","c3 e3"],["orbit",[["pure",1]]]],
+      "error": "orbit() takes a plain value, not a pattern; it cannot change from event to event"
+    },
+    {
+      "id": "controls-panlaw-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: controls that stay scalar",
+      "program": [["note","c3 e3"],["panlaw",[["pure",-3]]]],
+      "error": "panlaw() takes a plain value, not a pattern; it cannot change from event to event"
+    },
+    {
+      "id": "controls-cut-pattern-01",
+      "group": "controls",
+      "from": "src/controlSignals.test.ts: controls that stay scalar",
+      "program": [["note","c3 e3"],["cut",[["pure",1]]]],
+      "error": "cut() takes a plain value, not a pattern; it cannot change from event to event"
+    }
+  ]
+}
