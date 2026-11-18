@@ -72,3 +72,39 @@ playParams(ctx, [
 ```
 
 The path drives one stereo panner per voice, and the room and delay sends are taken after it, so the wet signal moves with the dry one. Stopping a voice early (a handle's `stop()`, a cut group or `loop().stop({ voices: 'cut' })`) holds the pan where the path had got to while it fades out. Like `pan`, a path is ignored when `.channels()` or `.surround()` is set.
+
+## Pan law
+
+A pan law says how loud a voice is on each side as it moves across. Undertone's default is the stereo panner's equal-power law: at the centre each side is about 3 dB down (1/√2), so a voice keeps the same power wherever it sits. Some mixes want a louder or quieter centre, and `.panlaw(db)` gives each side's level at the centre, from −6 to 0 dB:
+
+```ts
+import { note } from '@liminal-hq/undertone';
+
+// A balance-control feel: the centre stays full on both sides.
+note('c3 e3 g3 b3').sound('triangle').pan('-1 -0.5 0.5 1').panlaw(0).loop();
+```
+
+The same control is `panLaw` in plain voice data, and `score({ panLaw })` gives it to every event (an event whose `voice` sets its own keeps it). With a law other than −3, each side's gain is
+
+min(1, √2 · 10^(law/20) · cos θ) on the left and min(1, √2 · 10^(law/20) · sin θ) on the right, with θ = (pan + 1) · π/4.
+
+The equal-power curve is scaled so the centre lands on the law, and each side stops at full. Each side's level in dB:
+
+| Law                             | Hard left (left side) | Centre (each side) | Hard right (right side) |
+| ------------------------------- | --------------------- | ------------------ | ----------------------- |
+| −3 (default, the stereo panner) | 0                     | −3.01              | 0                       |
+| 0                               | 0                     | 0                  | 0                       |
+| −1.5                            | 0                     | −1.5               | 0                       |
+| −4.5                            | −1.49                 | −4.5               | −1.49                   |
+| −6                              | −2.99                 | −6                 | −2.99                   |
+
+The far side is silent at a hard pan under every law. In general the centre is the law and a hard pan is min(0, law + 3.01) dB.
+
+How it is built: with the default law nothing changes, and the voice goes through a `StereoPannerNode` as before. With any other law the voice goes through one gain per side into a two-input channel merger (the nodes `.channels()` uses), each booked with the law's gain. A `panPath` is booked on both gains: each ramp of the path becomes linear gain ramps no more than 1/32 of a pan apart, with a break where a side reaches full, so the levels land on the law at every point of the path and stay within 0.001 dB of it in between (wherever the side is above −20 dB). Stopping a voice early holds both gains where the path had got to. The room and delay sends are taken after the merger, so the wet signal is placed too.
+
+A few things to know:
+
+- `.panlaw()` only shapes voices that are panned (`.pan()` or a `panPath`); an unpanned voice still plays at full on both sides, as it always has.
+- `.channels()` and `.surround()` take precedence over the pan law, as they do over `pan`.
+- Under a custom law a stereo sample is summed to mono before it is placed, as it is under `.channels()`; the stereo panner places a stereo sample's two sides instead.
+- The −3 setting is the stereo panner itself, whose centre is 1/√2 (−3.0103 dB). The formula at exactly −3 would give 0.0103 dB more; the panner is used so that the default graph never changes.
