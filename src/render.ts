@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { playVoice } from './engine.js';
+import { isVoiceSkipped, playVoice } from './engine.js';
 import { Fraction } from './fraction.js';
 import { createMasterBus } from './masterBus.js';
 import type { MasterBusOptions } from './masterBus.js';
@@ -132,17 +132,19 @@ interface BookingWindow {
 
 /**
  * Gives every reverb voice on an orbit the room size the orbit's last booked
- * voice has. Booked up front, the last size booked on an orbit replaces the
+ * voice has, counting only voices the engine will really book (`isVoiceSkipped`
+ * leaves out a sample with no buffer). Booked up front, the last size booked on an orbit replaces the
  * impulse response for the whole render; booked in windows, a later size would
  * only replace it part way through. With this the windowed render builds the
  * same impulse response, from the same seeded key, once.
  */
-function lastRoomSizes(voices: readonly PendingVoice[]): PendingVoice[] {
+function lastRoomSizes(ctx: AudioContextLike, voices: readonly PendingVoice[]): PendingVoice[] {
   const sendsRoom = ({ params }: PendingVoice) =>
     params.roomLevel !== undefined && params.roomLevel > 0;
   const last = new Map<number, number>();
   for (const voice of voices) {
-    if (sendsRoom(voice)) {
+    // A voice the engine skips (a sample with no buffer) never reaches the bus, so it sets no size.
+    if (sendsRoom(voice) && !isVoiceSkipped(ctx, voice.params)) {
       last.set(voice.params.orbit ?? DEFAULT_ORBIT, voice.params.roomSize);
     }
   }
@@ -328,7 +330,7 @@ export async function renderToBuffer(
     rendered = await renderInWindows(
       ctx,
       bookingWindows(
-        lastRoomSizes(voices),
+        lastRoomSizes(ctx, voices),
         bookingWindow,
         (length - 2 * RENDER_QUANTUM_FRAMES) / sampleRate
       ),

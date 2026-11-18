@@ -273,6 +273,78 @@ describe('booking in windows', () => {
     expect(reverb(windowed.contexts[0])?.length).toBe(Math.round(1280 * (0.3 + (5 * 3.7) / 9)));
   });
 
+  it('ignores a sample that is not available when it works out the last room size', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    // An audible note sends to a size-2 room; a sample nobody registered, later on the same orbit, asks for size 8.
+    const cue = () =>
+      stack(note('c3 ~ ~ ~').room(0.5).roomsize(2), s('~ ~ ghost ~').room(0.5).roomsize(8));
+    const upFront = fakeOfflineFactory();
+    const windowed = fakeOfflineFactory();
+    await renderToBuffer(cue(), { cps: 1, cycles: 4, sampleRate: 1280, context: upFront });
+    await renderToBuffer(cue(), {
+      cps: 1,
+      cycles: 4,
+      sampleRate: 1280,
+      bookingWindow: 0.5,
+      context: windowed
+    });
+
+    expect(windowed.contexts[0].suspensions.length).toBeGreaterThan(0);
+    const reverb = (ctx: FakeOfflineAudioContext) => ctx.convolvers[0].buffer;
+    expect(reverb(upFront.contexts[0])?.length).toBe(Math.round(1280 * (0.3 + (1 * 3.7) / 9)));
+    expect(reverb(windowed.contexts[0])?.length).toBe(reverb(upFront.contexts[0])?.length);
+    expect(recordedGraph(windowed.contexts[0])).toEqual(recordedGraph(upFront.contexts[0]));
+  });
+
+  // Each case below must give the graph that booking up front gives: the windowed path books the same effective voices.
+  const equivalentCases: Record<string, { cue: () => ReturnType<typeof stack>; channels?: 4 }> = {
+    'cut groups choking across windows': {
+      cue: () => stack(note('c3 e3').release(2).cut(1), note('~ g3').release(2).cut(1)).slow(0.25)
+    },
+    'a cut group a missing sample does not claim': {
+      cue: () =>
+        stack(note('c3 ~ ~ ~').release(2).cut(1), s('~ ghost ~ ~').cut(1), note('~ ~ e3 ~').cut(1))
+    },
+    'late and early nudges that reorder voices': {
+      cue: () =>
+        stack(note('c3 e3 g3 b3').nudge('0 -0.6 0.9 0'), note('~ c4 ~ ~').nudge(1.4).cut(2))
+    },
+    'noise voices that share a start time': {
+      cue: () => stack(sound('white pink'), sound('white brown').release(0.3)).slow(0.25)
+    },
+    'delay sends with different times on one orbit': {
+      cue: () =>
+        stack(
+          note('c3 ~ e3 ~').delay(0.4).delaytime(0.1).delayfeedback(0.3),
+          note('~ g3 ~ b3').delay(0.4).delaytime(0.25).delayfeedback(0.5)
+        )
+    },
+    'room sends on separate orbits': {
+      cue: () =>
+        stack(
+          note('c3 e3').room(0.4).roomsize(3).orbit(0),
+          note('g3 b3').room(0.4).roomsize(7).orbit(1),
+          note('c4 ~').room(0.4).roomsize(2).orbit(0)
+        ).slow(0.5)
+    },
+    'surround placement folded to four channels': {
+      channels: 4,
+      cue: () => stack(note('c3 e3 g3 b3').surround(45), note('~ c4 ~ ~').channels([1, 0, 0, 1]))
+    }
+  };
+  for (const [name, { cue, channels }] of Object.entries(equivalentCases)) {
+    it(`books ${name} as booking up front does`, async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const upFront = fakeOfflineFactory();
+      const windowed = fakeOfflineFactory();
+      const options = { cps: 1, cycles: 4, sampleRate: 1280, tail: 1, channels } as const;
+      await renderToBuffer(cue(), { ...options, context: upFront });
+      await renderToBuffer(cue(), { ...options, bookingWindow: 0.5, context: windowed });
+      expect(windowed.contexts[0].suspensions.length).toBeGreaterThan(3);
+      expect(recordedGraph(windowed.contexts[0])).toEqual(recordedGraph(upFront.contexts[0]));
+    });
+  }
+
   it('books a voice nudged past the end at the last pause, which the context accepts', async () => {
     const context = fakeOfflineFactory();
     const cue = score({
