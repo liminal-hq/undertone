@@ -96,6 +96,20 @@ jobs:
         if: always()
         run: echo "## Docs" >> "${GITHUB_STEP_SUMMARY}"
 
+  api:
+    name: API report
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check the public API report
+        run: bun run api:check
+      - name: Write summary
+        if: always()
+        run: echo "## API report" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-fmt:
     name: Rust format
     runs-on: ubuntu-24.04
