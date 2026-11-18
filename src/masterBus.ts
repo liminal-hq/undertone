@@ -97,13 +97,23 @@ const CEILING_CURVE_POINTS = 4097;
  * convex below), interpolating between points never overshoots the level.
  */
 export function ceilingCurve(level: number): Float32Array {
-  const top = float32Below(level);
+  const top = ceilingTop(level);
   const curve = new Float32Array(CEILING_CURVE_POINTS);
   const last = CEILING_CURVE_POINTS - 1;
   for (let i = 0; i < CEILING_CURVE_POINTS; i++) {
     curve[i] = Math.max(-top, Math.min(top, (2 * i) / last - 1));
   }
   return curve;
+}
+
+/**
+ * The largest magnitude the ceiling lets through for a ceiling of `level`
+ * (linear): one float32 step below it, as the clip curve's flat part is. Code
+ * that bounds samples outside the graph, such as the offline render after it
+ * folds a tail, uses this so it clamps to exactly what the bus does.
+ */
+export function ceilingTop(level: number): number {
+  return float32Below(level);
 }
 
 /**

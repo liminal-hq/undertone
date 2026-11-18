@@ -6,7 +6,7 @@ title: Rendering & Export
 
 `renderToBuffer(pattern, options?)` plays a pattern on an `OfflineAudioContext` with no real-time clock and resolves with the finished audio. `pattern.render(options?)` is the same call as a method, and `score(...).render()` renders one pass of a cue at its own tempo. Pass the result to `encodeWav` to get the bytes of a `.wav` file.
 
-```ts
+```ts standalone
 import { encodeWav, note } from '@liminal-hq/undertone';
 
 const loop = note('c3 [e3 g3] <b3 a3> ~').sound('triangle').release(0.4);
@@ -23,7 +23,7 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 - **Length:** `cycles` (whole cycles, default 1) or `seconds`, not both. Tempo is `bpm` or `cps`, falling back to `setcpm()` and then the default tempo, exactly as `loop()` resolves it.
 - **Format:** `sampleRate` (default 48000) and `channels` (1, 2, 4, 6 or 8). More than two channels uses discrete multichannel output and skips the limiter, as live playback does.
 - **Tail:** `tail` adds seconds after the pattern so releases and reverb can ring out. By default the file is exactly `pattern + tail` long.
-- **Seamless loops:** `wrap: true` folds the tail back onto the start, so the file is exactly one pass long and loops without a gap or a cut-off tail. The folded tail was limited (and clipped, with a `ceiling`) separately from the start, so the sum can exceed the limiter's threshold and the ceiling.
+- **Seamless loops:** `wrap: true` folds the tail back onto the start, so the file is exactly one pass long and loops without a gap or a cut-off tail. The folded tail was limited separately from the start, so the sum can exceed the limiter's threshold. A master `ceiling` still holds: after folding, every sample is clamped to it, so the file never passes the ceiling even where the tail and the start overlap.
 - **Gating:** notes are gated by their event length like `loop()`. Pass `gated: false` for a percussive one-shot like `play()`.
 - **Master bus:** the render goes through the same limiter as `createMasterBus`, so the file matches what a listener hears. Pass `master: false` for the raw mix, or an object to tune it. The limiter's 3 ms attack lets a sharp transient pass it, so a loud render can still peak above full scale; `master: { ceiling: -0.3 }` adds a final clip that no sample passes (see the master bus recipe).
 - **Booking in windows:** `bookingWindow: seconds` books the voices a window at a time instead of all before the render starts. See below. Off by default.
@@ -32,8 +32,13 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 
 By default every voice is booked on the offline context before the render starts. That is the simplest thing and it is what a browser is built for, but some renderers process every node from the moment it is made, whether or not it has started yet, so their cost grows with the number of notes times the length of the piece. `bookingWindow` books the score in windows of that many seconds instead:
 
-```ts
-const buffer = await song.render({ tail: 2, bookingWindow: 1 });
+```ts standalone
+import { note } from '@liminal-hq/undertone';
+
+const song = note('c3 [e3 g3] <b3 a3> ~').sound('triangle').release(0.4);
+
+// Eight cycles at the default 120 bpm is sixteen seconds, booked a second at a time.
+const buffer = await song.render({ cycles: 8, tail: 2, bookingWindow: 1 });
 ```
 
 - **How:** the voices are split by onset (nudge included) into windows of `bookingWindow` seconds. Windows 0 and 1 are booked before the render starts. The render then pauses with `suspend()` at the start of each window k − 1, books window k (a whole window ahead, so a pause rounded to the next render quantum is still early), and calls `resume()`. A voice nudged past the end of the render is booked at the last pause.

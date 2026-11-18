@@ -8,7 +8,7 @@ title: Stereo & Surround
 
 By default a destination stays stereo and multichannel placements fold down automatically. To address real surround speakers, opt the context in once:
 
-```ts
+```ts standalone
 import { enableMultichannel, note } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -25,27 +25,32 @@ On plain stereo hardware the same code still sounds right — the fold-down is a
 
 On a pattern, `.panpath()` gives every note the same path, as plain data in the same way `.pitchsteps()` gives a pitch curve. An array of pans is frame-stepped: one pan per frame at a rate in Hz (default 140, the frame rate of classic AdLib effects), jumping from frame to frame and holding the last. An array of `{ time, pan }` points, in seconds from the onset, ramps instead:
 
-```ts
-import { note } from '@liminal-hq/undertone';
+```ts standalone
+import { cat, note } from '@liminal-hq/undertone';
 
 // Stepped: a fast left-right flutter, 30 frames a second, settling in the centre.
-note('c4 e4').sound('square').sustain(0.5).panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+const stepped = note('c4 e4')
+  .sound('square')
+  .sustain(0.5)
+  .panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
 
 // Ramped: each note sweeps from right to left over half a second.
-note('a2')
+const ramped = note('a2')
   .sound('sawtooth')
   .sustain(0.6)
   .panpath([
     { time: 0, pan: 1 },
     { time: 0.5, pan: -1 }
   ]);
+
+cat(stepped, ramped).loop({ bpm: 120 }); // one cycle of each, over and over
 ```
 
 Pans must be from −1 to 1 and point times must not go backwards; a rate is only taken with an array of pans. `.panpath()` is not patternable, and it replaces `.pan()`.
 
 In a `score()` event the points are in whole ticks from the onset:
 
-```ts
+```ts standalone
 import { score } from '@liminal-hq/undertone';
 
 score({
@@ -73,7 +78,7 @@ score({
 
 In plain voice data, such as `playParams()` takes, the points are in seconds from the voice's start:
 
-```ts
+```ts standalone
 import { playParams } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -97,9 +102,11 @@ The path drives one stereo panner per voice, and the room and delay sends are ta
 
 `.panslide(from, seconds?)` is `.slide()` for the pan: each note starts at pan `from` and moves linearly to its own pan (the centre without one) over `seconds`, or over the note's attack when you leave it out. It is a two-point pan path underneath, so it stops early the same way, and a `.panpath()` takes precedence over it (with a warning). `from` takes a mini-notation string; the time is a plain number. In voice data it is `panSlideFrom` and `panSlideTime`.
 
-```ts
+```ts standalone
+import { note } from '@liminal-hq/undertone';
+
 // Every hit flies in from the left to where it sits.
-note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15);
+note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15).loop({ bpm: 120 });
 ```
 
 ### Autopan
@@ -110,19 +117,23 @@ note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15);
 - `.autopanshape(s)`: `'sine'` (default), `'triangle'` or `'square'` (a square jumps between the two sides).
 - `.autopanphase(p)`: where in its cycle it starts, 0 to 1. Default 0: a sine or triangle starts at the pan moving right, a square on the right; 0.5 starts the other way.
 
-```ts
+```ts standalone
+import { note } from '@liminal-hq/undertone';
+
 // A pad that drifts slowly from side to side around the centre.
-note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7);
+note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7).loop({ bpm: 60 });
 ```
 
 The voice's pan is the centre of the swing. With a `panPath` or a pan slide too, the path sets the centre and the LFO adds to it; the panner clamps the sum to −1..1, so a deep swing off-centre flattens at the side. `autopan` and `autopandepth` take mini-notation strings; the shape and phase are plain values. In voice data the controls are `autopan` (Hz), `autopanDepth`, `autopanShape` and `autopanPhase`, and a `score()` event takes `autopan: { periodTicks, depth, shape?, phase? }`, with the period in whole ticks:
 
-```ts
+```ts standalone
+import { score } from '@liminal-hq/undertone';
+
 score({
   ticksPerSecond: 100,
   lengthTicks: 400,
   events: [{ tick: 0, note: 'e3', gate: 400, pan: 0.2, autopan: { periodTicks: 50, depth: 0.5 } }]
-});
+}).loop();
 ```
 
 How it is built, for anyone matching the graph:
@@ -137,7 +148,7 @@ How it is built, for anyone matching the graph:
 
 A pan law says how loud a voice is on each side as it moves across. Undertone's default is the stereo panner's equal-power law: at the centre each side is about 3 dB down (1/√2), so a voice keeps the same power wherever it sits. Some mixes want a louder or quieter centre, and `.panlaw(db)` gives each side's level at the centre, from −6 to 0 dB:
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 // A balance-control feel: the centre stays full on both sides.

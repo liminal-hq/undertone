@@ -293,6 +293,20 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
 }
 
 /**
+ * Whether `playVoice()` books nothing for these params on this context: a
+ * sample voice whose buffer is not available (not registered, or not decoded
+ * on `ctx` yet). It is the one place that rule lives, so anything that must
+ * know which voices will really sound, such as the offline render's room-size
+ * lookahead, asks here instead of repeating it.
+ */
+export function isVoiceSkipped(ctx: AudioContextLike, params: VoiceParams): boolean {
+  return (
+    params.sampleName !== undefined &&
+    getSampleBuffer(ctx, params.sampleName, params.sampleBank) === undefined
+  );
+}
+
+/**
  * Realizes a single voice against a real (or fake, for tests) AudioContext,
  * starting at `startTime`. A sample voice whose buffer isn't decoded yet (or
  * whose name was never registered) is silently skipped — samples.ts already
@@ -307,13 +321,13 @@ export function playVoice(
 ): PlaybackHandle {
   const output = options.output ?? ctx.destination;
   const usingSample = params.sampleName !== undefined;
-  const sampleBuffer = usingSample
-    ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
-    : undefined;
-  if (usingSample && sampleBuffer === undefined) {
+  if (isVoiceSkipped(ctx, params)) {
     const skippedAt = Math.max(startTime + params.nudgeTime, 0);
     return { startTime: skippedAt, endTime: skippedAt, stop: () => undefined };
   }
+  const sampleBuffer = usingSample
+    ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
+    : undefined;
 
   // Clamp to the context's origin — real AudioParams/sources throw RangeError on negative times.
   const voiceStart = Math.max(startTime + params.nudgeTime, 0);
