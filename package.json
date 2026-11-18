@@ -29,7 +29,9 @@
     "docs:api": "typedoc",
     "docs:dev": "bun run docs:api && vitepress dev docs",
     "docs:build": "bun run docs:api && vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "api:record": "bun conformance/api/report.ts record",
+    "api:check": "bun conformance/api/report.ts check"
   },
   "keywords": [
     "web-audio",
