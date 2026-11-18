@@ -19,7 +19,7 @@ note('c4(5,8)').sound('triangle').surround(135).loop({ ctx, bpm: 120 });
 
 On plain stereo hardware the same code still sounds right — the fold-down is automatic — so surround placement is safe to ship speculatively.
 
-## Moving the pan inside a note
+## Moving the pan: panpath, panslide and autopan
 
 `.pan()` sets one position per note. To slide, wobble or jump the pan while a note is held, give the voice data a `panPath`: points in time order, each a stereo position. The first point is the pan at the onset (it replaces `pan`), the pan moves linearly from each point to the next, two points at the same time make a jump, and the last value holds through the release. Pans are clamped to −1..1.
 
@@ -92,6 +92,46 @@ playParams(ctx, [
 ```
 
 The path drives one stereo panner per voice, and the room and delay sends are taken after it, so the wet signal moves with the dry one. Stopping a voice early (a handle's `stop()`, a cut group or `loop().stop({ voices: 'cut' })`) holds the pan where the path had got to while it fades out. Like `pan`, a path is ignored when `.channels()` or `.surround()` is set.
+
+### Pan slide
+
+`.panslide(from, seconds?)` is `.slide()` for the pan: each note starts at pan `from` and moves linearly to its own pan (the centre without one) over `seconds`, or over the note's attack when you leave it out. It is a two-point pan path underneath, so it stops early the same way, and a `.panpath()` takes precedence over it (with a warning). `from` takes a mini-notation string; the time is a plain number. In voice data it is `panSlideFrom` and `panSlideTime`.
+
+```ts
+// Every hit flies in from the left to where it sits.
+note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15);
+```
+
+### Autopan
+
+`.autopan(hz)` swings the pan with a low-frequency oscillator, as `.phaser()` sweeps its filters: a real `OscillatorNode` in the voice's graph, not booked points, so the movement is smooth at any rate and costs two nodes per voice. Shape it with:
+
+- `.autopandepth(d)`: how far it swings either side of the pan, 0 to 1. Default 1.
+- `.autopanshape(s)`: `'sine'` (default), `'triangle'` or `'square'` (a square jumps between the two sides).
+- `.autopanphase(p)`: where in its cycle it starts, 0 to 1. Default 0: a sine or triangle starts at the pan moving right, a square on the right; 0.5 starts the other way.
+
+```ts
+// A pad that drifts slowly from side to side around the centre.
+note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7);
+```
+
+The voice's pan is the centre of the swing. With a `panPath` or a pan slide too, the path sets the centre and the LFO adds to it; the panner clamps the sum to −1..1, so a deep swing off-centre flattens at the side. `autopan` and `autopandepth` take mini-notation strings; the shape and phase are plain values. In voice data the controls are `autopan` (Hz), `autopanDepth`, `autopanShape` and `autopanPhase`, and a `score()` event takes `autopan: { periodTicks, depth, shape?, phase? }`, with the period in whole ticks:
+
+```ts
+score({
+  ticksPerSecond: 100,
+  lengthTicks: 400,
+  events: [{ tick: 0, note: 'e3', gate: 400, pan: 0.2, autopan: { periodTicks: 50, depth: 0.5 } }]
+});
+```
+
+How it is built, for anyone matching the graph:
+
+- An `OscillatorNode` of the shape's type, its `frequency` set to the rate at the voice's start (`setValueAtTime`). For a phase other than 0 it gets a periodic wave instead: the built-in wave's Fourier series (up to 64 harmonics for a triangle or square), each harmonic k turned by k · 2π · phase, normalized as the built-in waves are. A context without `createPeriodicWave` drops the phase, with a warning.
+- A `GainNode` at the depth (`setValueAtTime` at the voice's start), fed by the oscillator, connected to the panner's `pan` param, which adds it to the pan booked there.
+- The oscillator starts at the voice's start and stops with the voice's source, after the release, or after the fade of an early stop.
+- The sends are taken after the panner as before, so the wet signal swings too. `.channels()` and `.surround()` take precedence, and then no LFO is made.
+- Under a pan law the voice keeps its stereo panner, so the LFO has a `pan` to drive. A law below −3 dB is the panner's curve scaled down, so one gain after the panner (√2 · 10^(law/20)) gives it exactly. A law above −3 dB cannot follow a moving pan with the nodes Undertone uses, so an autopanned voice keeps the −3 dB law there, with a warning.
 
 ## Pan law
 
