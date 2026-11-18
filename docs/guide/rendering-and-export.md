@@ -23,9 +23,9 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 - **Length:** `cycles` (whole cycles, default 1) or `seconds`, not both. Tempo is `bpm` or `cps`, falling back to `setcpm()` and then the default tempo, exactly as `loop()` resolves it.
 - **Format:** `sampleRate` (default 48000) and `channels` (1, 2, 4, 6 or 8). More than two channels uses discrete multichannel output and skips the limiter, as live playback does.
 - **Tail:** `tail` adds seconds after the pattern so releases and reverb can ring out. By default the file is exactly `pattern + tail` long.
-- **Seamless loops:** `wrap: true` folds the tail back onto the start, so the file is exactly one pass long and loops without a gap or a cut-off tail. The folded tail was limited separately from the start, so the sum can exceed the limiter's ceiling.
+- **Seamless loops:** `wrap: true` folds the tail back onto the start, so the file is exactly one pass long and loops without a gap or a cut-off tail. The folded tail was limited (and clipped, with a `ceiling`) separately from the start, so the sum can exceed the limiter's threshold and the ceiling.
 - **Gating:** notes are gated by their event length like `loop()`. Pass `gated: false` for a percussive one-shot like `play()`.
-- **Master bus:** the render goes through the same limiter as `createMasterBus`, so the file matches what a listener hears. Pass `master: false` for the raw mix, or an object to tune it.
+- **Master bus:** the render goes through the same limiter as `createMasterBus`, so the file matches what a listener hears. Pass `master: false` for the raw mix, or an object to tune it. The limiter's 3 ms attack lets a sharp transient pass it, so a loud render can still peak above full scale; `master: { ceiling: -0.3 }` adds a final clip that no sample passes (see the master bus recipe).
 - **Booking in windows:** `bookingWindow: seconds` books the voices a window at a time instead of all before the render starts. See below. Off by default.
 
 ## Booking in windows
