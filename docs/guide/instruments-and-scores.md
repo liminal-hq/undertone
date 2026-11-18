@@ -67,6 +67,8 @@ const cue = score({
 const handle = cue.loop(); // plays at its own tempo; each pass lands exactly on the audio clock
 ```
 
+The score's tempo is its own: `cue.cps` is `ticksPerSecond / lengthTicks` (here 560 / 2240 = 0.25, a four-second cycle), and `cue.loop()`, `cue.play()` and `cue.render()` use it. `cue.pattern` is the same events as an ordinary pattern, which plays at whatever tempo you give it, so pass `{ cps: cue.cps }` with it. A cycle lasts 240 / `bpm` seconds, so this score as a plain pattern needs `bpm: 60`. The [playground](/playground) plays what a script returns at its Tempo slider, so its tick-score example sets the slider to 60 bpm; with another tempo every tick lands at the wrong time while a `gate` stays in seconds.
+
 `lengthTicks` is the loop length, so a rest at the end is part of the loop. `gate` is how long the key is held, and the instrument's release rings on after it, which is how a one-to-three-tick gate on a fast-decaying voice becomes a drum. A note still held at the seam is cut there by default (`seam: 'cut'`); pass `seam: 'ring'` to let the gate run on past it. An event's `panPath` (`{ tick, pan }[]`, ticks from the onset) moves its pan while the note is held, and its `autopan` (`{ periodTicks, depth, shape?, phase? }`) swings it with an LFO; see [Moving the pan: panpath, panslide and autopan](/guide/stereo-and-surround#moving-the-pan-panpath-panslide-and-autopan).
 
 ## Repeatable variation
