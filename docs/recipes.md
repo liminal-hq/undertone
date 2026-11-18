@@ -174,9 +174,12 @@ export const fanfare = stack(
     .nudge(0.18),
   note('c6').sound('sine').attack(0.002).decay(0.3).release(0.2).gain(0.4).lpf(5000).nudge(0.27)
 );
+
+// Play one from a click, tap or keypress (autoplay policy):
+fanfare.play();
 ```
 
-Wiring it up is just calling `.play()` in your handlers:
+Wiring it up is just calling `.play()` in your handlers, here on the kit above:
 
 ```ts
 buyButton.addEventListener('click', () => cashIn.play());
@@ -312,7 +315,7 @@ lead.loop({ bpm: 110 });
 A note's gate (how long the key is held) and its release (how long it rings afterwards) are separate ideas. In a looped pattern each event is held for its own share of the cycle, then released, so a long `.release()` gives a short hit with a ringing body. For drums, use very short notes with a fast decay and a `.slide()`.
 
 ```ts
-import { note } from '@liminal-hq/undertone';
+import { note, stack } from '@liminal-hq/undertone';
 
 // Short notes, long ring-out: a mallet-like tone.
 const mallet = note('c5 e5 g5 e5*2')
@@ -325,6 +328,8 @@ const mallet = note('c5 e5 g5 e5*2')
 
 // A tom: a very short note with a quick downward slide.
 const tom = note('a2 ~ ~ ~').sound('sine').decay(0.15).release(0.05).slide(0.08).gain(0.7);
+
+stack(mallet, tom).loop({ bpm: 100 });
 ```
 
 ### Dynamics in `.gain()`
@@ -335,6 +340,8 @@ Keep one instrument definition and put the expression in the gain pattern, so a 
 import { note } from '@liminal-hq/undertone';
 
 const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
+
+groove.loop({ bpm: 120 });
 ```
 
 ### Keeping a dense mix in range

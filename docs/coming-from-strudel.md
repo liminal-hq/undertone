@@ -53,6 +53,8 @@ There's no `mode`, no `dict`, no voicing-dictionary system — `{ anchor }` is t
 Strudel gives you a default sample map and soundfonts from its CDN. Undertone ships **nothing** and fetches **nothing** by default — not Strudel's CDN, not anyone's:
 
 ```ts
+import { loadSamples, registerSamples, s } from '@liminal-hq/undertone';
+
 registerSamples({ bd: '/audio/kick.wav', sd: '/audio/snare.wav' });
 const ctx = new AudioContext();
 await loadSamples(ctx); // optional preload; otherwise decode happens on demand
@@ -66,8 +68,12 @@ s('bd sd').loop({ ctx, bpm: 120 });
 Reverb and delay are sends to per-orbit buses, not per-voice inserts — undertone builds a fresh node graph per onset, and a convolver per voice would be unshippable. `.room(level)`/`.delay(level)` set the send; `.roomsize()`, `.delaytime()`, `.delayfeedback()` configure the _shared bus_, last-writer-wins across every voice on that orbit. When two layers need genuinely different rooms, give them different orbits:
 
 ```ts
+import { chord, n, stack } from '@liminal-hq/undertone';
+
 const pad = chord('<Dm9 Gm9>').voicing().sound('sine').sustain(0.8).room(0.5).roomsize(8).orbit(1);
 const pluck = n('0 4 2 7').scale('d4:minor').delay(0.3).delaytime(0.25).orbit(2);
+
+stack(pad, pluck).loop({ bpm: 120 });
 ```
 
 Unlike Strudel's `orbit` control, undertone's `.orbit(n)` takes a plain non-negative integer and is the one voice control that is **not patternable** — it selects a bus rather than shaping a value. The reverb's impulse response is procedurally generated from `roomsize` (no IR files), regenerated only when that orbit's size actually changes.

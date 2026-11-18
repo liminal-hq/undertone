@@ -26,19 +26,24 @@ On plain stereo hardware the same code still sounds right — the fold-down is a
 On a pattern, `.panpath()` gives every note the same path, as plain data in the same way `.pitchsteps()` gives a pitch curve. An array of pans is frame-stepped: one pan per frame at a rate in Hz (default 140, the frame rate of classic AdLib effects), jumping from frame to frame and holding the last. An array of `{ time, pan }` points, in seconds from the onset, ramps instead:
 
 ```ts
-import { note } from '@liminal-hq/undertone';
+import { cat, note } from '@liminal-hq/undertone';
 
 // Stepped: a fast left-right flutter, 30 frames a second, settling in the centre.
-note('c4 e4').sound('square').sustain(0.5).panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+const stepped = note('c4 e4')
+  .sound('square')
+  .sustain(0.5)
+  .panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
 
 // Ramped: each note sweeps from right to left over half a second.
-note('a2')
+const ramped = note('a2')
   .sound('sawtooth')
   .sustain(0.6)
   .panpath([
     { time: 0, pan: 1 },
     { time: 0.5, pan: -1 }
   ]);
+
+cat(stepped, ramped).loop({ bpm: 120 }); // one cycle of each, over and over
 ```
 
 Pans must be from −1 to 1 and point times must not go backwards; a rate is only taken with an array of pans. `.panpath()` is not patternable, and it replaces `.pan()`.
@@ -98,8 +103,10 @@ The path drives one stereo panner per voice, and the room and delay sends are ta
 `.panslide(from, seconds?)` is `.slide()` for the pan: each note starts at pan `from` and moves linearly to its own pan (the centre without one) over `seconds`, or over the note's attack when you leave it out. It is a two-point pan path underneath, so it stops early the same way, and a `.panpath()` takes precedence over it (with a warning). `from` takes a mini-notation string; the time is a plain number. In voice data it is `panSlideFrom` and `panSlideTime`.
 
 ```ts
+import { note } from '@liminal-hq/undertone';
+
 // Every hit flies in from the left to where it sits.
-note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15);
+note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15).loop({ bpm: 120 });
 ```
 
 ### Autopan
@@ -111,18 +118,22 @@ note('c3*4').sound('square').decay(0.3).pan(0.4).panslide(-1, 0.15);
 - `.autopanphase(p)`: where in its cycle it starts, 0 to 1. Default 0: a sine or triangle starts at the pan moving right, a square on the right; 0.5 starts the other way.
 
 ```ts
+import { note } from '@liminal-hq/undertone';
+
 // A pad that drifts slowly from side to side around the centre.
-note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7);
+note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7).loop({ bpm: 60 });
 ```
 
 The voice's pan is the centre of the swing. With a `panPath` or a pan slide too, the path sets the centre and the LFO adds to it; the panner clamps the sum to −1..1, so a deep swing off-centre flattens at the side. `autopan` and `autopandepth` take mini-notation strings; the shape and phase are plain values. In voice data the controls are `autopan` (Hz), `autopanDepth`, `autopanShape` and `autopanPhase`, and a `score()` event takes `autopan: { periodTicks, depth, shape?, phase? }`, with the period in whole ticks:
 
 ```ts
+import { score } from '@liminal-hq/undertone';
+
 score({
   ticksPerSecond: 100,
   lengthTicks: 400,
   events: [{ tick: 0, note: 'e3', gate: 400, pan: 0.2, autopan: { periodTicks: 50, depth: 0.5 } }]
-});
+}).loop();
 ```
 
 How it is built, for anyone matching the graph:

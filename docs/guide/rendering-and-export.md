@@ -33,7 +33,12 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 By default every voice is booked on the offline context before the render starts. That is the simplest thing and it is what a browser is built for, but some renderers process every node from the moment it is made, whether or not it has started yet, so their cost grows with the number of notes times the length of the piece. `bookingWindow` books the score in windows of that many seconds instead:
 
 ```ts
-const buffer = await song.render({ tail: 2, bookingWindow: 1 });
+import { note } from '@liminal-hq/undertone';
+
+const song = note('c3 [e3 g3] <b3 a3> ~').sound('triangle').release(0.4);
+
+// Eight cycles at the default 120 bpm is sixteen seconds, booked a second at a time.
+const buffer = await song.render({ cycles: 8, tail: 2, bookingWindow: 1 });
 ```
 
 - **How:** the voices are split by onset (nudge included) into windows of `bookingWindow` seconds. Windows 0 and 1 are booked before the render starts. The render then pauses with `suspend()` at the start of each window k − 1, books window k (a whole window ahead, so a pause rounded to the next render quantum is still early), and calls `resume()`. A voice nudged past the end of the render is booked at the last pause.
