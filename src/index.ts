@@ -90,6 +90,7 @@ export type { WavOptions, WavSource } from './wav.js';
 export type {
   AudioContextLike,
   AudioDestinationNodeLike,
+  ControlInput,
   ControlPatch,
   DynamicsCompressorNodeLike,
   NoiseType,

@@ -4,7 +4,7 @@ title: Stereo & Surround
 
 # Stereo and surround placement
 
-`.pan(p)` places a voice in the stereo field, −1 (hard left) to 1 (hard right), and like most controls it takes a mini-notation string. For real multichannel rigs, `.channels([...])` sets raw per-speaker gains in FL, FR, C, LFE, SL, SR, RL, RR order, and `.surround(angleDegrees)` is the friendlier form — equal-power placement at an angle on the 7.1 speaker ring (0° front-centre, ±90° sides, ±180° dead behind). `channels`/`surround` take precedence over `pan` when both are set.
+`.pan(p)` places a voice in the stereo field, −1 (hard left) to 1 (hard right), and like most controls it takes a number, a mini-notation string or a pattern, so `.pan(sine2)` sweeps the field. For real multichannel rigs, `.channels([...])` sets raw per-speaker gains in FL, FR, C, LFE, SL, SR, RL, RR order, and `.surround(angleDegrees)` is the friendlier form — equal-power placement at an angle on the 7.1 speaker ring (0° front-centre, ±90° sides, ±180° dead behind). `channels`/`surround` take precedence over `pan` when both are set.
 
 By default a destination stays stereo and multichannel placements fold down automatically. To address real surround speakers, opt the context in once:
 
@@ -18,6 +18,23 @@ note('c4(5,8)').sound('triangle').surround(135).loop({ ctx, bpm: 120 });
 ```
 
 On plain stereo hardware the same code still sounds right — the fold-down is automatic — so surround placement is safe to ship speculatively.
+
+## Pan in the Strudel style
+
+There are three layers of pan movement, from the one that follows the music to the one that follows the clock. Pick the lightest that does the job.
+
+1. **A value per event: patternable `.pan`.** Each note gets its own pan, read at its onset. This is what Strudel's `pan(sine)` does, and it is a plain control, so a number, a string or a pattern all work. Pan runs −1 to 1 here, so use the bipolar signals (`sine2`, `saw2`, ...) or `.range(-1, 1)` for a full sweep; a value outside the range is clamped to the side, with one warning.
+2. **Named movement inside a note: `autopan` and `panslide`.** An LFO on the panner (`autopan`, shaped by `autopandepth`, `autopanshape` and `autopanphase`) or a slide from a start pan (`panslide`). The rate and the times are in seconds and hertz, on the audio clock, so a held note keeps moving. The numbers of `autopan`, `autopandepth`, `autopanphase` and the start of `panslide` can be patterns too, read at each onset.
+3. **Raw data: `panpath` and `pitchsteps`.** An array of pans or `{ time, pan }` points, the same for every note, as plain data. Not patternable.
+
+`.panlaw(db)` is a scalar: it sets the pan law for the whole voice and not per event.
+
+```ts standalone
+import { note, sine2 } from '@liminal-hq/undertone';
+
+// A value per event: each note one step further along a slow sweep of the field.
+note('c4*8').sound('triangle').decay(0.2).pan(sine2.slow(2)).loop({ bpm: 120 });
+```
 
 ## Moving the pan: panpath, panslide and autopan
 
@@ -46,7 +63,7 @@ const ramped = note('a2')
 cat(stepped, ramped).loop({ bpm: 120 }); // one cycle of each, over and over
 ```
 
-Pans must be from −1 to 1 and point times must not go backwards; a rate is only taken with an array of pans. `.panpath()` is not patternable, and it replaces `.pan()`.
+Pans must be from −1 to 1 and point times must not go backwards; a rate is only taken with an array of pans. `.panpath()` is plain data, not patternable, and it replaces `.pan()`.
 
 In a `score()` event the points are in whole ticks from the onset:
 
@@ -100,7 +117,7 @@ The path drives one stereo panner per voice, and the room and delay sends are ta
 
 ### Pan slide
 
-`.panslide(from, seconds?)` is `.slide()` for the pan: each note starts at pan `from` and moves linearly to its own pan (the centre without one) over `seconds`, or over the note's attack when you leave it out. It is a two-point pan path underneath, so it stops early the same way, and a `.panpath()` takes precedence over it (with a warning). `from` takes a mini-notation string; the time is a plain number. In voice data it is `panSlideFrom` and `panSlideTime`.
+`.panslide(from, seconds?)` is `.slide()` for the pan: each note starts at pan `from` and moves linearly to its own pan (the centre without one) over `seconds`, or over the note's attack when you leave it out. It is a two-point pan path underneath, so it stops early the same way, and a `.panpath()` takes precedence over it (with a warning). `from` takes a number, a string or a pattern (clamped to −1..1); the time is a plain number. In voice data it is `panSlideFrom` and `panSlideTime`.
 
 ```ts standalone
 import { note } from '@liminal-hq/undertone';
@@ -124,7 +141,7 @@ import { note } from '@liminal-hq/undertone';
 note('<c3 a2>').sound('triangle').sustain(0.8).autopan(0.25).autopandepth(0.7).loop({ bpm: 60 });
 ```
 
-The voice's pan is the centre of the swing. With a `panPath` or a pan slide too, the path sets the centre and the LFO adds to it; the panner clamps the sum to −1..1, so a deep swing off-centre flattens at the side. `autopan` and `autopandepth` take mini-notation strings; the shape and phase are plain values. In voice data the controls are `autopan` (Hz), `autopanDepth`, `autopanShape` and `autopanPhase`, and a `score()` event takes `autopan: { periodTicks, depth, shape?, phase? }`, with the period in whole ticks:
+The voice's pan is the centre of the swing. With a `panPath` or a pan slide too, the path sets the centre and the LFO adds to it; the panner clamps the sum to −1..1, so a deep swing off-centre flattens at the side. `autopan`, `autopandepth` and `autopanphase` take numbers, strings or patterns; the shape is a plain value. In voice data the controls are `autopan` (Hz), `autopanDepth`, `autopanShape` and `autopanPhase`, and a `score()` event takes `autopan: { periodTicks, depth, shape?, phase? }`, with the period in whole ticks:
 
 ```ts standalone
 import { score } from '@liminal-hq/undertone';

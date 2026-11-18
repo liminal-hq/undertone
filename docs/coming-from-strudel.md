@@ -26,9 +26,15 @@ The flip side is `.play()`, which has no Strudel equivalent: it schedules **one 
 
 Relatedly, `n()` means exactly one thing here: scale degrees, resolved by `.scale('D5:minor')`. It never selects a sample variant — there is no `s("bd").n(2)`-style sample indexing, and no chainable `.n()` at all. One name per sample; `.bank()` handles kit-prefix lookup.
 
-## Patterned parameters: point-sampled at each onset, strings only
+## Patterned parameters and signals: point-sampled at each onset
 
-Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern` yet. The signals themselves (`sine`, `saw`, `rand`, `perlin`, ...) exist from 0.4.0 and can be read with `.segment()` (see [Signals](/guide/signals)), but taking them as control inputs, as in `.lpf(sine.range(400, 4000))`, is still to come in 0.4.0. For motion inside a note, Undertone has its own controls instead (see below).
+Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a number, a mini-notation string or a pattern, and the signals (`sine`, `saw`, `rand`, `perlin`, ...) are patterns: `.lpf(sine.range(400, 4000))` and `.pan(sine2)` work as they do in Strudel (see [Signals](/guide/signals)). A few controls stay plain values (`orbit`, `cut`, `panlaw`, `channels`, `surround`, `fmenv`, `fmwave`, `autopanshape`, `panpath()` and `pitchsteps()`). For motion inside a note, Undertone has its own controls as well (see below). The differences to know when you port a patch:
+
+- **Pan is -1 to 1**, so a unipolar signal only reaches one side: `.pan(sine2)` or `.pan(sine.range(-1, 1))` sweeps the field, where Strudel's `.pan(sine)` already does. A value outside the range is clamped, with one warning.
+- **Events are never fragmented.** A signal never splits an event, and each event reads one value at its onset.
+- **`late` and `early` are in seconds**, not cycles, so they do not shift a signal in cycle time.
+- **`euclid` on a signal acts as a struct**: the rhythm's events, each holding the signal's value at its onset.
+- **Random values are Undertone's own.** The same seed never gives Strudel's numbers, and `.seed(n)` goes directly on the random signal (`rand.seed(7).range(200, 2000)`).
 
 The combination rule is simple and worth stating precisely, because it's the semantics everything else follows from:
 
@@ -36,7 +42,7 @@ The combination rule is simple and worth stating precisely, because it's the sem
 - **The control is sampled at each event's onset.** The control string divides the cycle its own way; at each event's onset instant, whichever control step covers that instant supplies the value.
 - **A rest (`~`) in the control leaves the value unset** for that event — the default (or an earlier chained call's value) applies. `.lpf('400 ~')` gives the second event _no filter_, not a cutoff of 0.
 
-Also: every control value is validated eagerly when the pattern is built — a typo'd note name, an out-of-range pan, or a malformed number in a control string throws at construction time, not mid-performance. The pattern engine has no random event operators (no `degradeBy`, no `sometimes`, no `?`); its random signals (`rand`, `perlin`, `irand`, ...) are deterministic functions of a seed and the exact time, so the only nondeterminism in the whole library is the noise oscillators' sample data.
+Also: every number and string control value is validated eagerly when the pattern is built — a typo'd note name, an out-of-range pan, or a malformed number in a control string throws at construction time, not mid-performance. A pattern's values are checked as they are read instead, and never throw: they are clamped or left unset, with one warning. The pattern engine has no random event operators (no `degradeBy`, no `sometimes`, no `?`), but it does have random signals (`rand`, `perlin`, `irand`, `choose`, ...), which are deterministic functions of a seed and the exact time, so the only nondeterminism in the whole library is the noise oscillators' sample data.
 
 ## `.voicing()` is a deterministic approximation, not voice-leading
 
@@ -109,10 +115,10 @@ Beyond stereo, undertone adds placement Strudel doesn't have: `.channels([...])`
 Most names come from Strudel or Tidal and keep their meaning: `note`, `s`, `n`, `stack`, `jux`, `every`, `lpf`/`lpenv`, `room`/`delay`/`orbit`, `fm`/`fmh`, `penv`, `slide`, `nudge`/`late`/`early`, `cut`, `legato`, `velocity`. Some are Undertone's own, for things a library that plays game audio needs and a live-coding environment does not:
 
 - **`.pitchsteps([...], rateHz?)`**: a frame-stepped pitch curve, one semitone offset per frame (140 a second by default, the frame rate of classic AdLib effects). Strudel has no equivalent.
-- **Pan motion inside a note**: `.panpath()` (a stepped array of pans or `{ time, pan }` ramps), `.panslide(from, seconds?)` (the pan's own `slide`), and `.autopan(hz)` with `.autopandepth()`, `.autopanshape()` and `.autopanphase()` (an LFO on the panner). Strudel moves pan by patterning it per event, or with a signal such as `pan(sine.range(0, 1))`; Undertone patterns it per event too, but moves it within a held note with these. `.panlaw(db)` sets the pan law, which Strudel does not expose.
-- **Offline rendering and instruments as data**: `render()`, `encodeWav()`, `fmVoice()`/`layer()`, `score()` for tick-timed events, and `drift()` for seeded variation, all aimed at shipping sound inside something. Nothing here needs a signal, so none of it waits for them.
+- **Pan motion inside a note**: `.panpath()` (a stepped array of pans or `{ time, pan }` ramps), `.panslide(from, seconds?)` (the pan's own `slide`), and `.autopan(hz)` with `.autopandepth()`, `.autopanshape()` and `.autopanphase()` (an LFO on the panner). Strudel moves pan by patterning it per event, or with a signal such as `pan(sine)`; Undertone does both too (`.pan(sine2)`), and these move it within a held note. `.panlaw(db)` sets the pan law, which Strudel does not expose.
+- **Offline rendering and instruments as data**: `render()`, `encodeWav()`, `fmVoice()`/`layer()`, `score()` for tick-timed events, and `drift()` for seeded variation, all aimed at shipping sound inside something.
 
-If you were using `sine` to sweep a pan, use `.autopan()` for a steady sweep or `.panpath()` for a shaped one. Neither is the same thing as a signal, which would drive any control; they only move the pan.
+If you were using `sine` to sweep a pan once per event, `.pan(sine2)` does it. For a sweep inside a held note, use `.autopan()` for a steady one or `.panpath()` for a shaped one: they only move the pan, and run on the audio clock rather than at the onset.
 
 ## The mini-notation subset
 
@@ -126,6 +132,6 @@ Not supported: `?` (degrade), `|` (random choice), `{a b c}%n` (polymeter), and 
 
 ## The shape of what's missing
 
-Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, `chunk`, `add`, or signal modulation (signals are not in Undertone yet), you'll be reformulating rather than porting. Synth sources are four oscillator waveforms, three shaped sines and three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `halfsine`, `abssine`, `pulsesine`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
+Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, or `chunk`, you'll be reformulating rather than porting. Signal modulation works, with `.range()`, `.segment()` and arithmetic (`add`, `sub`, `mul`, `div`) on patterns of numbers. Synth sources are four oscillator waveforms, three shaped sines and three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `halfsine`, `abssine`, `pulsesine`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
 
 What you get in trade: a dependency-free, tree-shakeable MIT library with exact rational timing, eager validation, first-class one-shots, surround placement, and a [fully unit-tested](https://github.com/liminal-hq/undertone) audio graph — built to be shipped inside something, not performed in. Start with [getting started](/guide/getting-started), or go straight to the [recipes](/recipes) and the [API reference](/api/).

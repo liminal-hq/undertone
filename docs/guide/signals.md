@@ -6,9 +6,7 @@ title: Signals
 
 A signal is a pattern with no rhythm of its own: a value that changes smoothly (or randomly) through cycle time, such as a sine wave or a stream of random numbers. Signals come from Strudel and TidalCycles, where they are called continuous patterns or oscillators. You read a signal by giving it a rhythm: `segment(n)` cuts it into `n` events per cycle, and any event of a structured pattern can read it at its onset.
 
-::: warning Work in progress (0.4.0)
-This page is the specification of Undertone's signals as well as their guide. The signals themselves, `segment()`, the ranges, arithmetic and seeds described here are built. Passing a signal to a control such as `.pan(sine2)` or `.lpf(sine.range(400, 4000))` and `.panpath(signal)` arrive later in 0.4.0; until then, read a signal with `segment()` and `query()`.
-:::
+Almost every numeric control takes a signal: `.pan(sine2)` pans each note by the sine at its onset, and `.lpf(sine.range(400, 4000))` walks a filter. [Signals as control values](#signals-as-control-values) says how.
 
 ## The signals
 
@@ -34,10 +32,19 @@ The random signals are described under [Randomness](#randomness-and-seeds) below
 A signal is read at the **onset** of the event that reads it: the start of the event's whole (or of its part, for the rare event with no whole). It is never averaged over the event, and never read at the event's middle. One event, one value.
 
 ```ts
-import { sine } from '@liminal-hq/undertone';
+import { saw, sine } from '@liminal-hq/undertone';
 
 sine.segment(4); // four events per cycle: 0.5, 1, 0.5, 0 (read at 0, ¼, ½ and ¾)
 saw.range(0, 8).segment(8); // 0, 1, 2, 3, 4, 5, 6, 7
+```
+
+To hear a segmented signal, give it to `n()`, which takes a pattern that has events and floors each value to a scale degree:
+
+```ts standalone
+import { n, saw } from '@liminal-hq/undertone';
+
+// Eight notes a cycle climbing the scale: degrees 0 to 7.
+n(saw.range(0, 8).segment(8)).scale('C4:major').sound('triangle').loop({ bpm: 100 });
 ```
 
 These are the values Strudel's public REPL gives for the same code, so the phase conventions and the sampling point match Strudel's published behaviour (see [Sources](#sources)).
@@ -46,13 +53,13 @@ These are the values Strudel's public REPL gives for the same code, so the phase
 
 ### Structure comes from the left
 
-When a structured pattern and a signal meet, the structured pattern supplies the events and the signal supplies values. A signal never adds or removes events. This holds for arithmetic (`segment(4).add(sine)` keeps four events per cycle) and, from later in 0.4.0, for controls (`s('hh*8').pan(sine2)` is eight hats, each panned by the sine at its onset).
+When a structured pattern and a signal meet, the structured pattern supplies the events and the signal supplies values. A signal never adds or removes events. This holds for arithmetic (`segment(4).add(sine)` keeps four events per cycle) and for controls (`s('hh*8').pan(sine2)` is eight hats, each panned by the sine at its onset).
 
 ## segment(n)
 
 `pattern.segment(n)` gives the pattern `n` evenly spaced events per cycle, each holding the pattern's value at that event's onset. `n` is a positive number (`segment(2.5)` is allowed, as for `fast()`); anything else throws `segment() count must be positive, got 0`. An onset where the pattern has no value (a rest) gives no event.
 
-`segment()` works on any pattern, but it is how a signal becomes something you can hear on its own: `n(sine.segment(8).range(0, 7))` once controls accept patterns.
+`segment()` works on any pattern, but it is how a signal becomes something you can hear on its own: `n(sine.segment(8).range(0, 7))`.
 
 ## Ranges
 
@@ -69,6 +76,55 @@ A range does not clamp: a value outside the expected input maps outside `lo..hi`
 `.add(x)`, `.sub(x)`, `.mul(x)` and `.div(x)` take a number or a pattern of numbers. A number applies to every value. A pattern on the right is read at each onset of the left side, the same rule as everywhere else, so structure comes from the left: `sine.segment(4).add(saw)` has four events, each `sine(t) + saw(t)` at its onset. Where the right side has no value at an onset (a rest), the event is dropped. `.round()` rounds to the nearest whole number (halves round up) and `.floor()` rounds down (-4.2 becomes -5). A signal stays a signal through all of these: `sine.add(saw)` has no events until you segment it or a control reads it.
 
 Division by zero gives JavaScript's `Infinity`, which a control later treats as a rest.
+
+## Signals as control values
+
+Every numeric control takes a number, a mini-notation string or a pattern, and a signal is a pattern. The control is read at the onset of each event, and the structure stays the left side's: `s('hh*8').pan(sine2)` is eight hats, each panned by the sine at its onset, and `s('hh*8').pan(0.5)` and `.pan(pure(0.5))` give exactly the same events and the same sound.
+
+```ts standalone
+import { sine, sine2, sound } from '@liminal-hq/undertone';
+
+// Eight hats a cycle, each one place further along a slow sweep of the stereo field,
+// with the filter opening and closing once a cycle.
+sound('white*8')
+  .attack(0.001)
+  .decay(0.03)
+  .pan(sine2.slow(4))
+  .lpf(sine.range(2000, 9000))
+  .gain(0.4)
+  .loop({ bpm: 120 });
+```
+
+The controls that take a pattern: `attack`, `decay`, `sustain`, `release`, `gain`, `lpf`, `lpenv`, `lpa`, `lpd`, `lps`, `lpr`, `hpf`, `phaser`, `room`, `roomsize`, `delay`, `delaytime`, `delayfeedback`, `slide`, `fm`/`fmi`, `fmh`, `fmattack`, `fmdecay`, `fmsustain`, `fmrelease`, `penv`, `pattack`, `pdecay`, `nudge`/`late`/`early`, `duration`, `legato`, `velocity`, `pan`, the start of `panslide`, `autopan`, `autopandepth` and `autopanphase`. `n()` takes a pattern that has events, as shown above; `note()` does not, because its numbers are frequencies in hertz.
+
+Some controls stay plain values and throw `cut() takes a plain value, not a pattern; it cannot change from event to event` when given a pattern: `fmenv`, `fmwave`, `autopanshape`, `cut`, `orbit`, `panlaw`, `channels`, `surround`, the time of `panslide`, and the data controls `panpath(points)` and `pitchsteps()`.
+
+Signals combine with everything else in the usual way. A signal inside `fast`, `slow`, `rev`, `every`, `cat`, `euclid` or `jux` moves as the combinator says, and a signal read by a control inside a `jux` transform reads the same cycle time as the event:
+
+```ts standalone
+import { note, sine } from '@liminal-hq/undertone';
+
+// The right-hand copy has a filter that opens and closes once a cycle; the left-hand copy has none.
+note('c3 e3 g3 b3 g3 e3')
+  .sound('sawtooth')
+  .gain(0.3)
+  .jux((pat) => pat.lpf(sine.range(300, 3000)))
+  .loop({ bpm: 90 });
+```
+
+### What a control does with a bad value
+
+A signal can give a value a control cannot use: `sine.range(0, 2)` goes past what `pan` accepts, and `1 / 0` is not a number at all. Reading a signal must never throw, because a throw would end a loop's tick and the music would stop. So the control deals with it, and warns once (per control, however many notes) in the console, for example `undertone: pan() got 1.4 from a pattern; clamped to 1.`
+
+| Control and what it gets                                                           | What happens                                               |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `pan` and the start of `panslide` outside -1 to 1                                  | Clamped to -1 or 1.                                        |
+| `autopandepth` and `autopanphase` outside 0 to 1                                   | Clamped to 0 or 1.                                         |
+| `autopan` or `fmh` at or below 0; `fm`, `duration`, `legato` or `velocity` below 0 | The key is left unset, as for a rest: the default applies. |
+| NaN, Infinity, -Infinity, or something that is not a number (for any control)      | Left unset.                                                |
+| No value at the onset (a rest, or a function that returns `undefined`)             | Left unset, with no warning.                               |
+
+A value left unset leaves whatever an earlier call set. The other controls have no range rule beyond that, as for a plain number. The same checks do not apply to a number or string you write directly: `.pan(2)` and `.pan('<-.6 1.2>')` still throw when the pattern is built, so a typo fails early.
 
 ## Combinators on signals
 
@@ -113,7 +169,7 @@ The scheme is stable from 0.4.0: the value of a random signal at time `t` (a fra
 
 ## Differences from Strudel
 
-- **Pan runs -1 to 1.** `.pan(x)` means exactly pan `x`, so a sine from 0 to 1 only moves a sound from the centre to the right. Use the bipolar form for a full sweep: `.pan(sine2)`, or `.pan(sine.range(-1, 1))`.
+- **Pan runs -1 to 1.** `.pan(x)` means exactly pan `x`, so a sine from 0 to 1 only moves a sound from the centre to the right. Use the bipolar form for a full sweep: `.pan(sine2)`, or `.pan(sine.range(-1, 1))`. A pan outside -1 to 1 is clamped, with one warning.
 - **Events are never fragmented.** A signal never splits an event in two, and an event reads one value at its onset.
 - **`.late()` and `.early()` stay in seconds**, as for every Undertone pattern. Shift a signal in cycle time by composing it instead, for example `cat()` or `signal((t) => …)`.
 - **`euclid` on a signal acts as a structure**, giving the rhythm's events each read at its onset.

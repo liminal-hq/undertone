@@ -425,6 +425,14 @@ const flutter = note('c4 e4 g4 e4')
 cat(sweep, flutter).loop({ bpm: 100 });
 ```
 
+Hats can drift across the field one hit at a time with a signal, instead of a path inside each note. `.pan(sine2.slow(4))` reads a bipolar sine at each hat's onset, so the field is swept once every four cycles (use `sine2`, not `sine`: pan runs -1 to 1):
+
+```ts standalone
+import { sine2, sound } from '@liminal-hq/undertone';
+
+sound('white*8').attack(0.001).decay(0.03).gain(0.4).pan(sine2.slow(4)).loop({ bpm: 120 });
+```
+
 Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
 
 ```ts standalone
@@ -438,6 +446,55 @@ cat(crossing.panlaw(-6), crossing.panlaw(-3), crossing.panlaw(0)).loop({ bpm: 10
 ```
 
 A path, a slide and an autopan can be combined: the path or slide sets the centre of the swing and the LFO adds to it. `.channels()` and `.surround()` take precedence over all of them.
+
+## Signals
+
+A signal is a value that changes through time (see the [Signals guide](/guide/signals)), and any numeric control can read one. Each event reads it once, at its onset.
+
+A bass with a filter that wanders on its own: `perlin` is smooth random motion, and `.range()` puts it between two frequencies.
+
+```ts standalone
+import { note, perlin } from '@liminal-hq/undertone';
+
+note('c2*8')
+  .sound('sawtooth')
+  .decay(0.2)
+  .sustain(0.2)
+  .lpf(perlin.range(300, 2400))
+  .gain(0.35)
+  .loop({ bpm: 110 });
+```
+
+Random accents that sound the same every time: a random signal is a pure function of its seed and the time, so `.seed(7)` gives the same velocity on every pass and in every render. Change the seed for another take.
+
+```ts standalone
+import { rand, sound } from '@liminal-hq/undertone';
+
+sound('white*16')
+  .attack(0.001)
+  .decay(0.03)
+  .gain(0.35)
+  .hpf(6000)
+  .velocity(rand.seed(7).range(0.3, 1))
+  .loop({ bpm: 120 });
+```
+
+An autopan whose LFO carries on from where the last note left it: `.autopanphase()` takes a pattern, so a slow saw steps the phase round once every four cycles and each note's wobble starts a little further on.
+
+```ts standalone
+import { chord, saw } from '@liminal-hq/undertone';
+
+chord('<Am7 Fmaj7>')
+  .voicing()
+  .sound('triangle')
+  .attack(0.2)
+  .sustain(0.7)
+  .gain(0.25)
+  .autopan(0.5)
+  .autopandepth(0.8)
+  .autopanphase(saw.slow(4))
+  .loop({ bpm: 80 });
+```
 
 ## Safe loud mixes
 
