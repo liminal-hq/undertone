@@ -10,7 +10,7 @@ import { Pattern, arrange, cat, hasOnset, pure, seq, stack, timecat } from './pa
 import { mini } from './mini';
 import { loopPattern } from './scheduler';
 import type { TimerLike } from './scheduler';
-import { saw, saw2, signal, sine, sine2 } from './signal';
+import { rand, saw, saw2, signal, sine, sine2 } from './signal';
 import { FakeAudioContext, recordedGraph } from './test-utils/fakeAudioContext';
 import type { ControlPatch } from './types';
 import { resetWarnings } from './warn';
@@ -411,6 +411,28 @@ describe('a bad time from a signal', () => {
     expect(onsets(note('c4').late(bad(-0.05)))[0].nudgeTime).toBe(-0.05);
     expect(onsets(note('c4').early(bad(-0.05)))[0].nudgeTime).toBe(0.05);
     expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+describe('a random signal across cycles', () => {
+  const velocities = (pat: Pattern<ControlPatch>, cycle: number) =>
+    onsets(pat, cycle).map((v) => v.velocity);
+
+  it('gives the same sequence every time it is played, but each cycle reads its own times', () => {
+    const make = () => note('c4*8').velocity(rand.seed(7).range(0.3, 1));
+
+    expect(velocities(make(), 0)).toEqual(velocities(make(), 0));
+    expect(velocities(make(), 1)).toEqual(velocities(make(), 1));
+    expect(velocities(make(), 1)).not.toEqual(velocities(make(), 0));
+  });
+
+  it('arrange([1, signal]) repeats the first cycle on every cycle', () => {
+    const repeated = note('c4*8').velocity(arrange([1, rand.seed(7).range(0.3, 1)]));
+    const first = velocities(note('c4*8').velocity(rand.seed(7).range(0.3, 1)), 0);
+
+    for (const cycle of [0, 1, 2, 5]) {
+      expect(velocities(repeated, cycle)).toEqual(first);
+    }
   });
 });
 

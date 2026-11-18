@@ -465,17 +465,17 @@ note('c2*8')
   .loop({ bpm: 110 });
 ```
 
-Random accents that sound the same every time: a random signal is a pure function of its seed and the time, so `.seed(7)` gives the same velocity on every pass and in every render. Change the seed for another take.
+Random accents that come out the same every time you play: a random signal is a pure function of its seed and the time, so `.seed(7)` gives the same sequence of velocities on every run and in every render. The sequence does not repeat from one cycle to the next, because each cycle reads its own stretch of time. To repeat one cycle's accents, wrap the signal in `arrange([1, …])`, which makes it live through its first cycle again every cycle. Change the seed for another take.
 
 ```ts standalone
-import { rand, sound } from '@liminal-hq/undertone';
+import { arrange, rand, sound } from '@liminal-hq/undertone';
 
 sound('white*16')
   .attack(0.001)
   .decay(0.03)
   .gain(0.35)
   .hpf(6000)
-  .velocity(rand.seed(7).range(0.3, 1))
+  .velocity(arrange([1, rand.seed(7).range(0.3, 1)]))
   .loop({ bpm: 120 });
 ```
 
