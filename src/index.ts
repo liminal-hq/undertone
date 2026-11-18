@@ -77,5 +77,6 @@ export type {
   RenderedAudioBufferLike,
   ShapedWaveType,
   SoundType,
-  VoiceParams
+  VoiceParams,
+  WaveShaperNodeLike
 } from './types.js';

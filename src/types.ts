@@ -251,6 +251,12 @@ export interface DynamicsCompressorNodeLike extends AudioNodeLike {
   release: AudioParamLike;
 }
 
+/** A wave shaper: maps each sample through `curve`, the master bus's ceiling clip. */
+export interface WaveShaperNodeLike extends AudioNodeLike {
+  curve: Float32Array | null;
+  oversample: 'none' | '2x' | '4x';
+}
+
 export interface StereoPannerNodeLike extends AudioNodeLike {
   pan: AudioParamLike;
 }
@@ -293,6 +299,8 @@ export interface AudioContextLike {
   createDelay(maxDelayTime?: number): DelayNodeLike;
   /** Optional: needed for createMasterBus()'s limiter; without it the bus is gain only. */
   createDynamicsCompressor?(): DynamicsCompressorNodeLike;
+  /** Optional: needed for createMasterBus()'s `ceiling`; without it the bus has no ceiling. */
+  createWaveShaper?(): WaveShaperNodeLike;
   /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
   createPeriodicWave?(
     real: Float32Array,

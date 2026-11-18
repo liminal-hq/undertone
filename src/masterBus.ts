@@ -1,4 +1,4 @@
-// An opt-in master bus: a gain stage and a limiter between your voices and the speakers
+// An opt-in master bus: a gain stage, a limiter and an optional ceiling between your voices and the speakers
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -7,7 +7,8 @@ import type {
   AudioContextLike,
   AudioNodeLike,
   DynamicsCompressorNodeLike,
-  GainNodeLike
+  GainNodeLike,
+  WaveShaperNodeLike
 } from './types.js';
 import { warnOnce } from './warn.js';
 
@@ -41,6 +42,16 @@ export interface MasterBusOptions {
   gain?: number;
   /** `true` (default) for the default limiter, an object to tune it, or `false` for gain only. */
   limiter?: boolean | LimiterOptions;
+  /**
+   * A hard ceiling in dBFS (0 or below), as the last stage of the bus: a wave
+   * shaper that passes every sample below the ceiling unchanged and clips any
+   * sample above it to the ceiling, so the output never exceeds it. It catches
+   * the transients the limiter's attack lets through. It works with or without
+   * the limiter and on any number of channels, and is skipped, with a warning,
+   * when the context has no `createWaveShaper`. It bounds sample values, not
+   * the peaks between samples. Default: no ceiling, and no node.
+   */
+  ceiling?: number;
 }
 
 export interface MasterBus {
@@ -48,6 +59,8 @@ export interface MasterBus {
   readonly input: GainNodeLike;
   /** The limiter, when one is in the path. */
   readonly compressor?: DynamicsCompressorNodeLike;
+  /** The ceiling's clip, when `ceiling` is set. */
+  readonly clipper?: WaveShaperNodeLike;
 }
 
 const DEFAULTS: Required<LimiterOptions> = {
@@ -73,6 +86,70 @@ function makeupCompensation(thresholdDb: number, ratio: number): number {
   return (1 / fullScaleGain) ** -MAKEUP_EXPONENT;
 }
 
+/** Points in the ceiling's curve: odd, so 0 maps to exactly 0, and fine enough that the knee is sharp. */
+const CEILING_CURVE_POINTS = 4097;
+
+/**
+ * The clip curve for a ceiling at `level` (linear, 0 to 1): the identity,
+ * clamped to ±level. A wave shaper maps input -1..1 onto the curve by linear
+ * interpolation and holds the end values beyond it, so input past full scale
+ * comes out at ±level too. Because the clamp is concave above zero (and
+ * convex below), interpolating between points never overshoots the level.
+ */
+export function ceilingCurve(level: number): Float32Array {
+  const top = float32Below(level);
+  const curve = new Float32Array(CEILING_CURVE_POINTS);
+  const last = CEILING_CURVE_POINTS - 1;
+  for (let i = 0; i < CEILING_CURVE_POINTS; i++) {
+    curve[i] = Math.max(-top, Math.min(top, (2 * i) / last - 1));
+  }
+  return curve;
+}
+
+/**
+ * One float32 step below the largest float32 at or below `value`. A wave
+ * shaper interpolates in float32, and blending two equal points can round up
+ * by one step, so the flat part of the curve sits a step low to land at or
+ * under the ceiling all the same (measured: without the step, a renderer's
+ * output came one step, 3e-8, over).
+ */
+function float32Below(value: number): number {
+  const word = new Float32Array([value]);
+  const bits = new Uint32Array(word.buffer);
+  if (word[0] > value) {
+    bits[0] -= 1; // positive floats order like their bits
+  }
+  bits[0] -= 1;
+  return word[0];
+}
+
+/** Puts the ceiling's clip between `from` and `output` when there is one, and returns it. */
+function connectCeiling(
+  ctx: AudioContextLike,
+  from: AudioNodeLike,
+  output: AudioNodeLike,
+  ceiling: number | undefined
+): WaveShaperNodeLike | undefined {
+  if (ceiling === undefined) {
+    from.connect(output);
+    return undefined;
+  }
+  if (!ctx.createWaveShaper) {
+    warnOnce(
+      'master-bus-no-wave-shaper',
+      'undertone: this audio context has no createWaveShaper(), so the master bus has no ceiling.'
+    );
+    from.connect(output);
+    return undefined;
+  }
+  const clipper = ctx.createWaveShaper();
+  clipper.curve = ceilingCurve(10 ** (ceiling / 20));
+  clipper.oversample = 'none';
+  from.connect(clipper);
+  clipper.connect(output);
+  return clipper;
+}
+
 /**
  * Creates a master bus: voices play into `bus.input`, pass a gain stage and a
  * limiter, and reach `output` (the speakers by default). Undertone writes
@@ -93,13 +170,24 @@ export function createMasterBus(ctx: AudioContextLike, options: MasterBusOptions
     throw new Error(`createMasterBus() gain must not be negative, got ${level}`);
   }
 
+  const ceiling = options.ceiling;
+  if (ceiling !== undefined && !(ceiling <= 0)) {
+    throw new Error(`createMasterBus() ceiling must be 0 dBFS or below, got ${ceiling}`);
+  }
+  if (ceiling === -Infinity) {
+    throw new Error('createMasterBus() ceiling must be a finite level in dBFS');
+  }
+
   const input = ctx.createGain();
   input.gain.setValueAtTime(level, ctx.currentTime);
+  const finish = (from: AudioNodeLike, compressor?: DynamicsCompressorNodeLike): MasterBus => {
+    const clipper = connectCeiling(ctx, from, output, ceiling);
+    return { input, ...(compressor && { compressor }), ...(clipper && { clipper }) };
+  };
 
   const limiter = options.limiter ?? true;
   if (limiter === false) {
-    input.connect(output);
-    return { input };
+    return finish(input);
   }
 
   const channels = (output as { channelCount?: number }).channelCount ?? 2;
@@ -108,16 +196,14 @@ export function createMasterBus(ctx: AudioContextLike, options: MasterBusOptions
       'master-bus-surround',
       `undertone: the master bus limiter is skipped because the output has ${channels} channels; a compressor would fold it to stereo.`
     );
-    input.connect(output);
-    return { input };
+    return finish(input);
   }
   if (!ctx.createDynamicsCompressor) {
     warnOnce(
       'master-bus-no-compressor',
       'undertone: this audio context has no createDynamicsCompressor(), so the master bus has no limiter.'
     );
-    input.connect(output);
-    return { input };
+    return finish(input);
   }
 
   const settings = { ...DEFAULTS, ...(limiter === true ? {} : limiter) };
@@ -135,9 +221,7 @@ export function createMasterBus(ctx: AudioContextLike, options: MasterBusOptions
       ctx.currentTime
     );
     compressor.connect(makeup);
-    makeup.connect(output);
-  } else {
-    compressor.connect(output);
+    return finish(makeup, compressor);
   }
-  return { input, compressor };
+  return finish(compressor, compressor);
 }

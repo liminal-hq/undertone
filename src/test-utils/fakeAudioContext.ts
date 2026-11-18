@@ -20,7 +20,8 @@ import type {
   PeriodicWaveLike,
   RenderedAudioBufferLike,
   StereoPannerNodeLike,
-  AudioBufferSourceNodeLike
+  AudioBufferSourceNodeLike,
+  WaveShaperNodeLike
 } from '../types';
 
 export type AutomationCall =
@@ -164,6 +165,11 @@ export class FakeDynamicsCompressorNode extends FakeNode implements DynamicsComp
   release = new FakeAudioParam();
 }
 
+export class FakeWaveShaperNode extends FakeNode implements WaveShaperNodeLike {
+  curve: Float32Array | null = null;
+  oversample: WaveShaperNodeLike['oversample'] = 'none';
+}
+
 export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
   maxChannelCount = 2;
   channelCount = 2;
@@ -219,8 +225,12 @@ export class FakeAudioContext implements AudioContextLike {
       bareParams?: boolean;
       noPeriodicWave?: boolean;
       noCompressor?: boolean;
+      noWaveShaper?: boolean;
     } = {}
   ) {
+    if (options.noWaveShaper) {
+      (this as { createWaveShaper?: unknown }).createWaveShaper = undefined;
+    }
     if (options.noCompressor) {
       (this as { createDynamicsCompressor?: unknown }).createDynamicsCompressor = undefined;
     }
@@ -256,6 +266,7 @@ export class FakeAudioContext implements AudioContextLike {
   readonly delays: FakeDelayNode[] = [];
   readonly periodicWaves: FakePeriodicWave[] = [];
   readonly compressors: FakeDynamicsCompressorNode[] = [];
+  readonly waveShapers: FakeWaveShaperNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
     const node = this.bare(new FakeOscillatorNode(), 'frequency');
@@ -308,6 +319,12 @@ export class FakeAudioContext implements AudioContextLike {
   createDynamicsCompressor(): FakeDynamicsCompressorNode {
     const node = new FakeDynamicsCompressorNode();
     this.compressors.push(node);
+    return node;
+  }
+
+  createWaveShaper(): FakeWaveShaperNode {
+    const node = new FakeWaveShaperNode();
+    this.waveShapers.push(node);
     return node;
   }
 
@@ -413,7 +430,8 @@ export class FakeOfflineAudioContext extends FakeAudioContext implements Offline
       this.bufferSources.length +
       this.convolvers.length +
       this.delays.length +
-      this.compressors.length
+      this.compressors.length +
+      this.waveShapers.length
     );
   }
 
@@ -472,7 +490,8 @@ export function recordedGraph(ctx: FakeAudioContext): Record<string, unknown[]> 
     bufferSource: ctx.bufferSources,
     convolver: ctx.convolvers,
     delay: ctx.delays,
-    compressor: ctx.compressors
+    compressor: ctx.compressors,
+    waveShaper: ctx.waveShapers
   } as const;
   const names = new Map<unknown, string>([[ctx.destination, 'destination']]);
   for (const [kind, nodes] of Object.entries(kinds)) {
@@ -493,6 +512,9 @@ export function recordedGraph(ctx: FakeAudioContext): Record<string, unknown[]> 
       return Array.from({ length: value.numberOfChannels }, (_, c) =>
         Array.from(value.getChannelData(c))
       );
+    }
+    if (value instanceof Float32Array) {
+      return Array.from(value);
     }
     if (value instanceof FakePeriodicWave) {
       return [Array.from(value.real), Array.from(value.imag), value.constraints];

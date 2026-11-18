@@ -1,12 +1,13 @@
-// Tests for the opt-in master bus: graph shape, limiter settings, and the surround and fallback guards
+// Tests for the opt-in master bus: graph shape, limiter settings, the ceiling, and the surround and fallback guards
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { note } from './control';
-import { createMasterBus } from './masterBus';
-import { FakeAudioContext } from './test-utils/fakeAudioContext';
+import { ceilingCurve, createMasterBus } from './masterBus';
+import { renderToBuffer } from './render';
+import { FakeAudioContext, fakeOfflineFactory } from './test-utils/fakeAudioContext';
 import { resetWarnings } from './warn';
 
 /** The value of the first automation call recorded on a fake param. */
@@ -136,5 +137,128 @@ describe('createMasterBus', () => {
 
     expect(ctx.gains[2].connectedTo).toEqual([bus.input]);
     expect(ctx.destination.connectedTo).toEqual([]);
+  });
+});
+
+/** A wave shaper's output for one sample, as the Web Audio specification defines it (no oversampling). */
+function shape(curve: Float32Array, x: number): number {
+  const v = ((curve.length - 1) / 2) * (x + 1);
+  if (v <= 0) {
+    return curve[0];
+  }
+  if (v >= curve.length - 1) {
+    return curve[curve.length - 1];
+  }
+  const k = Math.floor(v);
+  const f = v - k;
+  return (1 - f) * curve[k] + f * curve[k + 1];
+}
+
+describe('createMasterBus ceiling', () => {
+  it('adds no node without a ceiling', () => {
+    const ctx = new FakeAudioContext();
+    const bus = createMasterBus(ctx);
+    expect(ctx.waveShapers).toHaveLength(0);
+    expect(bus.clipper).toBeUndefined();
+  });
+
+  it('puts a clip after the makeup compensation, as the last stage before the output', () => {
+    const ctx = new FakeAudioContext();
+
+    const bus = createMasterBus(ctx, { ceiling: -1 });
+
+    const [, makeup] = ctx.gains;
+    expect(ctx.waveShapers).toEqual([bus.clipper]);
+    expect(bus.input.connectedTo).toEqual([bus.compressor]);
+    expect(bus.compressor?.connectedTo).toEqual([makeup]);
+    expect(makeup.connectedTo).toEqual([bus.clipper]);
+    expect(bus.clipper?.connectedTo).toEqual([ctx.destination]);
+    expect(bus.clipper?.oversample).toBe('none');
+  });
+
+  it('follows the compressor, or the input, when there is no makeup or no limiter', () => {
+    const noMakeup = new FakeAudioContext();
+    const bus = createMasterBus(noMakeup, { ceiling: -1, limiter: { compensate: false } });
+    expect(bus.compressor?.connectedTo).toEqual([bus.clipper]);
+
+    const noLimiter = new FakeAudioContext();
+    const plain = createMasterBus(noLimiter, { ceiling: -1, limiter: false });
+    expect(plain.input.connectedTo).toEqual([plain.clipper]);
+    expect(plain.clipper?.connectedTo).toEqual([noLimiter.destination]);
+  });
+
+  it('still clips a surround output, where the limiter is skipped', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const ctx = new FakeAudioContext();
+    ctx.destination.channelCount = 6;
+
+    const bus = createMasterBus(ctx, { ceiling: -0.5 });
+
+    expect(bus.compressor).toBeUndefined();
+    expect(bus.input.connectedTo).toEqual([bus.clipper]);
+    expect(bus.clipper?.connectedTo).toEqual([ctx.destination]);
+  });
+
+  it('skips the ceiling, warning once, without createWaveShaper', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const ctx = new FakeAudioContext({ noWaveShaper: true });
+
+    const bus = createMasterBus(ctx, { ceiling: -1 });
+    createMasterBus(ctx, { ceiling: -1 });
+
+    expect(bus.clipper).toBeUndefined();
+    expect(ctx.gains[1].connectedTo).toEqual([ctx.destination]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('no ceiling');
+  });
+
+  it('rejects a ceiling above full scale or not a level', () => {
+    const ctx = new FakeAudioContext();
+    expect(() => createMasterBus(ctx, { ceiling: 0.5 })).toThrow(/0 dBFS or below/);
+    expect(() => createMasterBus(ctx, { ceiling: Number.NaN })).toThrow(/0 dBFS or below/);
+    expect(() => createMasterBus(ctx, { ceiling: -Infinity })).toThrow(/finite/);
+  });
+
+  it('builds an odd, symmetric curve: the identity, clamped to the ceiling', () => {
+    const level = 10 ** (-1 / 20);
+    const curve = ceilingCurve(level);
+    const middle = (curve.length - 1) / 2;
+    expect(curve.length % 2).toBe(1);
+    expect(curve[middle]).toBe(0);
+    expect(curve[0]).toBe(-curve[curve.length - 1]);
+    expect(curve[curve.length - 1]).toBeLessThan(level);
+    expect(curve[curve.length - 1]).toBeCloseTo(level, 6);
+    expect(curve[middle + 1024]).toBeCloseTo(0.5, 6);
+  });
+
+  it('holds a loud transient to the ceiling and leaves quieter samples alone', () => {
+    const level = 10 ** (-0.3 / 20);
+    const curve = ceilingCurve(level);
+    // A 1 kHz tone at 0.5 with a 2 ms burst peaking at 1.10, as a limiter's 3 ms attack lets through, and one at 3.
+    const input = Array.from({ length: 480 }, (_, i) => {
+      const tone = 0.5 * Math.sin((2 * Math.PI * 1000 * i) / 48000);
+      const burst = i >= 100 && i < 196 ? 1.1 * Math.sin((Math.PI * (i - 100)) / 96) : 0;
+      return i === 300 ? 3 : i === 301 ? -3 : tone + burst;
+    });
+    expect(Math.max(...input.map(Math.abs))).toBe(3);
+
+    const output = input.map((x) => shape(curve, x));
+
+    expect(Math.max(...output.map(Math.abs))).toBeLessThanOrEqual(level);
+    expect(output[300]).toBeCloseTo(level, 6);
+    expect(output[301]).toBeCloseTo(-level, 6);
+    input.forEach((x, i) => {
+      if (Math.abs(x) < level - 0.001) {
+        expect(Math.abs(output[i] - x)).toBeLessThan(1e-6);
+      }
+    });
+  });
+
+  it('reaches a render through its master options', async () => {
+    const context = fakeOfflineFactory();
+    await renderToBuffer(note('c3'), { master: { ceiling: -0.1 }, context });
+    const ctx = context.contexts[0];
+    expect(ctx.waveShapers).toHaveLength(1);
+    expect(ctx.waveShapers[0].connectedTo).toEqual([ctx.destination]);
   });
 });
