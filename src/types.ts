@@ -133,6 +133,27 @@ export interface VoiceParams {
    */
   panPath?: PanPoint[];
   /**
+   * Autopan: a low-frequency oscillator, at this rate in Hz, that swings the
+   * pan either side of the voice's pan (or of its path or slide), from the
+   * onset through the release. Creates the panner even without `pan`. No LFO
+   * when unset or not positive. Ignored when `channelGains` is set.
+   */
+  autopan?: number;
+  /** How far the autopan swings either side of the voice's pan, 0 to 1 (clamped). Default 1. The panner clamps the sum to -1..1. */
+  autopanDepth?: number;
+  /** The autopan LFO's wave: 'sine' (default), 'triangle' or 'square'. */
+  autopanShape?: 'sine' | 'triangle' | 'square';
+  /** Where in its cycle the autopan starts, as a fraction of a cycle (wrapped into 0..1). Default 0: a sine or triangle starts at the centre moving right, a square on the right. */
+  autopanPhase?: number;
+  /**
+   * Pan slide: the voice starts at this pan (-1 to 1) and moves linearly to
+   * its own pan (the centre without one) over `panSlideTime`. A `panPath`
+   * takes precedence over it.
+   */
+  panSlideFrom?: number;
+  /** Seconds the pan slide takes. Default: the voice's attack. */
+  panSlideTime?: number;
+  /**
    * Pan law: each side's level at the centre in dB, -6 to 0 (clamped). Unset
    * or -3 keeps the stereo panner's equal-power law (about -3 dB each side at
    * the centre). Any other value places a panned voice with one gain per side,

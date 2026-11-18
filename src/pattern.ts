@@ -19,6 +19,7 @@ import {
   type LoopOptions,
   type PlayOptions
 } from './scheduler.js';
+import { AUTOPAN_SHAPES } from './autopan.js';
 import { renderToBuffer } from './render.js';
 import type { RenderOptions } from './render.js';
 import type { RenderedAudioBufferLike } from './types.js';
@@ -624,6 +625,81 @@ export class Pattern<T> {
         }
       }
     });
+  }
+
+  /**
+   * Pan slide (the pan's own slide()): each note starts at pan `from` and
+   * moves linearly to its pan (the centre without one) over `seconds`, or over
+   * the note's attack when omitted. Accepts a mini-notation string for `from`;
+   * `seconds` is scalar. A panpath() takes precedence.
+   */
+  panslide(
+    this: Pattern<ControlPatch>,
+    from: number | string,
+    seconds?: number
+  ): Pattern<ControlPatch> {
+    if (seconds !== undefined && !(seconds >= 0 && Number.isFinite(seconds))) {
+      throw new Error(`panslide() time must be zero or more seconds, got ${seconds}`);
+    }
+    const timed = seconds === undefined ? this : this.withPatch({ panSlideTime: seconds });
+    return timed.withControlPattern('panSlideFrom', from, {
+      validate: (v) => {
+        if (v < -1 || v > 1) {
+          throw new Error(`panslide() start must be between -1 and 1, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Autopan: an LFO at `hz` swings each note's pan either side of its pan()
+   * (or its panpath() or panslide()), from the onset through the release, as
+   * a real oscillator on the panner, not booked points. Shape it with
+   * autopandepth(), autopanshape() and autopanphase(). Accepts a
+   * mini-notation string to pattern it.
+   */
+  autopan(this: Pattern<ControlPatch>, hz: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('autopan', hz, {
+      validate: (v) => {
+        if (!(v > 0) || !Number.isFinite(v)) {
+          throw new Error(`autopan() rate must be positive, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** How far autopan() swings either side of the pan, 0 to 1 (default 1). Accepts a mini-notation string. */
+  autopandepth(this: Pattern<ControlPatch>, depth: number | string): Pattern<ControlPatch> {
+    return this.withControlPattern('autopanDepth', depth, {
+      validate: (v) => {
+        if (!(v >= 0 && v <= 1)) {
+          throw new Error(`autopandepth() must be between 0 and 1, got ${v}`);
+        }
+      }
+    });
+  }
+
+  /** The autopan() LFO's wave: 'sine' (default), 'triangle' or 'square'. Not patternable. */
+  autopanshape(
+    this: Pattern<ControlPatch>,
+    shape: 'sine' | 'triangle' | 'square'
+  ): Pattern<ControlPatch> {
+    if (!AUTOPAN_SHAPES.includes(shape)) {
+      throw new Error(`autopanshape() must be sine, triangle or square, got ${String(shape)}`);
+    }
+    return this.withPatch({ autopanShape: shape });
+  }
+
+  /**
+   * Where in its cycle autopan() starts, 0 to 1 of a cycle (default 0: a sine
+   * or triangle starts at the pan moving right, a square on the right; 0.5
+   * starts the other way). Not patternable.
+   */
+  autopanphase(this: Pattern<ControlPatch>, phase: number): Pattern<ControlPatch> {
+    if (!(phase >= 0 && phase <= 1)) {
+      throw new Error(`autopanphase() must be between 0 and 1, got ${phase}`);
+    }
+    return this.withPatch({ autopanPhase: phase });
   }
 
   /**

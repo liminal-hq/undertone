@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import type { PlaybackHandle } from './engine.js';
+import { AUTOPAN_SHAPES } from './autopan.js';
 import { Fraction } from './fraction.js';
 import { midiToFrequency } from './pitch.js';
 import { Pattern } from './pattern.js';
@@ -41,8 +42,27 @@ export interface ScoreEvent {
    * and holds the last value, through the release too.
    */
   panPath?: readonly ScorePanPoint[];
+  /**
+   * An autopan LFO on this note: one cycle every `periodTicks` (a whole number
+   * of ticks), swinging `depth` (0 to 1) either side of the note's pan, with an
+   * optional `shape` (default 'sine') and starting `phase` (0 to 1 of a cycle,
+   * default 0). Carried into the `autopan` voice controls in Hz.
+   */
+  autopan?: ScoreAutopan;
   /** Any further voice controls for this one note, such as an instrument from `fmVoice()`. */
   voice?: ControlPatch;
+}
+
+/** A score event's autopan, in ticks like the event's other fields. */
+export interface ScoreAutopan {
+  /** Ticks per LFO cycle, a whole number of at least 1. */
+  periodTicks: number;
+  /** Swing either side of the note's pan, 0 to 1. */
+  depth: number;
+  /** The LFO's wave. Default 'sine'. */
+  shape?: 'sine' | 'triangle' | 'square';
+  /** Where in its cycle the LFO starts, 0 to 1. Default 0. */
+  phase?: number;
 }
 
 export interface ScoreDefinition {
@@ -113,6 +133,36 @@ function compilePanPath(
   });
 }
 
+/** A score event's autopan as voice controls, checked: a whole-tick period, a depth and phase in 0..1, a known shape. */
+function compileAutopan(
+  autopan: ScoreAutopan,
+  onset: number,
+  ticksPerSecond: number
+): ControlPatch {
+  requireInteger(autopan.periodTicks, 'autopan periodTicks', 1);
+  if (!(autopan.depth >= 0 && autopan.depth <= 1)) {
+    throw new Error(
+      `score() autopan depth must be between 0 and 1, got ${autopan.depth} (event at tick ${onset})`
+    );
+  }
+  if (autopan.shape !== undefined && !AUTOPAN_SHAPES.includes(autopan.shape)) {
+    throw new Error(
+      `score() autopan shape must be sine, triangle or square, got ${String(autopan.shape)} (event at tick ${onset})`
+    );
+  }
+  if (autopan.phase !== undefined && !(autopan.phase >= 0 && autopan.phase <= 1)) {
+    throw new Error(
+      `score() autopan phase must be between 0 and 1, got ${autopan.phase} (event at tick ${onset})`
+    );
+  }
+  return {
+    autopan: ticksPerSecond / autopan.periodTicks,
+    autopanDepth: autopan.depth,
+    ...(autopan.shape !== undefined && { autopanShape: autopan.shape }),
+    ...(autopan.phase !== undefined && { autopanPhase: autopan.phase })
+  };
+}
+
 /**
  * Compiles explicitly timed events into a looping pattern. Pattern time stays
  * in exact fractions of the cue (`tick / lengthTicks`), so repeats land on the
@@ -153,6 +203,9 @@ export function score(definition: ScoreDefinition): Score {
       duration: gateTicks / ticksPerSecond
     };
     if (panLaw !== undefined && value.panLaw === undefined) value.panLaw = panLaw;
+    if (event.autopan !== undefined) {
+      Object.assign(value, compileAutopan(event.autopan, event.tick, ticksPerSecond));
+    }
     if (event.level !== undefined) value.velocity = event.level;
     if (event.pan !== undefined) value.pan = event.pan;
     if (event.panPath !== undefined && event.panPath.length > 0) {
