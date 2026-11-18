@@ -22,6 +22,7 @@
     "typecheck:docs": "tsc -p docs/.vitepress/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bench": "vitest bench --run",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

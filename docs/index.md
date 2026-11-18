@@ -42,6 +42,15 @@ features:
   - icon: '🔊'
     title: Stereo to 7.1 surround
     details: Per-voice pan, raw per-speaker gains, or equal-power placement at an angle on the speaker ring — with automatic stereo fold-down on plain hardware, so surround code is safe to ship speculatively.
+  - icon: '↔️'
+    title: Moving the pan
+    details: Slide, sweep or wobble the pan inside a held note with panpath(), panslide() and an LFO autopan, and choose the pan law. Each has a live example in the playground.
+  - icon: '🔔'
+    title: FM, instruments and scores
+    details: FM controls, shaped waves, instruments kept as plain data, layering, tick-timed scores and seeded human variation — enough to voice a whole retro cue without a sample.
+  - icon: '💾'
+    title: Offline render and WAV export
+    details: Render any pattern or score to an AudioBuffer on an OfflineAudioContext, behind the same limiter (with an optional hard ceiling), and encode it as a 16, 24 or 32-bit WAV file.
 ---
 
 ## Sixty seconds of undertone
@@ -53,7 +62,7 @@ bun add @liminal-hq/undertone
 
 A one-shot game sound effect and a looped, polyphonic track, from the same API:
 
-```ts
+```ts standalone
 import { note, rev, stack } from '@liminal-hq/undertone';
 
 // One-shot SFX — call it from a click handler (autoplay policy):
@@ -76,7 +85,7 @@ Every constructor returns an immutable `Pattern`; every chained call returns a n
 
 - **[Getting started](/guide/getting-started)** — the mental model and your first sounds, building up through [mini-notation](/guide/mini-notation), [scales and chords](/guide/melody-and-harmony), [samples](/guide/samples), [effects](/guide/effects), and [full arrangements](/guide/arranging-songs).
 - **[Try it live](/playground)** — a live pattern editor in the browser, no install required.
-- **[Recipes](/recipes)** — complete, runnable patterns to copy and adapt: a drum machine, an ambient pad, a game-SFX kit, a multi-section song.
+- **[Recipes](/recipes)** — complete, runnable patterns to copy and adapt: a drum machine, an ambient pad, a game-SFX kit, a multi-section song, moving the pan, safe loud mixes and long renders.
 - **[Coming from Strudel](/coming-from-strudel)** — already write Strudel? The vocabulary transfers; here are the differences that actually matter.
 - **[API reference](/api/)** — every exported function, class, and type, generated from the source.
 

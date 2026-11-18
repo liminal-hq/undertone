@@ -6,11 +6,13 @@ title: Recipes
 
 Complete patterns to copy, run, and bend into your own. Each one works as written — the synth-only recipes need no assets at all. Two ground rules apply to all of them: the first `play()` or `loop()` in your app must happen inside a user gesture (click, tap, keypress — browser autoplay policy), and every `loop()` returns a handle whose `stop()` ends it.
 
+A code block marked `ts standalone` runs as written: it imports everything it uses, defines everything it refers to, and plays or renders what it builds. The test suite executes every such block against the library on a fake `AudioContext` (`src/docSnippets.test.ts`), on this page, the guides and the README, so a missing import or a pattern that is built but never played fails the build. A plain `ts` block is a fragment that depends on its surroundings, and says so.
+
 ## A drum machine, no samples required
 
 Kick, snare, and hats synthesized from scratch: the kick is a low sine with a downward pitch `slide` (the classic thump), the snare is highpassed white noise over a short tone, and the hats are eighth-note white noise with a patterned gain for accents.
 
-```ts
+```ts standalone
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 const kick = note('c1 ~ [~ c1] ~')
@@ -39,7 +41,7 @@ Things to bend: swap the kick's rhythm for a euclidean `note('c1(3,8)')`, push t
 
 If you have recordings, register them and let `s()` drive the same rhythms. `.bank('TR808')` makes `bd` look up `TR808_bd` first, so swapping kits is a one-word change.
 
-```ts
+```ts standalone
 import { loadSamples, registerSamples, s, stack } from '@liminal-hq/undertone';
 
 registerSamples({
@@ -62,7 +64,7 @@ Undertone bundles no samples — see the [samples guide](/guide/samples) for reg
 
 Three slow layers on a 4-second cycle (`bpm: 60`): a chord progression voiced into real pitches, a filtered sawtooth drone with a slow phaser, and a sparse pentatonic shimmer echoing through a delay. The pad and drone share reverb on orbit 1; the shimmer gets its own delay bus on orbit 2 so the two effect characters don't fight (see [effects](/guide/effects) for why orbits exist).
 
-```ts
+```ts standalone
 import { chord, n, note, stack } from '@liminal-hq/undertone';
 
 const pad = chord('<Am9 FM7 CM7 G6>')
@@ -112,7 +114,7 @@ The long attacks only work because `loop()` gates each envelope by its event's l
 
 One-shots want the opposite envelope: near-zero attack, short decay, `sustain: 0`. Build the patterns once at module scope, then call `.play()` whenever the game event fires — patterns are immutable, so one object serves unlimited plays. These four are adapted from the [playground](/playground)'s "Game SFX" examples:
 
-```ts
+```ts standalone
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 // Menu click / toggle: a bright sine tick with a tiny noise transient.
@@ -174,9 +176,12 @@ export const fanfare = stack(
     .nudge(0.18),
   note('c6').sound('sine').attack(0.002).decay(0.3).release(0.2).gain(0.4).lpf(5000).nudge(0.27)
 );
+
+// Play one from a click, tap or keypress (autoplay policy):
+fanfare.play();
 ```
 
-Wiring it up is just calling `.play()` in your handlers:
+Wiring it up is just calling `.play()` in your handlers, here on the kit above:
 
 ```ts
 buyButton.addEventListener('click', () => cashIn.play());
@@ -189,7 +194,7 @@ Two one-shot habits worth building: `nudge(seconds)` is how you arpeggiate insid
 
 A sawtooth line where the movement comes from patterned parameters: the resting cutoff walks between values per cycle via a `<...>` alternation in `.lpf()`, a filter envelope snaps each note open, and `jux(rev)` plays the reversed line hard right against the original hard left.
 
-```ts
+```ts standalone
 import { note, rev } from '@liminal-hq/undertone';
 
 const acid = note('a1 [a1 a2] c2 <e2 g1>')
@@ -216,7 +221,7 @@ Every numeric control takes a mini-notation string like that `.lpf()` — see [p
 
 `arrange()` plays each `[cycles, pattern]` entry for its span of whole cycles, then loops the whole thing. Build sections from shared parts, then lay them out — this reuses the drum machine from the first recipe:
 
-```ts
+```ts standalone
 import { arrange, chord, n, note, sound, stack } from '@liminal-hq/undertone';
 
 // The drum machine from the first recipe, condensed.
@@ -270,7 +275,7 @@ You don't need FM to get most of the way to a rich, FM-flavoured sound. These fo
 
 In a two-operator FM voice, a quick-decaying modulator gives a bright attack that mellows as the note settles. A lowpass with a filter envelope does the same job: it opens at the attack and closes as the note sustains. Remember that `.lpenv()` is added on top of `.lpf()`, so the filter peaks at `lpf + lpenv`.
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 const pluck = note('e4 g4 b4 a4')
@@ -294,7 +299,7 @@ pluck.loop({ bpm: 100 });
 
 Two voices on the same notes, with a different waveform, more sustain, a few milliseconds of `.nudge()` and opposite `.pan()` positions, sound much fuller than either alone. The tiny start offset reads as width rather than as an echo.
 
-```ts
+```ts standalone
 import { note, stack } from '@liminal-hq/undertone';
 
 const melody = 'e5 g5 b5 a5';
@@ -311,8 +316,8 @@ lead.loop({ bpm: 110 });
 
 A note's gate (how long the key is held) and its release (how long it rings afterwards) are separate ideas. In a looped pattern each event is held for its own share of the cycle, then released, so a long `.release()` gives a short hit with a ringing body. For drums, use very short notes with a fast decay and a `.slide()`.
 
-```ts
-import { note } from '@liminal-hq/undertone';
+```ts standalone
+import { note, stack } from '@liminal-hq/undertone';
 
 // Short notes, long ring-out: a mallet-like tone.
 const mallet = note('c5 e5 g5 e5*2')
@@ -325,23 +330,27 @@ const mallet = note('c5 e5 g5 e5*2')
 
 // A tom: a very short note with a quick downward slide.
 const tom = note('a2 ~ ~ ~').sound('sine').decay(0.15).release(0.05).slide(0.08).gain(0.7);
+
+stack(mallet, tom).loop({ bpm: 100 });
 ```
 
 ### Dynamics in `.gain()`
 
 Keep one instrument definition and put the expression in the gain pattern, so a ghost note and an accent are the same instrument at different levels rather than two different sounds.
 
-```ts
+```ts standalone
 import { note } from '@liminal-hq/undertone';
 
 const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
+
+groove.loop({ bpm: 120 });
 ```
 
 ### Keeping a dense mix in range
 
 Undertone writes straight to the speakers, so a busy cue can peak at or above full scale. `createMasterBus()` puts a gain stage and a limiter in front of the destination; pass its `input` as the `output` of everything that should share it.
 
-```ts
+```ts standalone
 import { createMasterBus, note, stack } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -356,3 +365,212 @@ music.loop({ ctx, output: bus.input });
 ```
 
 Browsers' compressors add automatic makeup gain, which would make a limited mix louder and push peaks back up. The bus takes that makeup back out (`limiter: { compensate: false }` keeps it), so the threshold, -2 dB by default, is close to the ceiling. It is a fast compressor rather than a true brick-wall limiter, so brief peaks can still pass the threshold. The bus is an ordinary object you hold, so a game can make one for music and another for effects. The limiter steps aside above two output channels (a compressor would fold surround to stereo), and the gain stage keeps working.
+
+When a file or a stream must never pass a level, add a `ceiling` in dBFS: `createMasterBus(ctx, { ceiling: -0.3 })`, or `render({ master: { ceiling: -0.3 } })`. It is a hard clip after everything else on the bus: samples below the ceiling pass unchanged, and a sample above it is set to the ceiling. A render with `wrap: true` is clamped to it again after the tail is folded onto the start, so the returned file holds the ceiling too. The limiter still does the work of keeping the mix down; the clip only catches what its 3 ms attack lets through, so it should touch a few samples, not the music. It is off by default, and without it the bus is exactly the gain stage and limiter above.
+
+Why a clip and not a look-ahead limiter: a look-ahead limiter delays the signal and turns the gain down before a peak arrives, which needs the level of the signal ahead of the playhead. Web Audio's built-in nodes cannot measure a level and drive a gain from it (the compressor's detector is not exposed), so it would need an `AudioWorklet`, which Undertone does not use. A wave shaper is a built-in node, costs one node per bus and no latency, and guarantees the ceiling for every sample. The price is that an over that does reach it is clipped, which is distortion; keep the limiter's threshold below the ceiling so that is rare. It bounds sample values, not the peaks a DAC reconstructs between samples, so leave a fraction of a dB for those.
+
+## Moving the pan
+
+Four ways to move a sound across the stereo field, from the smallest change to the most control. Each one is an example in the [playground](/playground) under "Moving the pan". The [stereo guide](/guide/stereo-and-surround#moving-the-pan-panpath-panslide-and-autopan) has the full reference.
+
+A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds (it is in hertz, so it does not follow `bpm`).
+
+```ts standalone
+import { chord } from '@liminal-hq/undertone';
+
+chord('<Dm9 Gm9 Bbmaj7 A7>')
+  .voicing()
+  .sound('triangle')
+  .attack(0.4)
+  .sustain(0.8)
+  .release(1)
+  .lpf(1800)
+  .gain(0.25)
+  .room(0.4)
+  .autopan(0.25)
+  .autopandepth(0.7)
+  .loop({ bpm: 70 });
+```
+
+A lead that flies in from the left: `.panslide(from, seconds)` is `.slide()` for the pan. Each note starts at `from` and moves to its own `.pan()`.
+
+```ts standalone
+import { note } from '@liminal-hq/undertone';
+
+note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop({ bpm: 100 });
+```
+
+A melody with a path inside each note: `{ time, pan }` points ramp, and an array of pans steps frame by frame.
+
+```ts standalone
+import { cat, note } from '@liminal-hq/undertone';
+
+// A sweep from hard right to hard left over half a second, every note.
+const sweep = note('a2 e3 a3 c4')
+  .sound('sawtooth')
+  .legato(1)
+  .panpath([
+    { time: 0, pan: 1 },
+    { time: 0.5, pan: -1 }
+  ]);
+
+// A flutter, 30 frames a second, that settles in the centre.
+const flutter = note('c4 e4 g4 e4')
+  .sound('square')
+  .legato(1)
+  .panpath([-0.8, 0.8, -0.8, 0.8, -0.4, 0.4, 0], 30);
+
+// One cycle of each, over and over.
+cat(sweep, flutter).loop({ bpm: 100 });
+```
+
+Hats can drift across the field one hit at a time with a signal, instead of a path inside each note. `.pan(sine2.slow(4))` reads a bipolar sine at each hat's onset, so the field is swept once every four cycles (use `sine2`, not `sine`: pan runs -1 to 1):
+
+```ts standalone
+import { sine2, sound } from '@liminal-hq/undertone';
+
+sound('white*8').attack(0.001).decay(0.03).gain(0.4).pan(sine2.slow(4)).loop({ bpm: 120 });
+```
+
+Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
+
+```ts standalone
+import { cat, note } from '@liminal-hq/undertone';
+
+const crossing = note('c3 e3 g3 e3 c4 e4 g4 e4')
+  .sound('triangle')
+  .pan('-1 -0.5 0 0.5 1 0.5 0 -0.5');
+
+cat(crossing.panlaw(-6), crossing.panlaw(-3), crossing.panlaw(0)).loop({ bpm: 100 });
+```
+
+A path, a slide and an autopan can be combined: the path or slide sets the centre of the swing and the LFO adds to it. `.channels()` and `.surround()` take precedence over all of them.
+
+## Signals
+
+A signal is a value that changes through time (see the [Signals guide](/guide/signals)), and any numeric control can read one. Each event reads it once, at its onset.
+
+A bass with a filter that wanders on its own: `perlin` is smooth random motion, and `.range()` puts it between two frequencies.
+
+```ts standalone
+import { note, perlin } from '@liminal-hq/undertone';
+
+note('c2*8')
+  .sound('sawtooth')
+  .decay(0.2)
+  .sustain(0.2)
+  .lpf(perlin.range(300, 2400))
+  .gain(0.35)
+  .loop({ bpm: 110 });
+```
+
+Random accents that come out the same every time you play: a random signal is a pure function of its seed and the time, so `.seed(7)` gives the same sequence of velocities on every run and in every render. The sequence does not repeat from one cycle to the next, because each cycle reads its own stretch of time. To repeat one cycle's accents, wrap the signal in `arrange([1, …])`, which makes it live through its first cycle again every cycle. Change the seed for another take.
+
+```ts standalone
+import { arrange, rand, sound } from '@liminal-hq/undertone';
+
+sound('white*16')
+  .attack(0.001)
+  .decay(0.03)
+  .gain(0.35)
+  .hpf(6000)
+  .velocity(arrange([1, rand.seed(7).range(0.3, 1)]))
+  .loop({ bpm: 120 });
+```
+
+An autopan whose LFO carries on from where the last note left it, as if one LFO ran under the whole loop. `.autopanphase()` takes a pattern, and the phase a note needs at its onset is `hz × seconds` modulo 1, which is `saw` sped up to turn that many times per pattern cycle. A cycle is four beats, so at 80 BPM it lasts three seconds, and a 0.5 Hz LFO turns 1.5 times in it. `saw.fast(1.5)` then reads 0 at the first chord, 0.5 at the second, 0 at the third, and so on (the saw's own value is the fraction of a turn, and `autopanphase()` is a fraction of a turn too). Change the rate or the tempo and the phase signal follows.
+
+```ts standalone
+import { chord, saw } from '@liminal-hq/undertone';
+
+const bpm = 80;
+const lfoHz = 0.5;
+// A pattern cycle is four beats: 240 / bpm seconds (3 s at 80 BPM).
+const secondsPerCycle = 240 / bpm;
+// Turns of the LFO in one pattern cycle: 0.5 Hz x 3 s = 1.5. The saw repeats once a cycle,
+// so speeding it up by this many gives the LFO's phase (its fraction of a turn) at any onset.
+const turnsPerCycle = lfoHz * secondsPerCycle;
+
+chord('<Am7 Fmaj7>')
+  .voicing()
+  .sound('triangle')
+  .attack(0.2)
+  .sustain(0.7)
+  .gain(0.25)
+  .autopan(lfoHz)
+  .autopandepth(0.8)
+  .autopanphase(saw.fast(turnsPerCycle))
+  .loop({ bpm });
+```
+
+## Safe loud mixes
+
+A busy cue can peak above full scale, and a file you render should not clip when somebody plays it. Use the limiter to keep the mix down and the ceiling as the last guarantee. The same options work live, on a master bus, and offline, in `render()`:
+
+```ts standalone
+import { createMasterBus, encodeWav, note, stack } from '@liminal-hq/undertone';
+
+const loud = stack(
+  note('[c3,e3,g3,b3,d4]').sound('sawtooth').gain(0.9),
+  note('[c4,e4,g4,b4,d5]').sound('square').gain(0.9),
+  note('c2*4').sound('square').gain(0.9)
+);
+
+// Offline: the limiter alone can let a sharp transient past full scale.
+const limited = await loud.render({ cycles: 4, tail: 1 });
+
+// With a ceiling, no sample is louder than -0.3 dBFS.
+const safe = await loud.render({ cycles: 4, tail: 1, master: { ceiling: -0.3 } });
+const bytes = encodeWav(safe, { bitDepth: 24 });
+
+// Live, the same ceiling on a bus:
+const ctx = new AudioContext();
+const bus = createMasterBus(ctx, { ceiling: -0.3 });
+loud.loop({ ctx, output: bus.input });
+```
+
+The ceiling is a hard clip, so keep the limiter's threshold under it and let the clip catch only a few samples; if it is clipping often, turn the voices down. It bounds sample values, not the peaks a DAC reconstructs between samples, so leave a fraction of a dB. The playground has no export control or level meter, so these are for your own code. See [keeping a dense mix in range](#keeping-a-dense-mix-in-range) for the reasoning.
+
+## Long renders
+
+By default `render()` books every voice on the offline context before it starts. For a short cue that is the simplest thing, but a long score with thousands of notes can be slow on a renderer that processes every node from the moment it is made. `bookingWindow` books the score a window of seconds at a time, pausing the render between windows:
+
+```ts standalone
+import { arrange, encodeWav, note, stack } from '@liminal-hq/undertone';
+
+// Any pattern will do; this is 16 cycles of a bass and a lead.
+const song = arrange(
+  [8, stack(note('<a1 f1 c2 g1>(3,8)').sound('square').lpf(500), note('a4 c5 e5 c5').fm(1))],
+  [8, stack(note('<a1 f1 c2 g1>(3,8)').sound('square').lpf(500), note('e5 g5 b5 g5').fm(1))]
+);
+
+// A pattern renders one cycle unless you say how long: 16 cycles at 120 bpm (two seconds a cycle) is 32 s.
+const buffer = await song.render({
+  cycles: 16,
+  bpm: 120,
+  tail: 2, // so the last release rings out
+  seed: 7, // the same seed, tempo and sample rate give the same samples
+  bookingWindow: 1, // book one second of notes at a time
+  master: { ceiling: -0.3 }
+});
+const wav = encodeWav(buffer, { bitDepth: 24 });
+```
+
+Say the length with `cycles` (whole cycles) or `seconds`, never both; without either, a pattern renders a single cycle, which is two seconds at the default 120 bpm, whatever its `arrange()` sections add up to. A `score()` is different: its `render()` plays one pass of the whole score, which is its own length (`cue.seconds`) and can be minutes, so a long score is where `bookingWindow` matters most. It takes no `seconds` or tempo, because the score has its own (`cycles` would repeat the pass):
+
+```ts standalone
+import { encodeWav, fmPresets, score } from '@liminal-hq/undertone';
+
+const cue = score({
+  ticksPerSecond: 560,
+  lengthTicks: 560 * 60, // a minute; a real score has thousands of events in it
+  events: [{ tick: 0, note: 'e4', gate: 560, voice: fmPresets.lead }]
+});
+
+// One pass is 60 seconds, so book it in windows.
+const buffer = await cue.render({ tail: 2, bookingWindow: 1 });
+const wav = encodeWav(buffer, { bitDepth: 24 });
+```
+
+The audio is the same as booking up front: same voices, same order, same parameters. The window must be at least two render quanta (about 5 ms); a second or so is a good start. A context without `suspend()` and `resume()` falls back to booking everything up front, with a warning. It was measured on a Rust implementation of Web Audio, where it cut a 75-second score from 85 s to under 12 s; no browser has been measured. The whole render still lives in memory, so very long pieces may need to be rendered in sections. See [Rendering and export](/guide/rendering-and-export#booking-in-windows).

@@ -20,7 +20,8 @@ import type {
   PeriodicWaveLike,
   RenderedAudioBufferLike,
   StereoPannerNodeLike,
-  AudioBufferSourceNodeLike
+  AudioBufferSourceNodeLike,
+  WaveShaperNodeLike
 } from '../types';
 
 export type AutomationCall =
@@ -34,31 +35,44 @@ export type AutomationCall =
 export class FakeAudioParam implements AudioParamLike {
   value = 0;
   readonly calls: AutomationCall[] = [];
+  /** Rejects a negative or non-finite time with a RangeError, as a real AudioParam does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
+  private check(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
+  }
 
   setValueAtTime(value: number, time: number): this {
+    this.check('setValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'setValueAtTime', value, time });
     return this;
   }
 
   linearRampToValueAtTime(value: number, time: number): this {
+    this.check('linearRampToValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'linearRampToValueAtTime', value, time });
     return this;
   }
 
   exponentialRampToValueAtTime(value: number, time: number): this {
+    this.check('exponentialRampToValueAtTime', time);
     this.value = value;
     this.calls.push({ method: 'exponentialRampToValueAtTime', value, time });
     return this;
   }
 
   cancelScheduledValues(time: number): this {
+    this.check('cancelScheduledValues', time);
     this.calls.push({ method: 'cancelScheduledValues', time });
     return this;
   }
 
   setTargetAtTime(value: number, time: number, timeConstant: number): this {
+    this.check('setTargetAtTime', time);
     this.value = value;
     this.calls.push({ method: 'setTargetAtTime', value, time, timeConstant });
     return this;
@@ -95,12 +109,23 @@ export class FakeOscillatorNode extends FakeNode implements OscillatorNodeLike {
     this.type = 'custom';
   }
 
+  /** Rejects a negative or non-finite time, as a real source node does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
   start(when = 0): void {
+    this.checkTime('start', when);
     this.started.push(when);
   }
 
   stop(when = 0): void {
+    this.checkTime('stop', when);
     this.stopped.push(when);
+  }
+
+  private checkTime(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
   }
 }
 
@@ -125,7 +150,22 @@ export class FakeChannelMergerNode extends FakeNode implements ChannelMergerNode
 }
 
 export class FakeConvolverNode extends FakeNode implements ConvolverNodeLike {
-  buffer: AudioBufferLike | null = null;
+  private current: AudioBufferLike | null = null;
+  /** Each impulse response the convolver was given, with the context's time when it was. */
+  readonly bufferHistory: { time: number; buffer: AudioBufferLike | null }[] = [];
+
+  constructor(private readonly clock: () => number = () => 0) {
+    super();
+  }
+
+  get buffer(): AudioBufferLike | null {
+    return this.current;
+  }
+
+  set buffer(buffer: AudioBufferLike | null) {
+    this.current = buffer;
+    this.bufferHistory.push({ time: this.clock(), buffer });
+  }
 }
 
 export class FakeDelayNode extends FakeNode implements DelayNodeLike {
@@ -149,6 +189,11 @@ export class FakeDynamicsCompressorNode extends FakeNode implements DynamicsComp
   release = new FakeAudioParam();
 }
 
+export class FakeWaveShaperNode extends FakeNode implements WaveShaperNodeLike {
+  curve: Float32Array | null = null;
+  oversample: WaveShaperNodeLike['oversample'] = 'none';
+}
+
 export class FakeAudioDestinationNode extends FakeNode implements AudioDestinationNodeLike {
   maxChannelCount = 2;
   channelCount = 2;
@@ -162,12 +207,23 @@ export class FakeAudioBufferSourceNode extends FakeNode implements AudioBufferSo
   started: number[] = [];
   stopped: number[] = [];
 
+  /** Rejects a negative or non-finite time, as a real source node does. Set by FakeAudioContext's `strictTimes`. */
+  strictTimes = false;
+
   start(when = 0): void {
+    this.checkTime('start', when);
     this.started.push(when);
   }
 
   stop(when = 0): void {
+    this.checkTime('stop', when);
     this.stopped.push(when);
+  }
+
+  private checkTime(method: string, time: number): void {
+    if (this.strictTimes && !(Number.isFinite(time) && time >= 0)) {
+      throw new RangeError(`${method}: time must be a finite number of 0 or more, got ${time}`);
+    }
   }
 }
 
@@ -204,8 +260,14 @@ export class FakeAudioContext implements AudioContextLike {
       bareParams?: boolean;
       noPeriodicWave?: boolean;
       noCompressor?: boolean;
+      noWaveShaper?: boolean;
+      /** Makes every param automation call and start()/stop() throw a RangeError for a negative or non-finite time, as Web Audio does. */
+      strictTimes?: boolean;
     } = {}
   ) {
+    if (options.noWaveShaper) {
+      (this as { createWaveShaper?: unknown }).createWaveShaper = undefined;
+    }
     if (options.noCompressor) {
       (this as { createDynamicsCompressor?: unknown }).createDynamicsCompressor = undefined;
     }
@@ -213,6 +275,21 @@ export class FakeAudioContext implements AudioContextLike {
       // A wrapper context from before shaped waveforms: the method simply is not there.
       (this as { createPeriodicWave?: unknown }).createPeriodicWave = undefined;
     }
+  }
+
+  /** Switches on time checking for a new node's params (and its start/stop) when `strictTimes` is set. */
+  private strict<T extends object>(node: T): T {
+    if (this.options.strictTimes) {
+      for (const value of Object.values(node)) {
+        if (value instanceof FakeAudioParam) {
+          value.strictTimes = true;
+        }
+      }
+      if ('strictTimes' in node) {
+        (node as { strictTimes: boolean }).strictTimes = true;
+      }
+    }
+    return node;
   }
 
   private bare<T extends { gain?: FakeAudioParam; frequency?: FakeAudioParam }>(
@@ -241,27 +318,28 @@ export class FakeAudioContext implements AudioContextLike {
   readonly delays: FakeDelayNode[] = [];
   readonly periodicWaves: FakePeriodicWave[] = [];
   readonly compressors: FakeDynamicsCompressorNode[] = [];
+  readonly waveShapers: FakeWaveShaperNode[] = [];
 
   createOscillator(): FakeOscillatorNode {
-    const node = this.bare(new FakeOscillatorNode(), 'frequency');
+    const node = this.strict(this.bare(new FakeOscillatorNode(), 'frequency'));
     this.oscillators.push(node);
     return node;
   }
 
   createGain(): FakeGainNode {
-    const node = this.bare(new FakeGainNode(), 'gain');
+    const node = this.strict(this.bare(new FakeGainNode(), 'gain'));
     this.gains.push(node);
     return node;
   }
 
   createBiquadFilter(): FakeBiquadFilterNode {
-    const node = new FakeBiquadFilterNode();
+    const node = this.strict(new FakeBiquadFilterNode());
     this.filters.push(node);
     return node;
   }
 
   createStereoPanner(): FakeStereoPannerNode {
-    const node = new FakeStereoPannerNode();
+    const node = this.strict(new FakeStereoPannerNode());
     this.panners.push(node);
     return node;
   }
@@ -273,26 +351,32 @@ export class FakeAudioContext implements AudioContextLike {
   }
 
   createBufferSource(): FakeAudioBufferSourceNode {
-    const node = new FakeAudioBufferSourceNode();
+    const node = this.strict(new FakeAudioBufferSourceNode());
     this.bufferSources.push(node);
     return node;
   }
 
   createConvolver(): FakeConvolverNode {
-    const node = new FakeConvolverNode();
+    const node = new FakeConvolverNode(() => this.currentTime);
     this.convolvers.push(node);
     return node;
   }
 
   createDelay(): FakeDelayNode {
-    const node = new FakeDelayNode();
+    const node = this.strict(new FakeDelayNode());
     this.delays.push(node);
     return node;
   }
 
   createDynamicsCompressor(): FakeDynamicsCompressorNode {
-    const node = new FakeDynamicsCompressorNode();
+    const node = this.strict(new FakeDynamicsCompressorNode());
     this.compressors.push(node);
+    return node;
+  }
+
+  createWaveShaper(): FakeWaveShaperNode {
+    const node = new FakeWaveShaperNode();
+    this.waveShapers.push(node);
     return node;
   }
 
@@ -322,15 +406,39 @@ export interface FakeOfflineOptions {
   sampleRate: number;
   /** Fills each rendered channel; the default leaves silence. */
   fill?: (channel: number, data: Float32Array) => void;
+  /** Leaves out `suspend()` and `resume()`, like an offline context that cannot pause a render. */
+  noSuspend?: boolean;
 }
 
-/** A fake OfflineAudioContext: records nodes like FakeAudioContext, then "renders" a buffer on demand. */
+/** Frames in a render quantum: `suspend()` times are rounded down to a multiple of this. */
+const RENDER_QUANTUM_FRAMES = 128;
+
+/** What the fake saw at one pause of its render. */
+export interface FakeSuspension {
+  /** The pause's time on the context's clock, after quantizing. */
+  time: number;
+  /** Nodes created before the pause, so before anything booked at it. */
+  nodeCount: number;
+  /** The start time of every oscillator and buffer source created before the pause. */
+  startsBooked: number[];
+}
+
+/**
+ * A fake OfflineAudioContext: records nodes like FakeAudioContext, then "renders" a buffer on demand.
+ * Its `suspend()` pauses the render at a quantum boundary, sets `currentTime` there, records what had
+ * been booked in `suspensions`, and waits for `resume()`, as a real offline context does.
+ */
 export class FakeOfflineAudioContext extends FakeAudioContext implements OfflineAudioContextLike {
   readonly length: number;
   readonly numberOfChannels: number;
   /** Total nodes created before startRendering() was called. */
   nodeCountAtRender = -1;
   rendered = false;
+  /** Every pause the render made, in time order. */
+  readonly suspensions: FakeSuspension[] = [];
+  private readonly pauses: { frame: number; resolve: () => void }[] = [];
+  private renderedFrame = -1;
+  private resumeRender: (() => void) | undefined;
 
   constructor(private readonly offline: FakeOfflineOptions) {
     super();
@@ -339,9 +447,32 @@ export class FakeOfflineAudioContext extends FakeAudioContext implements Offline
     this.numberOfChannels = offline.numberOfChannels;
     this.destination.channelCount = offline.numberOfChannels;
     this.destination.maxChannelCount = offline.numberOfChannels;
+    if (offline.noSuspend) {
+      (this as { suspend?: unknown }).suspend = undefined;
+      (this as { resume?: unknown }).resume = undefined;
+    }
   }
 
-  private nodeCount(): number {
+  suspend(suspendTime: number): Promise<void> {
+    const frame =
+      Math.floor((suspendTime * this.sampleRate) / RENDER_QUANTUM_FRAMES) * RENDER_QUANTUM_FRAMES;
+    if (!(suspendTime >= 0) || frame >= this.length) {
+      return Promise.reject(new Error(`cannot suspend at ${suspendTime}: outside the render`));
+    }
+    if (frame <= this.renderedFrame || this.pauses.some((pause) => pause.frame === frame)) {
+      return Promise.reject(new Error(`cannot suspend at ${suspendTime}: frame ${frame} is taken`));
+    }
+    return new Promise((resolve) => this.pauses.push({ frame, resolve }));
+  }
+
+  resume(): Promise<void> {
+    const resumeRender = this.resumeRender;
+    this.resumeRender = undefined;
+    resumeRender?.();
+    return Promise.resolve();
+  }
+
+  nodeCount(): number {
     return (
       this.oscillators.length +
       this.gains.length +
@@ -351,18 +482,32 @@ export class FakeOfflineAudioContext extends FakeAudioContext implements Offline
       this.bufferSources.length +
       this.convolvers.length +
       this.delays.length +
-      this.compressors.length
+      this.compressors.length +
+      this.waveShapers.length
     );
   }
 
-  startRendering(): Promise<RenderedAudioBufferLike> {
+  async startRendering(): Promise<RenderedAudioBufferLike> {
     this.nodeCountAtRender = this.nodeCount();
+    this.pauses.sort((a, b) => a.frame - b.frame);
+    for (let pause = this.pauses.shift(); pause; pause = this.pauses.shift()) {
+      this.renderedFrame = pause.frame;
+      this.currentTime = pause.frame / this.sampleRate;
+      this.suspensions.push({
+        time: this.currentTime,
+        nodeCount: this.nodeCount(),
+        startsBooked: [...this.oscillators, ...this.bufferSources].map((node) => node.started[0])
+      });
+      const resumed = new Promise<void>((resolve) => (this.resumeRender = resolve));
+      pause.resolve();
+      await resumed;
+    }
     this.rendered = true;
     const buffer = new FakeAudioBuffer(this.numberOfChannels, this.length, this.sampleRate);
     for (let c = 0; c < this.numberOfChannels; c++) {
       this.offline.fill?.(c, buffer.getChannelData(c));
     }
-    return Promise.resolve(buffer);
+    return buffer;
   }
 }
 
@@ -380,4 +525,84 @@ export function fakeOfflineFactory(spy?: (ctx: FakeOfflineAudioContext) => void)
   };
   factory.contexts = contexts;
   return factory;
+}
+
+/**
+ * Every node a fake context made, as plain data a test can compare with `toEqual`: per kind in
+ * creation order, each node's settings, automation calls, starts and stops, buffers, and
+ * connections (named `<kind><index>`, `destination`, or `<node>.<param>` for a param).
+ */
+export function recordedGraph(ctx: FakeAudioContext): Record<string, unknown[]> {
+  const kinds = {
+    oscillator: ctx.oscillators,
+    gain: ctx.gains,
+    filter: ctx.filters,
+    panner: ctx.panners,
+    merger: ctx.mergers,
+    bufferSource: ctx.bufferSources,
+    convolver: ctx.convolvers,
+    delay: ctx.delays,
+    compressor: ctx.compressors,
+    waveShaper: ctx.waveShapers
+  } as const;
+  const names = new Map<unknown, string>([[ctx.destination, 'destination']]);
+  for (const [kind, nodes] of Object.entries(kinds)) {
+    (nodes as readonly object[]).forEach((node, index) => {
+      names.set(node, `${kind}${index}`);
+      for (const [key, value] of Object.entries(node)) {
+        if (value instanceof FakeAudioParam) {
+          names.set(value, `${kind}${index}.${key}`);
+        }
+      }
+    });
+  }
+  const plain = (value: unknown): unknown => {
+    if (value instanceof FakeAudioParam) {
+      return value.calls;
+    }
+    if (value instanceof FakeAudioBuffer) {
+      return Array.from({ length: value.numberOfChannels }, (_, c) =>
+        Array.from(value.getChannelData(c))
+      );
+    }
+    if (value instanceof Float32Array) {
+      return Array.from(value);
+    }
+    if (value instanceof FakePeriodicWave) {
+      return [Array.from(value.real), Array.from(value.imag), value.constraints];
+    }
+    return value;
+  };
+  const graph: Record<string, unknown[]> = {};
+  for (const [kind, nodes] of Object.entries(kinds)) {
+    graph[kind] = (nodes as readonly FakeNode[]).map((node) => {
+      const record: Record<string, unknown> = {};
+      if (node instanceof FakeConvolverNode) {
+        // What is heard from each time on: the last impulse response given at that time. The
+        // first is heard from whenever the convolver was made, before which nothing reaches it.
+        const heard = new Map<number | 'first', unknown>();
+        const first = node.bufferHistory[0]?.time;
+        for (const { time, buffer } of node.bufferHistory) {
+          heard.set(time === first ? 'first' : time, plain(buffer));
+        }
+        record.buffers = [...heard];
+      }
+      for (const [key, value] of Object.entries(node)) {
+        if (
+          key === 'connectedTo' ||
+          key === 'current' ||
+          key === 'bufferHistory' ||
+          typeof value === 'function'
+        ) {
+          continue;
+        }
+        record[key] =
+          key === 'connections'
+            ? (value as FakeNode['connections']).map((c) => ({ ...c, node: names.get(c.node) }))
+            : plain(value);
+      }
+      return record;
+    });
+  }
+  return graph;
 }

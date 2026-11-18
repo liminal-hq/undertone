@@ -3,6 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import type { Fraction } from './fraction.js';
 import type { AudioContextLike } from './types.js';
 
 /**
@@ -73,4 +74,33 @@ function hashString(text: string): number {
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash;
+}
+
+/**
+ * The value of a random signal at the exact cycle time `t`: a pure function of
+ * the seed, the signal's kind (`rand` or `perlin`) and `t` (a fraction in
+ * lowest terms), so it never depends on query order, query windows or the
+ * device. The first output of `seededRandom('seed|kind|n/d')`, the same
+ * FNV-1a and mulberry32 scheme drift() uses. Stable from 0.4.0: changing it
+ * changes every seeded song.
+ */
+export function timeRandom(seed: number | string, kind: string, t: Fraction): number {
+  return seededRandom(`${seed}|${kind}|${t.n}/${t.d}`)();
+}
+
+/** How each random signal makes itself again with another seed (see Pattern.seed()). */
+const reseeds = new WeakMap<object, (seed: number | string) => unknown>();
+
+/** Marks `pattern` as a random signal that `reseed` can rebuild with another seed. */
+export function registerReseed<P extends object>(
+  pattern: P,
+  reseed: (seed: number | string) => P
+): P {
+  reseeds.set(pattern, reseed);
+  return pattern;
+}
+
+/** The rebuild for a random signal registered with registerReseed(), or undefined for any other pattern. */
+export function reseedFor(pattern: object): ((seed: number | string) => unknown) | undefined {
+  return reseeds.get(pattern);
 }

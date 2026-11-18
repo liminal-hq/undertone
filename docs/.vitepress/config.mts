@@ -20,6 +20,7 @@ const guideSidebar = [
       { text: 'FM Synthesis', link: '/guide/fm-synthesis' },
       { text: 'Instruments & Scores', link: '/guide/instruments-and-scores' },
       { text: 'Patterned Parameters', link: '/guide/patterned-parameters' },
+      { text: 'Signals', link: '/guide/signals' },
       { text: 'Arranging Songs', link: '/guide/arranging-songs' },
       { text: 'Stereo & Surround', link: '/guide/stereo-and-surround' },
       { text: 'Rendering & Export', link: '/guide/rendering-and-export' },

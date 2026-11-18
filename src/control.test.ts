@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { voicingPitches } from './chord';
 import { chord, n, note, s, sound } from './control';
 import { Fraction } from './fraction';
-import { hasOnset, rev, type Pattern } from './pattern';
+import { hasOnset, pure, rev, seq, silence, type Pattern } from './pattern';
+import { saw, sine } from './signal';
 import { midiToFrequency, noteToFrequency } from './pitch';
 import type { ControlPatch } from './types';
 
@@ -361,5 +362,39 @@ describe('patterned parameters', () => {
 
   it('still accepts a plain scalar everywhere a string is accepted', () => {
     expect(onsets(note('c3 e3').gain(0.4)).map((v) => v.gainLevel)).toEqual([0.4, 0.4]);
+  });
+});
+
+describe('n() with a pattern', () => {
+  it('floors the values of a pattern that has events into scale degrees', () => {
+    const degrees = onsets(n(saw.range(0, 8).segment(8))).map((v) => v.degree);
+
+    expect(degrees).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(onsets(n(sine.segment(4).range(-2, 2))).map((v) => v.degree)).toEqual([0, 2, 0, -2]);
+    expect(onsets(n(pure(2.9))).map((v) => v.degree)).toEqual([2]);
+    expect(onsets(n(pure(-0.5))).map((v) => v.degree)).toEqual([-1]);
+  });
+
+  it('keeps the structure of the pattern, resolves through scale() and leaves a rest alone', () => {
+    const pitched = onsets(n(saw.range(0, 4).segment(4)).scale('C4:major'));
+
+    expect(pitched.map((v) => v.pitch)).toEqual(
+      onsets(n('0 1 2 3').scale('C4:major')).map((v) => v.pitch)
+    );
+    expect(onsets(n(seq(pure(1), silence)))).toHaveLength(1);
+  });
+
+  it('throws for a pure signal, which has no events', () => {
+    expect(() => n(sine)).toThrow('n() needs events: call .segment(n) on a signal first');
+    expect(() => n(sine.range(0, 7))).toThrow('n() needs events');
+  });
+
+  it('leaves a value that is not finite as a rest', () => {
+    expect(onsets(n(pure(Number.NaN)))).toEqual([]);
+  });
+
+  it('still takes a string and a whole number as before', () => {
+    expect(onsets(n('0 2')).map((v) => v.degree)).toEqual([0, 2]);
+    expect(() => n(1.5)).toThrow('Invalid scale degree');
   });
 });

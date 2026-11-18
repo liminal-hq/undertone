@@ -12,6 +12,7 @@ import {
   cat,
   hasOnset,
   pure,
+  rev,
   seq,
   silence,
   stack,
@@ -251,5 +252,237 @@ describe('euclid', () => {
   it('rotates the rhythm left', () => {
     const haps = queryCycle(pure('a').euclid(3, 8, 1));
     expect(haps.map((h) => h.begin)).toEqual([2 / 8, 5 / 8, 7 / 8]);
+  });
+});
+
+// --- The point sampler (signals) ---
+
+/** A test signal whose value is the cycle time itself, so every mapping of time shows in its values. */
+const clock = new Pattern<number>(
+  (span) => (span.begin.lt(span.end) ? [{ part: span, value: span.begin.toNumber() }] : []),
+  (t) => t.toNumber()
+);
+
+/** The query route: the first event over [t, next cycle) whose part covers t. */
+function viaQuery<T>(pat: Pattern<T>, t: Fraction): T | undefined {
+  return pat
+    .query({ begin: t, end: t.nextSam() })
+    .find((hap) => hap.part.begin.lte(t) && t.lt(hap.part.end))?.value;
+}
+
+/** Instants from cycle -2 to cycle 6 in twelfths and sevenths, negative cycles included. */
+const instants: Fraction[] = [
+  ...Array.from({ length: 97 }, (_, k) => new Fraction(k - 24, 12)),
+  ...Array.from({ length: 57 }, (_, k) => new Fraction(k - 14, 7))
+];
+
+describe('sampleAt', () => {
+  it('uses the sampler when the pattern has one', () => {
+    expect(clock.sampleAt(new Fraction(13, 4))).toBe(3.25);
+  });
+
+  it('falls back to the covering event of the query for a discrete pattern', () => {
+    const steps = seq(pure(1), pure(2), silence);
+    expect(steps.sample).toBeUndefined();
+    expect(steps.sampleAt(new Fraction(0))).toBe(1);
+    expect(steps.sampleAt(new Fraction(1, 2))).toBe(2);
+    expect(steps.sampleAt(new Fraction(7, 3))).toBe(2);
+    expect(steps.sampleAt(new Fraction(5, 6))).toBeUndefined(); // a rest
+  });
+
+  it('leaves discrete patterns without a sampler through every combinator', () => {
+    const a = pure(1);
+    for (const pat of [
+      a.fmap((v) => v + 1),
+      a.fast(2),
+      a.slow(2),
+      a.rev(),
+      a.every(2, rev),
+      a.euclid(3, 8),
+      a.segment(4),
+      cat(a, a),
+      seq(a, a),
+      timecat([[1, a]]),
+      arrange([1, a]),
+      stack(a, a),
+      a.add(clock)
+    ]) {
+      expect(pat.sample).toBeUndefined();
+    }
+  });
+});
+
+describe('sampler and query agree', () => {
+  const cases: [string, Pattern<number>][] = [
+    ['fmap', clock.fmap((v) => v * 2)],
+    ['fast', clock.fast(3)],
+    ['fast by a fraction', clock.fast(1.5)],
+    ['slow', clock.slow(2)],
+    ['every', clock.every(3, (p) => p.fast(2))],
+    ['cat', cat(clock, clock.fast(2), clock.slow(3))],
+    ['arrange', arrange([2, clock], [1, clock.slow(2)])],
+    ['seq', seq(clock, clock.fast(2), clock)],
+    [
+      'timecat',
+      timecat([
+        [1, clock],
+        [3, clock.slow(2)]
+      ])
+    ],
+    [
+      'nested',
+      seq(cat(clock, clock.fast(2)), clock)
+        .fast(2)
+        .every(2, (p) => p.slow(3))
+    ],
+    ['add a signal', clock.add(clock.fast(2))],
+    ['add a discrete pattern', clock.add(seq(pure(10), pure(20)))],
+    ['range', clock.range(-1, 1)]
+  ];
+
+  for (const [name, pat] of cases) {
+    it(`for ${name}`, () => {
+      expect(pat.sample).toBeDefined();
+      for (const t of instants) {
+        expect(pat.sampleAt(t), `at ${t}`).toBe(viaQuery(pat, t));
+      }
+    });
+  }
+
+  it('is undefined outside a seq window, where the query has no covering event', () => {
+    const half = timecat([
+      [1, clock],
+      [1, silence as Pattern<number>]
+    ]);
+    expect(half.sample).toBeDefined(); // one continuous part is enough
+    expect(half.sampleAt(new Fraction(1, 4))).toBe(0.5);
+    expect(half.sampleAt(new Fraction(3, 4))).toBeUndefined(); // the silent half has no value
+    const windowed = seq(clock, clock);
+    expect(windowed.sampleAt(new Fraction(1, 2))).toBe(0); // the second half restarts the clock
+  });
+});
+
+describe('rev on a signal', () => {
+  it('mirrors each cycle point by point: c + x reads c + 1 - x', () => {
+    const reversed = clock.rev();
+    expect(reversed.sampleAt(new Fraction(0))).toBe(1);
+    expect(reversed.sampleAt(new Fraction(1, 4))).toBe(0.75);
+    expect(reversed.sampleAt(new Fraction(9, 4))).toBe(2.75);
+    expect(reversed.sampleAt(new Fraction(-3, 4))).toBe(-0.25);
+  });
+
+  it('is why the sampler exists: the query route reads the mirrored end instead', () => {
+    const t = new Fraction(1, 4);
+    expect(viaQuery(clock.rev(), t)).toBe(0); // the cycle's start, not 0.75
+    expect(clock.rev().sampleAt(t)).toBe(0.75);
+  });
+
+  it('reads correctly through segment()', () => {
+    expect(queryCycle(clock.rev().segment(4)).map((h) => h.value)).toEqual([1, 0.75, 0.5, 0.25]);
+  });
+});
+
+describe('stack of signals', () => {
+  it('has a sampler that reads the first layer with a value at the instant', () => {
+    const layered = stack(clock, clock.fast(2));
+    expect(layered.sample).toBeDefined();
+    expect(layered.sampleAt(new Fraction(1, 4))).toBe(0.25);
+  });
+});
+
+describe('segment', () => {
+  it('gives n events per cycle, each holding the value at its onset', () => {
+    expect(queryCycle(clock.segment(4), 2)).toEqual([
+      { value: 2, begin: 2, end: 2.25, onset: true },
+      { value: 2.25, begin: 2.25, end: 2.5, onset: true },
+      { value: 2.5, begin: 2.5, end: 2.75, onset: true },
+      { value: 2.75, begin: 2.75, end: 3, onset: true }
+    ]);
+  });
+
+  it('reads at the onset even when the query starts mid-event', () => {
+    const haps = querySpan(clock.segment(2), new Fraction(1, 4), new Fraction(1));
+    expect(haps).toEqual([
+      { value: 0, begin: 0.25, end: 0.5, onset: false },
+      { value: 0.5, begin: 0.5, end: 1, onset: true }
+    ]);
+  });
+
+  it('drops an onset where a discrete pattern rests', () => {
+    expect(queryCycle(seq(pure(1), silence).segment(4)).map((h) => [h.begin, h.value])).toEqual([
+      [0, 1],
+      [0.25, 1]
+    ]);
+  });
+
+  it('takes a fractional count, like fast()', () => {
+    expect(querySpan(clock.segment(2.5), new Fraction(0), new Fraction(2)).length).toBe(5);
+  });
+
+  it('rejects a count that is not positive and finite', () => {
+    expect(() => clock.segment(0)).toThrow('segment() count must be positive, got 0');
+    expect(() => clock.segment(-2)).toThrow('segment() count must be positive, got -2');
+    expect(() => clock.segment(Number.NaN)).toThrow(/segment\(\) count must be positive/);
+    expect(() => clock.segment(Infinity)).toThrow(/segment\(\) count must be positive/);
+  });
+});
+
+describe('euclid on a signal', () => {
+  it('acts as a structure: the rhythm, each event read at its onset', () => {
+    expect(queryCycle(clock.euclid(3, 8), 1)).toEqual([
+      { value: 1, begin: 1, end: 1.125, onset: true },
+      { value: 1.375, begin: 1.375, end: 1.5, onset: true },
+      { value: 1.75, begin: 1.75, end: 1.875, onset: true }
+    ]);
+  });
+
+  it('rotates like the discrete form', () => {
+    expect(queryCycle(clock.euclid(3, 8, 1)).map((h) => h.value)).toEqual([2 / 8, 5 / 8, 7 / 8]);
+  });
+});
+
+describe('arithmetic', () => {
+  const steps = seq(pure(1), pure(2));
+
+  it('applies a number to every value and keeps a signal a signal', () => {
+    expect(queryCycle(steps.add(10)).map((h) => h.value)).toEqual([11, 12]);
+    expect(queryCycle(steps.sub(1)).map((h) => h.value)).toEqual([0, 1]);
+    expect(queryCycle(steps.mul(3)).map((h) => h.value)).toEqual([3, 6]);
+    expect(queryCycle(steps.div(2)).map((h) => h.value)).toEqual([0.5, 1]);
+    expect(clock.mul(2).sampleAt(new Fraction(3, 4))).toBe(1.5);
+  });
+
+  it('reads a pattern on the right at each onset of the left: structure from the left', () => {
+    expect(queryCycle(steps.add(clock))).toEqual([
+      { value: 1, begin: 0, end: 0.5, onset: true },
+      { value: 2.5, begin: 0.5, end: 1, onset: true }
+    ]);
+    // A busier right side adds no events.
+    expect(queryCycle(steps.mul(seq(pure(10), pure(20), pure(30), pure(40)))).length).toBe(2);
+  });
+
+  it('drops an event where the right side rests', () => {
+    expect(queryCycle(steps.add(seq(pure(10), silence))).map((h) => h.value)).toEqual([11]);
+  });
+
+  it('combines two signals point by point', () => {
+    const sum = clock.add(clock.fast(2)).sub(clock);
+    expect(sum.sampleAt(new Fraction(5, 4))).toBe(2.5);
+  });
+
+  it('divides by zero to Infinity', () => {
+    expect(queryCycle(steps.div(0)).map((h) => h.value)).toEqual([Infinity, Infinity]);
+  });
+
+  it('rejects anything but a number or a pattern', () => {
+    expect(() => steps.add('1' as unknown as number)).toThrow(
+      'add() needs a number or a pattern of numbers'
+    );
+  });
+
+  it('rounds and floors', () => {
+    const values = seq(pure(-4.2), pure(2.5), pure(-2.5), pure(1.4));
+    expect(queryCycle(values.round()).map((h) => h.value)).toEqual([-4, 3, -2, 1]);
+    expect(queryCycle(values.floor()).map((h) => h.value)).toEqual([-5, 2, -3, 1]);
   });
 });

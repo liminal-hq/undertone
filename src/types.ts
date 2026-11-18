@@ -3,6 +3,15 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import type { Pattern } from './pattern.js';
+
+/**
+ * What a patternable control accepts: a number (every event), a mini-notation
+ * string of numbers, or a pattern of numbers such as `sine.range(200, 2000)`
+ * (a signal is read at each event's onset).
+ */
+export type ControlInput = number | string | Pattern<number>;
+
 export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
 /** Waveforms cut from a sine: a half-wave rectified sine, a full-wave rectified (absolute) sine, and a pulsed sine. */
 export type ShapedWaveType = 'halfsine' | 'abssine' | 'pulsesine';
@@ -25,6 +34,14 @@ export const SOUND_TYPES: readonly SoundType[] = [
 
 export function isSoundType(word: string): word is SoundType {
   return (SOUND_TYPES as readonly string[]).includes(word);
+}
+
+/** One point of a voice's `panPath`: a stereo position at a time inside the note. */
+export interface PanPoint {
+  /** Seconds from the voice's start (after any nudge). */
+  time: number;
+  /** Stereo position from -1 (hard left) to 1 (hard right); clamped. */
+  pan: number;
 }
 
 export interface VoiceParams {
@@ -114,6 +131,47 @@ export interface VoiceParams {
   nudgeTime: number;
   /** Stereo position from -1 (hard left) to 1 (hard right). No panner node is created when undefined. */
   pan?: number;
+  /**
+   * Pan automation inside the note: points in time order, in seconds from the
+   * voice's start. The first point is the pan at the onset (replacing `pan`);
+   * the pan moves linearly from each point to the next, jumps when two points
+   * share a time, and holds the last value through the release. Pans are
+   * clamped to -1..1. Plain data, so a sound editor can store and replay it.
+   * Creates the panner even without `pan`; an empty path is no path. Like
+   * `pan`, it is ignored when `channelGains` is set.
+   */
+  panPath?: PanPoint[];
+  /**
+   * Autopan: a low-frequency oscillator, at this rate in Hz, that swings the
+   * pan either side of the voice's pan (or of its path or slide), from the
+   * onset through the release. Creates the panner even without `pan`. No LFO
+   * when unset or not positive. Ignored when `channelGains` is set.
+   */
+  autopan?: number;
+  /** How far the autopan swings either side of the voice's pan, 0 to 1 (clamped). Default 1. The panner clamps the sum to -1..1. */
+  autopanDepth?: number;
+  /** The autopan LFO's wave: 'sine' (default), 'triangle' or 'square'. */
+  autopanShape?: 'sine' | 'triangle' | 'square';
+  /** Where in its cycle the autopan starts, as a fraction of a cycle (wrapped into 0..1). Default 0: a sine or triangle starts at the centre moving right, a square on the right. */
+  autopanPhase?: number;
+  /**
+   * Pan slide: the voice starts at this pan (-1 to 1) and moves linearly to
+   * its own pan (the centre without one) over `panSlideTime`. A `panPath`
+   * takes precedence over it.
+   */
+  panSlideFrom?: number;
+  /** Seconds the pan slide takes. Default: the voice's attack. */
+  panSlideTime?: number;
+  /**
+   * Pan law: each side's level at the centre in dB, -6 to 0 (clamped). Unset
+   * or -3 keeps the stereo panner's equal-power law (about -3 dB each side at
+   * the centre). Any other value places a panned voice with one gain per side,
+   * min(1, √2 · 10^(law/20) · cos or sin of (pan + 1) · π/4): at 0 dB the
+   * louder side stays full like a balance control, at -6 dB a hard pan is
+   * -3 dB. Applies only to a voice with `pan` or `panPath`; ignored, like
+   * them, when `channelGains` is set.
+   */
+  panLaw?: number;
   /**
    * Per-speaker output gains for multichannel (up to 7.1) playback, in the
    * Web-Audio-conventional order FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries).
@@ -233,6 +291,12 @@ export interface DynamicsCompressorNodeLike extends AudioNodeLike {
   release: AudioParamLike;
 }
 
+/** A wave shaper: maps each sample through `curve`, the master bus's ceiling clip. */
+export interface WaveShaperNodeLike extends AudioNodeLike {
+  curve: Float32Array | null;
+  oversample: 'none' | '2x' | '4x';
+}
+
 export interface StereoPannerNodeLike extends AudioNodeLike {
   pan: AudioParamLike;
 }
@@ -275,6 +339,8 @@ export interface AudioContextLike {
   createDelay(maxDelayTime?: number): DelayNodeLike;
   /** Optional: needed for createMasterBus()'s limiter; without it the bus is gain only. */
   createDynamicsCompressor?(): DynamicsCompressorNodeLike;
+  /** Optional: needed for createMasterBus()'s `ceiling`; without it the bus has no ceiling. */
+  createWaveShaper?(): WaveShaperNodeLike;
   /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
   createPeriodicWave?(
     real: Float32Array,
@@ -294,4 +360,13 @@ export interface RenderedAudioBufferLike extends AudioBufferLike {
 export interface OfflineAudioContextLike extends AudioContextLike {
   readonly length: number;
   startRendering(): Promise<RenderedAudioBufferLike>;
+  /**
+   * Pauses rendering at `suspendTime` (seconds, quantized to a render quantum)
+   * and resolves once it has paused, so more nodes can be booked before
+   * `resume()`. Optional: a render that asks for a `bookingWindow` on a
+   * context without it books everything up front instead.
+   */
+  suspend?(suspendTime: number): Promise<void>;
+  /** Continues a render paused by `suspend()`. */
+  resume?(): Promise<void>;
 }

@@ -11,10 +11,22 @@ import type {
   GainNodeLike,
   OscillatorNodeLike,
   OscType,
+  PanPoint,
   ShapedWaveType,
   VoiceParams
 } from './types.js';
+import { autopanSettings, connectAutopan, voicePanPath } from './autopan.js';
 import { getOrbitBus } from './effects.js';
+import { warnOnce } from './warn.js';
+import {
+  applyPanPath,
+  buildPanPath,
+  customPanLaw,
+  panLawGains,
+  panLawPath,
+  stopPanPath,
+  type PanEvent
+} from './panPath.js';
 import { applyPitchCurve, buildPitchCurve, type CurveEvent } from './pitchCurve.js';
 import { noteToFrequency } from './pitch.js';
 import { buildNoiseBuffer } from './noise.js';
@@ -281,6 +293,20 @@ function isNoiseType(soundType: VoiceParams['soundType']): soundType is 'white' 
 }
 
 /**
+ * Whether `playVoice()` books nothing for these params on this context: a
+ * sample voice whose buffer is not available (not registered, or not decoded
+ * on `ctx` yet). It is the one place that rule lives, so anything that must
+ * know which voices will really sound, such as the offline render's room-size
+ * lookahead, asks here instead of repeating it.
+ */
+export function isVoiceSkipped(ctx: AudioContextLike, params: VoiceParams): boolean {
+  return (
+    params.sampleName !== undefined &&
+    getSampleBuffer(ctx, params.sampleName, params.sampleBank) === undefined
+  );
+}
+
+/**
  * Realizes a single voice against a real (or fake, for tests) AudioContext,
  * starting at `startTime`. A sample voice whose buffer isn't decoded yet (or
  * whose name was never registered) is silently skipped — samples.ts already
@@ -295,13 +321,13 @@ export function playVoice(
 ): PlaybackHandle {
   const output = options.output ?? ctx.destination;
   const usingSample = params.sampleName !== undefined;
-  const sampleBuffer = usingSample
-    ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
-    : undefined;
-  if (usingSample && sampleBuffer === undefined) {
+  if (isVoiceSkipped(ctx, params)) {
     const skippedAt = Math.max(startTime + params.nudgeTime, 0);
     return { startTime: skippedAt, endTime: skippedAt, stop: () => undefined };
   }
+  const sampleBuffer = usingSample
+    ? getSampleBuffer(ctx, params.sampleName as string, params.sampleBank)
+    : undefined;
 
   // Clamp to the context's origin — real AudioParams/sources throw RangeError on negative times.
   const voiceStart = Math.max(startTime + params.nudgeTime, 0);
@@ -410,7 +436,8 @@ export function playVoice(
 
   tail.connect(gainNode);
 
-  const finalNode = connectOutput(ctx, output, gainNode, params, voiceStart);
+  const placed = connectOutput(ctx, output, gainNode, params, voiceStart, voiceEnd, stoppables);
+  const finalNode = placed.node;
   connectEffectSends(ctx, output, finalNode, params, voiceStart);
 
   source.start(voiceStart);
@@ -443,6 +470,9 @@ export function playVoice(
         } else {
           gain.setValueAtTime(0, stopAt);
         }
+      }
+      for (const path of placed.panPaths ?? []) {
+        stopPanPath(path.param, path.events, stopAt);
       }
       // Calling stop() again on a source replaces the earlier stop time.
       for (const stoppable of stoppables) {
@@ -599,39 +629,72 @@ function connectEffectSends(
   }
 }
 
+/** What connectOutput() made: the voice's last node, and the pan paths it booked, if any, so a stop can cut them short. */
+interface Placement {
+  node: AudioNodeLike;
+  panPaths?: { param: AudioParamLike; events: PanEvent[] }[];
+}
+
 /**
  * Routes the enveloped voice to the destination: through per-speaker gains
  * into a channel merger when channelGains is set (folded down as far as the
- * destination requires), through a stereo panner when pan is set, or straight
- * through otherwise. On a destination widened by enableMultichannel(), the
- * plain path also goes through a two-channel merger — a bare mono connect
- * would land in the front-left speaker only under discrete interpretation.
+ * destination requires), through a stereo panner when pan or panPath is set,
+ * or straight through otherwise. On a destination widened by
+ * enableMultichannel(), the plain path also goes through a two-channel merger
+ * — a bare mono connect would land in the front-left speaker only under
+ * discrete interpretation.
  */
 function connectOutput(
   ctx: AudioContextLike,
   output: AudioNodeLike,
   gainNode: GainNodeLike,
   params: VoiceParams,
-  voiceStart: number
-): AudioNodeLike {
+  voiceStart: number,
+  voiceEnd: number,
+  stoppables: Stoppable[]
+): Placement {
   const available = (output as { channelCount?: number }).channelCount ?? 2;
   let placement = params.channelGains?.slice(0, MAX_CHANNELS);
   if (placement !== undefined && placement.length === 0) {
     placement = undefined;
   }
 
-  if (placement === undefined && params.pan !== undefined) {
+  const path = placement === undefined ? voicePanPath(params) : undefined;
+  const autopan = placement === undefined ? autopanSettings(params) : undefined;
+  const panLaw = customPanLaw(params.panLaw);
+  const panned = params.pan !== undefined || path !== undefined || autopan !== undefined;
+  if (placement === undefined && panned && panLaw !== undefined && autopan === undefined) {
+    return connectPanLaw(ctx, output, gainNode, params.pan, path, voiceStart, panLaw);
+  }
+  if (placement === undefined && panned) {
     const panner = ctx.createStereoPanner();
-    panner.pan.setValueAtTime(params.pan, voiceStart);
+    let panPaths: Placement['panPaths'];
+    if (path !== undefined) {
+      const events = buildPanPath(path, voiceStart);
+      applyPanPath(panner.pan, events);
+      panPaths = [{ param: panner.pan, events }];
+    } else {
+      panner.pan.setValueAtTime(params.pan ?? 0, voiceStart);
+    }
     gainNode.connect(panner);
-    panner.connect(output);
-    return panner;
+    let last: AudioNodeLike = panner;
+    if (autopan !== undefined) {
+      const lfo = connectAutopan(ctx, panner.pan, autopan, voiceStart);
+      lfo.start(voiceStart);
+      lfo.stop(voiceEnd);
+      stoppables.push(lfo);
+      if (panLaw !== undefined) {
+        last = scaleForPanLaw(ctx, panner, panLaw, voiceStart);
+      }
+    }
+    last.connect(output);
+    return { node: last, panPaths };
   }
 
   if (placement === undefined) {
     if (available <= 2) {
       gainNode.connect(output);
-      return gainNode;
+      return { node: gainNode };
     }
     placement = [1, 1]; // centred stereo image, matching the spec's mono->stereo up-mix
   }
@@ -650,7 +713,73 @@ function connectOutput(
     }
   });
   merger.connect(output);
-  return merger;
+  return { node: merger };
+}
+
+/**
+ * Places a voice under a pan law other than the stereo panner's: one gain per
+ * side into a two-input channel merger (as `channelGains` does), each booked
+ * with the law's gain for the pan, or for every point of the pan path.
+ */
+function connectPanLaw(
+  ctx: AudioContextLike,
+  output: AudioNodeLike,
+  gainNode: GainNodeLike,
+  pan: number | undefined,
+  path: PanPoint[] | undefined,
+  voiceStart: number,
+  law: number
+): Placement {
+  const merger = ctx.createChannelMerger(2);
+  const left = ctx.createGain();
+  const right = ctx.createGain();
+  let panPaths: Placement['panPaths'];
+  if (path !== undefined) {
+    const sides = panLawPath(buildPanPath(path, voiceStart), law);
+    applyPanPath(left.gain, sides.left);
+    applyPanPath(right.gain, sides.right);
+    panPaths = [
+      { param: left.gain, events: sides.left },
+      { param: right.gain, events: sides.right }
+    ];
+  } else {
+    const gains = panLawGains(pan ?? 0, law);
+    left.gain.setValueAtTime(gains.left, voiceStart);
+    right.gain.setValueAtTime(gains.right, voiceStart);
+  }
+  gainNode.connect(left);
+  gainNode.connect(right);
+  left.connect(merger, 0, 0);
+  right.connect(merger, 0, 1);
+  merger.connect(output);
+  return { node: merger, panPaths };
+}
+
+/**
+ * An autopanned voice keeps its stereo panner, so the LFO has a `pan` to
+ * drive. A law below -3 dB is the panner's curve scaled by √2 · 10^(law/20),
+ * exact at every pan, so one gain after the panner gives it. A law above -3
+ * dB caps each side at full, which no gain can do on a moving pan, so the
+ * voice keeps the panner's law, with a warning.
+ */
+function scaleForPanLaw(
+  ctx: AudioContextLike,
+  panner: AudioNodeLike,
+  law: number,
+  voiceStart: number
+): AudioNodeLike {
+  const scale = Math.SQRT2 * 10 ** (law / 20);
+  if (scale >= 1) {
+    warnOnce(
+      'autopan-pan-law',
+      `undertone: an autopanned voice keeps the stereo panner's -3 dB law; a pan law above -3 dB (got ${law}) cannot follow a moving pan.`
+    );
+    return panner;
+  }
+  const level = ctx.createGain();
+  level.gain.setValueAtTime(scale, voiceStart);
+  panner.connect(level);
+  return level;
 }
 
 /** Realizes every voice in a stack together, each offset by its own nudge time from `when`. */

@@ -7,7 +7,7 @@
 
 ## Repository Layout
 
-- `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound()/n()/chord()/s() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), note-name/MIDI parsing (`pitch.ts`), named scales (`scale.ts`), chord symbols + voicing (`chord.ts`), bring-your-own-assets sample registry (`samples.ts`), per-orbit reverb/delay buses (`effects.ts`), noise generation (`noise.ts`), seeded random sources (`random.ts`), offline rendering (`render.ts`), WAV encoding (`wav.ts`), shared types (`types.ts`), public exports (`index.ts`)
+- `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound()/n()/chord()/s() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), pan automation inside a note and pan laws (`panPath.ts`), autopan and the pan slide (`autopan.ts`), note-name/MIDI parsing (`pitch.ts`), named scales (`scale.ts`), chord symbols + voicing (`chord.ts`), bring-your-own-assets sample registry (`samples.ts`), per-orbit reverb/delay buses (`effects.ts`), noise generation (`noise.ts`), seeded random sources (`random.ts`), offline rendering (`render.ts`), WAV encoding (`wav.ts`), shared types (`types.ts`), public exports (`index.ts`)
 - `src/test-utils/`: hand-written Web Audio fakes shared by the test suite; excluded from the published build
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`, `icon.svg`)
@@ -73,6 +73,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Documentation
 
 - When the public API changes, update `README.md`'s Usage/API sections in the same change.
+- Mark a documentation code block that runs as written (its own imports, everything defined, something played or rendered) with ` ```ts standalone `. `src/docSnippets.test.ts` executes every such block in `README.md` and `docs/` against the fake `AudioContext`; a block that is only a fragment stays a plain `ts` block. It also checks that a playground example returning a `score()` pattern sets the `bpm` that matches the score's `cps` (`bpm = 240 × cps`).
 - Do not manually hard-wrap markdown prose — write each paragraph as one line and let the renderer/editor soft-wrap.
 
 ## Project Structure
