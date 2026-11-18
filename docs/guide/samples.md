@@ -44,6 +44,33 @@ The pieces:
 - `s('bd sd hh')` is the constructor, and `.s(name)` the chainable equivalent for putting a sample on an already-built pattern. Any word that matches one of the seven synth types (`sine`, `white`, ...) behaves exactly like `sound()`; anything else is a sample name, validated against the registry at play time (since you might register after building the pattern).
 - `.bank(name)` is a lookup convention, not a loader: it tries `${bank}_${sampleName}` before the bare name, so after `registerSample('TR707_bd', ...)`, `s('bd').bank('TR707')` finds it — handy for swapping kits by changing one call.
 
+- **Checking the registry:** `isSampleRegistered(name, bank?)` says whether a name (or a `bank_name` pair) is registered, `getSampleBaseNote(name, bank?)` returns its declared `baseNote`, and `getSampleBuffer(ctx, name, bank?)` returns the decoded buffer, or `undefined` while it is still decoding (asking also starts the decode, and an unregistered name warns once). `clearSamples()` empties the registry, which is mostly useful between tests or when swapping a whole kit.
+
+```ts standalone
+import {
+  clearSamples,
+  getSampleBaseNote,
+  getSampleBuffer,
+  isSampleRegistered,
+  loadSamples,
+  note,
+  registerSample
+} from '@liminal-hq/undertone';
+
+clearSamples(); // start from an empty registry
+registerSample('bass', { url: '/audio/pluck-e1.wav', baseNote: 'e1' });
+
+console.log(isSampleRegistered('bass')); // true
+console.log(getSampleBaseNote('bass')); // 'e1'
+
+const ctx = new AudioContext();
+console.log(getSampleBuffer(ctx, 'bass')); // undefined: not decoded yet (this starts the decode)
+await loadSamples(ctx, ['bass']);
+console.log(getSampleBuffer(ctx, 'bass') !== undefined); // true
+
+note('e1 g1').s('bass').loop({ ctx, bpm: 100 });
+```
+
 Two behaviours worth knowing. First, an _unregistered_ name never throws during playback — the voice is skipped silently with a once-per-name console warning (`undertone: sample "xyz" is not registered`), because a hard throw inside the loop scheduler would take the whole pattern down. Check the console when a layer is mysteriously absent. Second, sample voices default to `sustain: 1` (hold, not the percussive synth default), so a gated loop event lets the recording ring for its full note length — but a one-shot `.play()` has no gate, so its envelope releases right after the decay (about 0.16 s on defaults). To hear a sample ring out in a one-shot, give it room explicitly, e.g. `.decay(1)` for a second of full-level playback before the release.
 
 You are responsible for the legal status of whatever you register — undertone deliberately points at no sample library, Strudel's CDN included.

@@ -66,6 +66,17 @@ Three more waveforms are cut from a sine, and they work both as a voice's sound 
 note('c3 e3 g3 e3').sound('abssine').fm(1.5).fmh(2).fmwave('halfsine').loop();
 ```
 
+The names are also exported: `SHAPED_WAVE_TYPES` is the list of the three, and `isShapedWave(word)` says whether a string is one of them, which is handy when you accept a waveform name from your own configuration and need to tell a shaped wave from a plain oscillator type.
+
+```ts standalone
+import { SHAPED_WAVE_TYPES, isShapedWave, note } from '@liminal-hq/undertone';
+
+console.log(SHAPED_WAVE_TYPES); // ['halfsine', 'abssine', 'pulsesine']
+console.log(isShapedWave('halfsine'), isShapedWave('square')); // true false
+
+note('c3 e3').sound(SHAPED_WAVE_TYPES[0]).sustain(0.3).loop();
+```
+
 They are band-limited to 64 harmonics, so they stay clean at ordinary pitches, and like any waveform without a DC offset they will not shift the pitch of whatever they modulate. As a modulator a shaped wave modulates the frequency directly, the same as `triangle` or `square` does. Because `abssine` and `pulsesine` repeat twice per cycle, using either as the _modulator_ doubles its effective ratio, and since the depth is worked out from `fmh` and the note's frequency, it also halves the effective index. Raise `.fm()` or halve `.fmh()` to compensate if you want the sound you had with a sine. A sample registered under one of these three names is shadowed by the waveform, and a context without `createPeriodicWave` plays them as a sine.
 
 ## Where to go next

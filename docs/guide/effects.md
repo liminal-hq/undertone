@@ -75,3 +75,22 @@ stack(pad, pluck).loop({ bpm: 90 });
 ```
 
 `.orbit()` takes a plain non-negative integer — it's the one voice control that is _not_ patternable, since it selects a bus rather than shaping a value.
+
+**Reaching the buses directly.** `getOrbitBus(ctx, orbit, output?)` returns the shared bus for an orbit on a context, creating it the first time, as an `OrbitBus`: its `reverbInput` and `delayInput` are gain nodes you can feed from your own graph, and `setRoomSize(size)` and `setDelay(time, feedback)` configure it without going through a pattern. `buildImpulseResponse(ctx, seconds, random?)` is the function the bus uses to make its reverb: it returns a buffer of exponentially decaying noise, and passing a seeded `random` such as `seededRandom(1)` makes the room repeatable.
+
+```ts standalone
+import { buildImpulseResponse, getOrbitBus, note, seededRandom } from '@liminal-hq/undertone';
+
+const ctx = new AudioContext();
+
+// A repeatable one-second room, built the way the bus builds its own.
+const room = buildImpulseResponse(ctx, 1, seededRandom(1));
+console.log(room.length); // sampleRate frames
+
+// Tune orbit 2's bus by hand, then send a voice to it.
+const bus = getOrbitBus(ctx, 2);
+bus.setRoomSize(3);
+bus.setDelay(0.25, 0.4);
+
+note('c4 e4 g4').sound('triangle').room(0.5).orbit(2).loop({ ctx, bpm: 100 });
+```
