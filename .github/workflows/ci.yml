@@ -85,3 +85,103 @@ jobs:
       - name: Write summary
         if: always()
         run: echo "## Docs" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The Rust jobs run in the shared ci-rust image from liminal-hq/.github (public; pinned by digest).
+  # It provides Rust 1.98.0 (matching rust-toolchain.toml), rustfmt, Clippy, cargo-nextest, cargo-deny, git, and jq.
+  # Update the digest from docs/reference/recommended-image-pins.md in liminal-hq/.github.
+  rust-fmt:
+    name: Rust format
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Write summary
+        if: always()
+        run: echo "## Rust format" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-clippy:
+    name: Rust Clippy
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Write summary
+        if: always()
+        run: echo "## Rust Clippy" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-test:
+    name: Rust tests
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run tests
+        run: cargo nextest run --workspace --locked
+      - name: Write summary
+        if: always()
+        run: echo "## Rust tests" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-doc:
+    name: Rust docs (doc tests + cargo doc)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Doc tests
+        run: cargo test --doc --workspace --locked
+      - name: Build API docs
+        run: cargo doc --workspace --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - name: Write summary
+        if: always()
+        run: echo "## Rust docs" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-deny:
+    name: Rust dependencies (cargo deny)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check licences, bans, sources, and advisories
+        run: cargo deny check licenses bans sources advisories
+      - name: Write summary
+        if: always()
+        run: echo "## Rust dependencies" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-wasm:
+    name: Rust WebAssembly build
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Build for wasm32
+        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine
+      - name: Write summary
+        if: always()
+        run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-layering:
+    name: Rust crate layering
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check crate layering
+        run: scripts/check-layering.sh
+      - name: Write summary
+        if: always()
+        run: echo "## Rust layering" >> "${GITHUB_STEP_SUMMARY}"
