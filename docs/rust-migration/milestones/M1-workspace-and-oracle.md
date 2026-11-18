@@ -24,7 +24,7 @@ The repository has a Rust workspace with two empty crates, Rust is checked on ev
 - **Objective:** Rust is checked on every pull request the way the TypeScript is, and the repository's conventions cover Rust.
 - **Steps:**
   1. Add jobs to `.github/workflows/ci.yml`, one per check as today: Rust format (`cargo fmt --all -- --check`), Clippy (`cargo clippy --workspace --all-targets --locked -- -D warnings`), tests (`cargo nextest run --workspace --locked`), doc tests, `cargo doc --no-deps` with `RUSTDOCFLAGS=-D warnings` (so `missing_docs` and broken links fail the build), `cargo deny check licenses bans sources advisories`, a `wasm32-unknown-unknown` build of the two crates, and a layering check (`scripts/check-layering.sh`, written new, with its licence header): `undertone-pattern` depends on no other workspace crate, `undertone-engine` only on `undertone-pattern`, and no crate depends on anything outside crates.io (no git or path dependency on the lab or the studio).
-  2. Use `dtolnay/rust-toolchain` and `Swatinem/rust-cache`; pin action versions as the existing workflows do. (Ask once whether the person prefers the lab's `ghcr.io/liminal-hq/ci-rust` image; it is private to the organisation, so the default is `dtolnay/rust-toolchain`.)
+  2. Run the Rust jobs in the shared `ghcr.io/liminal-hq/ci-rust` image, pinned by digest (the `liminal-hq/.github` images are public; the pin comes from `docs/reference/recommended-image-pins.md` there, `sha256:0ef31efa...` on 2026-11-10). The image provides Rust 1.98.0 (matching `rust-toolchain.toml`), rustfmt, Clippy, `cargo-nextest`, `cargo-deny`, `git`, and `jq`, but no Node and no `wasm32` target: the wasm job runs `rustup target add wasm32-unknown-unknown`. Pin action versions as the existing workflows do; no Cargo cache to begin with. The existing TypeScript jobs move to the shared `ci-web` image, pinned the same way, with the same commands.
   3. Measure the Rust jobs' wall time on the first CI run (this is spike R13's question, folded in here); if a warm pull request run exceeds 10 minutes, restrict the Rust jobs to paths under `crates/`, `conformance/`, `packages/`, and `Cargo.*` and run everything nightly.
   4. Update `AGENTS.md`: the layout (`crates/`, `conformance/`, later `packages/`), the licence header rule extended to `.rs` (the `//` header with the SPDX identifier `MIT OR Apache-2.0`) and to new `.ts` in `packages/` and `conformance/`, the Rust commands (`cargo fmt`, `clippy`, `nextest`, `doc`), the rule that engine changes need a corpus case, that a change to synthesis needs a recorded-graph or render test, and the resource-watch rules (shared `CARGO_TARGET_DIR`, at most 2 Rust-building agents). Keep it short.
   5. Add a "Development" note for Rust to `README.md`.
@@ -90,6 +90,7 @@ The orchestrator assigns Sonnet agents. RF-03 first; RF-04 and RF-06 can follow 
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                        |
+| 2026-11-18 | RF-04 used the public `ci-rust` image, pinned by digest, in place of `dtolnay/rust-toolchain`; CI behaviour unverified until the pull request runs |
