@@ -89,6 +89,11 @@ function mapSpan(span: TimeSpan, fn: (t: Fraction) => Fraction): TimeSpan {
   return { begin: fn(span.begin), end: fn(span.end) };
 }
 
+/** Where an event reads a signal: its onset (the whole's begin), or its part's begin when it has no whole. */
+function onsetOf(hap: Hap<unknown>): Fraction {
+  return hap.whole?.begin ?? hap.part.begin;
+}
+
 function mapHapTime<T>(hap: Hap<T>, fn: (t: Fraction) => Fraction): Hap<T> {
   return {
     whole: hap.whole && mapSpan(hap.whole, fn),
@@ -113,25 +118,79 @@ function steppedPanPath(pans: readonly number[], rateHz: number): PanPoint[] {
   return points;
 }
 
+/** A point sampler: a continuous pattern's value at one instant of cycle time, or undefined where it has none. */
+export type Sampler<T> = (t: Fraction) => T | undefined;
+
 /**
  * A pattern is a function from a timespan (in cycles) to the events overlapping
  * it. Patterns are immutable: every combinator returns a new Pattern wrapping
  * the old query, so a partially-built pattern is always safe to branch or reuse.
+ *
+ * A continuous pattern (a signal: `sine`, `rand`, ...) also carries a point
+ * `sample`r, its exact value at one instant. A combinator passes a sampler on
+ * only when every child it queries has one, mapping time the same way its
+ * query does; discrete patterns never carry one, so their behaviour is
+ * exactly the query's. See sampleAt().
  */
 export class Pattern<T> {
-  constructor(readonly query: (span: TimeSpan) => Hap<T>[]) {}
+  constructor(
+    readonly query: (span: TimeSpan) => Hap<T>[],
+    readonly sample?: Sampler<T>
+  ) {}
+
+  /**
+   * The pattern's value at the instant `t`: the sampler's when there is one,
+   * otherwise the value of the first event the query returns over
+   * [t, next cycle) whose part covers `t` (undefined in a rest). The sampler
+   * exists because the query route is wrong for a reversed signal (a query
+   * over a mirrored span starts at the mirrored end) and costs a query per
+   * read; wherever both are defined and the query route is right, they agree.
+   */
+  sampleAt(t: Fraction): T | undefined {
+    if (this.sample) {
+      return this.sample(t);
+    }
+    const covering = this.query({ begin: t, end: t.nextSam() }).find(
+      (hap) => hap.part.begin.lte(t) && t.lt(hap.part.end)
+    );
+    return covering?.value;
+  }
 
   /** Transforms every event value, keeping the pattern's structure. */
   fmap<U>(fn: (value: T) => U): Pattern<U> {
-    return new Pattern((span) => this.query(span).map((hap) => ({ ...hap, value: fn(hap.value) })));
+    const sample = this.sample;
+    return new Pattern(
+      (span) => this.query(span).map((hap) => ({ ...hap, value: fn(hap.value) })),
+      sample &&
+        ((t) => {
+          const value = sample(t);
+          return value === undefined ? undefined : fn(value);
+        })
+    );
   }
 
   private withTime(
     queryTime: (t: Fraction) => Fraction,
     hapTime: (t: Fraction) => Fraction
   ): Pattern<T> {
+    const sample = this.sample;
+    return new Pattern(
+      (span) => this.query(mapSpan(span, queryTime)).map((hap) => mapHapTime(hap, hapTime)),
+      sample && ((t) => sample(queryTime(t)))
+    );
+  }
+
+  /**
+   * Events from `structure`, each holding this pattern's value at its onset
+   * (dropped where this pattern has none). The reading side of segment() and
+   * of euclid() on a signal.
+   */
+  private readAt(structure: Pattern<unknown>): Pattern<T> {
     return new Pattern((span) =>
-      this.query(mapSpan(span, queryTime)).map((hap) => mapHapTime(hap, hapTime))
+      structure.query(span).flatMap((hap) => {
+        const value = this.sampleAt(onsetOf(hap));
+        return value === undefined ? [] : [{ whole: hap.whole, part: hap.part, value }];
+      })
     );
   }
 
@@ -161,18 +220,26 @@ export class Pattern<T> {
 
   /** Reverses each cycle in time (cycle-local mirror, the classic `rev`). */
   rev(): Pattern<T> {
-    return new Pattern((span) =>
-      splitIntoCycles(span).flatMap((cycleSpan) => {
-        const cycle = cycleSpan.begin.sam();
-        // Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t)
-        const mirror = (t: Fraction) => cycle.add(cycle.add(ONE).sub(t));
-        const reflect = (s: TimeSpan) => ({ begin: mirror(s.end), end: mirror(s.begin) });
-        return this.query(reflect(cycleSpan)).map((hap) => ({
-          whole: hap.whole && reflect(hap.whole),
-          part: reflect(hap.part),
-          value: hap.value
-        }));
-      })
+    const sample = this.sample;
+    return new Pattern(
+      (span) =>
+        splitIntoCycles(span).flatMap((cycleSpan) => {
+          const cycle = cycleSpan.begin.sam();
+          // Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t)
+          const mirror = (t: Fraction) => cycle.add(cycle.add(ONE).sub(t));
+          const reflect = (s: TimeSpan) => ({ begin: mirror(s.end), end: mirror(s.begin) });
+          return this.query(reflect(cycleSpan)).map((hap) => ({
+            whole: hap.whole && reflect(hap.whole),
+            part: reflect(hap.part),
+            value: hap.value
+          }));
+        }),
+      // A point mirrors to a point: c + x reads c + 1 - x.
+      sample &&
+        ((t) => {
+          const cycle = t.sam();
+          return sample(cycle.add(cycle.add(ONE).sub(t)));
+        })
     );
   }
 
@@ -182,12 +249,14 @@ export class Pattern<T> {
       throw new Error(`every() cycle count must be a positive integer, got ${n}`);
     }
     const transformed = fn(this);
-    return new Pattern((span) =>
-      splitIntoCycles(span).flatMap((cycleSpan) => {
-        const cycle = cycleSpan.begin.floor();
-        const target = ((cycle % n) + n) % n === 0 ? transformed : this;
-        return target.query(cycleSpan);
-      })
+    const pick = (cycle: number) => (((cycle % n) + n) % n === 0 ? transformed : this);
+    const [plain, changed] = [this.sample, transformed.sample];
+    return new Pattern(
+      (span) =>
+        splitIntoCycles(span).flatMap((cycleSpan) =>
+          pick(cycleSpan.begin.floor()).query(cycleSpan)
+        ),
+      plain && changed && ((t) => (pick(t.floor()) === this ? plain(t) : changed(t)))
     );
   }
 
@@ -196,11 +265,94 @@ export class Pattern<T> {
    * evenly as possible across `steps` slots per cycle (Bjorklund's algorithm),
    * optionally rotated left by `rotation` slots. The whole pattern is squeezed
    * into each onset slot, which for single-value patterns matches Strudel's
-   * `"x(3,8)"` exactly.
+   * `"x(3,8)"` exactly. On a signal (a pattern with a sampler) it acts as a
+   * structure instead: the rhythm's events, each holding the signal's value
+   * at its onset.
    */
   euclid(pulses: number, steps: number, rotation = 0): Pattern<T> {
     const slots = rotate(bjorklund(pulses, steps), rotation);
+    if (this.sample) {
+      return this.readAt(seq(...slots.map((on) => (on ? pure(true) : silence))));
+    }
     return seq(...slots.map((on) => (on ? this : (silence as Pattern<T>))));
+  }
+
+  /**
+   * `count` evenly spaced events per cycle, each holding this pattern's value
+   * at its onset (none where the pattern has no value there). The way to give
+   * a signal a rhythm: `sine.segment(4)` is 0.5, 1, 0.5, 0.
+   */
+  segment(count: number): Pattern<T> {
+    if (!(count > 0) || !Number.isFinite(count)) {
+      throw new Error(`segment() count must be positive, got ${count}`);
+    }
+    return this.readAt(pure(true).fast(count));
+  }
+
+  // --- Numeric methods (patterns of numbers, signals among them) ---
+
+  /**
+   * Combines each value with a number, or with a pattern read at the value's
+   * onset (structure from the left; an event is dropped where the right side
+   * has no value). The result keeps a sampler when this pattern has one: the
+   * right side is read through its own sampleAt(), whatever kind it is.
+   */
+  private arithmetic(
+    this: Pattern<number>,
+    name: string,
+    other: number | Pattern<number>,
+    op: (a: number, b: number) => number
+  ): Pattern<number> {
+    if (typeof other === 'number') {
+      return this.fmap((v) => op(v, other));
+    }
+    if (!(other instanceof Pattern)) {
+      throw new Error(`${name}() needs a number or a pattern of numbers`);
+    }
+    const sample = this.sample;
+    return new Pattern(
+      (span) =>
+        this.query(span).flatMap((hap) => {
+          const right = other.sampleAt(onsetOf(hap));
+          return right === undefined ? [] : [{ ...hap, value: op(hap.value, right) }];
+        }),
+      sample &&
+        ((t) => {
+          const left = sample(t);
+          const right = left === undefined ? undefined : other.sampleAt(t);
+          return left === undefined || right === undefined ? undefined : op(left, right);
+        })
+    );
+  }
+
+  /** Adds a number, or a pattern read at each onset. */
+  add(this: Pattern<number>, other: number | Pattern<number>): Pattern<number> {
+    return this.arithmetic('add', other, (a, b) => a + b);
+  }
+
+  /** Subtracts a number, or a pattern read at each onset. */
+  sub(this: Pattern<number>, other: number | Pattern<number>): Pattern<number> {
+    return this.arithmetic('sub', other, (a, b) => a - b);
+  }
+
+  /** Multiplies by a number, or by a pattern read at each onset. */
+  mul(this: Pattern<number>, other: number | Pattern<number>): Pattern<number> {
+    return this.arithmetic('mul', other, (a, b) => a * b);
+  }
+
+  /** Divides by a number, or by a pattern read at each onset (by 0 gives Infinity). */
+  div(this: Pattern<number>, other: number | Pattern<number>): Pattern<number> {
+    return this.arithmetic('div', other, (a, b) => a / b);
+  }
+
+  /** Rounds each value to the nearest whole number (halves round up). */
+  round(this: Pattern<number>): Pattern<number> {
+    return this.fmap(Math.round);
+  }
+
+  /** Rounds each value down (-4.2 becomes -5). */
+  floor(this: Pattern<number>): Pattern<number> {
+    return this.fmap(Math.floor);
   }
 
   // --- Voice-control methods (only available on patterns of voice parameters) ---
@@ -960,22 +1112,38 @@ function compress<T>(winBegin: Fraction, winEnd: Fraction, pat: Pattern<T>): Pat
   if (width.n <= 0) {
     return silence as Pattern<T>;
   }
-  return new Pattern((span) =>
-    splitIntoCycles(span).flatMap((cycleSpan) => {
-      const cycle = cycleSpan.begin.sam();
-      const window: TimeSpan = { begin: cycle.add(winBegin), end: cycle.add(winEnd) };
-      const clipped = intersect(cycleSpan, window);
-      if (!clipped) {
-        return [];
-      }
-      const toInner = (t: Fraction) => cycle.add(t.sub(window.begin).div(width));
-      const toOuter = (t: Fraction) => window.begin.add(t.sub(cycle).mul(width));
-      return pat.query(mapSpan(clipped, toInner)).map((hap) => mapHapTime(hap, toOuter));
-    })
+  const sample = pat.sample;
+  return new Pattern(
+    (span) =>
+      splitIntoCycles(span).flatMap((cycleSpan) => {
+        const cycle = cycleSpan.begin.sam();
+        const window: TimeSpan = { begin: cycle.add(winBegin), end: cycle.add(winEnd) };
+        const clipped = intersect(cycleSpan, window);
+        if (!clipped) {
+          return [];
+        }
+        const toInner = (t: Fraction) => cycle.add(t.sub(window.begin).div(width));
+        const toOuter = (t: Fraction) => window.begin.add(t.sub(cycle).mul(width));
+        return pat.query(mapSpan(clipped, toInner)).map((hap) => mapHapTime(hap, toOuter));
+      }),
+    // Inside the window a point maps in as the query does; outside it there is no value.
+    sample &&
+      ((t) => {
+        const cycle = t.sam();
+        const pos = t.sub(cycle);
+        if (pos.lt(winBegin) || pos.gte(winEnd)) {
+          return undefined;
+        }
+        return sample(cycle.add(pos.sub(winBegin).div(width)));
+      })
   );
 }
 
-/** Plays all patterns simultaneously (polyphony: chords, layers, parallel lines). */
+/**
+ * Plays all patterns simultaneously (polyphony: chords, layers, parallel
+ * lines). It carries no sampler: sampleAt() falls back to the first layer
+ * whose event covers the instant.
+ */
 export function stack<T>(...pats: Pattern<T>[]): Pattern<T> {
   return new Pattern((span) => pats.flatMap((pat) => pat.query(span)));
 }
@@ -1001,7 +1169,20 @@ export function timecat<T>(pairs: [number, Pattern<T>][]): Pattern<T> {
     pos = pos.add(w);
     return compress(begin, pos.div(total), pat);
   });
-  return stack(...parts);
+  const layered = stack(...parts);
+  if (!parts.every((part) => part.sample)) {
+    return layered;
+  }
+  // The windows never overlap, so at most one part has a value at any instant.
+  return new Pattern(layered.query, (t) => {
+    for (const part of parts) {
+      const value = part.sample?.(t);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+    return undefined;
+  });
 }
 
 /** Plays the given patterns one after another within each single cycle. */
@@ -1014,16 +1195,26 @@ export function cat<T>(...pats: Pattern<T>[]): Pattern<T> {
   if (pats.length === 0) {
     return silence as Pattern<T>;
   }
-  return new Pattern((span) =>
-    splitIntoCycles(span).flatMap((cycleSpan) => {
-      const cycle = cycleSpan.begin.floor();
-      const index = ((cycle % pats.length) + pats.length) % pats.length;
-      // Shift time so the chosen pattern experiences its own consecutive cycles —
-      // this is what makes nested alternations like <a <b c>> unfold as a b a c.
-      const offset = new Fraction(cycle - Math.floor(cycle / pats.length));
-      const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
-      return pats[index].query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
-    })
+  // The chosen pattern and the shift that makes it experience its own
+  // consecutive cycles — what makes nested alternations like <a <b c>>
+  // unfold as a b a c.
+  const choose = (cycle: number) => ({
+    pat: pats[((cycle % pats.length) + pats.length) % pats.length],
+    offset: new Fraction(cycle - Math.floor(cycle / pats.length))
+  });
+  return new Pattern(
+    (span) =>
+      splitIntoCycles(span).flatMap((cycleSpan) => {
+        const { pat, offset } = choose(cycleSpan.begin.floor());
+        const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
+        return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
+      }),
+    pats.every((pat) => pat.sample)
+      ? (t) => {
+          const { pat, offset } = choose(t.floor());
+          return pat.sample?.(t.sub(offset));
+        }
+      : undefined
   );
 }
 
@@ -1050,19 +1241,27 @@ export function arrange<T>(...sections: [cycles: number, pat: Pattern<T>][]): Pa
     starts.push(total);
     total += cycles;
   }
-  return new Pattern((span) =>
-    splitIntoCycles(span).flatMap((cycleSpan) => {
-      const cycle = cycleSpan.begin.floor();
-      const local = ((cycle % total) + total) % total;
-      const index = sections.findIndex((section, i) => local < starts[i] + section[0]);
-      const sectionStart = starts[index];
-      const pat = sections[index][1];
-      // Shift time so the section pattern experiences its own cycles from 0,
-      // restarting at the top of every pass through the arrangement.
-      const offset = new Fraction(cycle - (local - sectionStart));
-      const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
-      return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
-    })
+  // The section playing in `cycle`, and the shift that makes its pattern
+  // experience its own cycles from 0, restarting at the top of every pass
+  // through the arrangement.
+  const sectionAt = (cycle: number) => {
+    const local = ((cycle % total) + total) % total;
+    const index = sections.findIndex((section, i) => local < starts[i] + section[0]);
+    return { pat: sections[index][1], offset: new Fraction(cycle - (local - starts[index])) };
+  };
+  return new Pattern(
+    (span) =>
+      splitIntoCycles(span).flatMap((cycleSpan) => {
+        const { pat, offset } = sectionAt(cycleSpan.begin.floor());
+        const shifted = mapSpan(cycleSpan, (t) => t.sub(offset));
+        return pat.query(shifted).map((hap) => mapHapTime(hap, (t) => t.add(offset)));
+      }),
+    sections.every(([, pat]) => pat.sample)
+      ? (t) => {
+          const { pat, offset } = sectionAt(t.floor());
+          return pat.sample?.(t.sub(offset));
+        }
+      : undefined
   );
 }
 

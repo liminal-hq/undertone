@@ -66,7 +66,7 @@ A range does not clamp: a value outside the expected input maps outside `lo..hi`
 
 ## Arithmetic
 
-`.add(x)`, `.sub(x)`, `.mul(x)` and `.div(x)` take a number or a pattern of numbers. A number applies to every value. A pattern on the right is read at each onset of the left side, the same rule as everywhere else, so structure comes from the left: `sine.segment(4).add(saw)` has four events, each `sine(t) + saw(t)` at its onset. `.round()` rounds to the nearest whole number (halves round up) and `.floor()` rounds down (-4.2 becomes -5). A signal stays a signal through all of these: `sine.add(saw)` has no events until you segment it or a control reads it.
+`.add(x)`, `.sub(x)`, `.mul(x)` and `.div(x)` take a number or a pattern of numbers. A number applies to every value. A pattern on the right is read at each onset of the left side, the same rule as everywhere else, so structure comes from the left: `sine.segment(4).add(saw)` has four events, each `sine(t) + saw(t)` at its onset. Where the right side has no value at an onset (a rest), the event is dropped. `.round()` rounds to the nearest whole number (halves round up) and `.floor()` rounds down (-4.2 becomes -5). A signal stays a signal through all of these: `sine.add(saw)` has no events until you segment it or a control reads it.
 
 Division by zero gives JavaScript's `Infinity`, which a control later treats as a rest.
 
