@@ -3,9 +3,9 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { playVoice } from './engine.js';
+import { isVoiceSkipped, playVoice } from './engine.js';
 import { Fraction } from './fraction.js';
-import { createMasterBus } from './masterBus.js';
+import { ceilingTop, createMasterBus } from './masterBus.js';
 import type { MasterBusOptions } from './masterBus.js';
 import type { Hap, TimeSpan } from './pattern.js';
 import { seedContext } from './random.js';
@@ -47,13 +47,13 @@ export interface RenderOptions {
   channels?: 1 | 2 | 4 | 6 | 8;
   /** Extra seconds rendered after the pattern, so releases and reverb can ring out. Default 0. */
   tail?: number;
-  /** Fold the tail onto the start, so the result loops seamlessly. The result is then exactly one pass long. Default false. */
+  /** Fold the tail onto the start, so the result loops seamlessly. The result is then exactly one pass long. A master `ceiling` still holds after the fold: the folded sum is clamped to it. Default false. */
   wrap?: boolean;
   /** Seeds noise and reverb so the same inputs give the same samples on the same engine. Default 0. */
   seed?: number | string;
   /** Hold each note for its share of the cycle, like `loop()`. Use `false` for a one-shot like `play()`. Default true. */
   gated?: boolean;
-  /** Route through the master bus and its limiter (default), tune it with an object, or `false` for the raw mix. */
+  /** Route through the master bus and its limiter (default), tune it with an object, or `false` for the raw mix. A `ceiling` bounds the returned samples, including after `wrap` folds the tail. */
   master?: boolean | Omit<MasterBusOptions, 'output'>;
   /**
    * Books the voices in windows of this many seconds instead of all up front:
@@ -123,6 +123,21 @@ function foldTail(
   return folded;
 }
 
+/**
+ * Clamps every sample of a folded buffer to the master ceiling. The bus clips
+ * the tail and the start separately, so once they are added the sum can pass
+ * the ceiling; this holds the returned buffer to it.
+ */
+function clampToCeiling(rendered: RenderedAudioBufferLike, ceilingDb: number): void {
+  const top = ceilingTop(10 ** (ceilingDb / 20));
+  for (let c = 0; c < rendered.numberOfChannels; c++) {
+    const data = rendered.getChannelData(c);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.max(-top, Math.min(top, data[i]));
+    }
+  }
+}
+
 /** The voices to book at one pause of the render, and when that pause is. */
 interface BookingWindow {
   /** Seconds on the render's clock; 0 means before the render starts. */
@@ -132,17 +147,19 @@ interface BookingWindow {
 
 /**
  * Gives every reverb voice on an orbit the room size the orbit's last booked
- * voice has. Booked up front, the last size booked on an orbit replaces the
+ * voice has, counting only voices the engine will really book (`isVoiceSkipped`
+ * leaves out a sample with no buffer). Booked up front, the last size booked on an orbit replaces the
  * impulse response for the whole render; booked in windows, a later size would
  * only replace it part way through. With this the windowed render builds the
  * same impulse response, from the same seeded key, once.
  */
-function lastRoomSizes(voices: readonly PendingVoice[]): PendingVoice[] {
+function lastRoomSizes(ctx: AudioContextLike, voices: readonly PendingVoice[]): PendingVoice[] {
   const sendsRoom = ({ params }: PendingVoice) =>
     params.roomLevel !== undefined && params.roomLevel > 0;
   const last = new Map<number, number>();
   for (const voice of voices) {
-    if (sendsRoom(voice)) {
+    // A voice the engine skips (a sample with no buffer) never reaches the bus, so it sets no size.
+    if (sendsRoom(voice) && !isVoiceSkipped(ctx, voice.params)) {
       last.set(voice.params.orbit ?? DEFAULT_ORBIT, voice.params.roomSize);
     }
   }
@@ -328,7 +345,7 @@ export async function renderToBuffer(
     rendered = await renderInWindows(
       ctx,
       bookingWindows(
-        lastRoomSizes(voices),
+        lastRoomSizes(ctx, voices),
         bookingWindow,
         (length - 2 * RENDER_QUANTUM_FRAMES) / sampleRate
       ),
@@ -344,5 +361,13 @@ export async function renderToBuffer(
     voices.forEach(book);
     rendered = await ctx.startRendering();
   }
-  return options.wrap && tail > 0 ? foldTail(ctx, rendered, passLength) : rendered;
+  if (!options.wrap || tail <= 0) {
+    return rendered;
+  }
+  const folded = foldTail(ctx, rendered, passLength);
+  const ceiling = typeof options.master === 'object' ? options.master.ceiling : undefined;
+  if (ceiling !== undefined) {
+    clampToCeiling(folded, ceiling);
+  }
+  return folded;
 }
