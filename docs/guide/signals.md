@@ -126,6 +126,10 @@ A signal can give a value a control cannot use: `sine.range(0, 2)` goes past wha
 
 A value left unset leaves whatever an earlier call set. The other controls have no range rule beyond that, as for a plain number. The same checks do not apply to a number or string you write directly: `.pan(2)` and `.pan('<-.6 1.2>')` still throw when the pattern is built, so a typo fails early.
 
+### Cost
+
+Reading a signal at an onset is cheap: a point read, not a query. `bun run bench` (`src/signal.bench.ts`, run by hand, never in CI) times `s('hh*16')` with three controls through a thousand scheduler windows of a twentieth of a cycle (what a loop's ticks do), on one developer machine with Node and `vitest bench`. Mean time for the thousand windows: no controls 0.30 ms; three number controls 1.57 ms; three string controls 10.9 ms; three signal controls (`pan(sine2.slow(4))`, `lpf(perlin.range(800, 3200))`, `gain(rand.range(0.3, 0.5))`) 1.85 ms. So a signal costs about 0.3 ms more per thousand windows than a number and about a sixth of a string control, which searches a mini-notation pattern for the covering step on every window. Your machine's numbers will differ; the ratios are what to look at. This is cost on the main thread only, and says nothing about how a pattern sounds.
+
 ## Combinators on signals
 
 The pattern combinators work on signals and move the signal in time the way they move events:
