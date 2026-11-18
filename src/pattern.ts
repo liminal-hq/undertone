@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction, ONE } from './fraction.js';
+import { reseedFor } from './random.js';
 import { voicingPitches } from './chord.js';
 // mini.ts imports Pattern/cat/silence/stack/timecat/pure from this module, creating an ESM import
 // cycle — safe here because both modules only reference each other's bindings inside function
@@ -287,6 +288,24 @@ export class Pattern<T> {
       throw new Error(`segment() count must be positive, got ${count}`);
     }
     return this.readAt(pure(true).fast(count));
+  }
+
+  /**
+   * Chooses the seed of a random signal (`rand`, `rand2`, `perlin`, `irand()`,
+   * `choose()`, `brand`, `brandBy()`); the default is 0. It works only
+   * directly on the random signal, before range(), segment() or anything else.
+   */
+  seed(seed: number | string): Pattern<T> {
+    const reseed = reseedFor(this);
+    if (!reseed) {
+      throw new Error(
+        'seed() works directly on rand, rand2, perlin, irand(), choose() and brand — call it before range() or segment()'
+      );
+    }
+    if (typeof seed === 'number' ? !Number.isFinite(seed) : typeof seed !== 'string') {
+      throw new Error(`seed() needs a finite number or a string, got ${String(seed)}`);
+    }
+    return reseed(seed) as Pattern<T>;
   }
 
   // --- Numeric methods (patterns of numbers, signals among them) ---

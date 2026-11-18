@@ -25,10 +25,17 @@ export {
   timecat
 } from './pattern.js';
 export {
+  brand,
+  brandBy,
+  choose,
   cosine,
   cosine2,
+  irand,
   isaw,
   isaw2,
+  perlin,
+  rand,
+  rand2,
   saw,
   saw2,
   signal,

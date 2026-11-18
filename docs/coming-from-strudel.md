@@ -28,7 +28,7 @@ Relatedly, `n()` means exactly one thing here: scale degrees, resolved by `.scal
 
 ## Patterned parameters: point-sampled at each onset, strings only
 
-Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern` yet. The periodic signals (`sine`, `saw`, `tri`, ...) exist from 0.4.0 and can be read with `.segment()` (see [Signals](/guide/signals)), but taking them as control inputs, as in `.lpf(sine.range(400, 4000))`, is still to come in 0.4.0. For motion inside a note, Undertone has its own controls instead (see below).
+Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern` yet. The signals themselves (`sine`, `saw`, `rand`, `perlin`, ...) exist from 0.4.0 and can be read with `.segment()` (see [Signals](/guide/signals)), but taking them as control inputs, as in `.lpf(sine.range(400, 4000))`, is still to come in 0.4.0. For motion inside a note, Undertone has its own controls instead (see below).
 
 The combination rule is simple and worth stating precisely, because it's the semantics everything else follows from:
 
@@ -36,7 +36,7 @@ The combination rule is simple and worth stating precisely, because it's the sem
 - **The control is sampled at each event's onset.** The control string divides the cycle its own way; at each event's onset instant, whichever control step covers that instant supplies the value.
 - **A rest (`~`) in the control leaves the value unset** for that event — the default (or an earlier chained call's value) applies. `.lpf('400 ~')` gives the second event _no filter_, not a cutoff of 0.
 
-Also: every control value is validated eagerly when the pattern is built — a typo'd note name, an out-of-range pan, or a malformed number in a control string throws at construction time, not mid-performance. There is no randomness anywhere in the pattern engine (no `degradeBy`, no `sometimes`, no `?`); the only nondeterminism in the whole library is the noise oscillators' sample data.
+Also: every control value is validated eagerly when the pattern is built — a typo'd note name, an out-of-range pan, or a malformed number in a control string throws at construction time, not mid-performance. The pattern engine has no random event operators (no `degradeBy`, no `sometimes`, no `?`); its random signals (`rand`, `perlin`, `irand`, ...) are deterministic functions of a seed and the exact time, so the only nondeterminism in the whole library is the noise oscillators' sample data.
 
 ## `.voicing()` is a deterministic approximation, not voice-leading
 
