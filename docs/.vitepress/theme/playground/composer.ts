@@ -428,6 +428,51 @@ const API_DOCS: Record<string, ApiDoc> = {
     signature: '.surround(angleDegrees: number) => Pattern<ControlPatch>',
     doc: 'Places the voice at an angle on the 7.1 speaker ring, equal-power panned between the two nearest speakers.'
   },
+  panpath: {
+    signature:
+      '.panpath(path: number[] | { time, pan }[], rateHz?: number) => Pattern<ControlPatch>',
+    doc: 'Pan automation inside each note. An array of pans is frame-stepped at rateHz (default 140), holding the last; { time, pan } points (seconds from the onset) ramp linearly. Replaces .pan(). Not patternable.'
+  },
+  panslide: {
+    signature: '.panslide(from: number, seconds?: number) => Pattern<ControlPatch>',
+    doc: "Pan slide: each note starts at pan from and moves linearly to its own pan (the centre without one) over seconds, or over the note's attack when omitted. A .panpath() takes precedence."
+  },
+  autopan: {
+    signature: '.autopan(hz: number) => Pattern<ControlPatch>',
+    doc: "An LFO at hz swings each note's pan either side of its pan (or its panpath or panslide) from the onset through the release. Shape it with .autopandepth(), .autopanshape() and .autopanphase()."
+  },
+  autopandepth: {
+    signature: '.autopandepth(depth: number) => Pattern<ControlPatch>',
+    doc: 'How far .autopan() swings either side of the pan, 0 to 1. Default 1.'
+  },
+  autopanshape: {
+    signature: ".autopanshape(shape: 'sine' | 'triangle' | 'square') => Pattern<ControlPatch>",
+    doc: "The .autopan() LFO's wave. Default sine; a square jumps between the two sides. Not patternable."
+  },
+  autopanphase: {
+    signature: '.autopanphase(phase: number) => Pattern<ControlPatch>',
+    doc: 'Where in its cycle .autopan() starts, 0 to 1 (default 0; 0.5 starts the other way). Not patternable.'
+  },
+  panlaw: {
+    signature: '.panlaw(db: number) => Pattern<ControlPatch>',
+    doc: "Pan law: each side's level at the centre in dB, from -6 to 0. Default -3 (equal power); 0 keeps the louder side full like a balance control. Shapes only panned voices. Not patternable."
+  },
+  renderToBuffer: {
+    signature: 'renderToBuffer(pattern, options?) => Promise<AudioBuffer>',
+    doc: 'Renders a pattern offline (also the .render() method). The playground has no export control, so this is for use in your own code: see Rendering and export in the guide.'
+  },
+  encodeWav: {
+    signature: 'encodeWav(buffer, options?: { bitDepth?: 16 | 24 | 32 }) => Uint8Array',
+    doc: 'Encodes a rendered buffer as a 16- or 24-bit PCM or 32-bit float WAV file.'
+  },
+  SHAPED_WAVE_TYPES: {
+    signature: "SHAPED_WAVE_TYPES: ['halfsine', 'abssine', 'pulsesine']",
+    doc: 'The shaped sines usable as .sound() types and .fmwave() modulators.'
+  },
+  isShapedWave: {
+    signature: 'isShapedWave(type: string) => boolean',
+    doc: 'Whether type is one of the shaped waves.'
+  },
   play: {
     signature: '.play(options?: { ctx?, bpm?, when?, gated? }) => void',
     doc: 'Plays one cycle as a one-shot. Percussive by default; gated: true holds each event for its own share of the cycle, like loop().'
@@ -491,6 +536,13 @@ const METHOD_NAMES = [
   'velocity',
   'cut',
   'pan',
+  'panpath',
+  'panslide',
+  'autopan',
+  'autopandepth',
+  'autopanshape',
+  'autopanphase',
+  'panlaw',
   'channels',
   'surround',
   'jux',
@@ -500,7 +552,13 @@ const METHOD_NAMES = [
 
 function completionType(name: string): string {
   if (name === 'Pattern' || name === 'Fraction') return 'class';
-  if (name === 'CHANNEL_ORDER' || name === 'MAX_CHANNELS' || name === 'silence') return 'constant';
+  if (
+    name === 'CHANNEL_ORDER' ||
+    name === 'MAX_CHANNELS' ||
+    name === 'SHAPED_WAVE_TYPES' ||
+    name === 'silence'
+  )
+    return 'constant';
   return SCOPE_NAMES.includes(name) ? 'function' : 'method';
 }
 
