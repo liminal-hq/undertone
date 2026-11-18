@@ -43,6 +43,8 @@ export default withMermaid({
   description: 'A procedural synth engine for games and music, built on the Web Audio API.',
   base,
   cleanUrls: true,
+  // The Rust migration plan lives in the repository but is not part of the published site.
+  srcExclude: ['rust-migration/**'],
   // Absolute, not `favicon.svg` — a bare relative href resolves against the
   // *current page's* URL, so it'd 404 from anywhere but the site root (the
   // same bug the Playground nav link had).

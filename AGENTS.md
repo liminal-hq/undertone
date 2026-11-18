@@ -12,6 +12,7 @@
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`, `icon.svg`)
 - `docs/`: the VitePress documentation site and the deployed playground — homepage (`index.md`), the narrative guide split by topic (`guide/*.md`), `recipes.md`, `coming-from-strudel.md`, the TypeDoc-generated API reference (`api/`, gitignored, rebuilt by `bun run docs:api`), the interactive playground (`playground.md` + its component and logic under `.vitepress/theme/`), and site config (`.vitepress/`); `README.md` stays the quick-reference API tables
+- `docs/rust-migration/`: the plan to rebuild Undertone in Rust and WebAssembly — `README.md` (goal and status table), `DECISIONS.md`, `RISKS.md`, `ARCHITECTURE.md`, `CONFORMANCE.md`, `API-MAPPING.md`, `HANDOFFS.md`, one document per milestone under `milestones/`, and `results/` for spike and release reports; excluded from the published site by `srcExclude` in `docs/.vitepress/config.mts`
 
 ## Commit Messages
 
