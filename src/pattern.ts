@@ -24,7 +24,14 @@ import type { RenderOptions } from './render.js';
 import type { RenderedAudioBufferLike } from './types.js';
 import { MAX_CHANNELS, surroundGains } from './surround.js';
 import { isSoundType } from './types.js';
-import type { ControlPatch, OscType, ShapedWaveType, SoundType, VoiceParams } from './types.js';
+import type {
+  ControlPatch,
+  OscType,
+  PanPoint,
+  ShapedWaveType,
+  SoundType,
+  VoiceParams
+} from './types.js';
 
 const MODULATOR_WAVES: readonly (OscType | ShapedWaveType)[] = [
   'sine',
@@ -87,6 +94,22 @@ function mapHapTime<T>(hap: Hap<T>, fn: (t: Fraction) => Fraction): Hap<T> {
     part: mapSpan(hap.part, fn),
     value: hap.value
   };
+}
+
+/** Frames per second for panpath()'s stepped form, as for pitchsteps(): the frame rate of classic AdLib effects. */
+const DEFAULT_PAN_STEP_RATE = 140;
+
+/** A frame-stepped pan as a pan path: each frame's pan holds until the next frame, then jumps. */
+function steppedPanPath(pans: readonly number[], rateHz: number): PanPoint[] {
+  const points: PanPoint[] = [{ time: 0, pan: pans[0] }];
+  for (let frame = 1; frame < pans.length; frame++) {
+    if (pans[frame] === pans[frame - 1]) {
+      continue; // a held frame needs no point of its own
+    }
+    const time = frame / rateHz;
+    points.push({ time, pan: pans[frame - 1] }, { time, pan: pans[frame] });
+  }
+  return points;
 }
 
 /**
@@ -600,6 +623,60 @@ export class Pattern<T> {
           throw new Error(`pan() position must be between -1 and 1, got ${v}`);
         }
       }
+    });
+  }
+
+  /**
+   * Pan automation inside each note, as plain data. Give an array of pans for
+   * a frame-stepped path, one per frame at `rateHz` (default 140, the frame
+   * rate of classic AdLib effects), jumping from frame to frame and holding
+   * the last; or give `{ time, pan }` points in seconds from the onset, which
+   * ramp linearly (two points at one time make a jump). Either way it becomes
+   * the voice's `panPath`, replacing pan(). Pans are -1 to 1. Not patternable.
+   */
+  panpath(
+    this: Pattern<ControlPatch>,
+    path: readonly number[] | readonly PanPoint[],
+    rateHz?: number
+  ): Pattern<ControlPatch> {
+    if (path.length === 0) {
+      throw new Error('panpath() needs a non-empty array of pans or { time, pan } points');
+    }
+    const inRange = (pan: unknown) => typeof pan === 'number' && pan >= -1 && pan <= 1;
+    if (path.every((item) => typeof item === 'number')) {
+      const pans = path as readonly number[];
+      if (!pans.every(inRange)) {
+        throw new Error('panpath() needs pans between -1 and 1');
+      }
+      if (rateHz !== undefined && !(rateHz > 0 && Number.isFinite(rateHz))) {
+        throw new Error(`panpath() rate must be positive, got ${rateHz}`);
+      }
+      return this.withPatch({ panPath: steppedPanPath(pans, rateHz ?? DEFAULT_PAN_STEP_RATE) });
+    }
+    if (rateHz !== undefined) {
+      throw new Error(
+        'panpath() takes a rate only with an array of pans, not with { time, pan } points'
+      );
+    }
+    let previous = 0;
+    for (const point of path as readonly PanPoint[]) {
+      if (
+        typeof point !== 'object' ||
+        point === null ||
+        !Number.isFinite(point.time) ||
+        !inRange(point.pan)
+      ) {
+        throw new Error('panpath() points need a finite time and a pan between -1 and 1');
+      }
+      if (point.time < previous) {
+        throw new Error(
+          `panpath() times must not go backwards, got ${point.time} after ${previous}`
+        );
+      }
+      previous = point.time;
+    }
+    return this.withPatch({
+      panPath: (path as readonly PanPoint[]).map(({ time, pan }) => ({ time, pan }))
     });
   }
 

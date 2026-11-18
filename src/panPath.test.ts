@@ -1,9 +1,10 @@
-// Tests for pan automation inside a note: the booked pan calls, an early stop, and pan paths in scores
+// Tests for pan automation inside a note: the booked pan calls, an early stop, panpath(), and pan paths in scores
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
 import { describe, expect, it } from 'vitest';
+import { note } from './control';
 import { getOrbitBus } from './effects';
 import { playParams, playVoice, resolveParams } from './engine';
 import { Fraction } from './fraction';
@@ -309,5 +310,78 @@ describe('score panPath', () => {
       ])
     ).toThrow(/must not go backwards/);
     expect(at([{ tick: 0, pan: Number.NaN }])).toThrow(/pan must be a number/);
+  });
+});
+
+describe('panpath()', () => {
+  const panCalls = (pattern: ReturnType<typeof note>) => {
+    const ctx = new FakeAudioContext();
+    pattern.play({ ctx, when: 1 });
+    return ctx.panners[0].pan.calls;
+  };
+
+  it('steps through one pan per frame at 140 Hz by default, holding the last', () => {
+    expect(panCalls(note('a4').panpath([-1, -1, 0.5, 1]))).toEqual([
+      { method: 'setValueAtTime', value: -1, time: 1 },
+      { method: 'linearRampToValueAtTime', value: -1, time: 1 + 2 / 140 },
+      { method: 'setValueAtTime', value: 0.5, time: 1 + 2 / 140 },
+      { method: 'linearRampToValueAtTime', value: 0.5, time: 1 + 3 / 140 },
+      { method: 'setValueAtTime', value: 1, time: 1 + 3 / 140 }
+    ]);
+  });
+
+  it('feeds the voice panPath, at a given frame rate', () => {
+    const [hap] = note('a4')
+      .panpath([0, 1], 10)
+      .query({ begin: new Fraction(0), end: new Fraction(1) });
+    expect(hap.value.panPath).toEqual([
+      { time: 0, pan: 0 },
+      { time: 0.1, pan: 0 },
+      { time: 0.1, pan: 1 }
+    ]);
+  });
+
+  it('takes { time, pan } points that ramp, as plain voice data does', () => {
+    expect(
+      panCalls(
+        note('a4').panpath([
+          { time: 0, pan: 1 },
+          { time: 0.5, pan: -1 },
+          { time: 0.5, pan: 0 }
+        ])
+      )
+    ).toEqual([
+      { method: 'setValueAtTime', value: 1, time: 1 },
+      { method: 'linearRampToValueAtTime', value: -1, time: 1.5 },
+      { method: 'setValueAtTime', value: 0, time: 1.5 }
+    ]);
+  });
+
+  it('replaces pan() and follows a pan law', () => {
+    const ctx = new FakeAudioContext();
+    note('a4').pan(0.5).panpath([0]).panlaw(0).play({ ctx, when: 0 });
+    expect(ctx.panners).toHaveLength(0);
+    expect(ctx.gains[1].gain.calls).toEqual([{ method: 'setValueAtTime', value: 1, time: 0 }]);
+  });
+
+  it('rejects empty, out-of-range or badly timed paths, and a rate with points', () => {
+    expect(() => note('a4').panpath([])).toThrow(
+      'panpath() needs a non-empty array of pans or { time, pan } points'
+    );
+    expect(() => note('a4').panpath([0, 2])).toThrow('panpath() needs pans between -1 and 1');
+    expect(() => note('a4').panpath([0, Number.NaN])).toThrow('between -1 and 1');
+    expect(() => note('a4').panpath([0, 1], 0)).toThrow('panpath() rate must be positive, got 0');
+    expect(() => note('a4').panpath([{ time: 0, pan: 0 }], 140)).toThrow(
+      'panpath() takes a rate only with an array of pans'
+    );
+    expect(() =>
+      note('a4').panpath([
+        { time: 0.5, pan: 0 },
+        { time: 0.25, pan: 1 }
+      ])
+    ).toThrow('panpath() times must not go backwards, got 0.25 after 0.5');
+    expect(() => note('a4').panpath([{ time: Number.NaN, pan: 0 }])).toThrow(
+      'panpath() points need a finite time and a pan between -1 and 1'
+    );
   });
 });
