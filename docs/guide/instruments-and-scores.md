@@ -67,7 +67,7 @@ const cue = score({
 const handle = cue.loop(); // plays at its own tempo; each pass lands exactly on the audio clock
 ```
 
-`lengthTicks` is the loop length, so a rest at the end is part of the loop. `gate` is how long the key is held, and the instrument's release rings on after it, which is how a one-to-three-tick gate on a fast-decaying voice becomes a drum. A note still held at the seam is cut there by default (`seam: 'cut'`); pass `seam: 'ring'` to let the gate run on past it.
+`lengthTicks` is the loop length, so a rest at the end is part of the loop. `gate` is how long the key is held, and the instrument's release rings on after it, which is how a one-to-three-tick gate on a fast-decaying voice becomes a drum. A note still held at the seam is cut there by default (`seam: 'cut'`); pass `seam: 'ring'` to let the gate run on past it. An event's `panPath` (`{ tick, pan }[]`, ticks from the onset) moves its pan while the note is held; see [Moving the pan inside a note](/guide/stereo-and-surround#moving-the-pan-inside-a-note).
 
 ## Repeatable variation
 
