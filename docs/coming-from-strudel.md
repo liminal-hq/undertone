@@ -28,7 +28,7 @@ Relatedly, `n()` means exactly one thing here: scale degrees, resolved by `.scal
 
 ## Patterned parameters: point-sampled at each onset, strings only
 
-Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern`, and there are no continuous signals (`sine`, `saw`, `rand`, `perlin` don't exist).
+Every numeric control (`gain`, `lpf`, `pan`, envelope stages, effect sends, ...) accepts a mini-notation string, but the input is only ever a number or a string — you can't pass an arbitrary `Pattern`, and there are no continuous signals yet (`sine`, `saw`, `rand`, `perlin`, and so `sine.range(0, 1)` as a control, don't exist). Signals are being planned; there is no date, so don't port code that depends on them. For motion inside a note, Undertone has its own controls instead (see below).
 
 The combination rule is simple and worth stating precisely, because it's the semantics everything else follows from:
 
@@ -94,9 +94,19 @@ The one deliberate difference from Tone is the unit of the index, which follows 
 
 ## `.pan()` runs −1..1, not 0..1
 
-Strudel pans from 0 (left) to 1 (right) with 0.5 centre. Undertone uses the Web Audio convention: **−1 left, 0 centre, 1 right**, validated at build time. Porting a Strudel pan value means `pan(2 * x - 1)`. This is also what `jux` does under the hood — original at `pan(-1)`, transformed copy at `pan(1)`.
+Strudel pans from 0 (left) to 1 (right) with 0.5 centre. Undertone uses the Web Audio convention: **−1 left, 0 centre, 1 right**, validated at build time (`.panpath()`, `.panslide()` and `.autopan()` use the same range). Porting a Strudel pan value means `pan(2 * x - 1)`. This is also what `jux` does under the hood — original at `pan(-1)`, transformed copy at `pan(1)`.
 
 Beyond stereo, undertone adds placement Strudel doesn't have: `.channels([...])` for raw per-speaker gains up to 7.1, `.surround(angleDegrees)` for equal-power placement on the speaker ring, and `enableMultichannel(ctx)` to opt into real surround hardware (everything folds down to stereo otherwise).
+
+## What is Strudel's vocabulary and what is Undertone's own
+
+Most names come from Strudel or Tidal and keep their meaning: `note`, `s`, `n`, `stack`, `jux`, `every`, `lpf`/`lpenv`, `room`/`delay`/`orbit`, `fm`/`fmh`, `penv`, `slide`, `nudge`/`late`/`early`, `cut`, `legato`, `velocity`. Some are Undertone's own, for things a library that plays game audio needs and a live-coding environment does not:
+
+- **`.pitchsteps([...], rateHz?)`**: a frame-stepped pitch curve, one semitone offset per frame (140 a second by default, the frame rate of classic AdLib effects). Strudel has no equivalent.
+- **Pan motion inside a note**: `.panpath()` (a stepped array of pans or `{ time, pan }` ramps), `.panslide(from, seconds?)` (the pan's own `slide`), and `.autopan(hz)` with `.autopandepth()`, `.autopanshape()` and `.autopanphase()` (an LFO on the panner). Strudel moves pan by patterning it per event, or with a signal such as `pan(sine.range(0, 1))`; Undertone patterns it per event too, but moves it within a held note with these. `.panlaw(db)` sets the pan law, which Strudel does not expose.
+- **Offline rendering and instruments as data**: `render()`, `encodeWav()`, `fmVoice()`/`layer()`, `score()` for tick-timed events, and `drift()` for seeded variation, all aimed at shipping sound inside something. Nothing here needs a signal, so none of it waits for them.
+
+If you were using `sine` to sweep a pan, use `.autopan()` for a steady sweep or `.panpath()` for a shaped one. Neither is the same thing as a signal, which would drive any control; they only move the pan.
 
 ## The mini-notation subset
 
@@ -110,6 +120,6 @@ Not supported: `?` (degrade), `|` (random choice), `{a b c}%n` (polymeter), and 
 
 ## The shape of what's missing
 
-Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, `chunk`, `add`, or signal modulation, you'll be reformulating rather than porting. Synth sources are four oscillator waveforms, three shaped sines and three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `halfsine`, `abssine`, `pulsesine`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
+Undertone's transform vocabulary is the core set: `fast`, `slow`, `rev`, `every`, `euclid`, `jux`, plus `stack`/`seq`/`cat`/`arrange` and the lower-level `mini`/`pure`/`silence`/`timecat`. If your Strudel style leans on `sometimes`, `off`, `ply`, `chunk`, `add`, or signal modulation (signals are not in Undertone yet), you'll be reformulating rather than porting. Synth sources are four oscillator waveforms, three shaped sines and three noise colours (`sine`, `triangle`, `square`, `sawtooth`, `halfsine`, `abssine`, `pulsesine`, `white`, `pink`, `brown`) — no soundfonts, no wavetables, no ZzFX.
 
 What you get in trade: a dependency-free, tree-shakeable MIT library with exact rational timing, eager validation, first-class one-shots, surround placement, and a [fully unit-tested](https://github.com/liminal-hq/undertone) audio graph — built to be shipped inside something, not performed in. Start with [getting started](/guide/getting-started), or go straight to the [recipes](/recipes) and the [API reference](/api/).
