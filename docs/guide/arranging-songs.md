@@ -36,3 +36,5 @@ const handle = song.loop({ bpm: 96 }); // 16 cycles ≈ 40 s per pass, then roun
 Each section experiences its _own_ cycles starting from zero whenever its span begins: the verse's `<Dm9 BbM7 Gm9 A7sus>` alternation always opens on `Dm9`, no matter that the verse starts at overall cycle 4. That makes sections self-contained — you can develop each one on its own with `.loop()` and then slot it into the arrangement without its alternations shifting.
 
 Since `arrange()` returns an ordinary pattern, everything composes as usual: `arrange(...)` inside a `stack()` (a drum loop that runs under every section), `.fast(2)` on a whole arrangement, or an `arrange()` section that is itself an `arrange()`.
+
+The [playground](/playground)'s **Showcase songs** group has whole commented pieces built this way: _Pixel Quest_ nests an `arrange()` inside each section to put a drum fill on every eighth bar, _Lantern Lullaby_ gives each instrument its own `arrange()` lane and stacks the lanes, and _Tidepool_ plays a seeded generative section twice, note for note, because each section starts its own clock at zero.
