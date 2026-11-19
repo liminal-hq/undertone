@@ -101,7 +101,7 @@ Property tests run in Rust (`proptest`, in `crates/undertone-pattern/tests/prope
 2. **Inverses:** `p.fast(n).slow(n)` equals `p`; `p.rev().rev()` equals `p`; `p.every(1, f)` equals `f(p)`.
 3. **Signals:** a signal sampled at `t` gives the same value in any window that contains `t`; `seed(s)` is reproducible across runs and threads.
 4. **Booking:** booking a window gives the same voices as booking its two halves (RF-22).
-5. **Round trip:** a tree serialised and rebuilt (for the worklet and worker) queries the same (RF-16).
+5. **Round trip:** a tree serialised and rebuilt (for the worklet and worker) queries the same (RF-16; `crates/undertone-pattern/tests/serialize.rs`, done).
 
 The same properties 1 to 3 run once against the reference with `fast-check` (a dev dependency; RF-05), to catch a property that the reference itself breaks, which would be a finding for the person rather than a Rust bug.
 

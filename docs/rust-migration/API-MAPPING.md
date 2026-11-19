@@ -61,6 +61,14 @@ Groups 1 to 6 are done in Rust, in `undertone-pattern`, and corpus-green: layer 
 - **Also in the crate, for later groups:** `Pattern::{describe, structural_hash}` and `Hash` (every node prints), `segment`, `range`, `range2`, `rangex`, `round`, `floor`, `arith`, and the signals.
 - **Names missing before RF-13:** `Query`, `ForeignId`, `ForeignHost`, `Pattern::{foreign, from_fn, fmap, fmap_with, jux(f), describe, query_into}`, and the free functions `mini` and `rev`.
 
+## Status of signals (RF-16)
+
+Group 18 is done in Rust, in `undertone-pattern`: layer 1 `signals` (104 of 104) and layer 2 `signals` are equal, and `tests/signal_regressions.rs` pins the two behaviours the corpus does not (mixed compositions across query windows, `5a45f43`; a negative time from a signal, `6deecfb`).
+
+- **Names:** `signal::{periodic, rand, rand2, irand, choose, brand, brand_by, perlin, by_name, signal_from_fn}`; `Pattern::{seed, segment, range, range2, rangex, arith, round, floor}` and `+ - * /` on patterns and numbers. `signal(fn)` is `signal_from_fn(f)`, a `Custom` node; in the bridge it is a `Foreign` leaf.
+- **Off the main thread:** `Pattern::serialize` and `Pattern::deserialize` rebuild any tree without a `Custom` or `Foreign` node on another thread, with identical answers ([results/RF-16.md](results/RF-16.md)).
+- **Benchmark:** `cargo run --release -p undertone-engine --example signal_bench`; at most the TypeScript's figure in all four rows on one machine.
+
 ## The handle and closure story
 
 - **Patterns are handles.** A bridge `Pattern` holds a `u32` handle to a Rust tree. Every method returns a new wrapper, as every TypeScript method returns a new `Pattern`, so immutability and object identity behave as today. Building costs one node and never queries.
