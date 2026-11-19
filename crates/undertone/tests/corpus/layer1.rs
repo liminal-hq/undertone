@@ -309,6 +309,13 @@ fn layer_one_corpus_is_equal() {
 			}
 		}
 	}
+	super::assert_every_case_ran(
+		"1",
+		&groups
+			.iter()
+			.map(|(group, t)| (group.clone(), t.total))
+			.collect(),
+	);
 	let mut report = String::from(
 		"\nlayer 1 group        equal / total   exact   tolerance only   not covered   failed\n",
 	);

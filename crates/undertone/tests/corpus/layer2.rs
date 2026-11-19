@@ -312,6 +312,13 @@ fn layer_two_corpus_is_equal() {
 			}
 		}
 	}
+	super::assert_every_case_ran(
+		"2",
+		&groups
+			.iter()
+			.map(|(group, t)| (group.clone(), t.total))
+			.collect(),
+	);
 	let mut report = String::from(
 		"\nlayer 2 group        equal / total   exact   tolerance only   not covered   failed   objects\n",
 	);

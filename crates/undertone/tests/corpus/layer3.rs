@@ -736,10 +736,12 @@ fn layer_3_cases_are_equal_or_listed_as_pending() {
 		);
 	}
 	let mut failures = Vec::new();
+	let mut ran: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
 	for (group, cases) in &groups {
 		let (mut equal, mut pending, mut floor_ids) = (0usize, 0usize, Vec::new());
 		let mut pending_ids = Vec::new();
 		for value in cases {
+			*ran.entry(group.clone()).or_default() += 1;
 			let case = parse_case(value);
 			let reason = pending_reason(&case);
 			// `Ok(floor)` when the booking equals the corpus, `Err(difference)` when it does not.
@@ -795,6 +797,8 @@ fn layer_3_cases_are_equal_or_listed_as_pending() {
 			println!("  pending {id}: {reason}");
 		}
 	}
+	// Every group has cases, and every case in the files was run.
+	super::assert_every_case_ran("3", &ran);
 	assert!(
 		failures.is_empty(),
 		"layer 3 differences:\n{}",

@@ -529,6 +529,7 @@ fn rust_renders_meet_the_proposed_tolerances_and_the_quirk_cases_their_guards() 
 	}
 	// A file with no cases, or a case that compares nothing, must fail rather than pass every guard.
 	assert!(!results.is_empty(), "the layer 4 file holds no cases");
+	super::assert_every_case_ran("4", &[("renders".to_string(), results.len())].into());
 	for m in &results {
 		assert!(
 			m.compared_bands > 0 && m.compared_windows > 0,

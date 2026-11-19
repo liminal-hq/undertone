@@ -24,6 +24,10 @@
 //! **Coverage.** [`every_group_of_the_corpus_is_handled`] lists the corpus's directories and fails unless each
 //! group is named in [`HANDLED`], and each layer's runner asserts that it ran exactly the groups named for it,
 //! so a group added to the corpus cannot be skipped silently.
+//!
+//! **Counts.** Each runner also calls `assert_every_case_ran`: every group file must hold at least one case, and
+//! the cases the runner ran, by group, must be exactly the cases in the files, so an emptied group or a skipped
+//! case fails (checked by emptying a file by hand; `count_cases` and `check_every_case_ran` have their own tests).
 
 mod corpus {
 	pub mod encode;
@@ -116,12 +120,13 @@ mod corpus {
 			let group = path.file_stem().unwrap().to_string_lossy().into_owned();
 			let text = std::fs::read_to_string(&path)
 				.map_err(|error| format!("{} does not read: {error}", path.display()))?;
-			let file: serde_json::Value = serde_json::from_str(&text)
-				.map_err(|error| format!("{} is not JSON: {error}", path.display()))?;
+			// The corpus reader, not serde_json: layer 1 holds strings (lone surrogates) that serde refuses.
+			let file = json::parse(&text)
+				.map_err(|error| format!("{} is not JSON: {error:?}", path.display()))?;
 			let count = file
 				.get("cases")
-				.and_then(serde_json::Value::as_array)
-				.map_or(0, Vec::len);
+				.and_then(json::Json::as_arr)
+				.map_or(0, <[_]>::len);
 			if count == 0 {
 				return Err(format!(
 					"group {group} ({}) has no cases: a runner would pass having compared nothing",

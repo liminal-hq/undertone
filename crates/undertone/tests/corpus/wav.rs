@@ -73,7 +73,9 @@ fn every_wav_case_is_byte_for_byte_equal() {
 
 	let mut failures = Vec::new();
 	let (mut bytes_equal, mut errors_equal) = (0, 0);
+	let mut ran = 0;
 	for case in cases {
+		ran += 1;
 		let id = case["id"].as_str().expect("id");
 		let channels: Vec<Vec<f32>> = case["channels"]
 			.as_array()
@@ -116,6 +118,7 @@ fn every_wav_case_is_byte_for_byte_equal() {
 			)),
 		}
 	}
+	super::assert_every_case_ran("wav", &[("wav".to_string(), ran)].into());
 	println!(
 		"wav: {bytes_equal} byte-equal files and {errors_equal} equal errors of {KNOWN_CASES}"
 	);
