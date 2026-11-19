@@ -128,6 +128,7 @@ The orchestrator assigns Sonnet agents. R1 and R9 first (R9 is small); R2 after 
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                           |
+| 2026-11-18 | R9 done on `chore/spike-r9-maths-determinism`: pass with conditions (C library natively, pinned `libm` in WebAssembly); see [R9.md](../results/R9.md) |
