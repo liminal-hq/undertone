@@ -193,6 +193,16 @@ mod tests {
 	}
 
 	#[test]
+	fn subnormals_print_the_shortest_text_that_reads_back() {
+		// toPrecision(9) of 5e-324 is 4.94065646e-324, which Number() reads back as 5e-324, and String prints that.
+		assert_eq!(nine_digits_text(5e-324), "5e-324");
+		assert_eq!(nine_digits_text(1e-323), "1e-323");
+		assert_eq!(nine_digits_text(1e-320), "1e-320");
+		assert_eq!(nine_digits_text(-5e-324), "-5e-324");
+		assert_eq!(nine_digits_json(5e-324), "5e-324");
+	}
+
+	#[test]
 	fn special_values() {
 		assert_eq!(nine_digits_text(f64::NAN), "NaN");
 		assert_eq!(nine_digits_text(f64::INFINITY), "Infinity");
