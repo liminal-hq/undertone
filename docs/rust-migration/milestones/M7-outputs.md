@@ -23,6 +23,7 @@ Undertone produces sound without Web Audio: natively in real time, in a browser 
 - **Steps:** (1) the raw-ABI crate over the engine; (2) the processor and the bridge's backend switch in `packages/undertone`; (3) a harness page that reports underruns, the 99th percentile of `process`, and drift; (4) **documentation:** a worklet section in `docs/guide/runtimes.md` (opt-in, cross-origin isolation, the foreign-leaf restriction), and the measured numbers.
 - **Acceptance (formerly spike R6):** on a mid-range phone, a Steam Deck, and Chromium throttled six times (the person runs them with the harness page), no underrun over five minutes, the 99th percentile of `process` at most 40% of the 128-frame budget, drift zero against frames. If not met, the backend still ships as opt-in with the numbers documented, and Web Audio stays the default (D-09).
 - **Risks:** the device checks need the person's time (batched into one request); a pattern with a foreign leaf cannot run in the worklet (refused with a diagnostic).
+- **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** decide whether the worklet queries patterns or only plays booked voices before RF-24 fixes the combined budget: the pattern core is about 65 KB of the measured worklet (R4), so the answer moves the combined limit by about 70 KB (D-07).
 
 ### RF-30. Rendering with no browser (WASI, Node, Bun, Deno)
 
