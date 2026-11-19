@@ -533,4 +533,77 @@ mod tests {
 		);
 		assert_eq!(record.nodes[2].stop.len(), 1);
 	}
+
+	fn short_voice() -> VoiceParams {
+		VoiceParams {
+			duration: Some(0.01),
+			sustain: 1.0,
+			release: 0.01,
+			..VoiceParams::empty()
+		}
+	}
+
+	#[test]
+	fn a_hundred_thousand_short_voices_in_sequence_keep_the_voice_list_small() {
+		let mut engine = engine();
+		let mut most = 0;
+		for i in 0..100_000_u32 {
+			let now = f64::from(i) * 0.05;
+			engine.graph_mut().set_current_time(now);
+			engine.play(&short_voice(), now).unwrap();
+			most = most.max(engine.voice_count());
+		}
+		// Each voice lasts well under the 0.05 s between bookings.
+		assert!(most <= 4, "the engine kept {most} voices at once");
+		assert!(engine.voices.len() <= 4, "{} slots", engine.voices.len());
+	}
+
+	#[test]
+	fn a_finished_voice_is_kept_until_the_clock_passes_its_end() {
+		let mut engine = engine();
+		let first = engine.play(&short_voice(), 0.0).unwrap();
+		engine.graph_mut().set_current_time(first.end_time - 0.001);
+		engine.play(&short_voice(), 0.0).unwrap();
+		assert_eq!(engine.voice_count(), 2);
+	}
+
+	#[test]
+	fn a_stale_playback_is_a_no_op_even_when_its_slot_is_reused() {
+		let mut engine = engine();
+		let first = engine.play(&short_voice(), 0.0).unwrap();
+		engine.graph_mut().set_current_time(first.end_time + 1.0);
+		engine.play(&short_voice(), 2.0).unwrap();
+		assert_eq!(engine.voice_count(), 1);
+		// The second voice sits in the first one's slot; the first handle must not reach it.
+		engine.stop(first, Some(2.001), None);
+		let record = engine.into_graph().finish(None);
+		let second_gain = &record.nodes[4].params[0].1;
+		assert!(
+			!second_gain.iter().any(|call| call.starts_with("cancel")),
+			"{second_gain:?}"
+		);
+	}
+
+	#[test]
+	fn a_cut_group_still_chokes_its_live_voice_after_older_voices_are_dropped() {
+		let mut engine = engine();
+		let grouped = VoiceParams {
+			duration: Some(10.0),
+			sustain: 1.0,
+			cut_group: Some(1.0),
+			..VoiceParams::empty()
+		};
+		let long = engine.play(&grouped, 0.0).unwrap();
+		for i in 1..50_u32 {
+			let now = f64::from(i);
+			engine.graph_mut().set_current_time(now);
+			engine.play(&short_voice(), now).unwrap();
+		}
+		// The long voice is still live (it ends at 10 s plus its release) and the clock has passed it.
+		engine.graph_mut().set_current_time(5.0);
+		engine.play(&grouped, 5.0).unwrap();
+		let record = engine.into_graph().finish(None);
+		let calls = &record.nodes[1].params[0].1;
+		assert!(calls.iter().any(|call| call == "cancel @5"), "{calls:?}");
+	}
 }
