@@ -39,7 +39,9 @@
 //!
 //! # Differences from the reference
 //!
-//! The voices of a window are booked in time order rather than the order the pattern lists them; `seek`, the
+//! The voices of a window are booked in onset order rather than the order the pattern lists them, so the order
+//! is the same however a span is split; a tick books at most [`SchedulerOptions::max_catch_up_seconds`] of what
+//! it missed, where the reference books all of it; `seek`, the
 //! statistics, and [`LoopOptions::follow_tempo`] are additions; an infinite tempo, and a window edge more than
 //! [`MAX_WINDOW_CYCLES`] from the start, are errors. Each is noted where it lives.
 

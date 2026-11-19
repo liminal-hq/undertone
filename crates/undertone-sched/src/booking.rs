@@ -21,10 +21,15 @@
 //! - **No boundary is booked twice.** A voice that starts exactly on an edge belongs to the window that begins
 //!   there, never to the one that ends there.
 //!
-//! One deliberate difference from the reference's `loop()`: the voices of a window are booked in time order
-//! (the nudge included), as an offline render books them, where the reference books them in the order the
-//! pattern lists them. Within one 0.3 second look-ahead the two orders agree except for stacked layers, and the
-//! time order is what makes the property above hold for any pattern.
+//! One deliberate difference from the reference's `loop()`: the voices of a window are booked in onset order
+//! (then by nudged start), where the reference books them in the order the pattern lists them. Within one
+//! 0.3 second look-ahead the two orders agree except for stacked layers. The order is by the onset, not the
+//! nudged start an offline render uses, because the onset is what decides which window a voice belongs to:
+//! with that key the order is the same however the span is split, for any pattern and any nudge, positive or
+//! negative. Ordering by the nudged start cannot be: a voice nudged past a window edge is booked before a
+//! later onset that sounds first is even seen. So a nudge changes when a voice sounds, never when it is
+//! booked; for a nudge larger than the gap to the next onset, a cut group chokes in onset order, not in the
+//! order the voices sound.
 //!
 //! ```
 //! use undertone_engine::engine::{Engine, OutputSetup};
@@ -52,7 +57,7 @@ use crate::tempo::Tempo;
 use undertone_engine::engine::{Engine, Playback};
 use undertone_engine::graph::{Graph, NodeId};
 use undertone_engine::render::collect_onsets;
-use undertone_engine::window::{PendingVoice, sort_booking_order};
+use undertone_engine::window::PendingVoice;
 use undertone_pattern::js::number_to_string;
 use undertone_pattern::{ControlMap, Error, Fraction, Pattern, Result, Span};
 
@@ -139,8 +144,25 @@ pub fn window_edge(seconds: f64, cycle_seconds: f64) -> Result<Fraction> {
 	Ok(Fraction::new(steps as i128, WINDOW_GRID))
 }
 
-/// Finds every voice that starts in the cycles `[begin, end)` and puts them in booking order (time, nudge
-/// included), without booking anything. Cycle zero is at `start_time` on the graph's clock and a cycle lasts
+/// Puts voices in the order the scheduler books them: by onset (before the nudge), then by nudged start, and
+/// voices that tie on both keep the order the pattern listed them in.
+///
+/// The window an onset belongs to is decided by the onset alone, so this key makes the order a voice is booked
+/// in the same however the span is cut into windows. Ordering by nudged start, as an offline render does,
+/// would not: a voice nudged across a window edge is already booked when the later onset it sounds after is
+/// first seen. The cost is that, for nudges larger than the gap to the next onset, a cut group chokes in
+/// onset order, not in the order the voices sound.
+fn sort_onset_order(voices: &mut [PendingVoice]) {
+	voices.sort_by(|a, b| {
+		let nudged = |v: &PendingVoice| v.start_time + v.params.nudge_time;
+		a.start_time
+			.total_cmp(&b.start_time)
+			.then_with(|| nudged(a).total_cmp(&nudged(b)))
+	});
+}
+
+/// Finds every voice that starts in the cycles `[begin, end)` and puts them in booking order (onset, then
+/// nudged start; see the module documentation), without booking anything. Cycle zero is at `start_time` on the graph's clock and a cycle lasts
 /// `cycle_seconds`. An empty window (`end <= begin`) has no voices.
 ///
 /// This is the half of [`book_cycles`] that can fail on the pattern; the [`Transport`](crate::Transport)
@@ -167,7 +189,7 @@ pub fn collect_window(
 		cycle_seconds,
 		gated,
 	)?;
-	sort_booking_order(&mut voices);
+	sort_onset_order(&mut voices);
 	Ok(voices)
 }
 
@@ -191,7 +213,7 @@ pub fn book_voices<G: Graph>(
 	Ok(())
 }
 
-/// Books every voice that starts in the cycles `[begin, end)` on `engine`, in time order, with cycle zero at
+/// Books every voice that starts in the cycles `[begin, end)` on `engine`, in onset order, with cycle zero at
 /// `start_time` on the graph's clock and `cycle_seconds` a cycle. The exact form of [`book_window`], for a
 /// caller that already holds the window as fractions.
 ///
