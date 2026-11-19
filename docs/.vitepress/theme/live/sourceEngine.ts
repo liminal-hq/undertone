@@ -89,6 +89,8 @@ export const sourceEngine: SnippetEngine = {
     const stop = (): void => {
       collectors.delete(collect);
       for (const fn of stops.splice(0)) fn();
+      // A snippet's setcpm() would otherwise change the tempo of every example played after it.
+      lib.resetTempo();
     };
     const consoleShadow = {
       log: (...args: unknown[]) => ctx.log(format(args)),
@@ -96,6 +98,7 @@ export const sourceEngine: SnippetEngine = {
       error: (...args: unknown[]) => ctx.log(format(args))
     };
 
+    lib.resetTempo();
     let done: Promise<void>;
     try {
       const body = prepareSnippet(code, lib as unknown as Record<string, unknown>);
