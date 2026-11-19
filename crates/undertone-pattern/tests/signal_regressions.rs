@@ -221,7 +221,7 @@ fn a_rest_in_a_discrete_child_leaves_the_key_unset() {
 	let half_rest = mini::parse("~ 0.5", |w| Ok(Value::Num(js::string_to_number(w)))).unwrap();
 	let control = control::note("c4*4")
 		.unwrap()
-		.pan(&cat(vec![half_rest, saw2()]))
+		.pan(cat(vec![half_rest, saw2()]))
 		.unwrap();
 	let mut haps = control.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
 	haps.sort_by_key(|h| h.part.begin);
@@ -316,21 +316,21 @@ fn nudge_late_and_early_stay_signed() {
 	let note = || control::note("c4").unwrap();
 	let nudge = |p: Pattern<Value>| first_value(&p).get("nudgeTime").cloned();
 	assert_eq!(
-		nudge(note().nudge(&bad(-0.05)).unwrap()),
+		nudge(note().nudge(bad(-0.05)).unwrap()),
 		Some(Value::Num(-0.05))
 	);
 	assert_eq!(
-		nudge(note().late(&bad(-0.05)).unwrap()),
+		nudge(note().late(bad(-0.05)).unwrap()),
 		Some(Value::Num(-0.05))
 	);
 	assert_eq!(
-		nudge(note().early(&bad(-0.05)).unwrap()),
+		nudge(note().early(bad(-0.05)).unwrap()),
 		Some(Value::Num(0.05))
 	);
 }
 
 #[test]
 fn a_very_large_time_is_left_alone() {
-	let value = first_value(&control::note("c4*2").unwrap().attack(&bad(1e300)).unwrap());
+	let value = first_value(&control::note("c4*2").unwrap().attack(bad(1e300)).unwrap());
 	assert_eq!(value.get("attack"), Some(&Value::Num(1e300)));
 }
