@@ -16,6 +16,7 @@
 
 pub mod math;
 pub mod params;
+pub mod random;
 
 /// The name of this crate, as a placeholder item until the engine lands.
 ///
