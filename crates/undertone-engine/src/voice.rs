@@ -11,7 +11,9 @@
 //! placement, then its sends to the orbit buses.
 
 use crate::effects::OrbitBus;
-use crate::engine::{BookedVoice, Engine, EnvelopeShape, Playback, number_key};
+use crate::engine::{
+	BookedVoice, Engine, EnvelopeShape, Playback, VoiceHandle, VoiceSlot, number_key,
+};
 use crate::graph::{
 	FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Target,
 };
@@ -325,8 +327,7 @@ impl<G: Graph> Engine<G> {
 			self.graph.stop(modulator, voice_end);
 		}
 
-		let index = self.voices.len();
-		self.voices.push(BookedVoice {
+		let handle = self.keep_voice(BookedVoice {
 			end: voice_end,
 			gain: gain_param,
 			envelope: gain_envelope,
@@ -336,12 +337,32 @@ impl<G: Graph> Engine<G> {
 		let playback = Playback {
 			start_time: voice_start,
 			end_time: voice_end,
-			voice: Some(index),
+			voice: Some(handle),
 		};
 		if let Some(group) = params.cut_group {
 			self.claim_cut_group(output, group, playback);
 		}
 		Ok(playback)
+	}
+
+	/// Keeps a booked voice in the slab, in a freed slot when there is one, and returns its handle.
+	fn keep_voice(&mut self, voice: BookedVoice) -> VoiceHandle {
+		let slot = match self.free_slots.pop() {
+			Some(slot) => slot,
+			None => {
+				self.voices.push(VoiceSlot {
+					generation: 0,
+					voice: None,
+				});
+				self.voices.len() - 1
+			}
+		};
+		self.voices[slot].voice = Some(voice);
+		VoiceHandle {
+			engine: self.id,
+			slot,
+			generation: self.voices[slot].generation,
+		}
 	}
 
 	/// Stops the previous voice in `group` at the new voice's onset, then records `playback` as the group's

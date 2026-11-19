@@ -51,6 +51,7 @@ use crate::math::gains::PanEvent;
 use crate::surround::MAX_CHANNELS;
 use crate::warn::{Warning, Warnings};
 use crate::waves::ShapedWaves;
+use core::sync::atomic::{AtomicU64, Ordering};
 use std::collections::HashMap;
 use undertone_pattern::Result;
 use undertone_pattern::random::{Seed, SeededRandom};
@@ -91,8 +92,28 @@ pub struct Playback {
 	pub start_time: f64,
 	/// The latest time the voice is still sounding (after its release), in seconds.
 	pub end_time: f64,
-	pub(crate) voice: Option<usize>,
+	pub(crate) voice: Option<VoiceHandle>,
 }
+
+/// Which booked voice a [`Playback`] means: the engine that booked it, the slot it sits in, and the slot's
+/// generation when it was booked. A handle from another engine, or for a voice whose slot was freed (and
+/// perhaps reused), no longer names a voice, and [`Engine::stop`] ignores it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct VoiceHandle {
+	pub(crate) engine: u64,
+	pub(crate) slot: usize,
+	pub(crate) generation: u64,
+}
+
+/// One slot of the engine's voice slab: the voice booked in it (if any) and how many voices it has held.
+#[derive(Debug)]
+pub(crate) struct VoiceSlot {
+	pub(crate) generation: u64,
+	pub(crate) voice: Option<BookedVoice>,
+}
+
+/// The next engine id: process-unique, so a handle never means a voice of another engine.
+static NEXT_ENGINE_ID: AtomicU64 = AtomicU64::new(1);
 
 /// The envelope a gain was scheduled with, kept so a stopped voice can fade from wherever it actually is.
 #[derive(Debug, Clone, Copy)]
@@ -187,7 +208,11 @@ pub struct Engine<G: Graph> {
 	pub(crate) shaped_waves: ShapedWaves,
 	pub(crate) buses: HashMap<(NodeId, u64), OrbitBus>,
 	pub(crate) cut_groups: HashMap<(NodeId, u64), Playback>,
-	pub(crate) voices: Vec<BookedVoice>,
+	/// A process-unique id, carried by every [`Playback`] this engine hands out.
+	pub(crate) id: u64,
+	/// The booked voices, in a slab: a slot freed by a finished voice is reused, with its generation raised.
+	pub(crate) voices: Vec<VoiceSlot>,
+	pub(crate) free_slots: Vec<usize>,
 	pub(crate) warnings: Warnings,
 }
 
@@ -209,7 +234,9 @@ impl<G: Graph> Engine<G> {
 			shaped_waves: ShapedWaves::default(),
 			buses: HashMap::new(),
 			cut_groups: HashMap::new(),
+			id: NEXT_ENGINE_ID.fetch_add(1, Ordering::Relaxed),
 			voices: Vec::new(),
+			free_slots: Vec::new(),
 			warnings: Warnings::default(),
 		};
 		if setup.multichannel {
@@ -236,6 +263,11 @@ impl<G: Graph> Engine<G> {
 				.set_channel_interpretation(destination, ChannelInterpretation::Discrete);
 		}
 		self.graph.destination_channels()
+	}
+
+	/// How many booked voices the engine still keeps, to stop them early or to cut a group.
+	pub fn voice_count(&self) -> usize {
+		self.voices.len() - self.free_slots.len()
 	}
 
 	/// The graph the engine books on.
@@ -284,18 +316,33 @@ impl<G: Graph> Engine<G> {
 		SeededRandom::from_text(&format!("{}|{key}", self.seed.key_text()))
 	}
 
+	/// The voice a handle names, or `None` for a handle from another engine or for a voice that was freed.
+	fn booked_voice(&self, handle: VoiceHandle) -> Option<&BookedVoice> {
+		if handle.engine != self.id {
+			return None;
+		}
+		let slot = self.voices.get(handle.slot)?;
+		if slot.generation != handle.generation {
+			return None;
+		}
+		slot.voice.as_ref()
+	}
+
 	/// Stops a booked voice early: at `when` (default: the graph's clock now) with a fade (default 0.01
 	/// seconds) so there is no click. A voice that has not started never sounds; one that already finished is
 	/// untouched; a voice that booked nothing is left alone. Safe to call any number of times.
 	///
+	/// A `playback` from another engine, or for a voice the engine has since forgotten (finished voices are
+	/// dropped as new ones are booked), is ignored: it cannot panic and cannot stop anything.
+	///
 	/// The gain holds the envelope's level at the stop and falls exponentially to silence, a pan path under
 	/// way is cut short where it is, and every source is stopped when the fade is done.
 	pub fn stop(&mut self, playback: Playback, when: Option<f64>, fade: Option<f64>) {
-		let Some(index) = playback.voice else {
+		let Some(voice) = playback.voice.and_then(|handle| self.booked_voice(handle)) else {
 			return;
 		};
 		let now = self.graph.current_time();
-		let voice = self.voices[index].clone();
+		let voice = voice.clone();
 		let stop_at = crate::math::js_max(when.unwrap_or(now), 0.0);
 		if stop_at >= voice.end {
 			return;
@@ -332,7 +379,7 @@ impl<G: Graph + std::fmt::Debug> std::fmt::Debug for Engine<G> {
 		f.debug_struct("Engine")
 			.field("graph", &self.graph)
 			.field("output", &self.output)
-			.field("voices", &self.voices.len())
+			.field("voices", &self.voice_count())
 			.finish_non_exhaustive()
 	}
 }
