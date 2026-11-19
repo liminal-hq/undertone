@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/instruments_and_scores.rs` is below, inc
 
 <<< @/../crates/undertone/examples/instruments_and_scores.rs
 
+<RustAudio example="instruments_and_scores" />
+
 A score refuses an event it cannot place, with the reference's message.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

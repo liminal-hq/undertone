@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/troubleshooting.rs` is below, included f
 
 <<< @/../crates/undertone/examples/troubleshooting.rs
 
+<RustAudio example="troubleshooting" />
+
 Patterns are immutable: `pat.fast(2)` returns a new pattern and leaves `pat` untouched.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

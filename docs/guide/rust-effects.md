@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/effects_and_filters.rs` is below, includ
 
 <<< @/../crates/undertone/examples/effects_and_filters.rs
 
+<RustAudio example="effects_and_filters" />
+
 The browser-only part of the TypeScript page (the shared `AudioContext`) has no counterpart; the buses belong to the engine you hold.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

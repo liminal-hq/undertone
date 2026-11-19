@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/fm_synthesis.rs` is below, included from
 
 <<< @/../crates/undertone/examples/fm_synthesis.rs
 
+<RustAudio example="fm_synthesis" />
+
 Nothing on this page is browser-specific.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

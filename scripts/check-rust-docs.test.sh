@@ -74,5 +74,21 @@ status=0
 out=$(env -u CI RUSTDOC_DIR="$work/absent" bash "$script" 2>&1) || status=$?
 if [ "$status" -eq 0 ] && grep -q 'SKIPPED' <<<"$out"; then pass "a local run skips the rustdoc checks loudly"; else bad "a local run without rustdoc did not skip loudly (status $status): $out"; fi
 
+# The audio player: exactly one <RustAudio> per page, naming an example the page imports.
+audio_page() { printf '%s\n' "$@" >"$work/audio.md"; }
+audio_check() { status=0; out=$(bash "$script" --audio "$work/audio.md" 2>&1) || status=$?; }
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '' '<RustAudio example="signals" />'
+audio_check
+if [ "$status" -eq 0 ]; then pass "a RustAudio matching the imported example is accepted"; else bad "a matching RustAudio was refused: $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'found 0' <<<"$out"; then pass "a page with no RustAudio fails"; else bad "a page with no RustAudio was accepted (status $status): $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="signals" />' '<RustAudio example="signals" />'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'found 2' <<<"$out"; then pass "a page with two RustAudio tags fails"; else bad "two RustAudio tags were accepted (status $status): $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="fm_synthesis" />'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'fm_synthesis' <<<"$out"; then pass "a RustAudio for an example the page does not import fails"; else bad "a mismatched RustAudio was accepted (status $status): $out"; fi
+
 [ "$failures" -eq 0 ] && echo "check-rust-docs.test: all passed"
 exit "$failures"

@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/arranging_songs.rs` is below, included f
 
 <<< @/../crates/undertone/examples/arranging_songs.rs
 
+<RustAudio example="arranging_songs" />
+
 A sixteen-cycle song is about forty seconds at 96 bpm, so the example squeezes the same sections into two seconds to pass through every seam.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

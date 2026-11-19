@@ -5,6 +5,7 @@
 # Usage:
 #   scripts/check-rust-docs.sh                 every check, over docs/guide/rust-*.md
 #   scripts/check-rust-docs.sh --names FILE... only the inline names, over the given files (used by scripts/check-rust-docs.test.sh)
+#   scripts/check-rust-docs.sh --audio FILE... only the RustAudio check, over the given files (used by scripts/check-rust-docs.test.sh)
 #
 # The rustdoc directory is $RUSTDOC_DIR, default docs/public/rust (where CI downloads the rustdoc artifact, the contents of target/doc).
 # Locally, build it with `cargo doc --no-deps --workspace` and run `RUSTDOC_DIR=target/doc scripts/check-rust-docs.sh`. When the directory
@@ -14,7 +15,8 @@
 #   1. every page has the "ships with 0.4.0" callout, no `ts` fence (docSnippets would execute a `ts standalone` one), and at least one
 #      snippet import (`<<< @/../crates/...`), and every imported file exists;
 #   2. every example under crates/undertone/examples/ is imported by some page;
-#   3. every page is linked from guideSidebar in docs/.vitepress/config.mts.
+#   3. every page is linked from guideSidebar in docs/.vitepress/config.mts;
+#   3b. every page has exactly one <RustAudio example="NAME" /> and NAME is the file name of an example the page imports.
 #
 # Rustdoc checks, over the inline code of each page (fenced blocks are skipped):
 #   4. an inline `Type::method` (CamelCase, then snake_case): a page `struct.Type.html`, `enum.Type.html`, `trait.Type.html`, `type.Type.html`,
@@ -165,6 +167,32 @@ check_names() {
   done
 }
 
+# check_audio FILE...: each page holds exactly one <RustAudio example="NAME" />, and NAME is an example the page imports (`.../NAME.rs`).
+check_audio() {
+  local page tags count name
+  for page in "$@"; do
+    tags=$(grep -oE '<RustAudio[^>]*>' "$page" || true)
+    count=$(grep -c . <<<"$tags" || true)
+    if [ "$count" -ne 1 ]; then
+      note "$page: expected exactly one <RustAudio example=\"...\" />, found $count"
+      continue
+    fi
+    name=$(sed -nE 's/.*example="([^"]*)".*/\1/p' <<<"$tags")
+    if [ -z "$name" ]; then
+      note "$page: <RustAudio> has no example=\"...\" attribute"
+    elif ! grep -Eq "^<<< .*/$name\.rs([{ ]|\$)" "$page"; then
+      note "$page: <RustAudio example=\"$name\" /> does not match an example the page imports (<<< .../$name.rs)"
+    fi
+  done
+}
+
+if [ "${1:-}" = "--audio" ]; then
+  shift
+  check_audio "$@"
+  [ "$fail" -eq 0 ] && echo "check-rust-docs: $# files, RustAudio matches the imported example"
+  exit "$fail"
+fi
+
 if [ "${1:-}" = "--names" ]; then
   shift
   [ -f "$rd/undertone/index.html" ] || { echo "check-rust-docs: no rustdoc at $rd (set RUSTDOC_DIR)" >&2; exit 2; }
@@ -184,6 +212,7 @@ for page in "${pages[@]}"; do
   for rel in $imports; do
     [ -f "docs/$rel" ] || note "$page: imported file docs/$rel does not exist"
   done
+  check_audio "$page"
   slug=$(basename "$page" .md)
   grep -q "'/guide/$slug'" docs/.vitepress/config.mts || note "$page: not in guideSidebar"
 done

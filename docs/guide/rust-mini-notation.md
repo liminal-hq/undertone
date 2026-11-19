@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/mini_notation.rs` is below, included fro
 
 <<< @/../crates/undertone/examples/mini_notation.rs
 
+<RustAudio example="mini_notation" />
+
 A one-shot plays cycle zero only, so an alternation in a one-shot always plays its first option; the example renders two cycles to hear both.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

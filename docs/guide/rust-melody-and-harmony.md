@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/melody_and_harmony.rs` is below, include
 
 <<< @/../crates/undertone/examples/melody_and_harmony.rs
 
+<RustAudio example="melody_and_harmony" />
+
 Chords are just notes, so the example reads the first cycle of the progression back as pitches.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

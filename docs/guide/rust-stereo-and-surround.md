@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/stereo_and_surround.rs` is below, includ
 
 <<< @/../crates/undertone/examples/stereo_and_surround.rs
 
+<RustAudio example="stereo_and_surround" />
+
 Eight channels write a 7.1 WAV file with the extensible header.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

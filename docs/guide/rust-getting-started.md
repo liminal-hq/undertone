@@ -23,6 +23,10 @@ The whole of `crates/undertone/examples/getting_started.rs` is below, included f
 
 <<< @/../crates/undertone/examples/getting_started.rs
 
+<RustAudio example="getting_started" />
+
+The player above plays the files that example wrote, rendered by the Rust crate when the site is built. In a checkout the audio is not there until you make it: `scripts/render-rust-audio.sh` runs every example and writes the WAV files to `docs/public/rust-audio/`, and then `bun run docs:dev` shows the players. Nothing here has been listened to.
+
 The TypeScript `.play()` is one cycle, once, so the example renders it with `gated(false)`. `.loop({ bpm })` is `Player::play_loop`.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).
