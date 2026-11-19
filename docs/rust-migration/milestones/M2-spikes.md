@@ -128,7 +128,8 @@ The orchestrator assigns Sonnet agents. R1 and R9 first (R9 is small); R2 after 
 
 ## Status log
 
-| Date       | Entry                                                                                                                                                 |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-18 | Not started                                                                                                                                           |
-| 2026-11-18 | R9 done on `chore/spike-r9-maths-determinism`: pass with conditions (C library natively, pinned `libm` in WebAssembly); see [R9.md](../results/R9.md) |
+| Date       | Entry                                                                                                                                                                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Started: R1 (RF-07) and R9 (RF-08) assigned to two agents                                                                                                                                                                                           |
+| 2026-11-18 | R9 (RF-08) done on `chore/spike-r9-maths-determinism`: pass with conditions; decision D-23, `libm` everywhere (C library behind `--no-default-features`); see [R9.md](../results/R9.md)                                                             |
+| 2026-11-18 | R1 (RF-07) done on `chore/spike-r1-pattern-core`: pass with conditions. 308 of 309 layer 1 programs equal (chord and voicing not covered), 70,000 property cases pass, no closure outside the two escape hatches. Result: [R1.md](../results/R1.md) |
