@@ -28,6 +28,27 @@ const guideSidebar = [
     ]
   },
   {
+    // Ships with 0.4.0; each page says so. The rustdoc is published beside the site (see gh-pages.yml).
+    text: 'Rust (ships with 0.4.0)',
+    items: [
+      { text: 'Getting Started', link: '/guide/rust-getting-started' },
+      { text: 'Mini-Notation', link: '/guide/rust-mini-notation' },
+      { text: 'Tempo & Note Length', link: '/guide/rust-tempo-and-note-length' },
+      { text: 'Melody & Harmony', link: '/guide/rust-melody-and-harmony' },
+      { text: 'Samples', link: '/guide/rust-samples' },
+      { text: 'Effects & Filters', link: '/guide/rust-effects' },
+      { text: 'FM Synthesis', link: '/guide/rust-fm-synthesis' },
+      { text: 'Instruments & Scores', link: '/guide/rust-instruments-and-scores' },
+      { text: 'Patterned Parameters', link: '/guide/rust-patterned-parameters' },
+      { text: 'Signals', link: '/guide/rust-signals' },
+      { text: 'Arranging Songs', link: '/guide/rust-arranging-songs' },
+      { text: 'Stereo & Surround', link: '/guide/rust-stereo-and-surround' },
+      { text: 'Rendering & Export', link: '/guide/rust-rendering-and-export' },
+      { text: 'Troubleshooting', link: '/guide/rust-troubleshooting' },
+      { text: 'Rust API reference (rustdoc)', link: '/rust/undertone/', target: '_self' }
+    ]
+  },
+  {
     text: 'More',
     items: [
       { text: 'Recipes', link: '/recipes' },
@@ -43,8 +64,12 @@ export default withMermaid({
   description: 'A procedural synth engine for games and music, built on the Web Audio API.',
   base,
   cleanUrls: true,
-  // The Rust migration plan lives in the repository but is not part of the published site.
-  srcExclude: ['rust-migration/**'],
+  // The Rust migration plan lives in the repository but is not part of the published site; public/ holds
+  // static files only (rustdoc ships Markdown licence files that must not be built as pages).
+  srcExclude: ['rust-migration/**', 'public/**'],
+  // The rustdoc is built by cargo and copied to public/rust/ (gh-pages.yml), so its pages are not Markdown
+  // pages and the link checker cannot see them; scripts/check-rust-docs.sh checks the links to it.
+  ignoreDeadLinks: [/^\/rust\//],
   // Absolute, not `favicon.svg` — a bare relative href resolves against the
   // *current page's* URL, so it'd 404 from anywhere but the site root (the
   // same bug the Playground nav link had).
@@ -57,6 +82,7 @@ export default withMermaid({
       { text: 'Recipes', link: '/recipes' },
       { text: 'Coming from Strudel', link: '/coming-from-strudel' },
       { text: 'API', link: '/api/' },
+      { text: 'Rust API', link: '/rust/undertone/', target: '_self' },
       { text: 'Playground', link: '/playground' }
     ],
     sidebar: {
