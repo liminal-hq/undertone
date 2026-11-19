@@ -344,6 +344,9 @@ struct LoopState {
 	scheduled_until: Fraction,
 	/// Voices booked but possibly not finished, so a cut can reach them. Pruned each tick.
 	live: Vec<Playback>,
+	/// Voices a seek scheduled to stop at a time still ahead of the clock, and when. They stay reachable so a
+	/// cut can fade them sooner. Pruned each tick, once their stop time has passed.
+	stopping: Vec<(Playback, f64)>,
 	/// Whether a tick has run since the loop started or was last repositioned.
 	ticked: bool,
 }
@@ -643,6 +646,7 @@ impl<C: Clock> Transport<C> {
 			start_time: now + self.options.start_latency,
 			scheduled_until: Fraction::from_int(0),
 			live: Vec::new(),
+			stopping: Vec::new(),
 			ticked: false,
 		};
 		let handle = self.insert(state);
@@ -766,6 +770,7 @@ impl<C: Clock> Transport<C> {
 			return Ok(0);
 		}
 		state.live.retain(|playback| playback.end_time > now);
+		state.stopping.retain(|(_, stop_at)| *stop_at > now);
 		// Skip what is too far in the past to be worth booking (a suspended host), and count it.
 		let oldest = now - self.options.max_catch_up_seconds - state.start_time;
 		if oldest > 0.0 {
@@ -824,6 +829,13 @@ impl<C: Clock> Transport<C> {
 			for playback in &state.live {
 				engine.stop(*playback, Some(now), options.fade);
 			}
+			// Voices a seek had scheduled to stop later: only those whose stop is still ahead are touched,
+			// since a cut now would reopen one that has already faded.
+			for (playback, stop_at) in &state.stopping {
+				if *stop_at > now {
+					engine.stop(*playback, Some(now), options.fade);
+				}
+			}
 		}
 		Ok(())
 	}
@@ -876,8 +888,19 @@ impl<C: Clock> Transport<C> {
 		let Some(mut state) = self.loops[handle.index].state.take() else {
 			return Ok(false);
 		};
+		// Voices an earlier seek scheduled to stop after `when` stop at `when` instead.
+		for (playback, stop_at) in &mut state.stopping {
+			if *stop_at > when {
+				engine.stop(*playback, Some(when), Some(CUT_FADE_SECONDS));
+				*stop_at = when;
+			}
+		}
 		for playback in state.live.drain(..) {
 			engine.stop(playback, Some(when), Some(CUT_FADE_SECONDS));
+			// Keep it reachable while the stop is still ahead of the clock, so a cut can bring it forward.
+			if when > now {
+				state.stopping.push((playback, when));
+			}
 		}
 		state.start_time = when - from.to_f64() * state.cycle_seconds;
 		state.scheduled_until = from;
