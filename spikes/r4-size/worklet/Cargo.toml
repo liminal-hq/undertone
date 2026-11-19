@@ -10,9 +10,11 @@ publish.workspace = true
 crate-type = ["cdylib"]
 
 [features]
-default = ["mini"]
+default = ["pattern", "mini"]
+# Build and query pattern trees in the worklet (RF-29 may leave booking to a worker or the main thread, so the worklet would carry no pattern core).
+pattern = []
 # Parse mini-notation and scale text in the worklet (a worklet that is given a built tree needs neither).
-mini = []
+mini = ["pattern"]
 
 [dependencies]
 undertone-pattern = { path = "../../../crates/undertone-pattern" }

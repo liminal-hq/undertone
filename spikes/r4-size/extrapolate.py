@@ -21,5 +21,8 @@ for name, ratio in (("low", 3.5), ("central", CENTRAL), ("high", 8.0)):
     ctl = 83_695 + ctl_raw * BROTLI + serde
     wk_raw = ratio * (voice + harmony) + dsp[name] - 3_300
     wk = 75_767 + wk_raw * BROTLI
+    # A worklet with no pattern core (RF-29 may leave booking to a worker): measured base 10,432 B (the renderer
+    # stand-in and the engine's maths, `--no-default-features`), plus the voice graph and the DSP.
+    wk_bare = 10_432 + (ratio * voice + dsp[name] - 3_300) * BROTLI
     ctl_render = ctl + (ratio * render + dsp[name]) * BROTLI
-    print(f"{name:8s} ratio {ratio:4.2f}: control {ctl/1000:6.1f} KB, worklet {wk/1000:6.1f} KB, together {(ctl+wk)/1000:6.1f} KB; control if it also holds render and the DSP {ctl_render/1000:6.1f} KB")
+    print(f"{name:8s} ratio {ratio:4.2f}: control {ctl/1000:6.1f} KB, worklet {wk/1000:6.1f} KB, together {(ctl+wk)/1000:6.1f} KB; control if it also holds render and the DSP {ctl_render/1000:6.1f} KB; worklet with no pattern core {wk_bare/1000:6.1f} KB, together {(ctl+wk_bare)/1000:6.1f} KB")

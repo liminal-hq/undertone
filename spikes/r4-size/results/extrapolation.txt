@@ -1,0 +1,4 @@
+ported TypeScript 27726 B, central ratio 5.78 raw wasm bytes per TS byte
+low      ratio 3.50: control  126.8 KB, worklet  116.2 KB, together  243.0 KB; control if it also holds render and the DSP  146.7 KB; worklet with no pattern core   47.5 KB, together  174.3 KB
+central  ratio 5.78: control  147.8 KB, worklet  144.8 KB, together  292.6 KB; control if it also holds render and the DSP  182.1 KB; worklet with no pattern core   73.8 KB, together  221.6 KB
+high     ratio 8.00: control  168.2 KB, worklet  174.6 KB, together  342.9 KB; control if it also holds render and the DSP  218.5 KB; worklet with no pattern core  101.6 KB, together  269.8 KB

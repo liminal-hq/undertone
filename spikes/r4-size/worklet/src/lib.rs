@@ -9,18 +9,24 @@
 //! memory through `alloc`, `build`, `book`, and `render`. The real voice graph is not built yet, so
 //! this module is a lower bound.
 
+#[cfg(feature = "pattern")]
 use std::cell::RefCell;
 
 use undertone_engine::math::Libm;
 use undertone_engine::math::gains::pan_law_gains;
 use undertone_engine::math::waves::{ShapedWave, shaped_wave_table};
+#[cfg(feature = "pattern")]
 use undertone_pattern::control::{Control, ControlArg};
 #[cfg(feature = "mini")]
 use undertone_pattern::control::{n, note, sound};
+#[cfg(feature = "pattern")]
 use undertone_pattern::random::Seed;
+#[cfg(feature = "pattern")]
 use undertone_pattern::signal;
+#[cfg(feature = "pattern")]
 use undertone_pattern::{Fraction, Pattern, Span, Value, cat, pure, seq, silence, stack};
 
+#[cfg(feature = "pattern")]
 thread_local! {
 	static PATTERNS: RefCell<Vec<Pattern<Value>>> = const { RefCell::new(Vec::new()) };
 }
@@ -44,8 +50,10 @@ pub unsafe extern "C" fn dealloc(p: *mut u8, n: usize) {
 	drop(unsafe { Vec::from_raw_parts(p, 0, n) });
 }
 
+#[cfg(feature = "pattern")]
 struct Reader<'a>(&'a [u8]);
 
+#[cfg(feature = "pattern")]
 impl Reader<'_> {
 	fn u8(&mut self) -> u8 {
 		let (a, rest) = self.0.split_first().unwrap_or((&0, &[]));
@@ -74,6 +82,7 @@ impl Reader<'_> {
 /// # Safety
 ///
 /// `p..p+len` must be readable memory.
+#[cfg(feature = "pattern")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn build(p: *const u8, len: usize) -> u32 {
 	let bytes = unsafe { std::slice::from_raw_parts(p, len) };
@@ -158,6 +167,7 @@ pub unsafe extern "C" fn build(p: *const u8, len: usize) -> u32 {
 /// # Safety
 ///
 /// `out..out+cap*5` `f64`s must be writable memory.
+#[cfg(feature = "pattern")]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn book(handle: u32, from: f64, to: f64, out: *mut f64, cap: usize) -> usize {
 	PATTERNS.with(|all| {
