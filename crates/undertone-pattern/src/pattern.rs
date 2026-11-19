@@ -1105,6 +1105,7 @@ impl<T: Datum> core::hash::Hash for Pattern<T> {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use alloc::string::ToString;
 
 	fn span(a: i128, b: i128) -> Span {
 		Span::new(Fraction::from_int(a), Fraction::from_int(b))

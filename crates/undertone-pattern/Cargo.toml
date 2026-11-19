@@ -8,9 +8,14 @@ repository.workspace = true
 authors.workspace = true
 
 [features]
-default = ["std"]
-# The floating-point maths (floor, sin, cos, powf) comes from the standard library. Without it the crate needs a maths provider (see `math.rs`).
+default = ["libm"]
+# Use the pure-Rust `libm` crate for floor, sin, cos, pow, and sqrt: the same code on every target and CPU (D-23), and no need for `std`.
+libm = ["dep:libm"]
+# Use the standard library: its `f64` maths when `libm` is off (`--no-default-features --features std`), and `std::error::Error` for `Error`.
 std = []
+
+[dependencies]
+libm = { version = "0.2.16", optional = true }
 
 [lints]
 workspace = true

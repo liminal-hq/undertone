@@ -256,6 +256,7 @@ impl fmt::Display for Fraction {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use alloc::string::ToString;
 
 	#[test]
 	fn reduces_and_signs() {

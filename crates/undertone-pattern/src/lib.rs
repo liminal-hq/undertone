@@ -7,11 +7,15 @@
 //!
 //! This crate is the pure, audio-free part of Undertone: exact rational time ([`Fraction`]), spans and events ([`Span`], [`Hap`]), and the [`js`] module that reproduces the JavaScript number and string behaviour the reference depends on.
 //!
-//! The crate uses `alloc` types only and takes its floating-point maths from one small module, so a `no_std` build needs only a maths provider (see the `std` feature).
+//! The crate uses `alloc` types only, and its floating-point maths comes from one small module with two back-ends: the pure-Rust `libm` crate (the default, so it is `no_std` and gives the same numbers on every target, decision D-23) or the standard library (`--no-default-features --features std`).
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+
+#[cfg(test)]
+#[macro_use]
+extern crate std;
 
 pub mod control;
 pub mod error;
