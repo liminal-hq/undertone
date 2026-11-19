@@ -12,3 +12,5 @@ spikes/**/target
 spikes/**/node_modules
 spikes/**/pkg
 spikes/**/out
+spikes/**/*.tgz
+spikes/r3-bridge/apps/**/bun.lock
