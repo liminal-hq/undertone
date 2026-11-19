@@ -70,7 +70,7 @@ export interface RenderGraphCase extends CaseBase {
 export type GraphCase = VoicesGraphCase | RenderGraphCase;
 
 /** The groups of layer 3, in file order. */
-export const LAYER3_GROUPS = ['placement', 'voices', 'options'] as const;
+export const LAYER3_GROUPS = ['placement', 'voices', 'options', 'instruments'] as const;
 
 const CREATORS = [
   ['createOscillator', 'oscillator'],

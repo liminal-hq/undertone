@@ -1,0 +1,696 @@
+{
+  "corpus": 1,
+  "layer": 3,
+  "group": "instruments",
+  "cases": [
+    {
+      "id": "instruments-preset-glassBell",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (glassBell)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.002,\"decay\":0.7,\"duration\":0.5,\"fmAttack\":0,\"fmDecay\":0.35,\"fmHarmonicity\":3.5,\"fmIndex\":1.4285714285714286,\"fmRelease\":0.2,\"gainLevel\":0.3,\"pitch\":\"e5\",\"release\":0.9,\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.002","lin 0 @0.702","lin 0 @1.602"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[1.622],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 2307.3929 @0"]},"start":[0],"stop":[1.622],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 3296.27557 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.0001 @0.35","exp 0.0001 @0.55"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-roundBass",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (roundBass)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.005,\"decay\":0.2,\"duration\":0.5,\"fmAttack\":0,\"fmDecay\":0.18,\"fmHarmonicity\":1,\"fmIndex\":3.5,\"fmRelease\":0.1,\"fmSustain\":0.3,\"fmWave\":\"triangle\",\"gainLevel\":0.5,\"pitch\":\"e5\",\"release\":0.12,\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.005","lin 0.3 @0.205","set 0.3 @0.5","lin 0 @0.62"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.64],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.64],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 2307.3929 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.3 @0.18","set 0.3 @0.5","exp 0.0001 @0.6"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-softPad",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (softPad)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.4,\"decay\":0.3,\"duration\":0.5,\"fmAttack\":0.5,\"fmDecay\":0.6,\"fmHarmonicity\":2,\"fmIndex\":0.6,\"fmRelease\":0.8,\"fmSustain\":0.5,\"gainLevel\":0.22,\"pitch\":\"e5\",\"release\":0.9,\"sustain\":0.8}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.22 @0.4","lin 0.176 @0.7","lin 0 @1.6"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[1.62],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[1.62],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 791.106137 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","exp 1 @0.5","exp 0.5 @1.1","exp 0.0001 @1.9"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-pluck",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (pluck)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.003,\"decay\":0.2,\"duration\":0.5,\"fmAttack\":0,\"fmDecay\":0.12,\"fmHarmonicity\":2,\"fmIndex\":3,\"fmRelease\":0.1,\"fmSustain\":0.1,\"gainLevel\":0.35,\"pitch\":\"e5\",\"release\":0.15,\"sustain\":0.25}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.35 @0.003","lin 0.0875 @0.203","set 0.0875 @0.5","lin 0 @0.65"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.67],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.67],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 3955.53068 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.1 @0.12","set 0.1 @0.5","exp 0.0001 @0.6"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-lead",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (lead)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.008,\"decay\":0.12,\"duration\":0.5,\"fmAttack\":0.004,\"fmDecay\":0.16,\"fmHarmonicity\":2,\"fmIndex\":1.7,\"fmRelease\":0.1,\"fmSustain\":0.14,\"gainLevel\":0.32,\"pitch\":\"e5\",\"release\":0.16,\"sustain\":0.52}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.32 @0.008","lin 0.1664 @0.128","set 0.1664 @0.5","lin 0 @0.66"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.68],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.68],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 2241.46739 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","exp 1 @0.004","exp 0.14 @0.164","set 0.14 @0.5","exp 0.0001 @0.6"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-full",
+      "group": "instruments",
+      "from": "src/tools.test.ts: converts a Tone.js-shaped definition into plain Undertone controls",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.2,\"duration\":0.5,\"fmAttack\":0.02,\"fmDecay\":0.1,\"fmHarmonicity\":2,\"fmIndex\":3.5,\"fmRelease\":0.05,\"fmSustain\":0.25,\"fmWave\":\"square\",\"gainLevel\":0.4,\"pan\":-0.3,\"pitch\":\"e5\",\"release\":0.3,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"panner":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.4 @0.01","lin 0.2 @0.21","set 0.2 @0.5","lin 0 @0.8"]},"to":["n6"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.82],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.82],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 4614.7858 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","exp 1 @0.02","exp 0.25 @0.12","set 0.25 @0.5","exp 0.0001 @0.55"]},"to":["n2.frequency"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set -0.3 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-no-index",
+      "group": "instruments",
+      "from": "src/tools.test.ts: leaves FM out without a modulation index",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.1,\"duration\":0.5,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.1","lin 0 @0.2","lin 0 @0.25"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.27],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-index-zero",
+      "group": "instruments",
+      "from": "generated: a modulation index of 0 leaves FM out",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"decay\":0.3,\"duration\":0.5,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.31","lin 0 @0.36"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.38],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-empty",
+      "group": "instruments",
+      "from": "src/tools.test.ts: leaves FM out without a modulation index (empty definition)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-index-only",
+      "group": "instruments",
+      "from": "generated: an index without a harmonicity divides by 1 and sets no ratio",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmIndex\":4,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 2637.02046 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-harmonicity-only",
+      "group": "instruments",
+      "from": "generated: a fractional harmonicity divides the index and sets the ratio",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":1.5,\"fmIndex\":2,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 988.882671 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1977.76534 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-level-pan",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: level is the peak gain and pan the stereo position",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":2,\"fmIndex\":1,\"gainLevel\":0.6,\"pan\":0.5,\"pitch\":\"e5\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.6 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n5"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1318.51023 @0"]},"to":["n2.frequency"]},
+          {"id":"n5","kind":"panner","params":{"pan":["set 0.5 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-fmvoice-shaped-carrier-and-modulator",
+      "group": "instruments",
+      "from": "src/waves.test.ts: set a periodic wave on the carrier, shared between notes (carrier and modulator shaped)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":2,\"fmIndex\":1.5,\"fmWave\":\"abssine\",\"pitch\":\"e5\",\"soundType\":\"halfsine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"custom","wave":"w1"},"params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1977.76534 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,5.88914744e-17,-0.212206721,2.61024039e-17,-0.0424414426,1.93061291e-17,-0.0181892607,-4.81460707e-17,-0.010105201,3.9304893e-17,-0.00643062778,2.38243088e-17,-0.00445201155,-3.37801802e-17,-0.00326484162,-3.88743331e-18,-0.00249667303,-2.08769129e-19,-0.00197108393,1.25012782e-17,-0.00159566314,-3.41986144e-17,-0.00131817826,2.6222259e-17,-0.00110728969,-4.05472232e-18,-0.000943265273,-7.14978029e-18,-0.000813176914,-4.24879874e-18,-0.000708266976,-1.41893652e-17,-0.000622431573,2.57966324e-18,-0.000551310775,-3.93889147e-17,-0.000491723127,1.48034079e-17,-0.000441302807,-2.04195043e-17,-0.000398261065,-3.03545672e-17,-0.000361225131,1.99183114e-19,-0.000329127331,3.6096642e-19,-0.000301127118,1.54926809e-17,-0.000276555511,1.27275419e-17,-0.000254874671,9.92035723e-17,-0.000235648287,2.29090897e-17,-0.000218519315,-3.49800102e-19,-0.000203193384,2.97523731e-17,-0.000189426035,-1.03819521e-17,-0.000177012844,-3.48678673e-18,-0.000165781865,1.94841194e-18,-0.000155587593],"imag":[0,0.5,3.57161104e-17,4.33776319e-16,-2.2554618e-17,-5.62334983e-17,8.94808087e-18,6.64155622e-17,-6.86848429e-18,-2.36537425e-18,1.90238637e-17,-1.10012044e-18,-9.75618173e-19,5.54741432e-17,4.74379148e-18,-3.07705828e-17,1.95247513e-17,2.64315969e-17,-1.07323376e-17,-5.71053069e-18,-7.37799777e-18,2.24154365e-17,-1.91145227e-18,-1.89816146e-17,1.07574772e-17,-8.73141414e-18,-8.80972499e-18,8.28307563e-18,-9.15100647e-18,6.24646432e-18,6.68937653e-19,3.84689939e-18,-2.00197561e-19,-9.28683615e-17,6.16589164e-17,4.85338761e-17,4.67297489e-19,-1.6848822e-17,-1.18450278e-18,-7.43778969e-18,6.19678055e-18,5.49453068e-18,2.28418316e-17,3.04402465e-18,3.51172581e-18,-1.04260491e-18,6.26803057e-18,-8.76483886e-18,4.49814861e-18,-1.157182e-17,-6.02180868e-19,-3.86904996e-17,3.20822993e-18,2.01374672e-17,4.27289741e-18,-4.00819961e-18,-1.88948434e-17,-4.04018966e-17,4.60334614e-18,1.1625686e-17,3.23170863e-17,1.55785241e-17,7.8288476e-18,-5.29128247e-18,-4.20948905e-18],"disableNormalization":false},
+          {"id":"w1","real":[0,4.81093538e-17,-0.424413443,-7.95363937e-18,-0.0848828852,-3.71274658e-17,-0.0363785215,1.56435339e-17,-0.0202104021,6.57448974e-17,-0.0128612556,3.73342477e-17,-0.0089040231,-2.19571057e-17,-0.00652968325,-1.52836507e-18,-0.00499334605,2.3511517e-17,-0.00394216785,-1.98357117e-17,-0.00319132628,-4.99095106e-17,-0.00263635651,2.96996221e-17,-0.00221457938,-3.74070925e-18,-0.00188653055,-2.81981503e-17,-0.00162635383,-2.10359574e-17,-0.00141653395,-1.8114329e-17,-0.00124486315,2.92734587e-18,-0.00110262155,-5.74107285e-17,-0.000983446254,-5.22640504e-18,-0.000882605615,-1.62947963e-18,-0.00079652213,-2.16807612e-17,-0.000722450262,1.16960427e-17,-0.000658254663,3.89943264e-17,-0.000602254237,-3.96909051e-18,-0.000553111022,1.41825079e-17,-0.000509749341,1.20683349e-16,-0.000471296575,-6.48304195e-17,-0.00043703863,1.38153191e-17,-0.000406386767,-7.84103693e-17,-0.00037885207,1.16165275e-17,-0.000354025688,-8.28292343e-18,-0.00033156373,9.87746296e-19,-0.000311175187],"imag":[0,-2.94710456e-17,1.8522264e-16,-3.17841834e-17,-7.16561418e-17,-8.06204967e-17,4.04022474e-17,5.86383307e-17,4.03833943e-17,2.80776996e-17,8.51467793e-18,-4.59953217e-17,5.96138678e-17,3.23942093e-17,7.58634736e-17,8.78683855e-18,-6.97153445e-18,1.06261779e-16,-3.84158558e-17,3.24805107e-17,-8.90776905e-18,2.20036296e-17,1.84339483e-17,-1.44032493e-17,-1.44628063e-17,2.97269522e-18,-1.91843301e-17,4.81499717e-17,-6.72997455e-18,-1.05292283e-17,4.34208941e-18,3.81277985e-17,-6.3640497e-18,-2.83699127e-18,-5.5918938e-17,4.39342027e-17,5.2222162e-18,-2.04427961e-17,3.62639951e-18,-1.40446334e-17,1.58613537e-19,-4.88384771e-17,2.18385145e-17,2.82479003e-17,4.34752895e-19,1.23571996e-16,6.62353957e-18,-1.12279114e-17,-4.28918956e-18,-2.25981177e-17,7.76264139e-17,-1.4643274e-17,-6.50238077e-18,5.32939101e-17,-4.64911636e-17,-2.6119505e-17,-2.42630735e-17,3.50142906e-17,3.98638454e-17,5.116214e-17,2.93549062e-17,2.81034944e-17,-1.10583857e-17,1.613746e-17,-3.60816183e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "instruments-fmvoice-shaped-modulator-only",
+      "group": "instruments",
+      "from": "src/fm.test.ts: a shaped modulator on a native carrier",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":1,\"fmIndex\":2,\"fmWave\":\"pulsesine\",\"pitch\":\"e5\",\"soundType\":\"triangle\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1318.51023 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.07686487e-17,-0.21171844,1.89583761e-16,-0.0429297239,6.47709154e-17,-0.0177009795,-2.08989286e-16,-0.0105934823,-7.16987979e-17,-0.00594234653,3.49248625e-17,-0.0049402928,-3.63072203e-17,-0.00277656037,-3.49977073e-17,-0.00298495428,1.92899895e-16,-0.00148280268,-6.27566711e-17,-0.00208394439,2.4062512e-17,-0.000829896948,1.03134732e-17,-0.00159557094,-7.14895807e-18,-0.000454983994,3.57447904e-18,-0.00130145822,3.57447904e-18,-0.000219985726,-1.20278679e-17,-0.00111071276,2.74641963e-17,-0.0000630295544,-5.7408505e-17,-0.000980004435,-3.88483191e-17,0.00004697845,-3.27666225e-17,-0.000886542315,-3.65376132e-17,0.000127056119,-2.02542518e-17,-0.000817408552,-7.18283939e-18,0.000187154132,5.86824426e-18,-0.00076483679,2.92734587e-17,0.000233406565,-6.67190912e-17,-0.000723929552,8.59230222e-18,0.000269761949,1.20549729e-17,-0.000691474648,-6.27685295e-17,0.000298855215,1.97460321e-17,-0.000665294123,5.33291944e-18,0.000322499371,2.02678044e-17,-0.000643868872],"imag":[0,-2.21502504e-16,0.424412936,-5.5890622e-17,-0.169764772,5.29632761e-17,0.109134071,-2.28766658e-17,-0.0808396041,5.68664039e-17,0.0643037781,-2.35976603e-16,-0.0534211397,0,0.0457042865,-1.05926552e-16,-0.0399427712,7.54062611e-17,0.0354750156,-1.0966705e-16,-0.03190827,1.61004023e-17,0.028994428,-1.00776592e-16,-0.0265689604,-1.62088225e-17,0.0245184042,-5.05238212e-17,-0.0227619633,-1.25767452e-17,0.0212405194,-5.63243029e-17,-0.0199098196,4.87890978e-18,0.0187360775,-6.25042552e-17,-0.0176930446,3.25260652e-19,0.0167600177,-7.51352106e-17,-0.0159204546,6.11490025e-17,0.0151609676,-5.24753851e-17,-0.0144706154,6.71663246e-17,0.0138403606,1.9461429e-17,-0.0132626779,1.05167611e-16,0.0127312476,-8.49472402e-17,-0.0122407246,4.81927866e-17,0.0117865577,2.95445092e-17,-0.0113648446,1.60299291e-16,0.0109722251,-3.28513258e-17,-0.0106057869,4.73796349e-17,0.0102629913,2.52077005e-17,-0.00994162261],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "instruments-fmvoice-shaped-carrier-only",
+      "group": "instruments",
+      "from": "generated: a shaped carrier with a native modulator",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":3,\"fmIndex\":0.3333333333333333,\"fmWave\":\"sawtooth\",\"pitch\":\"e5\",\"soundType\":\"pulsesine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 1977.76534 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 659.255114 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.07686487e-17,-0.21171844,1.89583761e-16,-0.0429297239,6.47709154e-17,-0.0177009795,-2.08989286e-16,-0.0105934823,-7.16987979e-17,-0.00594234653,3.49248625e-17,-0.0049402928,-3.63072203e-17,-0.00277656037,-3.49977073e-17,-0.00298495428,1.92899895e-16,-0.00148280268,-6.27566711e-17,-0.00208394439,2.4062512e-17,-0.000829896948,1.03134732e-17,-0.00159557094,-7.14895807e-18,-0.000454983994,3.57447904e-18,-0.00130145822,3.57447904e-18,-0.000219985726,-1.20278679e-17,-0.00111071276,2.74641963e-17,-0.0000630295544,-5.7408505e-17,-0.000980004435,-3.88483191e-17,0.00004697845,-3.27666225e-17,-0.000886542315,-3.65376132e-17,0.000127056119,-2.02542518e-17,-0.000817408552,-7.18283939e-18,0.000187154132,5.86824426e-18,-0.00076483679,2.92734587e-17,0.000233406565,-6.67190912e-17,-0.000723929552,8.59230222e-18,0.000269761949,1.20549729e-17,-0.000691474648,-6.27685295e-17,0.000298855215,1.97460321e-17,-0.000665294123,5.33291944e-18,0.000322499371,2.02678044e-17,-0.000643868872],"imag":[0,-2.21502504e-16,0.424412936,-5.5890622e-17,-0.169764772,5.29632761e-17,0.109134071,-2.28766658e-17,-0.0808396041,5.68664039e-17,0.0643037781,-2.35976603e-16,-0.0534211397,0,0.0457042865,-1.05926552e-16,-0.0399427712,7.54062611e-17,0.0354750156,-1.0966705e-16,-0.03190827,1.61004023e-17,0.028994428,-1.00776592e-16,-0.0265689604,-1.62088225e-17,0.0245184042,-5.05238212e-17,-0.0227619633,-1.25767452e-17,0.0212405194,-5.63243029e-17,-0.0199098196,4.87890978e-18,0.0187360775,-6.25042552e-17,-0.0176930446,3.25260652e-19,0.0167600177,-7.51352106e-17,-0.0159204546,6.11490025e-17,0.0151609676,-5.24753851e-17,-0.0144706154,6.71663246e-17,0.0138403606,1.9461429e-17,-0.0132626779,1.05167611e-16,0.0127312476,-8.49472402e-17,-0.0122407246,4.81927866e-17,0.0117865577,2.95445092e-17,-0.0113648446,1.60299291e-16,0.0109722251,-3.28513258e-17,-0.0106057869,4.73796349e-17,0.0102629913,2.52077005e-17,-0.00994162261],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "instruments-fmvoice-shaped-no-fm",
+      "group": "instruments",
+      "from": "generated: a shaped carrier with no FM at all",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"pitch\":\"e5\",\"soundType\":\"abssine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.81093538e-17,-0.424413443,-7.95363937e-18,-0.0848828852,-3.71274658e-17,-0.0363785215,1.56435339e-17,-0.0202104021,6.57448974e-17,-0.0128612556,3.73342477e-17,-0.0089040231,-2.19571057e-17,-0.00652968325,-1.52836507e-18,-0.00499334605,2.3511517e-17,-0.00394216785,-1.98357117e-17,-0.00319132628,-4.99095106e-17,-0.00263635651,2.96996221e-17,-0.00221457938,-3.74070925e-18,-0.00188653055,-2.81981503e-17,-0.00162635383,-2.10359574e-17,-0.00141653395,-1.8114329e-17,-0.00124486315,2.92734587e-18,-0.00110262155,-5.74107285e-17,-0.000983446254,-5.22640504e-18,-0.000882605615,-1.62947963e-18,-0.00079652213,-2.16807612e-17,-0.000722450262,1.16960427e-17,-0.000658254663,3.89943264e-17,-0.000602254237,-3.96909051e-18,-0.000553111022,1.41825079e-17,-0.000509749341,1.20683349e-16,-0.000471296575,-6.48304195e-17,-0.00043703863,1.38153191e-17,-0.000406386767,-7.84103693e-17,-0.00037885207,1.16165275e-17,-0.000354025688,-8.28292343e-18,-0.00033156373,9.87746296e-19,-0.000311175187],"imag":[0,-2.94710456e-17,1.8522264e-16,-3.17841834e-17,-7.16561418e-17,-8.06204967e-17,4.04022474e-17,5.86383307e-17,4.03833943e-17,2.80776996e-17,8.51467793e-18,-4.59953217e-17,5.96138678e-17,3.23942093e-17,7.58634736e-17,8.78683855e-18,-6.97153445e-18,1.06261779e-16,-3.84158558e-17,3.24805107e-17,-8.90776905e-18,2.20036296e-17,1.84339483e-17,-1.44032493e-17,-1.44628063e-17,2.97269522e-18,-1.91843301e-17,4.81499717e-17,-6.72997455e-18,-1.05292283e-17,4.34208941e-18,3.81277985e-17,-6.3640497e-18,-2.83699127e-18,-5.5918938e-17,4.39342027e-17,5.2222162e-18,-2.04427961e-17,3.62639951e-18,-1.40446334e-17,1.58613537e-19,-4.88384771e-17,2.18385145e-17,2.82479003e-17,4.34752895e-19,1.23571996e-16,6.62353957e-18,-1.12279114e-17,-4.28918956e-18,-2.25981177e-17,7.76264139e-17,-1.4643274e-17,-6.50238077e-18,5.32939101e-17,-4.64911636e-17,-2.6119505e-17,-2.42630735e-17,3.50142906e-17,3.98638454e-17,5.116214e-17,2.93549062e-17,2.81034944e-17,-1.10583857e-17,1.613746e-17,-3.60816183e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "instruments-voice-then-gain",
+      "group": "instruments",
+      "from": "src/tools.test.ts: lets controls chained after voice() win",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.003,\"decay\":0.2,\"duration\":0.5,\"fmAttack\":0,\"fmDecay\":0.12,\"fmHarmonicity\":2,\"fmIndex\":3,\"fmRelease\":0.1,\"fmSustain\":0.1,\"gainLevel\":0.35,\"pitch\":\"e5\",\"release\":0.15,\"sustain\":0.25}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.35 @0.003","lin 0.0875 @0.203","set 0.0875 @0.5","lin 0 @0.65"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.67],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.67],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 3955.53068 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.1 @0.12","set 0.1 @0.5","exp 0.0001 @0.6"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-placed",
+      "group": "instruments",
+      "from": "generated: a preset booked on a four-channel destination, placed on the front and centre",
+      "baseline": true,
+      "output": {"channels":4},
+      "score": [
+        "v0 @0 {\"attack\":0.4,\"channelGains\":[0.3,0,1,0.5],\"decay\":0.3,\"duration\":0.5,\"fmAttack\":0.5,\"fmDecay\":0.6,\"fmHarmonicity\":2,\"fmIndex\":0.6,\"fmRelease\":0.8,\"fmSustain\":0.5,\"gainLevel\":0.22,\"pitch\":\"e5\",\"release\":0.9,\"sustain\":0.8}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 4,
+        "counts": {"destination":1,"gain":6,"oscillator":2,"merger":1,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.22 @0.4","lin 0.176 @0.7","lin 0 @1.6"]},"to":["n7","n8","n9"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[1.62],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[1.62],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 791.106137 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","exp 1 @0.5","exp 0.5 @1.1","exp 0.0001 @1.9"]},"to":["n2.frequency"]},
+          {"id":"n6","kind":"merger","to":["n0"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n6 out 0 in 2"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n6 out 0 in 3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-preset-sends",
+      "group": "instruments",
+      "from": "generated: a preset with reverb and delay sends",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.002,\"decay\":0.7,\"delayLevel\":0.2,\"duration\":0.5,\"fmAttack\":0,\"fmDecay\":0.35,\"fmHarmonicity\":3.5,\"fmIndex\":1.4285714285714286,\"fmRelease\":0.2,\"gainLevel\":0.3,\"pitch\":\"e5\",\"release\":0.9,\"roomLevel\":0.3,\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":9,"oscillator":2,"convolver":1,"delay":1,"total":14},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.002","lin 0 @0.702","lin 0 @1.602"]},"to":["n0","n12","n13"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[1.622],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 2307.3929 @0"]},"start":[0],"stop":[1.622],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 3296.27557 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.0001 @0.35","exp 0.0001 @0.55"]},"to":["n2.frequency"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n8","kind":"gain","to":["n9"]},
+          {"id":"n9","kind":"delay","params":{"delayTime":["set 0.3 @0"]},"to":["n10","n11"]},
+          {"id":"n10","kind":"gain","to":["n0"]},
+          {"id":"n11","kind":"gain","params":{"gain":["set 0.35 @0"]},"to":["n9"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n6"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n8"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":49490,"sampleRate":44100,"channels":[{"rms":0.155158734,"peak":0.975742757,"head":[-0.519331098,-0.1701269,-0.428244472,0.288116783]},{"rms":0.154952807,"peak":0.985308886,"head":[-0.589772642,0.81913811,0.718032122,0.397718191]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-shared-waves",
+      "group": "instruments",
+      "from": "src/waves.test.ts: creates one wave per shape per context and reuses it (two FM instruments)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":0.5,\"fmHarmonicity\":2,\"fmIndex\":1,\"fmWave\":\"halfsine\",\"pitch\":\"e5\",\"soundType\":\"abssine\"}",
+        "v1 @0.25 {\"duration\":0.5,\"fmHarmonicity\":2,\"fmIndex\":1,\"fmWave\":\"halfsine\",\"pitch\":\"g5\",\"soundType\":\"abssine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"oscillator":4,"total":9},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"custom","wave":"w1"},"params":{"frequency":["set 1318.51023 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1318.51023 @0"]},"to":["n2.frequency"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0.25","lin 0.8 @0.26","lin 0 @0.36","lin 0 @0.41"]},"to":["n0"]},
+          {"id":"n6","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 783.990872 @0.25"]},"start":[0.25],"stop":[0.43],"to":["n5"]},
+          {"id":"n7","kind":"oscillator","fields":{"type":"custom","wave":"w1"},"params":{"frequency":["set 1567.98174 @0.25"]},"start":[0.25],"stop":[0.43],"to":["n8"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 1567.98174 @0.25"]},"to":["n6.frequency"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.81093538e-17,-0.424413443,-7.95363937e-18,-0.0848828852,-3.71274658e-17,-0.0363785215,1.56435339e-17,-0.0202104021,6.57448974e-17,-0.0128612556,3.73342477e-17,-0.0089040231,-2.19571057e-17,-0.00652968325,-1.52836507e-18,-0.00499334605,2.3511517e-17,-0.00394216785,-1.98357117e-17,-0.00319132628,-4.99095106e-17,-0.00263635651,2.96996221e-17,-0.00221457938,-3.74070925e-18,-0.00188653055,-2.81981503e-17,-0.00162635383,-2.10359574e-17,-0.00141653395,-1.8114329e-17,-0.00124486315,2.92734587e-18,-0.00110262155,-5.74107285e-17,-0.000983446254,-5.22640504e-18,-0.000882605615,-1.62947963e-18,-0.00079652213,-2.16807612e-17,-0.000722450262,1.16960427e-17,-0.000658254663,3.89943264e-17,-0.000602254237,-3.96909051e-18,-0.000553111022,1.41825079e-17,-0.000509749341,1.20683349e-16,-0.000471296575,-6.48304195e-17,-0.00043703863,1.38153191e-17,-0.000406386767,-7.84103693e-17,-0.00037885207,1.16165275e-17,-0.000354025688,-8.28292343e-18,-0.00033156373,9.87746296e-19,-0.000311175187],"imag":[0,-2.94710456e-17,1.8522264e-16,-3.17841834e-17,-7.16561418e-17,-8.06204967e-17,4.04022474e-17,5.86383307e-17,4.03833943e-17,2.80776996e-17,8.51467793e-18,-4.59953217e-17,5.96138678e-17,3.23942093e-17,7.58634736e-17,8.78683855e-18,-6.97153445e-18,1.06261779e-16,-3.84158558e-17,3.24805107e-17,-8.90776905e-18,2.20036296e-17,1.84339483e-17,-1.44032493e-17,-1.44628063e-17,2.97269522e-18,-1.91843301e-17,4.81499717e-17,-6.72997455e-18,-1.05292283e-17,4.34208941e-18,3.81277985e-17,-6.3640497e-18,-2.83699127e-18,-5.5918938e-17,4.39342027e-17,5.2222162e-18,-2.04427961e-17,3.62639951e-18,-1.40446334e-17,1.58613537e-19,-4.88384771e-17,2.18385145e-17,2.82479003e-17,4.34752895e-19,1.23571996e-16,6.62353957e-18,-1.12279114e-17,-4.28918956e-18,-2.25981177e-17,7.76264139e-17,-1.4643274e-17,-6.50238077e-18,5.32939101e-17,-4.64911636e-17,-2.6119505e-17,-2.42630735e-17,3.50142906e-17,3.98638454e-17,5.116214e-17,2.93549062e-17,2.81034944e-17,-1.10583857e-17,1.613746e-17,-3.60816183e-18],"disableNormalization":false},
+          {"id":"w1","real":[0,5.88914744e-17,-0.212206721,2.61024039e-17,-0.0424414426,1.93061291e-17,-0.0181892607,-4.81460707e-17,-0.010105201,3.9304893e-17,-0.00643062778,2.38243088e-17,-0.00445201155,-3.37801802e-17,-0.00326484162,-3.88743331e-18,-0.00249667303,-2.08769129e-19,-0.00197108393,1.25012782e-17,-0.00159566314,-3.41986144e-17,-0.00131817826,2.6222259e-17,-0.00110728969,-4.05472232e-18,-0.000943265273,-7.14978029e-18,-0.000813176914,-4.24879874e-18,-0.000708266976,-1.41893652e-17,-0.000622431573,2.57966324e-18,-0.000551310775,-3.93889147e-17,-0.000491723127,1.48034079e-17,-0.000441302807,-2.04195043e-17,-0.000398261065,-3.03545672e-17,-0.000361225131,1.99183114e-19,-0.000329127331,3.6096642e-19,-0.000301127118,1.54926809e-17,-0.000276555511,1.27275419e-17,-0.000254874671,9.92035723e-17,-0.000235648287,2.29090897e-17,-0.000218519315,-3.49800102e-19,-0.000203193384,2.97523731e-17,-0.000189426035,-1.03819521e-17,-0.000177012844,-3.48678673e-18,-0.000165781865,1.94841194e-18,-0.000155587593],"imag":[0,0.5,3.57161104e-17,4.33776319e-16,-2.2554618e-17,-5.62334983e-17,8.94808087e-18,6.64155622e-17,-6.86848429e-18,-2.36537425e-18,1.90238637e-17,-1.10012044e-18,-9.75618173e-19,5.54741432e-17,4.74379148e-18,-3.07705828e-17,1.95247513e-17,2.64315969e-17,-1.07323376e-17,-5.71053069e-18,-7.37799777e-18,2.24154365e-17,-1.91145227e-18,-1.89816146e-17,1.07574772e-17,-8.73141414e-18,-8.80972499e-18,8.28307563e-18,-9.15100647e-18,6.24646432e-18,6.68937653e-19,3.84689939e-18,-2.00197561e-19,-9.28683615e-17,6.16589164e-17,4.85338761e-17,4.67297489e-19,-1.6848822e-17,-1.18450278e-18,-7.43778969e-18,6.19678055e-18,5.49453068e-18,2.28418316e-17,3.04402465e-18,3.51172581e-18,-1.04260491e-18,6.26803057e-18,-8.76483886e-18,4.49814861e-18,-1.157182e-17,-6.02180868e-19,-3.86904996e-17,3.20822993e-18,2.01374672e-17,4.27289741e-18,-4.00819961e-18,-1.88948434e-17,-4.04018966e-17,4.60334614e-18,1.1625686e-17,3.23170863e-17,1.55785241e-17,7.8288476e-18,-5.29128247e-18,-4.20948905e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "instruments-fmvoice-error-harmonicity",
+      "group": "instruments",
+      "from": "src/tools.test.ts: is JSON-safe and rejects bad values (harmonicity)",
+      "baseline": true,
+      "error": "fmVoice() harmonicity must be positive, got 0"
+    },
+    {
+      "id": "instruments-fmvoice-error-index",
+      "group": "instruments",
+      "from": "src/tools.test.ts: is JSON-safe and rejects bad values (modulation index)",
+      "baseline": true,
+      "error": "fmVoice() modulationIndex must not be negative, got -1"
+    },
+    {
+      "id": "instruments-layer-stagger-levels-pans",
+      "group": "instruments",
+      "from": "src/tools.test.ts: stacks the voices with a start stagger, level balance and opposite pans",
+      "baseline": true,
+      "program": [["note","a4"],["layer",[{"soundType":"square"},{"soundType":"triangle"}],{"stagger":0.002,"levels":[1,0.5],"pans":[-0.4,0.4]}]],
+      "render": {"cps":1,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":-0.4,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0,\"velocity\":1}",
+        "v1 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0.002,\"pan\":0.4,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"triangle\",\"sustain\":0,\"velocity\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 1280,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"panner":2,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set -0.4 @0"]},"to":["n1"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @0.002","lin 0.4 @0.012","lin 0 @0.112","lin 0 @0.162"]},"to":["n9"]},
+          {"id":"n8","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 440 @0.002"]},"start":[0.002],"stop":[0.182],"to":["n7"]},
+          {"id":"n9","kind":"panner","params":{"pan":["set 0.4 @0.002"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-layer-presets",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: layering a bell and a pad on one pattern of notes",
+      "baseline": true,
+      "program": [["note","e5 g5"],["layer",[{"$preset":"glassBell"},{"$preset":"softPad"}],{"stagger":0.003}]],
+      "render": {"cps":1,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.002,\"decay\":0.7,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"fmAttack\":0,\"fmDecay\":0.35,\"fmHarmonicity\":3.5,\"fmIndex\":1.4285714285714286,\"fmRelease\":0.2,\"gainLevel\":0.3,\"nudgeTime\":0,\"pitch\":\"e5\",\"release\":0.9,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.002,\"decay\":0.7,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"fmAttack\":0,\"fmDecay\":0.35,\"fmHarmonicity\":3.5,\"fmIndex\":1.4285714285714286,\"fmRelease\":0.2,\"gainLevel\":0.3,\"nudgeTime\":0,\"pitch\":\"g5\",\"release\":0.9,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0 {\"attack\":0.4,\"decay\":0.3,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"fmAttack\":0.5,\"fmDecay\":0.6,\"fmHarmonicity\":2,\"fmIndex\":0.6,\"fmRelease\":0.8,\"fmSustain\":0.5,\"gainLevel\":0.22,\"nudgeTime\":0.003,\"pitch\":\"e5\",\"release\":0.9,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0.8}",
+        "v3 @0.5 {\"attack\":0.4,\"decay\":0.3,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"fmAttack\":0.5,\"fmDecay\":0.6,\"fmHarmonicity\":2,\"fmIndex\":0.6,\"fmRelease\":0.8,\"fmSustain\":0.5,\"gainLevel\":0.22,\"nudgeTime\":0.003,\"pitch\":\"g5\",\"release\":0.9,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0.8}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 1280,
+        "channels": 2,
+        "counts": {"destination":1,"gain":14,"compressor":1,"oscillator":8,"total":24},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.002","lin 0 @0.702","lin 0 @1.602"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 659.255114 @0"]},"start":[0],"stop":[1.622],"to":["n4"]},
+          {"id":"n6","kind":"oscillator","params":{"frequency":["set 2307.3929 @0"]},"start":[0],"stop":[1.622],"to":["n7"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 3296.27557 @0"]},"to":["n8"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.0001 @0.35","exp 0.0001 @0.55"]},"to":["n5.frequency"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0 @0.003","lin 0.22 @0.403","lin 0.176 @0.703","lin 0 @1.603"]},"to":["n1"]},
+          {"id":"n10","kind":"oscillator","params":{"frequency":["set 659.255114 @0.003"]},"start":[0.003],"stop":[1.623],"to":["n9"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 1318.51023 @0.003"]},"start":[0.003],"stop":[1.623],"to":["n12"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 791.106137 @0.003"]},"to":["n13"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0.0001 @0.003","exp 1 @0.503","exp 0.5 @1.103","exp 0.0001 @1.903"]},"to":["n10.frequency"]},
+          {"id":"n14","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.3 @0.502","lin 0 @1.202","lin 0 @2.102"]},"to":["n1"]},
+          {"id":"n15","kind":"oscillator","params":{"frequency":["set 783.990872 @0.5"]},"start":[0.5],"stop":[2.122],"to":["n14"]},
+          {"id":"n16","kind":"oscillator","params":{"frequency":["set 2743.96805 @0.5"]},"start":[0.5],"stop":[2.122],"to":["n17"]},
+          {"id":"n17","kind":"gain","params":{"gain":["set 3919.95436 @0.5"]},"to":["n18"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0.0001 @0.5","set 1 @0.5","exp 0.0001 @0.85","exp 0.0001 @1.05"]},"to":["n15.frequency"]},
+          {"id":"n19","kind":"gain","params":{"gain":["set 0 @0.503","lin 0.22 @0.903","lin 0.176 @1.203","lin 0 @2.103"]},"to":["n1"]},
+          {"id":"n20","kind":"oscillator","params":{"frequency":["set 783.990872 @0.503"]},"start":[0.503],"stop":[2.123],"to":["n19"]},
+          {"id":"n21","kind":"oscillator","params":{"frequency":["set 1567.98174 @0.503"]},"start":[0.503],"stop":[2.123],"to":["n22"]},
+          {"id":"n22","kind":"gain","params":{"gain":["set 940.789046 @0.503"]},"to":["n23"]},
+          {"id":"n23","kind":"gain","params":{"gain":["set 0.0001 @0.503","exp 1 @1.003","exp 0.5 @1.603","exp 0.0001 @2.403"]},"to":["n20.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-layer-velocity-levels",
+      "group": "instruments",
+      "from": "src/tools.test.ts: multiplies the notes' own velocity by the layer level",
+      "baseline": true,
+      "program": [["note","a4 a4"],["velocity","1 0.25"],["gain",1],["layer",[{},{}],{"levels":[1,0.5]}]],
+      "render": {"cps":1,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1,\"nudgeTime\":0,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":1}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1,\"nudgeTime\":0,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":0.25}",
+        "v2 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1,\"nudgeTime\":0,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":0.5}",
+        "v3 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1,\"nudgeTime\":0,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":0.125}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 1280,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"compressor":1,"oscillator":4,"total":12},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 1 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.25 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 440 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.125 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 440 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n10"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-layer-own-pan",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given",
+      "baseline": true,
+      "program": [["note","a4"],["layer",[{"pan":0.7}]]],
+      "render": {"cps":1,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.7,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 1280,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"panner":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set 0.7 @0"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "instruments-layer-error-empty",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given, and rejects bad input (no voices)",
+      "baseline": true,
+      "program": [["note","a4"],["layer",[]]],
+      "error": "layer() needs at least one voice"
+    },
+    {
+      "id": "instruments-layer-error-stagger",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given, and rejects bad input (stagger)",
+      "baseline": true,
+      "program": [["note","a4"],["layer",[{}],{"stagger":-1}]],
+      "error": "layer() stagger must not be negative, got -1"
+    }
+  ]
+}
