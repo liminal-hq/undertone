@@ -6,7 +6,7 @@ title: Samples
 
 Undertone bundles no samples and fetches nothing by default — sample playback is strictly bring-your-own-assets. The flow is: register names, optionally preload, then play them with `s()` exactly like synth voices.
 
-```ts
+```ts standalone audio=samples-kit
 import {
   loadSamples,
   note,

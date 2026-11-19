@@ -31,6 +31,8 @@ export interface BlockSpec {
   tail?: number;
   /** capture: the output layouts to render, each its own file. Default `[2]`. A layout wider than stereo is rendered as it is; the stereo file is folded by the library itself. */
   channels?: Array<1 | 2 | 4 | 6 | 8>;
+  /** capture: master bus options to render through when the block does not make a master bus itself, for a block whose stand-in samples add up past full scale (`gain` brings the mix down; `ceiling` is the library's own hard ceiling in dBFS). */
+  master?: Omit<MasterBusOptions, 'output'>;
   /** direct: seconds of the offline context. Default 2. */
   seconds?: number;
   /** run: keep only the first this-many seconds of each render. */
@@ -286,6 +288,7 @@ export async function renderBlock(
           if (!tuned) throw new Error('the block plays through an output this renderer cannot map');
           master = tuned;
         }
+        if (master === false && spec.master !== undefined) master = spec.master;
         for (const channels of layouts) {
           const buffer = await lib.renderToBuffer(run.pattern, {
             cycles: spec.cycles ?? (run.once ? 1 : 4),

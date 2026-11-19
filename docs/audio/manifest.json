@@ -9,6 +9,17 @@
     "kind": "run",
     "labels": ["render"]
   },
+  "samples-kit": {
+    "page": "docs/guide/samples.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1,
+    "note": "The stand-in kit is loud, so the mix is brought down 4.4 dB and held under -1 dBFS by the library's own master ceiling.",
+    "master": {
+      "gain": 0.6,
+      "ceiling": -1
+    }
+  },
   "samples-registry": {
     "page": "docs/guide/samples.md",
     "kind": "capture",
