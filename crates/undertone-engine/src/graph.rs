@@ -391,20 +391,41 @@ impl ChannelInterpretation {
 /// together ([`Graph::retire_scope`]). [`Scope::NONE`] names nothing: it is what a graph that does not retire
 /// anything returns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Scope(u32);
+pub struct Scope {
+	index: u32,
+	generation: u32,
+}
 
 impl Scope {
 	/// The scope that names nothing; retiring it does nothing.
-	pub const NONE: Scope = Scope(0);
+	pub const NONE: Scope = Scope {
+		index: 0,
+		generation: 0,
+	};
 
-	/// A scope with the given index (`0` is [`Scope::NONE`]), for a graph that numbers its own scopes.
+	/// A scope with the given index (`0` is [`Scope::NONE`]) and generation `0`, for a graph that numbers its
+	/// own scopes.
 	pub const fn new(index: u32) -> Self {
-		Self(index)
+		Self {
+			index,
+			generation: 0,
+		}
+	}
+
+	/// A scope with the given index and generation. A graph that reuses scope numbers gives each use a new
+	/// generation, so a handle kept past its scope's retirement names nothing once the number is used again.
+	pub const fn with_generation(index: u32, generation: u32) -> Self {
+		Self { index, generation }
 	}
 
 	/// The index a graph numbered the scope with.
 	pub const fn index(self) -> u32 {
-		self.0
+		self.index
+	}
+
+	/// The generation of the use of that index (`0` for a graph that does not reuse indices).
+	pub const fn generation(self) -> u32 {
+		self.generation
 	}
 }
 

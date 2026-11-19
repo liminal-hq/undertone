@@ -331,6 +331,9 @@ pub struct RenderGraph {
 	/// Ended scopes waiting to be retired, numbered from 1 (0 is `Scope::NONE`).
 	ended_scopes: Vec<Option<ScopeRecord>>,
 	free_scopes: Vec<usize>,
+	/// How many times each ended-scope slot has been handed out, so a stale `Scope` names nothing once its
+	/// slot is reused.
+	scope_generations: Vec<u32>,
 	/// Retired node numbers, to be used again.
 	free_nodes: Vec<usize>,
 	/// Retired buffer numbers, to be used again.
@@ -418,6 +421,7 @@ impl RenderGraph {
 			open_scopes: Vec::new(),
 			ended_scopes: Vec::new(),
 			free_scopes: Vec::new(),
+			scope_generations: Vec::new(),
 			free_nodes: Vec::new(),
 			free_buffers: Vec::new(),
 		})
@@ -1542,14 +1546,16 @@ impl Graph for RenderGraph {
 		let slot = match self.free_scopes.pop() {
 			Some(slot) => {
 				self.ended_scopes[slot] = Some(record);
+				self.scope_generations[slot] = self.scope_generations[slot].wrapping_add(1);
 				slot
 			}
 			None => {
 				self.ended_scopes.push(Some(record));
+				self.scope_generations.push(0);
 				self.ended_scopes.len() - 1
 			}
 		};
-		Scope::new(slot as u32 + 1)
+		Scope::with_generation(slot as u32 + 1, self.scope_generations[slot])
 	}
 
 	fn begin_shared(&mut self) {
@@ -1569,6 +1575,10 @@ impl Graph for RenderGraph {
 			return;
 		}
 		let slot = scope.index() as usize - 1;
+		if self.scope_generations.get(slot) != Some(&scope.generation()) {
+			// A stale handle: its slot has been given to a newer scope.
+			return;
+		}
 		let Some(record) = self.ended_scopes.get_mut(slot).and_then(Option::take) else {
 			return;
 		};
