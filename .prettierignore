@@ -10,3 +10,4 @@ spikes/**/node_modules
 spikes/**/pkg
 spikes/**/out
 spikes/**/bun.lock
+conformance/test-classes.json
