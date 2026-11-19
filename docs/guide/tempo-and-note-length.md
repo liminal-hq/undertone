@@ -24,7 +24,19 @@ const handle = music.loop({ bpm: 110 });
 handle.stop();
 ```
 
-Tempo: `bpm` counts four beats per cycle, so the default 120 bpm means 2-second cycles and a 4-step sequence lands one step per beat. If you'd rather set tempo once instead of passing `{ bpm }` everywhere, `setcpm(cyclesPerMinute)` sets a default in cycles per minute (`setcpm(30)` is the same speed as `bpm: 120`); an explicit `bpm` on any call still wins, and `resetTempo()` clears the override.
+Tempo: `bpm` counts four beats per cycle, so the default 120 bpm means 2-second cycles and a 4-step sequence lands one step per beat. If you'd rather set tempo once instead of passing `{ bpm }` everywhere, `setcpm(cyclesPerMinute)` sets a default in cycles per minute (`setcpm(30)` is the same speed as `bpm: 120`); an explicit `bpm` or `cps` on any call still wins, and `resetTempo()` clears the override.
+
+A running loop **follows** the default tempo: a `.loop()` started without `bpm` or `cps` re-reads the `setcpm()` value on every scheduler tick, so calling `setcpm()` (or `resetTempo()`) while it plays changes its speed from the next scheduling window, with no gap, overlap or restart — voices already booked keep their times, and the loop carries on from the end of them at the new tempo. A loop started with an explicit `{ bpm }` or `{ cps }` keeps that tempo and ignores later changes. `.play()` reads the tempo once, when it is called.
+
+```ts
+import { note, setcpm } from '@liminal-hq/undertone';
+
+setcpm(30);
+const handle = note('c3 e3 g3 b3').loop(); // 2-second cycles
+// ... later, the running loop speeds up to 1-second cycles:
+setcpm(60);
+handle.stop();
+```
 
 `stop()` stops _scheduling_ — voices already handed to the audio clock (the scheduler looks ahead about a third of a second) finish their envelopes and ring out rather than being cut off mid-note.
 
