@@ -11,9 +11,15 @@
 //! pure-Rust `libm` crate by default, so the same numbers come out on every platform; build with
 //! `--no-default-features` for the platform C library.
 //!
+//! The [`graph`] module holds the [`graph::Graph`] trait, the Web Audio calls the engine books voices with, and
+//! [`graph::LogGraph`], which records them in the layer 3 corpus format.
+//!
 //! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
 //! support is behind the `serde` cargo feature.
 
+extern crate alloc;
+
+pub mod graph;
 pub mod math;
 pub mod params;
 pub mod random;
