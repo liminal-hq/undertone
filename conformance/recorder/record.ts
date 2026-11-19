@@ -14,6 +14,7 @@ import { layer3Cases } from './graphData';
 import { recordGraphCase, recordLayer3 } from './graph';
 import { layer1Programs } from './programData';
 import { recordLayer1 } from './programs';
+import { recordWav } from './wavData';
 import { randomCases, recordRandom } from './randomCases';
 import { loadReference, repoRoot } from './reference';
 import type { Reference } from './reference';
@@ -32,7 +33,12 @@ export async function generate(ref: Reference): Promise<Map<string, string>> {
       ...recordLayer2(ref, layer2Cases(layer1)),
       ...(await recordLayer3(ref, layer3Cases()))
     ];
-    return new Map(files.map((file) => [`${file.layer}/${file.group}.json`, serialiseFile(file)]));
+    const written = new Map(
+      files.map((file) => [`${file.layer}/${file.group}.json`, serialiseFile(file)])
+    );
+    // The WAV bytes are not a layer: a format of their own (`conformance/README.md`).
+    written.set('wav/wav.json', recordWav(ref));
+    return written;
   } finally {
     console.warn = warn;
   }
