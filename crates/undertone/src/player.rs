@@ -51,7 +51,7 @@
 //! does nothing.
 
 use crate::error::{Error, Result};
-use crate::rendering::RenderedAudio;
+use crate::rendering::{RENDER_BLOCK_FRAMES, RenderedAudio, check_render_size, reserve_channels};
 use undertone_engine::engine::{Engine, OutputSetup};
 use undertone_engine::graph::Graph;
 use undertone_engine::params::Pitch;
@@ -293,7 +293,9 @@ impl Player {
 	///
 	/// # Errors
 	///
-	/// A `seconds` that is not positive and finite, longer than the engine's bound (268,435,456 frames), or a
+	/// A `seconds` that is not positive and finite, longer than the engine's bound (268,435,456 frames), more
+	/// than [`MAX_RENDER_SAMPLES`](crate::MAX_RENDER_SAMPLES) samples in all channels (decision D-37), one the
+	/// machine cannot hold (an error, not an abort), or a
 	/// [`render_block`](Player::render_block) failure.
 	///
 	/// ```
@@ -324,11 +326,22 @@ impl Player {
 			)));
 		}
 		let frames = frames as usize;
-		let mut channels = vec![vec![0.0_f32; frames]; self.channel_count()];
-		let mut slices: Vec<&mut [f32]> = channels.iter_mut().map(Vec::as_mut_slice).collect();
-		let written = self.render_block(&mut slices)?;
-		for channel in &mut channels {
-			channel.truncate(written);
+		let channel_count = self.channel_count();
+		check_render_size(frames, channel_count)?;
+		let mut channels = reserve_channels(channel_count, frames)?;
+		let mut block = vec![vec![0.0_f32; frames.min(RENDER_BLOCK_FRAMES)]; channel_count];
+		let mut done = 0;
+		while done < frames {
+			let take = (frames - done).min(RENDER_BLOCK_FRAMES);
+			let mut slices: Vec<&mut [f32]> = block.iter_mut().map(|c| &mut c[..take]).collect();
+			let written = self.render_block(&mut slices)?;
+			for (channel, produced) in channels.iter_mut().zip(&block) {
+				channel.extend_from_slice(&produced[..written]);
+			}
+			done += written;
+			if written < take {
+				break;
+			}
 		}
 		RenderedAudio::new(sample_rate, channels)
 	}
@@ -912,7 +925,8 @@ mod tests {
 			"the render is too large: 288000000 samples in all channels, at most 268435456 are allowed"
 		);
 		// Eight channels at 1 MHz: 40 s is 320,000,000 samples.
-		let mut wide = Player::new(&PlayerOptions::new().sample_rate(1_000_000).channels(8)).unwrap();
+		let mut wide =
+			Player::new(&PlayerOptions::new().sample_rate(1_000_000).channels(8)).unwrap();
 		assert!(wide.render_seconds(40.0).is_err());
 		assert_eq!(player.clock().now(), 0.0);
 		assert_eq!(player.render_seconds(0.1).unwrap().frames(), 4_800);

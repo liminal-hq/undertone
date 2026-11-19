@@ -17,7 +17,7 @@
 use crate::error::{Error, Result};
 use crate::options::{RenderOptions, WavOptions};
 use undertone_engine::render::RenderPlan;
-use undertone_engine::render_graph::RenderGraph;
+use undertone_engine::render_graph::{MAX_BUFFER_SAMPLES, RenderGraph};
 use undertone_engine::samples::Samples;
 use undertone_engine::score::Score;
 use undertone_engine::wav::encode_wav;
@@ -148,7 +148,9 @@ impl RenderedAudio {
 /// An option the reference rejects fails with its message, in its order (see
 /// [`RenderPlan::new`](undertone_engine::render::RenderPlan::new)); a pattern that fails when queried, a voice
 /// that fails to book, and a render over the engine's bounds (1,048,576 cycles, 268,435,456 frames) fail the
-/// same way.
+/// same way. A render of more than [`MAX_RENDER_SAMPLES`] (2^28) samples in all channels, or one the machine
+/// cannot hold, returns an error before it renders anything (decision D-37); the reference would run out of
+/// memory instead.
 ///
 /// ```
 /// use undertone::prelude::*;
@@ -221,40 +223,112 @@ pub fn render_to_wav(
 	render(pattern, options)?.to_wav(wav)
 }
 
+/// The most samples, over all channels, that one [`render`] or [`Player::render_seconds`](crate::Player::render_seconds)
+/// returns: 2^28 (268,435,456), a gibibyte of `f32`, the same figure as the engine's bound on a buffer.
+///
+/// This is a deliberate Rust-only bound (decision D-37). A render is also limited to 268,435,456 frames per
+/// channel, but eight channels of that is sixteen gibibytes, which no machine can hold twice over, so a render
+/// of more samples than this in all channels fails with an error before any audio memory is allocated.
+pub const MAX_RENDER_SAMPLES: usize = MAX_BUFFER_SAMPLES;
+
+/// How many frames the renderer produces in one step: the block it renders into and copies out of, so a render
+/// never holds more than the result and one small block (8 channels of this is 2 MiB).
+pub(crate) const RENDER_BLOCK_FRAMES: usize = 65_536;
+
+/// Fails when `frames` frames of each of `channels` channels are more than [`MAX_RENDER_SAMPLES`] in all.
+pub(crate) fn check_render_size(frames: usize, channels: usize) -> Result<()> {
+	let samples = frames as u128 * channels as u128;
+	if samples > MAX_RENDER_SAMPLES as u128 {
+		return Err(Error::new(format!(
+			"the render is too large: {samples} samples in all channels, at most {MAX_RENDER_SAMPLES} are allowed"
+		)));
+	}
+	Ok(())
+}
+
+/// `channels` empty vectors with room for `frames` samples each, or an error where an allocation would fail
+/// (the standard `vec!` aborts the process instead).
+pub(crate) fn reserve_channels(channels: usize, frames: usize) -> Result<Vec<Vec<f32>>> {
+	let mut reserved = Vec::new();
+	reserved
+		.try_reserve_exact(channels)
+		.map_err(|_| too_big(channels, frames))?;
+	for _ in 0..channels {
+		let mut channel = Vec::new();
+		channel
+			.try_reserve_exact(frames)
+			.map_err(|_| too_big(channels, frames))?;
+		reserved.push(channel);
+	}
+	Ok(reserved)
+}
+
+fn too_big(channels: usize, frames: usize) -> Error {
+	Error::new(format!(
+		"could not allocate memory for the render: {frames} frames in each of {channels} channels"
+	))
+}
+
 /// Books `pattern` on a renderer made for `plan` and renders it.
 fn render_planned(
 	plan: &RenderPlan,
 	samples: Samples,
 	pattern: &Pattern<ControlMap>,
 ) -> Result<RenderedAudio> {
+	render_planned_in_blocks(plan, samples, pattern, RENDER_BLOCK_FRAMES)
+}
+
+/// As [`render_planned`], rendering `block_frames` frames at a time straight into the per-channel results. The
+/// samples do not depend on the block size.
+fn render_planned_in_blocks(
+	plan: &RenderPlan,
+	samples: Samples,
+	pattern: &Pattern<ControlMap>,
+	block_frames: usize,
+) -> Result<RenderedAudio> {
+	let channels = plan.channels as usize;
+	check_render_size(plan.length, channels)?;
 	let graph = RenderGraph::try_new(plan.sample_rate, plan.channels, plan.length as u64)?;
-	let mut rendered: Vec<Vec<f32>> = vec![Vec::new(); plan.channels as usize];
+	let mut rendered = reserve_channels(channels, plan.length)?;
+	let mut block = vec![vec![0.0_f32; block_frames.clamp(1, plan.length.max(1))]; channels];
 	// Without a booking window the render is never paused. With one, each pause renders up to where the next
 	// window's voices start, so the renderer has not yet processed a node that is booked later.
 	let engine = plan.book_pattern_with_samples(graph, samples, pattern, |graph, seconds| {
 		let frames = (seconds * plan.sample_rate).round() as usize;
-		render_until(graph, &mut rendered, frames);
+		render_until(graph, &mut rendered, &mut block, frames);
 		Ok(())
 	})?;
 	let mut graph = engine.into_graph();
-	render_until(&mut graph, &mut rendered, plan.length);
+	render_until(&mut graph, &mut rendered, &mut block, plan.length);
 	Ok(RenderedAudio {
 		sample_rate: plan.sample_rate,
 		channels: plan.finish(rendered),
 	})
 }
 
-/// Renders the graph on until `rendered` holds `frames` frames of each channel.
-fn render_until(graph: &mut RenderGraph, rendered: &mut [Vec<f32>], frames: usize) {
-	let have = rendered.first().map_or(0, Vec::len);
-	if frames <= have {
-		return;
-	}
-	let mut block = vec![vec![0.0_f32; frames - have]; rendered.len()];
-	let mut slices: Vec<&mut [f32]> = block.iter_mut().map(Vec::as_mut_slice).collect();
-	let written = graph.render_block(&mut slices);
-	for (channel, rendered_block) in rendered.iter_mut().zip(&block) {
-		channel.extend_from_slice(&rendered_block[..written]);
+/// Renders the graph on, one `block` at a time, until `rendered` holds `frames` frames of each channel (or the
+/// graph has no more to give).
+fn render_until(
+	graph: &mut RenderGraph,
+	rendered: &mut [Vec<f32>],
+	block: &mut [Vec<f32>],
+	frames: usize,
+) {
+	let size = block.first().map_or(0, Vec::len);
+	loop {
+		let have = rendered.first().map_or(0, Vec::len);
+		if frames <= have || size == 0 {
+			return;
+		}
+		let take = (frames - have).min(size);
+		let mut slices: Vec<&mut [f32]> = block.iter_mut().map(|c| &mut c[..take]).collect();
+		let written = graph.render_block(&mut slices);
+		for (channel, produced) in rendered.iter_mut().zip(block.iter()) {
+			channel.extend_from_slice(&produced[..written]);
+		}
+		if written < take {
+			return;
+		}
 	}
 }
 
@@ -432,8 +506,7 @@ mod tests {
 		let options = small().cycles(2).tail(1.0).booking_window(1);
 		let (engine_options, samples) = options.clone().into_parts();
 		let plan = RenderPlan::new(&engine_options).unwrap();
-		let whole =
-			render_planned_in_blocks(&plan, samples.clone(), &song, plan.length).unwrap();
+		let whole = render_planned_in_blocks(&plan, samples.clone(), &song, plan.length).unwrap();
 		for block in [1, 7, 128, 1_000, 4_096] {
 			let pieces = render_planned_in_blocks(&plan, samples.clone(), &song, block).unwrap();
 			assert_eq!(whole, pieces, "block of {block} frames");
