@@ -354,6 +354,15 @@ pub enum ControlSource<T> {
 	Pattern(Pattern<T>),
 }
 
+impl<T: Datum> ControlSource<T> {
+	/// Whether reading the control can fail at query time.
+	pub(crate) fn can_fail(&self) -> bool {
+		match self {
+			ControlSource::Literal(p) | ControlSource::Pattern(p) => p.can_fail(),
+		}
+	}
+}
+
 /// `^-?(\d+(\.\d+)?|\.\d+)$`
 fn parse_number_word(word: &str) -> core::result::Result<f64, String> {
 	let body = word.strip_prefix('-').unwrap_or(word);
@@ -379,10 +388,13 @@ pub(crate) fn query_with_control<T: Datum>(
 	control: Control,
 	input: &ControlSource<T>,
 	span: Span,
-) -> Vec<Hap<T>> {
-	let haps = child.query(span);
+	out: &mut Vec<Hap<T>>,
+	err: &mut Option<Error>,
+) {
+	let mut haps = Vec::new();
+	child.run(span, &mut haps, err);
 	if haps.is_empty() {
-		return haps;
+		return;
 	}
 	let spec = control.spec();
 	let (source, literal) = match input {
@@ -400,39 +412,40 @@ pub(crate) fn query_with_control<T: Datum>(
 		}
 	};
 	if !literal && source.has_sampler() {
-		return haps
-			.into_iter()
-			.map(|hap| {
-				let raw = source.sample_at(hap.onset()).and_then(|v| v.as_number());
-				let value = spec.sanitise(raw);
-				apply(hap, value)
-			})
-			.collect();
+		out.extend(haps.into_iter().map(|hap| {
+			let raw = source.sample_at(hap.onset()).and_then(|v| v.as_number());
+			let value = spec.sanitise(raw);
+			apply(hap, value)
+		}));
+		return;
 	}
 	let onsets: Vec<Fraction> = haps.iter().map(Hap::onset).collect();
 	let min_t = onsets.iter().copied().fold(onsets[0], Fraction::min);
 	let max_t = onsets.iter().copied().fold(onsets[0], Fraction::max);
-	let control_haps = source.query(Span::new(min_t, max_t + Fraction::from_int(1)));
-	haps.into_iter()
-		.map(|hap| {
-			let t = hap.onset();
-			let covering = control_haps
-				.iter()
-				.find(|c| c.part.begin <= t && t < c.part.end);
-			match covering {
-				None => hap,
-				Some(c) => {
-					let raw = c.value.as_number();
-					let value = if literal {
-						raw.map(|v| spec.transform(v))
-					} else {
-						spec.sanitise(raw)
-					};
-					apply(hap, value)
-				}
+	let mut control_haps = Vec::new();
+	source.run(
+		Span::new(min_t, max_t + Fraction::from_int(1)),
+		&mut control_haps,
+		err,
+	);
+	out.extend(haps.into_iter().map(|hap| {
+		let t = hap.onset();
+		let covering = control_haps
+			.iter()
+			.find(|c| c.part.begin <= t && t < c.part.end);
+		match covering {
+			None => hap,
+			Some(c) => {
+				let raw = c.value.as_number();
+				let value = if literal {
+					raw.map(|v| spec.transform(v))
+				} else {
+					spec.sanitise(raw)
+				};
+				apply(hap, value)
 			}
-		})
-		.collect()
+		}
+	}));
 }
 
 // ---------------------------------------------------------------------------------------------

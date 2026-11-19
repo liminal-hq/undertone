@@ -308,19 +308,24 @@ fn drift_tail<T: Datum>(
 }
 
 /// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
-fn read_at<T: Datum>(source: &Pattern<T>, structure: &Pattern<bool>, span: Span) -> Vec<Hap<T>> {
-	structure
-		.query(span)
-		.into_iter()
-		.filter_map(|hap| {
-			let value = source.sample_at(hap.onset())?;
-			Some(Hap {
+fn read_at<T: Datum>(
+	source: &Pattern<T>,
+	structure: &Pattern<bool>,
+	span: Span,
+	out: &mut Vec<Hap<T>>,
+	err: &mut Option<Error>,
+) {
+	let mut structure_haps = Vec::new();
+	structure.run(span, &mut structure_haps, err);
+	for hap in structure_haps {
+		if let Some(value) = source.sample_run(hap.onset(), err) {
+			out.push(Hap {
 				whole: hap.whole,
 				part: hap.part,
 				value,
-			})
-		})
-		.collect()
+			});
+		}
+	}
 }
 
 impl<T: Datum> Pattern<T> {
@@ -417,11 +422,18 @@ impl<T: Datum> Pattern<T> {
 
 	/// The pattern's value at the instant `t`: the sampler's when there is one, otherwise the value of the first hap over `[t, next cycle)` whose part covers `t` (`None` in a rest).
 	pub fn sample_at(&self, t: Fraction) -> Option<T> {
+		let mut ignored = None;
+		self.sample_run(t, &mut ignored)
+	}
+
+	/// [`Pattern::sample_at`] with the error slot, for a node that reads this pattern inside its own query.
+	pub(crate) fn sample_run(&self, t: Fraction, err: &mut Option<Error>) -> Option<T> {
 		if self.sampler {
 			return self.node.sample(t);
 		}
-		self.query(Span::new(t, t.next_sam()))
-			.into_iter()
+		let mut haps = Vec::new();
+		self.run(Span::new(t, t.next_sam()), &mut haps, err);
+		haps.into_iter()
 			.find(|hap| hap.part.begin <= t && t < hap.part.end)
 			.map(|hap| hap.value)
 	}
@@ -802,23 +814,25 @@ impl<T: Datum> Node<T> {
 			Node::Silence
 			| Node::Pure(_)
 			| Node::Signal(_)
-			| Node::Sample { .. }
-			| Node::Segment { .. }
 			| Node::Custom { .. }
 			| Node::Foreign { .. } => false,
+			Node::Sample { source, structure }
+			| Node::Segment {
+				source, structure, ..
+			} => source.can_fail() || structure.can_fail(),
 			Node::Stack(children) | Node::Cat(children) => children.iter().any(Pattern::can_fail),
 			Node::Compress { child, .. }
 			| Node::Fast { child, .. }
 			| Node::Slow { child, .. }
 			| Node::Rev(child)
-			| Node::Degrees(child)
-			| Node::WithControl { child, .. } => child.can_fail(),
+			| Node::Degrees(child) => child.can_fail(),
+			Node::WithControl { child, input, .. } => child.can_fail() || input.can_fail(),
 			Node::Map { child, f } => f.can_fail() || child.can_fail(),
 			Node::Every {
 				base, transformed, ..
 			} => base.can_fail() || transformed.can_fail(),
 			Node::Arrange(sections) => sections.iter().any(|(_, p)| p.can_fail()),
-			Node::Arith { left, .. } => left.can_fail(),
+			Node::Arith { left, right, .. } => left.can_fail() || right.can_fail(),
 		}
 	}
 
@@ -942,12 +956,7 @@ impl<T: Datum> Node<T> {
 				control,
 				input,
 			} => {
-				if child.can_fail() {
-					// The control code below queries the child itself, without an error slot, so look for the child's error first.
-					let mut scratch = Vec::new();
-					child.run(span, &mut scratch, err);
-				}
-				out.extend(query_with_control(child, *control, input, span));
+				query_with_control(child, *control, input, span, out, err);
 			}
 			Node::Signal(signal) => {
 				if span.begin < span.end {
@@ -961,7 +970,7 @@ impl<T: Datum> Node<T> {
 			Node::Sample { source, structure }
 			| Node::Segment {
 				source, structure, ..
-			} => out.extend(read_at(source, structure, span)),
+			} => read_at(source, structure, span, out, err),
 			Node::Map { child, f } => {
 				let start = out.len();
 				child.run(span, out, err);
@@ -979,7 +988,7 @@ impl<T: Datum> Node<T> {
 				let start = out.len();
 				left.run(span, out, err);
 				keep_tail(out, start, |hap| {
-					let Some(other) = right.sample_at(hap.onset()) else {
+					let Some(other) = right.sample_run(hap.onset(), err) else {
 						return false;
 					};
 					hap.value = match (hap.value.as_number(), other.as_number()) {
