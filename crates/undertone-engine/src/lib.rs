@@ -28,6 +28,7 @@ extern crate alloc;
 pub mod graph;
 pub mod math;
 pub mod noise;
+pub mod pan;
 pub mod params;
 pub mod pitch_curve;
 pub mod random;
