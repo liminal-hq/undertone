@@ -6,6 +6,7 @@
 import type { ControlPatch } from '../../src/types';
 import type { GraphCase, OutputSetup, RenderGraphCase, VoicesGraphCase } from './graph';
 import type { Program, Step } from './interpret';
+import { optionsCases } from './optionsData';
 import { voicesCases } from './voicesData';
 
 /** A short held tone: the patch every placement voice starts from. */
@@ -468,6 +469,7 @@ export function layer3Cases(): GraphCase[] {
     ...panSlide(),
     ...baselines(),
     ...renders(),
-    ...voicesCases()
+    ...voicesCases(),
+    ...optionsCases()
   ];
 }

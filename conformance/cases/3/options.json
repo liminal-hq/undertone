@@ -1,0 +1,973 @@
+{
+  "corpus": 1,
+  "layer": 3,
+  "group": "options",
+  "cases": [
+    {
+      "id": "options-law-minus6-hard-right",
+      "group": "options",
+      "from": "src/panLaw.test.ts: gives the documented levels at hard left, centre and hard right",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":1,\"panLaw\":-6,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 4.3400612e-17 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.708785783 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-minus1-5-centre",
+      "group": "options",
+      "from": "src/panLaw.test.ts: gives the documented levels at hard left, centre and hard right",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0,\"panLaw\":-1.5,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0.841395142 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.841395142 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-0-centre",
+      "group": "options",
+      "from": "src/panLaw.test.ts: gives the documented levels at hard left, centre and hard right",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0,\"panLaw\":0,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-minus3-stays-panner",
+      "group": "options",
+      "from": "src/panLaw.test.ts: leaves the stereo panner graph unchanged when unset or -3",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.25,\"panLaw\":-3,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.25 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-not-finite",
+      "group": "options",
+      "from": "generated: a pan law that is not a number is the plain panner",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.5,\"panLaw\":{\"$num\":\"NaN\"},\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.5 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-custom-mono-destination",
+      "group": "options",
+      "from": "generated: a custom law on a mono destination: the merger sums to mono (the documented limit)",
+      "output": {"channels":1},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.5,\"panLaw\":-6,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 1,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":1}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0.271240576 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.654832678 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-path-cap-knee",
+      "group": "options",
+      "from": "src/panLaw.test.ts: books a pan path as side gain ramps that follow the law",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"panLaw\":0,\"panPath\":[{\"pan\":-1,\"time\":0},{\"pan\":1,\"time\":0.5}],\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0","lin 1 @0.0078125","lin 1 @0.015625","lin 1 @0.0234375","lin 1 @0.03125","lin 1 @0.0390625","lin 1 @0.046875","lin 1 @0.0546875","lin 1 @0.0625","lin 1 @0.0703125","lin 1 @0.078125","lin 1 @0.0859375","lin 1 @0.09375","lin 1 @0.1015625","lin 1 @0.109375","lin 1 @0.1171875","lin 1 @0.125","lin 1 @0.1328125","lin 1 @0.140625","lin 1 @0.1484375","lin 1 @0.15625","lin 1 @0.1640625","lin 1 @0.171875","lin 1 @0.1796875","lin 1 @0.1875","lin 1 @0.1953125","lin 1 @0.203125","lin 1 @0.2109375","lin 1 @0.21875","lin 1 @0.2265625","lin 1 @0.234375","lin 1 @0.2421875","lin 1 @0.25","lin 1 @0.25","lin 1 @0.25","lin 0.97515759 @0.2578125","lin 0.949727782 @0.265625","lin 0.923725893 @0.2734375","lin 0.897167586 @0.28125","lin 0.870068859 @0.2890625","lin 0.842446036 @0.296875","lin 0.814315754 @0.3046875","lin 0.785694958 @0.3125","lin 0.75660089 @0.3203125","lin 0.727051073 @0.328125","lin 0.697063308 @0.3359375","lin 0.666655658 @0.34375","lin 0.63584644 @0.3515625","lin 0.604654212 @0.359375","lin 0.573097762 @0.3671875","lin 0.5411961 @0.375","lin 0.508968442 @0.3828125","lin 0.4764342 @0.390625","lin 0.443612972 @0.3984375","lin 0.410524528 @0.40625","lin 0.377188799 @0.4140625","lin 0.343625866 @0.421875","lin 0.309855945 @0.4296875","lin 0.275899379 @0.4375","lin 0.241776622 @0.4453125","lin 0.207508227 @0.453125","lin 0.173114837 @0.4609375","lin 0.138617169 @0.46875","lin 0.104036004 @0.4765625","lin 0.0693921705 @0.484375","lin 0.0347065382 @0.4921875","lin 8.65956056e-17 @0.5"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0","lin 0.0347065382 @0.0078125","lin 0.0693921705 @0.015625","lin 0.104036004 @0.0234375","lin 0.138617169 @0.03125","lin 0.173114837 @0.0390625","lin 0.207508227 @0.046875","lin 0.241776622 @0.0546875","lin 0.275899379 @0.0625","lin 0.309855945 @0.0703125","lin 0.343625866 @0.078125","lin 0.377188799 @0.0859375","lin 0.410524528 @0.09375","lin 0.443612972 @0.1015625","lin 0.4764342 @0.109375","lin 0.508968442 @0.1171875","lin 0.5411961 @0.125","lin 0.573097762 @0.1328125","lin 0.604654212 @0.140625","lin 0.63584644 @0.1484375","lin 0.666655658 @0.15625","lin 0.697063308 @0.1640625","lin 0.727051073 @0.171875","lin 0.75660089 @0.1796875","lin 0.785694958 @0.1875","lin 0.814315754 @0.1953125","lin 0.842446036 @0.203125","lin 0.870068859 @0.2109375","lin 0.897167586 @0.21875","lin 0.923725893 @0.2265625","lin 0.949727782 @0.234375","lin 0.97515759 @0.2421875","lin 1 @0.25","lin 1 @0.25","lin 1 @0.25","lin 1 @0.2578125","lin 1 @0.265625","lin 1 @0.2734375","lin 1 @0.28125","lin 1 @0.2890625","lin 1 @0.296875","lin 1 @0.3046875","lin 1 @0.3125","lin 1 @0.3203125","lin 1 @0.328125","lin 1 @0.3359375","lin 1 @0.34375","lin 1 @0.3515625","lin 1 @0.359375","lin 1 @0.3671875","lin 1 @0.375","lin 1 @0.3828125","lin 1 @0.390625","lin 1 @0.3984375","lin 1 @0.40625","lin 1 @0.4140625","lin 1 @0.421875","lin 1 @0.4296875","lin 1 @0.4375","lin 1 @0.4453125","lin 1 @0.453125","lin 1 @0.4609375","lin 1 @0.46875","lin 1 @0.4765625","lin 1 @0.484375","lin 1 @0.4921875","lin 1 @0.5"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-autopan-scaled",
+      "group": "options",
+      "from": "src/autopan.test.ts: keeps the panner under a pan law: scaled exactly below -3 dB, the panner law above",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.2,\"panLaw\":-5,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"panner":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.2 @0"]},"to":["n6"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0.795270729 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-law-autopan-above-minus3",
+      "group": "options",
+      "from": "src/autopan.test.ts: keeps the panner under a pan law: scaled exactly below -3 dB, the panner law above",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.2,\"panLaw\":-1,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.2 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-ceiling-0",
+      "group": "options",
+      "from": "src/masterBus.test.ts: puts a clip after the makeup compensation, as the last stage before the output",
+      "output": {"master":{"ceiling":0}},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":1.4,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"waveShaper":1,"oscillator":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n4"]},
+          {"id":"n4","kind":"waveShaper","fields":{"curve":"b0"},"to":["n0"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0","lin 1.4 @0.01","lin 0.7 @0.11","set 0.7 @0.5","lin 0 @0.7"]},"to":["n1"]},
+          {"id":"n6","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n5"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"curve","length":4097,"channels":[{"rms":0.577491207,"peak":0.99999994,"head":[-0.99999994,-0.999511719,-0.999023438,-0.998535156]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-ceiling-no-limiter",
+      "group": "options",
+      "from": "src/masterBus.test.ts: follows the compressor, or the input, when there is no makeup or no limiter",
+      "output": {"master":{"ceiling":-9,"limiter":false}},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":1.4,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"waveShaper":1,"oscillator":1,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"waveShaper","fields":{"curve":"b0"},"to":["n0"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0","lin 1.4 @0.01","lin 0.7 @0.11","set 0.7 @0.5","lin 0 @0.7"]},"to":["n1"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n3"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"curve","length":4097,"channels":[{"rms":0.310033667,"peak":0.354813337,"head":[-0.354813337,-0.354813337,-0.354813337,-0.354813337]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-ceiling-surround",
+      "group": "options",
+      "from": "src/masterBus.test.ts: still clips a surround output, where the limiter is skipped",
+      "output": {"master":{"ceiling":-6},"channels":4},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"channelGains\":[1,1,0,0],\"decay\":0.1,\"duration\":0.5,\"gainLevel\":1.4,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 4,
+        "counts": {"destination":1,"gain":4,"waveShaper":1,"oscillator":1,"merger":1,"total":8},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"waveShaper","fields":{"curve":"b0"},"to":["n0"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0","lin 1.4 @0.01","lin 0.7 @0.11","set 0.7 @0.5","lin 0 @0.7"]},"to":["n6","n7"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n3"]},
+          {"id":"n5","kind":"merger","to":["n1"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n5"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n5 out 0 in 1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"curve","length":4097,"channels":[{"rms":0.408999651,"peak":0.501187146,"head":[-0.501187146,-0.501187146,-0.501187146,-0.501187146]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-ceiling-above-full-scale",
+      "group": "options",
+      "from": "src/masterBus.test.ts: rejects a ceiling above full scale or not a level",
+      "error": "createMasterBus() ceiling must be 0 dBFS or below, got 3"
+    },
+    {
+      "id": "options-ceiling-not-a-level",
+      "group": "options",
+      "from": "src/masterBus.test.ts: rejects a ceiling above full scale or not a level",
+      "error": "createMasterBus() ceiling must be 0 dBFS or below, got NaN"
+    },
+    {
+      "id": "options-path-later-first-point",
+      "group": "options",
+      "from": "src/panPath.test.ts: holds a later first point from the onset, clamps pans and keeps times running forwards",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"panPath\":[{\"pan\":3,\"time\":0.2},{\"pan\":-3,\"time\":0.1}],\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 1 @0","set 1 @0.2","set -1 @0.2"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-path-empty",
+      "group": "options",
+      "from": "src/panPath.test.ts: leaves the plain pan alone without a path, and treats an empty path as none",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.4,\"panPath\":[],\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.4 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-path-channel-gains",
+      "group": "options",
+      "from": "src/panPath.test.ts: is ignored when channelGains is set",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"channelGains\":[0.5,1],\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"panPath\":[{\"pan\":-1,\"time\":0},{\"pan\":1,\"time\":0.3}],\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-slide-zero-time",
+      "group": "options",
+      "from": "src/autopan.test.ts: takes its own time, slides to the centre without a pan, and holds on an early stop",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"panSlideFrom\":-1,\"panSlideTime\":0,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set -1 @0","set 0 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-slide-longer-than-note",
+      "group": "options",
+      "from": "src/autopan.test.ts: takes its own time, slides to the centre without a pan, and holds on an early stop",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":1,\"panSlideFrom\":-1,\"panSlideTime\":2,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set -1 @0","lin 1 @2"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-slide-autopan",
+      "group": "options",
+      "from": "src/autopan.test.ts: is the centre of an autopan, and follows a pan law",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":1,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.5,\"panSlideFrom\":-1,\"panSlideTime\":0.2,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set -1 @0","lin 0.5 @0.2"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 1 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-autopan-depth-clamped",
+      "group": "options",
+      "from": "src/autopan.test.ts: clamps the depth, wraps the phase and treats an unknown shape as a sine in voice data",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"autopanDepth\":5,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-autopan-unknown-shape",
+      "group": "options",
+      "from": "src/autopan.test.ts: clamps the depth, wraps the phase and treats an unknown shape as a sine in voice data",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"autopanShape\":\"ramp\",\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-autopan-phase-wrapped",
+      "group": "options",
+      "from": "src/autopan.test.ts: clamps the depth, wraps the phase and treats an unknown shape as a sine in voice data",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"autopanPhase\":1.25,\"autopanShape\":\"triangle\",\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"panner":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.72],"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3.pan"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,0.810569465,3.03914881e-33,0.0900632739,3.03914881e-33,0.0324227773,3.03914881e-33,0.0165422335,3.03914881e-33,0.0100070303,3.03914881e-33,0.00669892132,3.03914881e-33,0.00479626888,3.03914881e-33,0.00360253104,3.03914881e-33,0.0028047387,3.03914881e-33,0.00224534469,3.03914881e-33,0.00183802599,4.02074052e-32,0.00153226743,3.03914881e-33,0.00129691116,4.60949979e-33,0.00111189228,3.03914881e-33,0.000963816245,2.61622049e-32,0.000843464572,3.03914881e-33,0.000744324585,1.51686866e-33,0.000661689381,3.03914881e-33,0.000592088734,1.94048433e-32,0.000532918784,3.03914881e-33,0.000482194795,4.42170924e-34,0.000438382616,4.02074052e-32,0.00040028122,1.55407436e-32,0.000366939552,3.03914881e-33,0.000337596604,7.81959448e-35,0.000311637617,4.60949979e-33,0.000288561569,1.30784796e-32,0.000267956842,3.03914881e-33,0.000249482749,3.69274375e-40,0.000232855353,2.61622049e-32,0.000217836467,1.13887851e-32,0.000204225114,3.03914881e-33],"imag":[0,4.96330668e-17,-2.48165334e-17,1.65443551e-17,-1.24082667e-17,9.9266132e-18,-8.27217753e-18,7.09043753e-18,-6.20413335e-18,5.51478502e-18,-4.9633066e-18,1.64117712e-17,-4.13608876e-18,-4.70195723e-18,-3.54521876e-18,9.70825158e-18,-3.10206668e-18,-2.0626247e-18,-2.75739251e-18,6.60080037e-18,-2.4816533e-18,-9.01510752e-19,-8.20588562e-18,4.87981306e-18,-2.06804438e-18,-3.18454377e-19,2.35097862e-18,3.81337914e-18,-1.77260938e-18,-5.9658362e-22,-4.85412579e-18,3.09936076e-18,-1.55103334e-18,1.81846223e-19,1.03131235e-18,2.59348398e-18,-1.37869625e-18,2.89673326e-19,-3.30040019e-18,2.21929663e-18,-1.24082665e-18,3.7802125e-18,4.50755376e-19,1.9329813e-18,-4.10294281e-18,3.91914736e-19,-2.43990653e-18,-8.99424086e-19,-1.03402219e-18,2.81199594e-18,1.59227189e-19,1.52677699e-18,1.17548931e-18,4.23884595e-19,-1.90668957e-18,-5.25541602e-19,-8.86304691e-19,2.20026672e-18,2.9829181e-22,1.25487259e-18,-2.4270629e-18,4.26701533e-19,-1.54968038e-18,-3.00503601e-19,-7.75516669e-19],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "options-autopan-rate-zero",
+      "group": "options",
+      "from": "src/autopan.test.ts: adds nothing without an autopan rate",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":0,\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pan\":0.2,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.2 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-autopan-channel-gains",
+      "group": "options",
+      "from": "src/autopan.test.ts: lets channelGains take precedence",
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"channelGains\":[1,0.3],\"decay\":0.1,\"duration\":0.5,\"gainLevel\":0.3,\"pitch\":220,\"release\":0.2,\"soundType\":\"triangle\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.3 @0.01","lin 0.15 @0.11","set 0.15 @0.5","lin 0 @0.7"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-skipped-voice-room-size",
+      "group": "options",
+      "from": "src/render.test.ts: ignores a sample that is not available when it works out the last room size",
+      "program": [["stack",[["note","c3 ~ ~ ~"],["room",0.5],["roomsize",2]],[["s","~ ~ ghost ~"],["room",0.5],["roomsize",8]]]],
+      "render": {"bookingWindow":0.5,"cps":1,"cycles":4,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":8,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v2 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @1.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":8,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v4 @2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v5 @2.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":8,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v6 @3 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v7 @3.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":8,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 5120,
+        "channels": 2,
+        "counts": {"destination":1,"gain":14,"compressor":1,"oscillator":4,"convolver":1,"delay":1,"total":22},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1","n12"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"convolver","heard":[["first","b0"]],"to":["n1"]},
+          {"id":"n8","kind":"gain","to":["n9"]},
+          {"id":"n9","kind":"delay","to":["n10","n11"]},
+          {"id":"n10","kind":"gain","to":["n1"]},
+          {"id":"n11","kind":"gain","to":["n9"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n6"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1","n15"]},
+          {"id":"n14","kind":"oscillator","params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[1.18],"to":["n13"]},
+          {"id":"n15","kind":"gain","params":{"gain":["set 0.5 @1"]},"to":["n6"]},
+          {"id":"n16","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @2.16"]},"to":["n1","n18"]},
+          {"id":"n17","kind":"oscillator","params":{"frequency":["set 130.812783 @2"]},"start":[2],"stop":[2.18],"to":["n16"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0.5 @2"]},"to":["n6"]},
+          {"id":"n19","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @3.16"]},"to":["n1","n21"]},
+          {"id":"n20","kind":"oscillator","params":{"frequency":["set 130.812783 @3"]},"start":[3],"stop":[3.18],"to":["n19"]},
+          {"id":"n21","kind":"gain","params":{"gain":["set 0.5 @3"]},"to":["n6"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":910,"sampleRate":1280,"channels":[{"rms":0.158499297,"peak":0.908858538,"head":[0.225098699,0.67836082,0.0174354222,0.102204315]},{"rms":0.159221747,"peak":0.831589222,"head":[0.0380741544,0.831589222,0.800884783,0.11335209]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-last-room-size",
+      "group": "options",
+      "from": "src/render.test.ts: keeps each orbit's last booked room size, as booking up front does",
+      "program": [["stack",[["note","c3 e3 ~ ~"],["room",0.5],["roomsize",2]],[["note","~ ~ g3 b3"],["room",0.5],["roomsize",6]]]],
+      "render": {"bookingWindow":1,"cps":1,"cycles":4,"sampleRate":1280},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @0.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v4 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v5 @1.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v6 @1.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v7 @1.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v8 @2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v9 @2.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v10 @2.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v11 @2.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v12 @3 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v13 @3.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":2,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v14 @3.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v15 @3.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomLevel\":0.5,\"roomSize\":6,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 5120,
+        "channels": 2,
+        "counts": {"destination":1,"gain":38,"compressor":1,"oscillator":16,"convolver":1,"delay":1,"total":58},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1","n12"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"convolver","heard":[["first","b0"]],"to":["n1"]},
+          {"id":"n8","kind":"gain","to":["n9"]},
+          {"id":"n9","kind":"delay","to":["n10","n11"]},
+          {"id":"n10","kind":"gain","to":["n1"]},
+          {"id":"n11","kind":"gain","to":["n9"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n6"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0 @0.25","lin 0.8 @0.26","lin 0 @0.36","lin 0 @0.41"]},"to":["n1","n15"]},
+          {"id":"n14","kind":"oscillator","params":{"frequency":["set 164.813778 @0.25"]},"start":[0.25],"stop":[0.43],"to":["n13"]},
+          {"id":"n15","kind":"gain","params":{"gain":["set 0.5 @0.25"]},"to":["n6"]},
+          {"id":"n16","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1","n18"]},
+          {"id":"n17","kind":"oscillator","params":{"frequency":["set 195.997718 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n16"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0.5 @0.5"]},"to":["n6"]},
+          {"id":"n19","kind":"gain","params":{"gain":["set 0 @0.75","lin 0.8 @0.76","lin 0 @0.86","lin 0 @0.91"]},"to":["n1","n21"]},
+          {"id":"n20","kind":"oscillator","params":{"frequency":["set 246.941651 @0.75"]},"start":[0.75],"stop":[0.93],"to":["n19"]},
+          {"id":"n21","kind":"gain","params":{"gain":["set 0.5 @0.75"]},"to":["n6"]},
+          {"id":"n22","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1","n24"]},
+          {"id":"n23","kind":"oscillator","params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[1.18],"to":["n22"]},
+          {"id":"n24","kind":"gain","params":{"gain":["set 0.5 @1"]},"to":["n6"]},
+          {"id":"n25","kind":"gain","params":{"gain":["set 0 @1.25","lin 0.8 @1.26","lin 0 @1.36","lin 0 @1.41"]},"to":["n1","n27"]},
+          {"id":"n26","kind":"oscillator","params":{"frequency":["set 164.813778 @1.25"]},"start":[1.25],"stop":[1.43],"to":["n25"]},
+          {"id":"n27","kind":"gain","params":{"gain":["set 0.5 @1.25"]},"to":["n6"]},
+          {"id":"n28","kind":"gain","params":{"gain":["set 0 @1.5","lin 0.8 @1.51","lin 0 @1.61","lin 0 @1.66"]},"to":["n1","n30"]},
+          {"id":"n29","kind":"oscillator","params":{"frequency":["set 195.997718 @1.5"]},"start":[1.5],"stop":[1.68],"to":["n28"]},
+          {"id":"n30","kind":"gain","params":{"gain":["set 0.5 @1.5"]},"to":["n6"]},
+          {"id":"n31","kind":"gain","params":{"gain":["set 0 @1.75","lin 0.8 @1.76","lin 0 @1.86","lin 0 @1.91"]},"to":["n1","n33"]},
+          {"id":"n32","kind":"oscillator","params":{"frequency":["set 246.941651 @1.75"]},"start":[1.75],"stop":[1.93],"to":["n31"]},
+          {"id":"n33","kind":"gain","params":{"gain":["set 0.5 @1.75"]},"to":["n6"]},
+          {"id":"n34","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @2.16"]},"to":["n1","n36"]},
+          {"id":"n35","kind":"oscillator","params":{"frequency":["set 130.812783 @2"]},"start":[2],"stop":[2.18],"to":["n34"]},
+          {"id":"n36","kind":"gain","params":{"gain":["set 0.5 @2"]},"to":["n6"]},
+          {"id":"n37","kind":"gain","params":{"gain":["set 0 @2.25","lin 0.8 @2.26","lin 0 @2.36","lin 0 @2.41"]},"to":["n1","n39"]},
+          {"id":"n38","kind":"oscillator","params":{"frequency":["set 164.813778 @2.25"]},"start":[2.25],"stop":[2.43],"to":["n37"]},
+          {"id":"n39","kind":"gain","params":{"gain":["set 0.5 @2.25"]},"to":["n6"]},
+          {"id":"n40","kind":"gain","params":{"gain":["set 0 @2.5","lin 0.8 @2.51","lin 0 @2.61","lin 0 @2.66"]},"to":["n1","n42"]},
+          {"id":"n41","kind":"oscillator","params":{"frequency":["set 195.997718 @2.5"]},"start":[2.5],"stop":[2.68],"to":["n40"]},
+          {"id":"n42","kind":"gain","params":{"gain":["set 0.5 @2.5"]},"to":["n6"]},
+          {"id":"n43","kind":"gain","params":{"gain":["set 0 @2.75","lin 0.8 @2.76","lin 0 @2.86","lin 0 @2.91"]},"to":["n1","n45"]},
+          {"id":"n44","kind":"oscillator","params":{"frequency":["set 246.941651 @2.75"]},"start":[2.75],"stop":[2.93],"to":["n43"]},
+          {"id":"n45","kind":"gain","params":{"gain":["set 0.5 @2.75"]},"to":["n6"]},
+          {"id":"n46","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @3.16"]},"to":["n1","n48"]},
+          {"id":"n47","kind":"oscillator","params":{"frequency":["set 130.812783 @3"]},"start":[3],"stop":[3.18],"to":["n46"]},
+          {"id":"n48","kind":"gain","params":{"gain":["set 0.5 @3"]},"to":["n6"]},
+          {"id":"n49","kind":"gain","params":{"gain":["set 0 @3.25","lin 0.8 @3.26","lin 0 @3.36","lin 0 @3.41"]},"to":["n1","n51"]},
+          {"id":"n50","kind":"oscillator","params":{"frequency":["set 164.813778 @3.25"]},"start":[3.25],"stop":[3.43],"to":["n49"]},
+          {"id":"n51","kind":"gain","params":{"gain":["set 0.5 @3.25"]},"to":["n6"]},
+          {"id":"n52","kind":"gain","params":{"gain":["set 0 @3.5","lin 0.8 @3.51","lin 0 @3.61","lin 0 @3.66"]},"to":["n1","n54"]},
+          {"id":"n53","kind":"oscillator","params":{"frequency":["set 195.997718 @3.5"]},"start":[3.5],"stop":[3.68],"to":["n52"]},
+          {"id":"n54","kind":"gain","params":{"gain":["set 0.5 @3.5"]},"to":["n6"]},
+          {"id":"n55","kind":"gain","params":{"gain":["set 0 @3.75","lin 0.8 @3.76","lin 0 @3.86","lin 0 @3.91"]},"to":["n1","n57"]},
+          {"id":"n56","kind":"oscillator","params":{"frequency":["set 246.941651 @3.75"]},"start":[3.75],"stop":[3.93],"to":["n55"]},
+          {"id":"n57","kind":"gain","params":{"gain":["set 0.5 @3.75"]},"to":["n6"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":3015,"sampleRate":1280,"channels":[{"rms":0.152956882,"peak":0.956495106,"head":[-0.820534766,0.511558831,-0.609111786,0.16726622]},{"rms":0.157006141,"peak":0.930949152,"head":[0.187603801,-0.0464904979,-0.635561705,0.54934299]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-cut-groups",
+      "group": "options",
+      "from": "src/render.test.ts: books cut groups choking across windows as booking up front does",
+      "program": [["stack",[["note","c3 e3"],["release",2],["cut",1]],[["note","~ g3"],["release",2],["cut",1]]]],
+      "render": {"bookingWindow":0.5,"cps":1,"cycles":4,"sampleRate":1280,"tail":1},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @1 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v4 @1.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v5 @1.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v6 @2 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v7 @2.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v8 @2.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v9 @3 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v10 @3.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v11 @3.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 6400,
+        "channels": 2,
+        "counts": {"destination":1,"gain":14,"compressor":1,"oscillator":12,"total":28},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @2.11","cancel @0.5","set 0 @0.5","target 0 @0.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[2.13,0.505],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @2.61"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 164.813778 @0.5"]},"start":[0.5],"stop":[2.63],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @2.61","cancel @1","set 0 @1","target 0 @1 tau 0.001"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 195.997718 @0.5"]},"start":[0.5],"stop":[2.63,1.005],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @3.11","cancel @1.5","set 0 @1.5","target 0 @1.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[3.13,1.505],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0 @1.5","lin 0.8 @1.51","lin 0 @1.61","lin 0 @3.61"]},"to":["n1"]},
+          {"id":"n13","kind":"oscillator","params":{"frequency":["set 164.813778 @1.5"]},"start":[1.5],"stop":[3.63],"to":["n12"]},
+          {"id":"n14","kind":"gain","params":{"gain":["set 0 @1.5","lin 0.8 @1.51","lin 0 @1.61","lin 0 @3.61","cancel @2","set 0 @2","target 0 @2 tau 0.001"]},"to":["n1"]},
+          {"id":"n15","kind":"oscillator","params":{"frequency":["set 195.997718 @1.5"]},"start":[1.5],"stop":[3.63,2.005],"to":["n14"]},
+          {"id":"n16","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @4.11","cancel @2.5","set 0 @2.5","target 0 @2.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n17","kind":"oscillator","params":{"frequency":["set 130.812783 @2"]},"start":[2],"stop":[4.13,2.505],"to":["n16"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0 @2.5","lin 0.8 @2.51","lin 0 @2.61","lin 0 @4.61"]},"to":["n1"]},
+          {"id":"n19","kind":"oscillator","params":{"frequency":["set 164.813778 @2.5"]},"start":[2.5],"stop":[4.63],"to":["n18"]},
+          {"id":"n20","kind":"gain","params":{"gain":["set 0 @2.5","lin 0.8 @2.51","lin 0 @2.61","lin 0 @4.61","cancel @3","set 0 @3","target 0 @3 tau 0.001"]},"to":["n1"]},
+          {"id":"n21","kind":"oscillator","params":{"frequency":["set 195.997718 @2.5"]},"start":[2.5],"stop":[4.63,3.005],"to":["n20"]},
+          {"id":"n22","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @5.11","cancel @3.5","set 0 @3.5","target 0 @3.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n23","kind":"oscillator","params":{"frequency":["set 130.812783 @3"]},"start":[3],"stop":[5.13,3.505],"to":["n22"]},
+          {"id":"n24","kind":"gain","params":{"gain":["set 0 @3.5","lin 0.8 @3.51","lin 0 @3.61","lin 0 @5.61"]},"to":["n1"]},
+          {"id":"n25","kind":"oscillator","params":{"frequency":["set 164.813778 @3.5"]},"start":[3.5],"stop":[5.63],"to":["n24"]},
+          {"id":"n26","kind":"gain","params":{"gain":["set 0 @3.5","lin 0.8 @3.51","lin 0 @3.61","lin 0 @5.61"]},"to":["n1"]},
+          {"id":"n27","kind":"oscillator","params":{"frequency":["set 195.997718 @3.5"]},"start":[3.5],"stop":[5.63],"to":["n26"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-missing-sample-cut",
+      "group": "options",
+      "from": "src/render.test.ts: books a cut group a missing sample does not claim as booking up front does",
+      "program": [["stack",[["note","c3 ~ ~ ~"],["release",2],["cut",1]],[["s","~ ghost ~ ~"],["cut",1]],[["note","~ ~ e3 ~"],["cut",1]]]],
+      "render": {"bookingWindow":0.5,"cps":1,"cycles":4,"sampleRate":1280,"tail":1},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.25 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomSize\":3,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v2 @0.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @1 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v4 @1.25 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomSize\":3,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v5 @1.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v6 @2 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v7 @2.25 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomSize\":3,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v8 @2.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v9 @3 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v10 @3.25 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"release\":0.05,\"roomSize\":3,\"sampleName\":\"ghost\",\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":1}",
+        "v11 @3.5 {\"attack\":0.01,\"cutGroup\":1,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 6400,
+        "channels": 2,
+        "counts": {"destination":1,"gain":10,"compressor":1,"oscillator":8,"total":20},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @2.11","cancel @0.5","set 0 @0.5","target 0 @0.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[2.13,0.505],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 164.813778 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @3.11","cancel @1.5","set 0 @1.5","target 0 @1.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[3.13,1.505],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @1.5","lin 0.8 @1.51","lin 0 @1.61","lin 0 @1.66"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 164.813778 @1.5"]},"start":[1.5],"stop":[1.68],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @4.11","cancel @2.5","set 0 @2.5","target 0 @2.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n13","kind":"oscillator","params":{"frequency":["set 130.812783 @2"]},"start":[2],"stop":[4.13,2.505],"to":["n12"]},
+          {"id":"n14","kind":"gain","params":{"gain":["set 0 @2.5","lin 0.8 @2.51","lin 0 @2.61","lin 0 @2.66"]},"to":["n1"]},
+          {"id":"n15","kind":"oscillator","params":{"frequency":["set 164.813778 @2.5"]},"start":[2.5],"stop":[2.68],"to":["n14"]},
+          {"id":"n16","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @5.11","cancel @3.5","set 0 @3.5","target 0 @3.5 tau 0.001"]},"to":["n1"]},
+          {"id":"n17","kind":"oscillator","params":{"frequency":["set 130.812783 @3"]},"start":[3],"stop":[5.13,3.505],"to":["n16"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0 @3.5","lin 0.8 @3.51","lin 0 @3.61","lin 0 @3.66"]},"to":["n1"]},
+          {"id":"n19","kind":"oscillator","params":{"frequency":["set 164.813778 @3.5"]},"start":[3.5],"stop":[3.68],"to":["n18"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-nudges",
+      "group": "options",
+      "from": "src/render.test.ts: books late and early nudges that reorder voices as booking up front does",
+      "program": [["stack",[["note","c3 e3 g3 b3"],["nudge","0 -0.6 0.9 0"]],[["note","~ c4 ~ ~"],["nudge",1.4],["cut",2]]]],
+      "render": {"bookingWindow":0.5,"cps":1,"cycles":4,"sampleRate":1280,"tail":1},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":-0.6,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0.9,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @0.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v4 @0.25 {\"attack\":0.01,\"cutGroup\":2,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":1.4,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v5 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v6 @1.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":-0.6,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v7 @1.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0.9,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v8 @1.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v9 @1.25 {\"attack\":0.01,\"cutGroup\":2,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":1.4,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v10 @2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v11 @2.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":-0.6,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v12 @2.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0.9,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v13 @2.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v14 @2.25 {\"attack\":0.01,\"cutGroup\":2,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":1.4,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v15 @3 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v16 @3.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":-0.6,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v17 @3.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0.9,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v18 @3.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"b3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v19 @3.25 {\"attack\":0.01,\"cutGroup\":2,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":1.4,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 6400,
+        "channels": 2,
+        "counts": {"destination":1,"gain":22,"compressor":1,"oscillator":20,"total":44},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 164.813778 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @0.65","lin 0.8 @0.66","lin 0 @0.76","lin 0 @0.81"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 164.813778 @0.65"]},"start":[0.65],"stop":[0.83],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.75","lin 0.8 @0.76","lin 0 @0.86","lin 0 @0.91"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 246.941651 @0.75"]},"start":[0.75],"stop":[0.93],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n13","kind":"oscillator","params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[1.18],"to":["n12"]},
+          {"id":"n14","kind":"gain","params":{"gain":["set 0 @1.4","lin 0.8 @1.41","lin 0 @1.51","lin 0 @1.56"]},"to":["n1"]},
+          {"id":"n15","kind":"oscillator","params":{"frequency":["set 195.997718 @1.4"]},"start":[1.4],"stop":[1.58],"to":["n14"]},
+          {"id":"n16","kind":"gain","params":{"gain":["set 0 @1.65","lin 0.8 @1.66","lin 0 @1.76","lin 0 @1.81"]},"to":["n1"]},
+          {"id":"n17","kind":"oscillator","params":{"frequency":["set 261.625565 @1.65"]},"start":[1.65],"stop":[1.83],"to":["n16"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0 @1.65","lin 0.8 @1.66","lin 0 @1.76","lin 0 @1.81"]},"to":["n1"]},
+          {"id":"n19","kind":"oscillator","params":{"frequency":["set 164.813778 @1.65"]},"start":[1.65],"stop":[1.83],"to":["n18"]},
+          {"id":"n20","kind":"gain","params":{"gain":["set 0 @1.75","lin 0.8 @1.76","lin 0 @1.86","lin 0 @1.91"]},"to":["n1"]},
+          {"id":"n21","kind":"oscillator","params":{"frequency":["set 246.941651 @1.75"]},"start":[1.75],"stop":[1.93],"to":["n20"]},
+          {"id":"n22","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @2.16"]},"to":["n1"]},
+          {"id":"n23","kind":"oscillator","params":{"frequency":["set 130.812783 @2"]},"start":[2],"stop":[2.18],"to":["n22"]},
+          {"id":"n24","kind":"gain","params":{"gain":["set 0 @2.4","lin 0.8 @2.41","lin 0 @2.51","lin 0 @2.56"]},"to":["n1"]},
+          {"id":"n25","kind":"oscillator","params":{"frequency":["set 195.997718 @2.4"]},"start":[2.4],"stop":[2.58],"to":["n24"]},
+          {"id":"n26","kind":"gain","params":{"gain":["set 0 @2.65","lin 0.8 @2.66","lin 0 @2.76","lin 0 @2.81"]},"to":["n1"]},
+          {"id":"n27","kind":"oscillator","params":{"frequency":["set 261.625565 @2.65"]},"start":[2.65],"stop":[2.83],"to":["n26"]},
+          {"id":"n28","kind":"gain","params":{"gain":["set 0 @2.65","lin 0.8 @2.66","lin 0 @2.76","lin 0 @2.81"]},"to":["n1"]},
+          {"id":"n29","kind":"oscillator","params":{"frequency":["set 164.813778 @2.65"]},"start":[2.65],"stop":[2.83],"to":["n28"]},
+          {"id":"n30","kind":"gain","params":{"gain":["set 0 @2.75","lin 0.8 @2.76","lin 0 @2.86","lin 0 @2.91"]},"to":["n1"]},
+          {"id":"n31","kind":"oscillator","params":{"frequency":["set 246.941651 @2.75"]},"start":[2.75],"stop":[2.93],"to":["n30"]},
+          {"id":"n32","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @3.16"]},"to":["n1"]},
+          {"id":"n33","kind":"oscillator","params":{"frequency":["set 130.812783 @3"]},"start":[3],"stop":[3.18],"to":["n32"]},
+          {"id":"n34","kind":"gain","params":{"gain":["set 0 @3.4","lin 0.8 @3.41","lin 0 @3.51","lin 0 @3.56"]},"to":["n1"]},
+          {"id":"n35","kind":"oscillator","params":{"frequency":["set 195.997718 @3.4"]},"start":[3.4],"stop":[3.58],"to":["n34"]},
+          {"id":"n36","kind":"gain","params":{"gain":["set 0 @3.65","lin 0.8 @3.66","lin 0 @3.76","lin 0 @3.81"]},"to":["n1"]},
+          {"id":"n37","kind":"oscillator","params":{"frequency":["set 261.625565 @3.65"]},"start":[3.65],"stop":[3.83],"to":["n36"]},
+          {"id":"n38","kind":"gain","params":{"gain":["set 0 @3.75","lin 0.8 @3.76","lin 0 @3.86","lin 0 @3.91"]},"to":["n1"]},
+          {"id":"n39","kind":"oscillator","params":{"frequency":["set 246.941651 @3.75"]},"start":[3.75],"stop":[3.93],"to":["n38"]},
+          {"id":"n40","kind":"gain","params":{"gain":["set 0 @4.4","lin 0.8 @4.41","lin 0 @4.51","lin 0 @4.56"]},"to":["n1"]},
+          {"id":"n41","kind":"oscillator","params":{"frequency":["set 195.997718 @4.4"]},"start":[4.4],"stop":[4.58],"to":["n40"]},
+          {"id":"n42","kind":"gain","params":{"gain":["set 0 @4.65","lin 0.8 @4.66","lin 0 @4.76","lin 0 @4.81"]},"to":["n1"]},
+          {"id":"n43","kind":"oscillator","params":{"frequency":["set 261.625565 @4.65"]},"start":[4.65],"stop":[4.83],"to":["n42"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-ceiling-wrap-tail",
+      "group": "options",
+      "from": "src/render.test.ts: keeps the folded tail under the master ceiling",
+      "program": [["note","c3 e3 g3 e3"],["sound","square"],["gain",1.5]],
+      "render": {"bookingWindow":0.5,"cps":1,"cycles":2,"master":{"ceiling":-6},"sampleRate":1280,"tail":0.5,"wrap":true},
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v1 @0.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v2 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v3 @0.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v4 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"c3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v5 @1.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v6 @1.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"g3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v7 @1.75 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":1.5,\"nudgeTime\":0,\"pitch\":\"e3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 3200,
+        "channels": 2,
+        "counts": {"destination":1,"gain":10,"compressor":1,"waveShaper":1,"oscillator":8,"total":21},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n4"]},
+          {"id":"n4","kind":"waveShaper","fields":{"curve":"b0"},"to":["n0"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0","lin 1.5 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n6","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n5"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @0.25","lin 1.5 @0.26","lin 0 @0.36","lin 0 @0.41"]},"to":["n1"]},
+          {"id":"n8","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 164.813778 @0.25"]},"start":[0.25],"stop":[0.43],"to":["n7"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0 @0.5","lin 1.5 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n10","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 195.997718 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n9"]},
+          {"id":"n11","kind":"gain","params":{"gain":["set 0 @0.75","lin 1.5 @0.76","lin 0 @0.86","lin 0 @0.91"]},"to":["n1"]},
+          {"id":"n12","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 164.813778 @0.75"]},"start":[0.75],"stop":[0.93],"to":["n11"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0 @1","lin 1.5 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n14","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 130.812783 @1"]},"start":[1],"stop":[1.18],"to":["n13"]},
+          {"id":"n15","kind":"gain","params":{"gain":["set 0 @1.25","lin 1.5 @1.26","lin 0 @1.36","lin 0 @1.41"]},"to":["n1"]},
+          {"id":"n16","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 164.813778 @1.25"]},"start":[1.25],"stop":[1.43],"to":["n15"]},
+          {"id":"n17","kind":"gain","params":{"gain":["set 0 @1.5","lin 1.5 @1.51","lin 0 @1.61","lin 0 @1.66"]},"to":["n1"]},
+          {"id":"n18","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 195.997718 @1.5"]},"start":[1.5],"stop":[1.68],"to":["n17"]},
+          {"id":"n19","kind":"gain","params":{"gain":["set 0 @1.75","lin 1.5 @1.76","lin 0 @1.86","lin 0 @1.91"]},"to":["n1"]},
+          {"id":"n20","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 164.813778 @1.75"]},"start":[1.75],"stop":[1.93],"to":["n19"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"curve","length":4097,"channels":[{"rms":0.408999651,"peak":0.501187146,"head":[-0.501187146,-0.501187146,-0.501187146,-0.501187146]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "options-window-not-positive",
+      "group": "options",
+      "from": "src/render.test.ts: rejects a window that is not positive or shorter than two render quanta",
+      "error": "bookingWindow must be positive, got 0"
+    },
+    {
+      "id": "options-window-too-short",
+      "group": "options",
+      "from": "src/render.test.ts: rejects a window that is not positive or shorter than two render quanta",
+      "error": "bookingWindow must cover at least 256 frames (0.2 s at 1280 Hz), got 0.05"
+    }
+  ]
+}
