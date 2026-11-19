@@ -61,7 +61,7 @@ Rust builds eat disk and memory, and this machine has only about 48 GB free. Bef
 | [M2: Spikes](milestones/M2-spikes.md)                             | stack #56                                     | #54, #55, #57, #58, #59, #60, #61                  | Merged (`8d06540`) |
 | [M3: Pattern core](milestones/M3-pattern-core.md)                 | stack #66 (a6511b9)                           | #63, #64, #65, #67, #68, #70, and the design notes | Merged             |
 | [M4: Engine](milestones/M4-engine.md)                             | stack #83                                     | #72, #73, #75, #76, #77, #78, #80, #82, #79        | In review          |
-| [M5: Scheduler and facade](milestones/M5-scheduler-and-facade.md) | planned in the milestone document             | none yet                                           | Not started        |
+| [M5: Scheduler and facade](milestones/M5-scheduler-and-facade.md) | planned in the milestone document             | none yet                                           | In progress        |
 | [M6: JS bridge](milestones/M6-js-bridge.md)                       | planned in the milestone document             | none yet                                           | Not started        |
 | [M7: Outputs](milestones/M7-outputs.md)                           | planned in the milestone document             | none yet                                           | Not started        |
 | [M8: Site and release](milestones/M8-site-and-release.md)         | planned in the milestone document             | none yet                                           | Not started        |
