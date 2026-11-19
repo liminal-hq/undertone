@@ -1,0 +1,26 @@
+sum of function bytes: 163681
+   32921  20.1%  undertone-pattern::pattern
+   22562  13.8%  the spike crate itself
+   19394  11.8%  undertone-pattern::mini
+   17829  10.9%  core::fmt
+   11596   7.1%  core (other)
+    9736   5.9%  undertone-pattern::value
+    9445   5.8%  undertone-pattern::hap
+    7360   4.5%  std
+    7059   4.3%  libm
+    6864   4.2%  undertone-pattern::js
+    4490   2.7%  undertone-pattern::(generic/impl)
+    3025   1.8%  undertone-pattern::fraction
+    2962   1.8%  undertone-pattern::control
+    2254   1.4%  compiler_builtins (i128 maths etc.)
+    1806   1.1%  alloc
+    1474   0.9%  undertone-pattern::signal
+     969   0.6%  other mangled
+     418   0.3%  other (__muloti4)
+     393   0.2%  undertone-pattern::random
+     226   0.1%  other (__fixdfti)
+     196   0.1%  other (__floattidf)
+     148   0.1%  other (__divti3)
+     142   0.1%  other (__modti3)
+     120   0.1%  other (__multi3)
+      77   0.0%  other (__lshrti3)

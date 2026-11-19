@@ -1,0 +1,25 @@
+worklet | worklet-z | cargo 0.0 s | pre-opt 222369 | raw 195268 | gzip9 88052 | brotli11 75767
+control | control-z | cargo 9.0 s | pre-opt 248503 | raw 221061 | gzip9 98315 | brotli11 83695 | glue-js 73327 glue-brotli 5591
+worklet | worklet-noopt | cargo 0.0 s | pre-opt 222369 | raw 222369 | gzip9 91831 | brotli11 77390
+worklet | worklet-O3 | cargo 0.0 s | pre-opt 222369 | raw 200261 | gzip9 87244 | brotli11 75180
+worklet | worklet-opt-s | cargo 2.2 s | pre-opt 245865 | raw 217732 | gzip9 94477 | brotli11 79473
+worklet | worklet-opt-s-Os | cargo 0.0 s | pre-opt 245865 | raw 222235 | gzip9 93989 | brotli11 79205
+worklet | worklet-opt-3 | cargo 2.6 s | pre-opt 328680 | raw 281006 | gzip9 115075 | brotli11 93016
+control | control-noopt | cargo 0.0 s | pre-opt 248503 | raw 248503 | gzip9 99479 | brotli11 84439 | glue-js 73327 glue-brotli 5591
+control | control-O3 | cargo 0.0 s | pre-opt 248503 | raw 236586 | gzip9 97634 | brotli11 83129 | glue-js 73327 glue-brotli 5591
+control | control-opt-s | cargo 7.1 s | pre-opt 281483 | raw 247647 | gzip9 105905 | brotli11 88099 | glue-js 73327 glue-brotli 5591
+control | control-opt-s-Os | cargo 0.0 s | pre-opt 281483 | raw 267576 | gzip9 105539 | brotli11 87745 | glue-js 73327 glue-brotli 5591
+control | control-opt-3 | cargo 7.6 s | pre-opt 383584 | raw 328078 | gzip9 129647 | brotli11 103011 | glue-js 73327 glue-brotli 5591
+control | control-no-named | cargo 1.6 s | pre-opt 240495 | raw 219064 | gzip9 97620 | brotli11 83081 | glue-js 40261 glue-brotli 4985
+control | control-no-named-no-signals | cargo 1.6 s | pre-opt 237017 | raw 215891 | gzip9 96374 | brotli11 82153 | glue-js 36404 glue-brotli 4754
+control | control-no-named-no-signals-no-scales | cargo 1.6 s | pre-opt 224707 | raw 204008 | gzip9 91089 | brotli11 77534 | glue-js 35578 glue-brotli 4723
+control | control-min | cargo 1.5 s | pre-opt 221237 | raw 201300 | gzip9 89656 | brotli11 76287 | glue-js 32469 glue-brotli 4426
+control | control-no-engine | cargo 1.8 s | pre-opt 245034 | raw 218445 | gzip9 97039 | brotli11 82456 | glue-js 70218 glue-brotli 5296
+control | control-no-signals | cargo 1.8 s | pre-opt 245025 | raw 217888 | gzip9 97169 | brotli11 82521 | glue-js 69470 glue-brotli 5331
+control | control-no-scales | cargo 2.0 s | pre-opt 236188 | raw 209185 | gzip9 93063 | brotli11 79161 | glue-js 72501 glue-brotli 5537
+control | control-serde | cargo 3.9 s | pre-opt 272197 | raw 243448 | gzip9 108007 | brotli11 90873 | glue-js 81372 glue-brotli 6834
+control | control-json | cargo 2.9 s | pre-opt 297887 | raw 267600 | gzip9 118762 | brotli11 100000 | glue-js 74420 glue-brotli 5715
+control | control-serde-and-json | cargo 2.5 s | pre-opt 318705 | raw 287238 | gzip9 126970 | brotli11 105756 | glue-js 82465 glue-brotli 6936
+worklet | worklet-z-recheck | cargo 1.1 s | pre-opt 222369 | raw 195268 | gzip9 88053 | brotli11 75751
+worklet | worklet-no-mini | cargo 1.0 s | pre-opt 188223 | raw 167366 | gzip9 79038 | brotli11 68349
+worklet | worklet-z-final | cargo 1.1 s | pre-opt 222369 | raw 195268 | gzip9 88053 | brotli11 75751

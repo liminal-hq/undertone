@@ -1,0 +1,14 @@
+== release, CARGO_INCREMENTAL=0 (the CI default), prime then touch control/src/lib.rs
+wall 1.8 s, user 1.7 s, sys 0.1 s, peak RSS of largest child 244 MB
+== release, CARGO_INCREMENTAL=0, touch crates/undertone-pattern/src/signal.rs
+wall 2.3 s, user 2.2 s, sys 0.2 s, peak RSS of largest child 244 MB
+== release, CARGO_INCREMENTAL=1 (deliberate), prime then touch control/src/lib.rs
+wall 1.6 s, user 1.5 s, sys 0.1 s, peak RSS of largest child 255 MB
+== release, CARGO_INCREMENTAL=1, touch signal.rs
+wall 1.7 s, user 1.6 s, sys 0.2 s, peak RSS of largest child 254 MB
+== dev profile (the day-to-day cargo build), CARGO_INCREMENTAL=1, prime then touch control/src/lib.rs
+wall 0.3 s, user 0.2 s, sys 0.1 s, peak RSS of largest child 174 MB
+== dev profile, touch signal.rs
+wall 0.3 s, user 0.3 s, sys 0.2 s, peak RSS of largest child 173 MB
+== no change at all, release
+wall 2.3 s, user 2.2 s, sys 0.2 s, peak RSS of largest child 248 MB
