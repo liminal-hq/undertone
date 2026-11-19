@@ -14,7 +14,7 @@ flowchart LR
 
 A small worked example — 4-cycle intro, 8-cycle verse, 4-cycle outro, reusing the harmony-section patterns:
 
-```ts
+```ts live
 import { arrange, chord, n, note, stack } from '@liminal-hq/undertone';
 
 const progression = chord('<Dm9 BbM7 Gm9 A7sus>').voicing().sound('sine').sustain(0.8).gain(0.35);

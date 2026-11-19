@@ -8,7 +8,7 @@ Writing every pitch out as note names works, but scale degrees and chord symbols
 
 **Scale degrees.** `n()` takes integers (or a mini-notation string of them) and `.scale('D5:minor')` resolves them against a named scale — root note + octave, colon, scale name (`major`, `minor`, `dorian`, `mixolydian`, `harmonicMinor`, `majorPentatonic`, and friends — [`Pattern.scale()`](/api/classes/Pattern#scale) has the full list). Degrees past the scale's length wrap up an octave (`7` in a 7-note scale is the root an octave up), and negative degrees descend the same way, so runs and octave jumps are just arithmetic:
 
-```ts
+```ts live
 import { n } from '@liminal-hq/undertone';
 
 n('0 2 4 <7 -3>').scale('d5:minor').sound('triangle').sustain(0.3).loop({ bpm: 130 });
@@ -18,7 +18,7 @@ n('0 2 4 <7 -3>').scale('d5:minor').sound('triangle').sustain(0.3).loop({ bpm: 1
 
 **Putting them together.** Since already-pitched events pass through `.scale()` and `.voicing()` untouched, a progression, a bassline, and a melody are three patterns stacked:
 
-```ts
+```ts live
 import { chord, n, note, stack } from '@liminal-hq/undertone';
 
 const progression = chord('<Dm9 BbM7 Gm9 A7sus>').voicing().sound('sine').sustain(0.8).gain(0.35);

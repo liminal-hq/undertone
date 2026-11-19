@@ -10,7 +10,7 @@ The amplitude envelope is a standard ADSR: `.attack(s)` ramps to peak, `.decay(s
 
 The practical consequence: **a held sound in a loop needs a non-zero sustain**. With the default `sustain: 0` there is nothing to hold (the engine doesn't even bother gating — the voice is silent after its decay regardless), so a chorale patch wants something like `.sustain(0.8)` while a plucky bassline might want `.sustain(0.1)` or none at all.
 
-```ts
+```ts live
 import { note, rev, stack } from '@liminal-hq/undertone';
 
 const music = stack(
@@ -20,8 +20,7 @@ const music = stack(
 );
 
 const handle = music.loop({ bpm: 110 });
-// ... later:
-handle.stop();
+// handle.stop() when you've had enough (the Stop button does that here)
 ```
 
 Tempo: `bpm` counts four beats per cycle, so the default 120 bpm means 2-second cycles and a 4-step sequence lands one step per beat. If you'd rather set tempo once instead of passing `{ bpm }` everywhere, `setcpm(cyclesPerMinute)` sets a default in cycles per minute (`setcpm(30)` is the same speed as `bpm: 120`); an explicit `bpm` or `cps` on any call still wins, and `resetTempo()` clears the override.
