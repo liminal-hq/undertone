@@ -96,7 +96,7 @@ mod tests;
 
 use crate::graph::{
 	BufferId, ChannelCountMode, ChannelInterpretation, FilterType, Graph, NodeId, NodeKind,
-	OscillatorType, Oversample, ParamId, ParamKind, Target, WaveId,
+	OscillatorType, Oversample, ParamId, ParamKind, Scope, Target, WaveId,
 };
 use crate::math::{cos, sin};
 use compressor::Compressor;
@@ -250,6 +250,9 @@ struct Node {
 	muted: bool,
 	/// A delay in a cycle, which is read at the start of the quantum and written at the end.
 	cycle_delay: bool,
+	/// A node given back ([`Graph::retire_scope`]): it holds nothing and is left out of every quantum until its
+	/// number is used again.
+	retired: bool,
 }
 
 impl Node {
@@ -271,8 +274,16 @@ impl Node {
 			silent: true,
 			muted: false,
 			cycle_delay: false,
+			retired: false,
 		}
 	}
+}
+
+/// The nodes and buffers made in one scope ([`Graph::begin_scope`]).
+#[derive(Debug, Clone, Default)]
+struct ScopeRecord {
+	nodes: Vec<usize>,
+	buffers: Vec<usize>,
 }
 
 /// A buffer the graph stores: audio, or a wave-shaper curve.
@@ -315,6 +326,15 @@ pub struct RenderGraph {
 	staged: Vec<f32>,
 	/// How many frames of `staged` were handed out; a full quantum means it is used up.
 	staged_used: usize,
+	/// The open scopes, innermost last; `None` is a stretch of shared work that no scope owns.
+	open_scopes: Vec<Option<ScopeRecord>>,
+	/// Ended scopes waiting to be retired, numbered from 1 (0 is `Scope::NONE`).
+	ended_scopes: Vec<Option<ScopeRecord>>,
+	free_scopes: Vec<usize>,
+	/// Retired node numbers, to be used again.
+	free_nodes: Vec<usize>,
+	/// Retired buffer numbers, to be used again.
+	free_buffers: Vec<usize>,
 }
 
 /// The lowest sample rate a [`RenderGraph`] accepts, in hertz.
@@ -395,6 +415,11 @@ impl RenderGraph {
 			dirty: true,
 			staged: vec![0.0; channels * QUANTUM],
 			staged_used: QUANTUM,
+			open_scopes: Vec::new(),
+			ended_scopes: Vec::new(),
+			free_scopes: Vec::new(),
+			free_nodes: Vec::new(),
+			free_buffers: Vec::new(),
 		})
 	}
 
@@ -414,6 +439,24 @@ impl RenderGraph {
 			"render length must be at most {MAX_RENDER_LENGTH_FRAMES} frames, got {length_frames}"
 		);
 		self.length_frames = length_frames;
+	}
+
+	/// How many nodes the graph holds now, the destination included: those made and not retired
+	/// ([`Graph::retire_scope`]).
+	pub fn live_nodes(&self) -> usize {
+		self.nodes.len() - self.free_nodes.len()
+	}
+
+	/// How many node numbers the graph has handed out in all (live and retired, waiting to be used again): its
+	/// high-water mark, which stays small for a loop that retires what it finishes.
+	pub fn node_slots(&self) -> usize {
+		self.nodes.len()
+	}
+
+	/// How many buffers (recordings, impulse responses, noise, curves) the graph holds now, those made and not
+	/// retired.
+	pub fn live_buffers(&self) -> usize {
+		self.buffers.len() - self.free_buffers.len()
 	}
 
 	/// How many frames have been handed out so far.
@@ -511,6 +554,46 @@ impl RenderGraph {
 		} else {
 			frame as u64
 		}
+	}
+
+	/// Keeps a buffer, in a retired buffer's place when there is one, and counts it in the open scope.
+	fn store_buffer(&mut self, stored: Stored) -> BufferId {
+		let index = match self.free_buffers.pop() {
+			Some(index) => {
+				self.buffers[index] = stored;
+				index
+			}
+			None => {
+				self.buffers.push(stored);
+				self.buffers.len() - 1
+			}
+		};
+		if let Some(Some(scope)) = self.open_scopes.last_mut() {
+			scope.buffers.push(index);
+		}
+		BufferId::new(index as u32)
+	}
+
+	fn retire_node(&mut self, index: usize) {
+		if index == 0 || self.nodes[index].retired {
+			return;
+		}
+		let mut node = Node::placeholder();
+		node.retired = true;
+		node.silent = true;
+		self.nodes[index] = node;
+		self.free_nodes.push(index);
+		self.dirty = true;
+	}
+
+	fn retire_buffer_at(&mut self, index: usize) {
+		if matches!(&self.buffers[index], Stored::Curve(samples) if samples.is_empty())
+			&& self.free_buffers.contains(&index)
+		{
+			return;
+		}
+		self.buffers[index] = Stored::Curve(Vec::new());
+		self.free_buffers.push(index);
 	}
 
 	fn node_mut(&mut self, id: NodeId) -> &mut Node {
@@ -614,9 +697,17 @@ impl RenderGraph {
 		}
 		let mut placed = vec![false; count];
 		placed[0] = true;
+		// A retired node is never run: count it as placed, and leave it out of the order.
+		let mut retired = 0;
+		for (index, node) in self.nodes.iter().enumerate().skip(1) {
+			if node.retired {
+				placed[index] = true;
+				retired += 1;
+			}
+		}
 		let mut queue: VecDeque<usize> = VecDeque::new();
 		for (index, wait) in waiting.iter().enumerate().skip(1) {
-			if *wait == 0 {
+			if *wait == 0 && !placed[index] {
 				placed[index] = true;
 				queue.push_back(index);
 			}
@@ -636,7 +727,7 @@ impl RenderGraph {
 					}
 				}
 			}
-			if order.len() + 1 >= count {
+			if order.len() + 1 + retired >= count {
 				break;
 			}
 			// Stuck on a cycle: a delay in it is read first and written last; with no delay the node is muted.
@@ -1189,9 +1280,21 @@ impl Graph for RenderGraph {
 			NodeKind::DynamicsCompressor => Proc::Compressor(Compressor::new(self.sample_rate)),
 			NodeKind::WaveShaper => Proc::Shaper(Shaper::new()),
 		};
-		self.nodes.push(node);
+		let index = match self.free_nodes.pop() {
+			Some(index) => {
+				self.nodes[index] = node;
+				index
+			}
+			None => {
+				self.nodes.push(node);
+				self.nodes.len() - 1
+			}
+		};
+		if let Some(Some(scope)) = self.open_scopes.last_mut() {
+			scope.nodes.push(index);
+		}
 		self.dirty = true;
-		NodeId::new(self.nodes.len() as u32 - 1)
+		NodeId::new(index as u32)
 	}
 
 	fn param(&self, node: NodeId, kind: ParamKind) -> ParamId {
@@ -1371,11 +1474,10 @@ impl Graph for RenderGraph {
 				.is_some_and(|total| total <= MAX_BUFFER_SAMPLES),
 			"buffer is too long: {channels} channels of {length} frames, at most {MAX_BUFFER_SAMPLES} samples"
 		);
-		self.buffers.push(Stored::Audio {
+		self.store_buffer(Stored::Audio {
 			sample_rate,
 			channels: vec![vec![0.0; length]; channels],
-		});
-		BufferId::new(self.buffers.len() as u32 - 1)
+		})
 	}
 
 	fn buffer_channel_mut(&mut self, buffer: BufferId, channel: u32) -> &mut [f32] {
@@ -1386,8 +1488,7 @@ impl Graph for RenderGraph {
 	}
 
 	fn create_curve(&mut self, samples: &[f32]) -> BufferId {
-		self.buffers.push(Stored::Curve(samples.to_vec()));
-		BufferId::new(self.buffers.len() as u32 - 1)
+		self.store_buffer(Stored::Curve(samples.to_vec()))
 	}
 
 	fn create_periodic_wave(
@@ -1403,5 +1504,60 @@ impl Graph for RenderGraph {
 			tables: None,
 		});
 		WaveId::new(self.waves.len() as u32 - 1)
+	}
+
+	fn begin_scope(&mut self) {
+		self.open_scopes.push(Some(ScopeRecord::default()));
+	}
+
+	fn end_scope(&mut self) -> Scope {
+		let Some(Some(record)) = self.open_scopes.pop() else {
+			// No scope is open, or the innermost is a shared stretch: there is nothing to name.
+			return Scope::NONE;
+		};
+		let slot = match self.free_scopes.pop() {
+			Some(slot) => {
+				self.ended_scopes[slot] = Some(record);
+				slot
+			}
+			None => {
+				self.ended_scopes.push(Some(record));
+				self.ended_scopes.len() - 1
+			}
+		};
+		Scope::new(slot as u32 + 1)
+	}
+
+	fn begin_shared(&mut self) {
+		self.open_scopes.push(None);
+	}
+
+	fn end_shared(&mut self) {
+		let ended = self.open_scopes.pop();
+		debug_assert!(
+			matches!(ended, Some(None)),
+			"end_shared without begin_shared"
+		);
+	}
+
+	fn retire_scope(&mut self, scope: Scope) {
+		if scope == Scope::NONE {
+			return;
+		}
+		let slot = scope.index() as usize - 1;
+		let Some(record) = self.ended_scopes.get_mut(slot).and_then(Option::take) else {
+			return;
+		};
+		self.free_scopes.push(slot);
+		for index in record.nodes {
+			self.retire_node(index);
+		}
+		for index in record.buffers {
+			self.retire_buffer_at(index);
+		}
+	}
+
+	fn retire_buffer(&mut self, buffer: BufferId) {
+		self.retire_buffer_at(buffer.index());
 	}
 }

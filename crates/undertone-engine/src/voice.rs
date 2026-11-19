@@ -12,10 +12,12 @@
 
 use crate::effects::OrbitBus;
 use crate::engine::{
-	BookedVoice, Engine, EnvelopeShape, Playback, VoiceHandle, VoiceSlot, number_key,
+	BookedVoice, Engine, EnvelopeShape, Playback, RETIRE_AFTER_SECONDS, VoiceHandle, VoiceSlot,
+	number_key,
 };
 use crate::graph::{
-	BufferId, FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Target,
+	BufferId, FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Scope,
+	Target,
 };
 use crate::master::output_channels;
 use crate::math::{js_max, js_min};
@@ -235,6 +237,39 @@ impl<G: Graph> Engine<G> {
 			None => None,
 		};
 
+		// Everything the voice makes on the graph is one scope, retired once the voice is over.
+		self.graph.begin_scope();
+		let booked = self.book_voice(output, params, start_time, sample);
+		let scope = self.graph.end_scope();
+		match booked {
+			Ok(playback) => {
+				if scope != Scope::NONE
+					&& let Some(voice) = playback
+						.voice
+						.and_then(|handle| self.voices[handle.slot].voice.as_mut())
+				{
+					voice.scope = scope;
+				}
+				Ok(playback)
+			}
+			Err(error) => {
+				// The nodes made before the failure stay on the graph, never started; give them back soon.
+				if scope != Scope::NONE {
+					self.retiring.push((js_max(start_time, 0.0), scope));
+				}
+				Err(error)
+			}
+		}
+	}
+
+	/// Books the voice's nodes (the part of [`Engine::play_to`] inside the voice's scope).
+	fn book_voice(
+		&mut self,
+		output: NodeId,
+		params: &VoiceParams,
+		start_time: f64,
+		sample: Option<BufferId>,
+	) -> Result<Playback> {
 		// Clamp to the graph's origin: real parameters and sources throw on negative times.
 		let voice_start = js_max(start_time + params.nudge_time, 0.0);
 		// A gate is only meaningful when there is a sustain level to hold; with sustain 0 the voice is silent
@@ -398,6 +433,7 @@ impl<G: Graph> Engine<G> {
 			envelope: gain_envelope,
 			stoppables,
 			pan_paths: placed.pan_paths,
+			scope: Scope::NONE,
 		});
 		let playback = Playback {
 			start_time: voice_start,
@@ -430,11 +466,29 @@ impl<G: Graph> Engine<G> {
 				.iter()
 				.any(|handle| handle.engine == self.id && handle.slot == index);
 			if finished && !held {
-				slot.voice = None;
+				if let Some(voice) = slot.voice.take()
+					&& voice.scope != Scope::NONE
+				{
+					self.retiring.push((voice.end, voice.scope));
+				}
 				slot.generation += 1;
 				self.free_slots.push(index);
 			}
 		}
+		self.retire_due(now);
+	}
+
+	/// Tells the graph to retire the nodes of every voice that ended more than [`RETIRE_AFTER_SECONDS`] ago.
+	fn retire_due(&mut self, now: f64) {
+		let graph = &mut self.graph;
+		self.retiring.retain(|(end, scope)| {
+			if end + RETIRE_AFTER_SECONDS < now {
+				graph.retire_scope(*scope);
+				false
+			} else {
+				true
+			}
+		});
 	}
 
 	/// Keeps a booked voice in the slab, in a freed slot when there is one, and returns its handle.
@@ -624,7 +678,10 @@ impl<G: Graph> Engine<G> {
 		let orbit = params.orbit.unwrap_or(DEFAULT_ORBIT);
 		let key = (output, number_key(orbit));
 		if !self.buses.contains_key(&key) {
+			// The bus outlives the voice that first needs it: its nodes belong to no voice's scope.
+			self.graph.begin_shared();
 			let bus = OrbitBus::create(&mut self.graph, output);
+			self.graph.end_shared();
 			self.buses.insert(key, bus);
 		}
 		let mut bus = self.buses.remove(&key).expect("the bus was just made");
@@ -637,9 +694,10 @@ impl<G: Graph> Engine<G> {
 					number_to_string(orbit),
 					number_to_string(params.room_size)
 				));
-				if let Err(error) =
-					bus.set_room_size(&mut self.graph, params.room_size, &mut random)
-				{
+				self.graph.begin_shared();
+				let made = bus.set_room_size(&mut self.graph, params.room_size, &mut random);
+				self.graph.end_shared();
+				if let Err(error) = made {
 					self.buses.insert(key, bus);
 					return Err(error);
 				}

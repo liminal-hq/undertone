@@ -864,3 +864,75 @@ fn render_all_refuses_a_render_that_could_not_be_held() {
 	let mut graph = RenderGraph::new(RATE, 32, 268_435_456);
 	let _ = graph.render_all();
 }
+
+// ----- Retiring scopes -----
+
+#[test]
+fn a_retired_scope_gives_its_nodes_and_buffers_back_and_their_numbers_are_reused() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	let first = osc_to_destination(&mut graph, 440.0);
+	let gain = graph.create_node(NodeKind::Gain);
+	let buffer = graph.create_buffer(1, 100, RATE);
+	let scope = graph.end_scope();
+	assert_eq!((graph.live_nodes(), graph.live_buffers()), (3, 1));
+
+	graph.retire_scope(scope);
+	assert_eq!((graph.live_nodes(), graph.live_buffers()), (1, 0));
+	graph.retire_scope(scope); // already retired: nothing happens
+	assert_eq!(graph.live_nodes(), 1);
+
+	// The next nodes and buffer take the numbers that were given back.
+	let again = graph.create_node(NodeKind::Gain);
+	let other = graph.create_node(NodeKind::Gain);
+	assert!([first.index(), gain.index()].contains(&again.index()));
+	assert!([first.index(), gain.index()].contains(&other.index()));
+	assert_eq!(graph.create_buffer(1, 10, RATE).index(), buffer.index());
+	assert_eq!(graph.node_slots(), 3);
+}
+
+#[test]
+fn a_retired_source_is_silent_and_a_shared_stretch_is_never_retired() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Gain);
+	graph.connect_node(shared, graph.destination());
+	graph.end_shared();
+	osc_to_destination(&mut graph, 1_000.0);
+	let scope = graph.end_scope();
+	let silent_destination = graph.end_scope();
+	assert_eq!(silent_destination, Scope::NONE, "no scope is open now");
+
+	graph.retire_scope(scope);
+	// The oscillator is gone; the shared node is still a live node of the graph.
+	assert_eq!(graph.live_nodes(), 2);
+	let out = graph.render_all();
+	assert_eq!(peak(&out[0]), 0.0);
+}
+
+#[test]
+fn retiring_none_or_the_destination_does_nothing() {
+	let mut graph = RenderGraph::new(RATE, 1, 480);
+	graph.retire_scope(Scope::NONE);
+	graph.retire_node(0);
+	assert_eq!(graph.live_nodes(), 1);
+	osc_to_destination(&mut graph, 1_000.0);
+	let out = graph.render_all();
+	assert!(peak(&out[0]) > 0.5);
+}
+
+#[test]
+fn a_retired_node_does_not_disturb_the_others_that_play_on() {
+	let mut graph = RenderGraph::new(RATE, 1, 9_600);
+	osc_to_destination(&mut graph, 1_000.0);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 1_500.0);
+	let scope = graph.end_scope();
+	let mut block = vec![0.0_f32; 4_800];
+	assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 4_800);
+	graph.retire_scope(scope);
+	assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 4_800);
+	// The 1 kHz sine alone has an RMS of 1/sqrt(2).
+	assert!((rms(&block) - core::f64::consts::FRAC_1_SQRT_2).abs() < 1e-2);
+}
