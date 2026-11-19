@@ -40,7 +40,7 @@ saw.range(0, 8).segment(8); // 0, 1, 2, 3, 4, 5, 6, 7
 
 To hear a segmented signal, give it to `n()`, which takes a pattern that has events and floors each value to a scale degree:
 
-```ts standalone
+```ts live
 import { n, saw } from '@liminal-hq/undertone';
 
 // Eight notes a cycle climbing the scale: degrees 0 to 7.
@@ -81,7 +81,7 @@ Division by zero gives JavaScript's `Infinity`, which a control later treats as 
 
 Every numeric control takes a number, a mini-notation string or a pattern, and a signal is a pattern. The control is read at the onset of each event, and the structure stays the left side's: `s('hh*8').pan(sine2)` is eight hats, each panned by the sine at its onset, and `s('hh*8').pan(0.5)` and `.pan(pure(0.5))` give exactly the same events and the same sound.
 
-```ts standalone
+```ts live
 import { sine, sine2, sound } from '@liminal-hq/undertone';
 
 // Eight hats a cycle, each one place further along a slow sweep of the stereo field,
@@ -101,7 +101,7 @@ Some controls stay plain values and throw `cut() takes a plain value, not a patt
 
 Signals combine with everything else in the usual way. A signal inside `fast`, `slow`, `rev`, `every`, `cat`, `euclid` or `jux` moves as the combinator says, and a signal read by a control inside a `jux` transform reads the same cycle time as the event:
 
-```ts standalone
+```ts live
 import { note, sine } from '@liminal-hq/undertone';
 
 // The right-hand copy has a filter that opens and closes once a cycle; the left-hand copy has none.

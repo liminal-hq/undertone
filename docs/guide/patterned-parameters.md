@@ -26,7 +26,7 @@ A rest in a control string leaves that event's value _unset_ — the engine defa
 
 Instead of a string you can pass any pattern of numbers. A signal is read at each event's onset, so `.pan(sine2)` gives every hat the sine at its own moment, and `.lpf(perlin.range(300, 3000))` is a slow random walk of the filter. The same events and the same sound come from `.gain(0.4)`, `.gain('0.4')` and `.gain(pure(0.4))`.
 
-```ts standalone
+```ts live
 import { perlin, rand, sine2, sound } from '@liminal-hq/undertone';
 
 // Hats drifting across the stereo field, a wandering filter and a random accent on each.
