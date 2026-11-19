@@ -1,7 +1,7 @@
 # Posts the results of a finished CI run to its pull request: one comment and a check run per suite.
 #
 # (c) Copyright 2026 Liminal HQ, Scott Morris
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: MIT OR Apache-2.0
 
 name: Publish Test Results
 
