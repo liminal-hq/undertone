@@ -984,7 +984,11 @@ fn retiring_a_scope_removes_the_parameter_edges_shared_nodes_had_to_its_nodes() 
 	graph.connect_node(again, graph.destination());
 	graph.set_value_at_time(graph.param(again, ParamKind::Gain), 0.0, 0.0);
 	let out = graph.render_all();
-	assert_eq!(peak(&out[0]), 0.0, "a dangling parameter edge modulated the new node");
+	assert_eq!(
+		peak(&out[0]),
+		0.0,
+		"a dangling parameter edge modulated the new node"
+	);
 }
 
 #[test]
@@ -1000,7 +1004,11 @@ fn retiring_a_stale_scope_twice_does_not_retire_a_newer_scope_that_reused_its_nu
 	assert_ne!(old, newer, "a reused slot carries a new generation");
 	let before = graph.live_nodes();
 	graph.retire_scope(old);
-	assert_eq!(graph.live_nodes(), before, "the stale scope retired a newer one");
+	assert_eq!(
+		graph.live_nodes(),
+		before,
+		"the stale scope retired a newer one"
+	);
 	graph.retire_scope(newer);
 	assert_eq!(graph.live_nodes(), before - 1);
 }

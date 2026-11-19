@@ -834,3 +834,70 @@ mod options {
 		assert_eq!(clock.now(), 0.0);
 	}
 }
+
+mod clock_jumps {
+	use super::*;
+	use std::cell::Cell;
+	use std::rc::Rc;
+
+	/// A clock a test can set to anything, including a time before the last one or a number that is not one.
+	#[derive(Clone)]
+	struct WildClock(Rc<Cell<f64>>);
+
+	impl Clock for WildClock {
+		fn now(&self) -> f64 {
+			self.0.get()
+		}
+		fn frames_played(&self) -> u64 {
+			0
+		}
+		fn output_latency(&self) -> f64 {
+			0.0
+		}
+	}
+
+	#[test]
+	fn a_forward_jump_does_not_book_every_onset_it_missed() {
+		let mut rig = Rig::new();
+		// One note every 2 s (120 bpm), looped.
+		let handle = rig
+			.transport
+			.play_loop(&mut rig.engine, &plain(note("c3")), &looping(120.0))
+			.unwrap();
+		// The host was suspended for a thousand seconds.
+		rig.advance_to(1000.0);
+		let report = rig.transport.tick(&mut rig.engine).unwrap();
+		assert!(
+			report.booked <= 8,
+			"booked {} voices in one tick",
+			report.booked
+		);
+		assert!(
+			rig.engine.voice_count() <= 10,
+			"{}",
+			rig.engine.voice_count()
+		);
+		// The loop is positioned at the new horizon, not left a thousand seconds behind.
+		let until = rig.transport.scheduled_until(handle).unwrap().to_f64();
+		assert!(until > 499.0, "scheduled only to cycle {until}");
+	}
+
+	#[test]
+	fn a_clock_that_goes_backwards_or_is_not_a_number_books_nothing_and_does_not_panic() {
+		let cell = Rc::new(Cell::new(10.0));
+		let clock = WildClock(cell.clone());
+		let mut engine = Engine::new(LogGraph::new(48_000.0, 2), OutputSetup::default()).unwrap();
+		let mut transport = Transport::new(clock, SchedulerOptions::default()).unwrap();
+		transport
+			.play_loop(&mut engine, &plain(note("c3")), &looping(120.0))
+			.unwrap();
+		for bad in [5.0, f64::NAN, f64::INFINITY, f64::NEG_INFINITY, -3.0] {
+			cell.set(bad);
+			let report = transport.tick(&mut engine).unwrap();
+			assert_eq!(report.booked, 0, "a clock reading {bad} booked voices");
+		}
+		// Once the clock is back to sensible, ticking carries on.
+		cell.set(12.0);
+		assert!(transport.tick(&mut engine).is_ok());
+	}
+}
