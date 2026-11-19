@@ -128,7 +128,7 @@ Not supported: `?` (degrade), `|` (random choice), `{a b c}%n` (polymeter), and 
 
 ## Tempo
 
-`play()`/`loop()` take `{ bpm }`, counting four beats per cycle — the default 120 bpm means 2-second cycles, which lands at the same speed as Strudel's default (0.5 cycles per second). `setcpm(cyclesPerMinute)` sets a default for calls that omit `bpm` (an explicit `bpm` always wins), and `resetTempo()` clears it. There's no per-pattern tempo — tempo belongs to the `play()`/`loop()` call, not the pattern (`{ cps }` sets cycles per second there directly, instead of `bpm`).
+`play()`/`loop()` take `{ bpm }`, counting four beats per cycle — the default 120 bpm means 2-second cycles, which lands at the same speed as Strudel's default (0.5 cycles per second). `setcpm(cyclesPerMinute)` sets a default for calls that omit `bpm` (an explicit `bpm` always wins), and `resetTempo()` clears it. A running `loop()` without an explicit tempo follows later `setcpm()` calls. There's no per-pattern tempo — tempo belongs to the `play()`/`loop()` call, not the pattern (`{ cps }` sets cycles per second there directly, instead of `bpm`).
 
 ## The shape of what's missing
 

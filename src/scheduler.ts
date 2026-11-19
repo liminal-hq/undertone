@@ -46,9 +46,9 @@ export interface PlayOptions extends OutputOptions {
 export interface LoopOptions extends OutputOptions {
   /** Audio context to schedule against; a lazily-created shared AudioContext when omitted. */
   ctx?: AudioContextLike;
-  /** Tempo in beats per minute, four beats to a cycle. Default 120 (2-second cycles). */
+  /** Tempo in beats per minute, four beats to a cycle. Default 120 (2-second cycles), or the setcpm() tempo, which a running loop follows. An explicit `bpm` pins the loop's tempo. */
   bpm?: number;
-  /** Tempo in cycles per second — an alternative to `bpm` for scores that know their loop length in seconds. Passing both throws. */
+  /** Tempo in cycles per second — an alternative to `bpm` for scores that know their loop length in seconds. Passing both throws. An explicit `cps` pins the loop's tempo. */
   cps?: number;
   /** Injectable timer (tests tick it by hand); defaults to global setInterval/clearInterval. */
   timer?: TimerLike;
@@ -105,9 +105,11 @@ let defaultCyclesPerMinute: number | undefined;
 /**
  * Sets a default tempo in cycles per minute, used by play()/loop() calls that
  * don't pass an explicit `bpm` — the top-of-file "set it once" style some
- * scripts prefer over per-call options. An explicit `{ bpm }` on a given call
- * always wins over this. Global mutable state, read once at each play()/
- * loop() call (not live-reactive mid-loop) — call again to change it.
+ * scripts prefer over per-call options. An explicit `{ bpm }` or `{ cps }` on
+ * a given call always wins over this. Global mutable state: play() reads it
+ * once when it is called, while a running loop() started without an explicit
+ * tempo follows it, picking up each change from the next scheduling window
+ * with no gap or overlap (voices already booked keep their times).
  */
 export function setcpm(cyclesPerMinute: number): void {
   if (!(cyclesPerMinute > 0)) {
@@ -228,21 +230,39 @@ function emptyHandle(at: number): PlaybackHandle {
  * Loops the pattern indefinitely using the standard two-clock approach: a
  * coarse timer tick queries the pattern for the window between what's already
  * scheduled and a short lookahead past the audio clock, and schedules those
- * voices at exact audio-clock times.
+ * voices at exact audio-clock times. A loop started without an explicit `bpm`
+ * or `cps` follows later setcpm()/resetTempo() changes; one started with an
+ * explicit tempo keeps it.
  */
 export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): LoopHandle {
   const ctx = options.ctx ?? getSharedContext();
-  const cycleSeconds = cycleSecondsFor(options.bpm, options.cps);
+  // An explicit bpm or cps pins the loop's tempo; otherwise it follows the
+  // setcpm()/resetTempo() default, re-read on every tick.
+  const followsTempo = options.bpm === undefined && options.cps === undefined;
+  let cycleSeconds = cycleSecondsFor(options.bpm, options.cps);
   const timer = options.timer ?? defaultTimer;
-  const startTime = ctx.currentTime + START_LATENCY_SECONDS;
+  // The anchor pairs a pattern position with its audio time. Pattern time p
+  // maps to anchorTime + (p - anchorCycle) * cycleSeconds. A tempo change
+  // moves the anchor to the end of what is already booked, so booked voices
+  // keep their times and the next window continues from exactly there.
+  let anchorCycle = new Fraction(0);
+  let anchorTime = ctx.currentTime + START_LATENCY_SECONDS;
   let scheduledUntil = new Fraction(0); // pattern time, in cycles
   // Voices booked but possibly not finished yet, so stop({ voices: 'cut' }) can
   // reach them. Pruned on every tick, so it stays bounded however long the loop runs.
   let live: PlaybackHandle[] = [];
 
   const tick = (): void => {
-    const horizonSeconds = ctx.currentTime + LOOKAHEAD_SECONDS - startTime;
-    const horizonCycles = horizonSeconds / cycleSeconds;
+    if (followsTempo) {
+      const latest = cycleSecondsFor(undefined, undefined);
+      if (latest !== cycleSeconds) {
+        anchorTime += scheduledUntil.sub(anchorCycle).toNumber() * cycleSeconds;
+        anchorCycle = scheduledUntil;
+        cycleSeconds = latest;
+      }
+    }
+    const horizonSeconds = ctx.currentTime + LOOKAHEAD_SECONDS - anchorTime;
+    const horizonCycles = anchorCycle.toNumber() + horizonSeconds / cycleSeconds;
     const horizon = new Fraction(Math.floor(horizonCycles * WINDOW_GRID), WINDOW_GRID);
     if (horizon.lte(scheduledUntil)) {
       return;
@@ -253,7 +273,7 @@ export function loopPattern(pattern: PatternLike, options: LoopOptions = {}): Lo
         ctx,
         pattern,
         { begin: scheduledUntil, end: horizon },
-        startTime,
+        anchorTime - anchorCycle.toNumber() * cycleSeconds,
         cycleSeconds,
         true,
         { output: options.output }

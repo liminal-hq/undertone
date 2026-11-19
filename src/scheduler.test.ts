@@ -222,6 +222,156 @@ describe('setcpm', () => {
   });
 });
 
+describe('a running loop and tempo changes', () => {
+  afterEach(() => resetTempo());
+
+  // Four onsets per cycle, so every cycle length gives distinct start times.
+  const starts = (ctx: FakeAudioContext): number[] => ctx.oscillators.map((osc) => osc.started[0]);
+  const run = (ctx: FakeAudioContext, timer: FakeTimer, until: number): void => {
+    for (let t = ctx.currentTime; t <= until + 1e-9; t += 0.1) {
+      ctx.currentTime = t;
+      timer.tick();
+    }
+  };
+
+  it('follows setcpm to a faster tempo with no gap or overlap', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(30); // 2-second cycles, steps 0.5 s apart
+    note('c3 e3 g3 b3').loop({ ctx, timer });
+    run(ctx, timer, 1.0);
+    setcpm(60); // 1-second cycles, steps 0.25 s apart
+    run(ctx, timer, 3.0);
+
+    const times = starts(ctx);
+    const first = times.findIndex((time, i) => i > 0 && time - times[i - 1] < 0.4);
+    expect(first).toBeGreaterThan(0);
+    // Before the change the steps are 0.5 s apart, after it 0.25 s, and the
+    // step that straddles the change keeps one of those two spacings.
+    // The step straddling the change mixes the two tempos, so every gap lies
+    // between the faster and the slower step: nothing doubled, nothing missing.
+    for (let i = 1; i < times.length; i++) {
+      const gap = times[i] - times[i - 1];
+      expect(gap).toBeGreaterThan(0.25 - 1e-9);
+      expect(gap).toBeLessThan(0.5 + 1e-9);
+    }
+    expect(new Set(times.map((time) => time.toFixed(6))).size).toBe(times.length);
+    expect(times[times.length - 1] - times[times.length - 2]).toBeCloseTo(0.25, 9);
+  });
+
+  it('follows setcpm to a slower tempo with no gap or overlap', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(60);
+    note('c3 e3 g3 b3').loop({ ctx, timer });
+    run(ctx, timer, 1.0);
+    setcpm(30);
+    run(ctx, timer, 4.0);
+
+    const times = starts(ctx);
+    expect(new Set(times.map((time) => time.toFixed(6))).size).toBe(times.length);
+    // The step straddling the change mixes the two tempos, so every gap lies
+    // between the faster and the slower step: nothing doubled, nothing missing.
+    for (let i = 1; i < times.length; i++) {
+      const gap = times[i] - times[i - 1];
+      expect(gap).toBeGreaterThan(0.25 - 1e-9);
+      expect(gap).toBeLessThan(0.5 + 1e-9);
+    }
+    expect(times[times.length - 1] - times[times.length - 2]).toBeCloseTo(0.5, 9);
+  });
+
+  it('keeps voices already booked at their times and continues from the end of them', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(30); // 2-second cycles
+    note('c3 e3').loop({ ctx, timer }); // onsets at 0.1 and 1.1, then 2.1, 3.1 ...
+    ctx.currentTime = 0.85;
+    timer.tick(); // books the onset at 1.1 (inside the lookahead)
+    const booked = starts(ctx).slice();
+    expect(booked).toEqual([0.1, 1.1]);
+
+    setcpm(60); // 1-second cycles: onsets 0.5 s apart
+    // The window booked so far ends at the grid point just under cycle 0.525
+    // ((0.85 + 0.3 - 0.1) / 2), which is the anchor: audio 0.1 + 2 * anchor.
+    const anchor = 5291 / 10080; // 0.525 * 10080 floors to 5291 in floating point
+    const anchorTime = 0.1 + anchor * 2;
+    ctx.currentTime = 1.9;
+    timer.tick();
+    ctx.currentTime = 2.9;
+    timer.tick();
+    const after = starts(ctx);
+    expect(after.slice(0, 2)).toEqual(booked);
+    // From the anchor on, one cycle lasts 1 s: pattern cycle 1 lands (1 - anchor)
+    // seconds after it, and onsets then fall every 0.5 s, none doubled or missing.
+    expect(after[2]).toBeCloseTo(anchorTime + (1 - anchor), 9);
+    expect(after[3]).toBeCloseTo(anchorTime + (1.5 - anchor), 9);
+  });
+
+  it('handles a change between ticks and several changes in a row', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(60);
+    note('c3 e3 g3 b3').loop({ ctx, timer });
+    run(ctx, timer, 0.5);
+    setcpm(120);
+    setcpm(15); // only the last value before the next tick counts
+    run(ctx, timer, 4.0);
+
+    const times = starts(ctx);
+    expect(new Set(times.map((time) => time.toFixed(6))).size).toBe(times.length);
+    expect(times[times.length - 1] - times[times.length - 2]).toBeCloseTo(1, 9); // 4-second cycles
+  });
+
+  it('follows resetTempo() back to the 120 bpm default', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(60);
+    note('c3 e3').loop({ ctx, timer });
+    run(ctx, timer, 1.0);
+    resetTempo(); // 2-second cycles, onsets 1 s apart
+    run(ctx, timer, 5.0);
+
+    const times = starts(ctx);
+    expect(times[times.length - 1] - times[times.length - 2]).toBeCloseTo(1, 9);
+    expect(new Set(times.map((time) => time.toFixed(6))).size).toBe(times.length);
+  });
+
+  it('keeps the tempo of a loop started with an explicit bpm or cps', () => {
+    for (const explicit of [{ bpm: 120 }, { cps: 0.5 }]) {
+      const ctx = new FakeAudioContext();
+      const timer = new FakeTimer();
+      note('c3 e3').loop({ ctx, timer, ...explicit });
+      run(ctx, timer, 1.0);
+      setcpm(600);
+      run(ctx, timer, 5.0);
+      expect(starts(ctx)).toEqual([0.1, 1.1, 2.1, 3.1, 4.1, 5.1].slice(0, starts(ctx).length));
+      expect(starts(ctx).length).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('stops scheduling after stop() and releases the timer', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(60);
+    const handle = note('c3 e3').loop({ ctx, timer });
+    run(ctx, timer, 1.0);
+    handle.stop();
+    expect(timer.cleared).toBe(true);
+    expect(ctx.oscillators.length).toBeGreaterThan(0);
+  });
+
+  it('still rejects a non-positive setcpm at the call, leaving the loop on its tempo', () => {
+    const ctx = new FakeAudioContext();
+    const timer = new FakeTimer();
+    setcpm(60);
+    note('c3 e3').loop({ ctx, timer });
+    expect(() => setcpm(0)).toThrow(/must be positive/);
+    run(ctx, timer, 3.0);
+    const times = starts(ctx);
+    expect(times[times.length - 1] - times[times.length - 2]).toBeCloseTo(0.5, 9);
+  });
+});
+
 describe('resetTempo', () => {
   it('restores the plain 120bpm (2-second cycle) default', () => {
     const ctx = new FakeAudioContext();
