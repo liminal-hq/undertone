@@ -843,3 +843,66 @@ fn recorded_graphs_without_buffers_replay_to_the_same_bytes() {
 	println!("replayed {replayed} recorded graphs; {skipped} skipped because they hold buffers");
 	assert!(replayed > 0);
 }
+
+/// A tiny graph around one node, to test the comparator on the paths it treats differently.
+#[cfg(test)]
+mod comparator {
+	use super::*;
+	use serde_json::json;
+
+	fn graph(node: Value, wave_real: Value) -> Value {
+		json!({
+			"nodes": [{"id": "n0", "kind": "destination"}, node],
+			"waves": [{"id": "w0", "real": wave_real, "imag": [0], "disableNormalization": false}]
+		})
+	}
+
+	fn gain_node(call: &str, start: f64) -> Value {
+		json!({"id": "n1", "kind": "gain", "params": {"gain": [call]}, "start": [start]})
+	}
+
+	fn same(a: &Value, b: &Value) -> Result<bool, String> {
+		compare(a, b, "case")
+	}
+
+	#[test]
+	fn negative_zero_differs_from_zero_in_a_call() {
+		let a = graph(gain_node("set -0 @0", 0.0), json!([0]));
+		let b = graph(gain_node("set 0 @0", 0.0), json!([0]));
+		assert!(same(&a, &b).is_err());
+	}
+
+	#[test]
+	fn a_start_time_off_by_one_tiny_step_differs() {
+		let a = graph(gain_node("set 1 @0", 0.5), json!([0]));
+		let b = graph(gain_node("set 1 @0", 0.5 + 1e-16), json!([0]));
+		assert!(same(&a, &b).is_err());
+	}
+
+	#[test]
+	fn a_time_in_a_call_is_exact_but_a_gain_value_has_the_floor() {
+		let a = graph(gain_node("set 1e-16 @0.5", 0.0), json!([0]));
+		let b = graph(gain_node("set 0 @0.5", 0.0), json!([0]));
+		assert_eq!(same(&a, &b), Ok(true));
+		let c = graph(gain_node("set 0 @0.5000000001", 0.0), json!([0]));
+		assert!(same(&b, &c).is_err());
+	}
+
+	#[test]
+	fn other_parameters_are_exact() {
+		let node = |call: &str| json!({"id": "n1", "kind": "panner", "params": {"pan": [call]}});
+		let a = graph(node("set 1e-16 @0"), json!([0]));
+		let b = graph(node("set 0 @0"), json!([0]));
+		assert!(same(&a, &b).is_err());
+	}
+
+	#[test]
+	fn a_wave_coefficient_has_the_floor_and_a_negative_zero_object_matches_a_tiny_number() {
+		let node = gain_node("set 1 @0", 0.0);
+		let a = graph(node.clone(), json!([1e-16, {"$num": "-0"}]));
+		let b = graph(node.clone(), json!([0, 5e-17]));
+		assert_eq!(same(&a, &b), Ok(true));
+		let c = graph(node, json!([1e-14, 0]));
+		assert!(same(&a, &c).is_err());
+	}
+}
