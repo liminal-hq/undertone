@@ -35,6 +35,9 @@
 //! | Errors | [`Error`], [`ErrorKind`] |
 
 pub use crate::error::{Error, ErrorKind};
+pub use crate::options::{RenderOptions, WavOptions};
+pub use crate::player::{Player, PlayerOptions};
+pub use crate::render::{RenderedAudio, render, render_score, render_to_wav};
 pub use crate::signals::{
 	brand, brand_by, choose, cosine, cosine2, irand, isaw, isaw2, perlin, rand, rand2, saw, saw2,
 	signal, sine, sine2, square, square2, tri, tri2,
