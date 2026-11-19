@@ -33,6 +33,8 @@
     "docs:preview": "vitepress preview docs",
     "api:record": "bun conformance/api/report.ts record",
     "api:check": "bun conformance/api/report.ts check",
+    "voice-params:record": "bun conformance/api/voice-params.ts record",
+    "voice-params:check": "bun conformance/api/voice-params.ts check",
     "conformance:record": "bun conformance/recorder/record.ts record",
     "conformance:check": "bun conformance/recorder/record.ts check",
     "typecheck:conformance": "tsc -p conformance/tsconfig.json",
