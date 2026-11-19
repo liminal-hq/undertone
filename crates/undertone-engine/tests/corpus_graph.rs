@@ -16,10 +16,10 @@
 //! if a pending case starts to equal the corpus (so its entry is removed), and for any other case that does
 //! not equal it.
 //!
-//! **How a booked graph is compared (CONFORMANCE.md).** Both sides are read as JSON; structure, strings, and
-//! counts are exact, and a number inside a call string or a value matches when its text is identical or the
-//! two differ by at most `1e-15` (the absolute floor for numerical zeros). Cases that pass only through the
-//! floor are listed.
+//! **How a booked graph is compared (CONFORMANCE.md).** Both sides are read as JSON and are exact: structure,
+//! strings, counts, times, and the sign of a zero. The one exception is the absolute floor of `1e-15` for
+//! numerical zeros, and it applies only to wave coefficients (`waves[].real` and `.imag`) and to the value
+//! of a gain parameter's automation call. Cases that pass only through the floor are listed.
 //!
 //! Two further tests keep the writer honest without any booking: a graph built by hand through the [`Graph`]
 //! trait for `placement-pan-default` must write the corpus bytes, and every recorded graph without buffers is
@@ -394,44 +394,83 @@ fn groups() -> BTreeMap<String, Vec<Value>> {
 	groups
 }
 
-/// Whether two JSON values are equal: exactly, except that numbers in numeric tokens may differ by the floor.
-/// Returns whether the floor was needed, or the path of the first difference.
+/// Where the absolute floor applies (CONFORMANCE.md, R9): wave coefficients (`waves[].real` and `.imag`) and
+/// the values of gain automation (`nodes[].params.gain`, the second token of a call string). Everything else,
+/// every time included, is compared exactly.
+fn is_wave_coefficient(path: &str) -> bool {
+	path.contains(".waves[") && (path.contains(".real[") || path.contains(".imag["))
+}
+
+fn is_gain_call(path: &str) -> bool {
+	path.contains(".nodes[") && path.contains(".params.gain[")
+}
+
+/// A number the recorder writes as `{"$num": ...}` (a value JSON cannot hold), or a plain number.
+fn number_of(value: &Value) -> Option<f64> {
+	match value {
+		Value::Number(n) => n.as_f64(),
+		Value::Object(map) if map.len() == 1 => match map.get("$num")?.as_str()? {
+			"-0" => Some(-0.0),
+			"NaN" => Some(f64::NAN),
+			"Infinity" => Some(f64::INFINITY),
+			"-Infinity" => Some(f64::NEG_INFINITY),
+			_ => None,
+		},
+		_ => None,
+	}
+}
+
+/// Whether two JSON values are equal: exactly, except inside the two places the floor is allowed (see
+/// [`is_wave_coefficient`]). Returns whether the floor was needed, or the path of the first difference.
 fn compare(expected: &Value, actual: &Value, path: &str) -> Result<bool, String> {
+	if is_wave_coefficient(path)
+		&& let (Some(e), Some(a)) = (number_of(expected), number_of(actual))
+	{
+		return if e.to_bits() == a.to_bits() {
+			Ok(false)
+		} else if (e - a).abs() <= ABS_FLOOR {
+			Ok(true)
+		} else {
+			Err(format!("{path}: recorded {e}, rust {a}"))
+		};
+	}
 	match (expected, actual) {
-		(Value::Number(e), Value::Number(a)) => {
-			let (e, a) = (e.as_f64().expect("f64"), a.as_f64().expect("f64"));
-			if e == a {
-				Ok(false)
-			} else if (e - a).abs() <= ABS_FLOOR {
-				Ok(true)
-			} else {
-				Err(format!("{path}: recorded {e}, rust {a}"))
-			}
-		}
 		(Value::String(e), Value::String(a)) => {
 			if e == a {
 				return Ok(false);
 			}
-			let (e_tokens, a_tokens): (Vec<_>, Vec<_>) =
-				(e.split(' ').collect(), a.split(' ').collect());
-			if e_tokens.len() != a_tokens.len() {
+			if !is_gain_call(path) {
 				return Err(format!("{path}: recorded {e:?}, rust {a:?}"));
 			}
-			let mut floor = false;
-			for (x, y) in e_tokens.iter().zip(&a_tokens) {
-				if x == y {
-					continue;
-				}
-				let (x, y) = (
-					x.trim_start_matches('@').parse::<f64>(),
-					y.trim_start_matches('@').parse::<f64>(),
+			// A call string is `<method> <value> @<time> ...`: only the value may use the floor, and a zero of
+			// either sign must match its sign.
+			let (e_tokens, a_tokens): (Vec<_>, Vec<_>) =
+				(e.split(' ').collect(), a.split(' ').collect());
+			let floor_value = e_tokens.len() == a_tokens.len()
+				&& e_tokens.len() > 2
+				&& e_tokens
+					.iter()
+					.zip(&a_tokens)
+					.enumerate()
+					.all(|(index, (x, y))| index == 1 || x == y)
+				&& *e_tokens[1] != *"-0"
+				&& *a_tokens[1] != *"-0"
+				&& matches!(
+					(e_tokens[1].parse::<f64>(), a_tokens[1].parse::<f64>()),
+					(Ok(x), Ok(y)) if (x - y).abs() <= ABS_FLOOR
 				);
-				match (x, y) {
-					(Ok(x), Ok(y)) if (x - y).abs() <= ABS_FLOOR => floor = true,
-					_ => return Err(format!("{path}: recorded {e:?}, rust {a:?}")),
-				}
+			if floor_value {
+				Ok(true)
+			} else {
+				Err(format!("{path}: recorded {e:?}, rust {a:?}"))
 			}
-			Ok(floor)
+		}
+		(Value::Number(e), Value::Number(a)) => {
+			if e == a {
+				Ok(false)
+			} else {
+				Err(format!("{path}: recorded {e}, rust {a}"))
+			}
 		}
 		(Value::Array(e), Value::Array(a)) => {
 			if e.len() != a.len() {
