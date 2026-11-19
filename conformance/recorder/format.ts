@@ -14,7 +14,7 @@ export type CaseRecord = { [key: string]: Json };
 
 /** One corpus file: the cases of a layer's group. */
 export interface CorpusFile {
-  layer: 1 | 2 | 3;
+  layer: 1 | 2 | 3 | 4;
   group: string;
   cases: CaseRecord[];
 }
@@ -90,13 +90,23 @@ function emitLines(value: Json, depth: number, indent: string): string {
   return `[\n${lines.join(',\n')}\n${indent}]`;
 }
 
-function emitObject(object: { [key: string]: Json }, indent: string): string {
+/** The fields of a layer 4 case's `browser` object that print one element per line (a channel per line). */
+const BROWSER_LINEWISE: Record<string, number> = { channels: 1 };
+
+function emitObject(
+  object: { [key: string]: Json },
+  indent: string,
+  linewise: Record<string, number> = LINEWISE
+): string {
   const inner = `${indent}  `;
   const lines = Object.entries(object).map(([key, value]) => {
-    const nested = key === 'graph' && typeof value === 'object' && !Array.isArray(value);
-    const text = nested
-      ? emitObject(value as { [key: string]: Json }, inner)
-      : emitLines(value, LINEWISE[key] ?? 0, inner);
+    const isObject = typeof value === 'object' && value !== null && !Array.isArray(value);
+    const text =
+      key === 'graph' && isObject
+        ? emitObject(value as { [key: string]: Json }, inner)
+        : key === 'browser' && isObject
+          ? emitObject(value as { [key: string]: Json }, inner, BROWSER_LINEWISE)
+          : emitLines(value, linewise[key] ?? 0, inner);
     return `${inner}${JSON.stringify(key)}: ${text}`;
   });
   return `{\n${lines.join(',\n')}\n${indent}}`;

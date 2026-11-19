@@ -344,8 +344,37 @@ function fresh(kind: string, node: NodeRecord): object | undefined {
   }
 }
 
+/**
+ * The onsets a render books, in booking order: each cycle's `collectOnsets`, as `renderToBuffer` collects them
+ * (a case with `seconds` drops onsets at or after it). Needs no audio, so the layer 4 files use it too.
+ */
+export function renderOnsets(
+  ref: Reference,
+  pattern: unknown,
+  render: Omit<RenderOptions, 'context'>
+): { at: number; patch: unknown }[] {
+  const cycleSeconds = ref.scheduler.cycleSecondsFor(render.bpm, render.cps);
+  const cycles = render.cycles ?? Math.ceil((render.seconds ?? cycleSeconds) / cycleSeconds);
+  const voices: { at: number; patch: unknown }[] = [];
+  for (let k = 0; k < cycles; k++) {
+    const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
+    for (const voice of ref.scheduler.collectOnsets(
+      pattern as never,
+      span,
+      0,
+      cycleSeconds,
+      render.gated ?? true
+    )) {
+      if (render.seconds === undefined || voice.startTime < render.seconds) {
+        voices.push({ at: voice.startTime, patch: voice.params });
+      }
+    }
+  }
+  return voices;
+}
+
 /** The score text: one line per voice, `v<k> @<seconds> <json of the patch>`. */
-function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[] {
+export function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[] {
   return voices.map(
     (voice, index) =>
       `v${index} @${nineDigitsText(voice.at)} ${JSON.stringify(encodeValue(voice.patch))}`
@@ -459,25 +488,7 @@ async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<
   for (const sample of spec.registry ?? []) registerDecoded(ref, scratch, sample);
   await ref.lib.renderToBuffer(built.pattern as never, options);
   if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
-  // The score a render books: the onsets of each cycle, as the renderer collects them.
-  const cycleSeconds = ref.scheduler.cycleSecondsFor(spec.render.bpm, spec.render.cps);
-  const cycles =
-    spec.render.cycles ?? Math.ceil((spec.render.seconds ?? cycleSeconds) / cycleSeconds);
-  const voices: { at: number; patch: unknown }[] = [];
-  for (let k = 0; k < cycles; k++) {
-    const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
-    for (const voice of ref.scheduler.collectOnsets(
-      built.pattern as never,
-      span,
-      0,
-      cycleSeconds,
-      spec.render.gated ?? true
-    )) {
-      if (spec.render.seconds === undefined || voice.startTime < spec.render.seconds) {
-        voices.push({ at: voice.startTime, patch: voice.params });
-      }
-    }
-  }
+  const voices = renderOnsets(ref, built.pattern, spec.render);
   return {
     ...head(spec),
     program: programJson(spec.program),
