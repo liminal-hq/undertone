@@ -53,6 +53,14 @@ const SCALES: [(&str, &[i32]); 14] = [
 	("chromatic", &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
 ];
 
+/// The interval table that equals `intervals`, as the `'static` slice a [`ParsedScale`] holds: how a scale is rebuilt from text.
+pub(crate) fn scale_table(intervals: &[i32]) -> Option<&'static [i32]> {
+	SCALES
+		.iter()
+		.map(|(_, table)| *table)
+		.find(|table| *table == intervals)
+}
+
 /// Parses a scale spec such as `"D5:minor"` into a root and its interval table.
 ///
 /// Scale names ignore case, spaces, hyphens, and underscores, so `"Harmonic Minor"` works.
