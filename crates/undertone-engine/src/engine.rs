@@ -412,4 +412,51 @@ mod tests {
 			"Invalid frequency: 0"
 		);
 	}
+
+	fn reverb_voice(room_size: f64) -> VoiceParams {
+		VoiceParams {
+			duration: Some(1.0),
+			sustain: 1.0,
+			room_level: Some(0.5),
+			room_size,
+			..VoiceParams::empty()
+		}
+	}
+
+	#[test]
+	fn an_infinite_room_size_is_an_error_not_a_panic() {
+		let mut engine = engine();
+		let error = engine.play(&reverb_voice(f64::INFINITY), 0.0).unwrap_err();
+		assert!(error.message().contains("room"), "{}", error.message());
+	}
+
+	#[test]
+	fn a_not_a_number_room_size_is_an_error() {
+		let mut engine = engine();
+		assert!(engine.play(&reverb_voice(f64::NAN), 0.0).is_err());
+	}
+
+	#[test]
+	fn a_huge_room_size_is_an_error_instead_of_a_huge_allocation() {
+		let mut engine = engine();
+		assert!(engine.play(&reverb_voice(1.0e12), 0.0).is_err());
+	}
+
+	#[test]
+	fn a_failed_room_does_not_poison_the_orbit() {
+		let mut engine = engine();
+		assert!(engine.play(&reverb_voice(f64::INFINITY), 0.0).is_err());
+		assert!(engine.play(&reverb_voice(3.0), 0.0).is_ok());
+	}
+
+	#[test]
+	fn an_infinite_delay_time_does_not_panic() {
+		let mut engine = engine();
+		let params = VoiceParams {
+			delay_level: Some(0.5),
+			delay_time: f64::INFINITY,
+			..VoiceParams::empty()
+		};
+		let _ = engine.play(&params, 0.0);
+	}
 }
