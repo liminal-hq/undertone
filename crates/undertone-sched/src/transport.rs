@@ -74,7 +74,9 @@
 //! # Ok::<(), undertone_pattern::Error>(())
 //! ```
 
-use crate::booking::{book_voices, collect_window, window_edge};
+use crate::booking::{
+	book_voices, check_cycle_position, check_seconds, collect_window, window_edge,
+};
 use crate::clock::Clock;
 use crate::stats::Stats;
 use crate::tempo::Tempo;
@@ -597,7 +599,10 @@ impl<C: Clock> Transport<C> {
 		let cycle_seconds = self.tempo.cycle_seconds(options.bpm, options.cps)?;
 		let now = self.read_now();
 		let at = options.when.unwrap_or(now);
+		check_seconds("when", at)?;
 		let from = options.from;
+		check_cycle_position(from)?;
+		check_cycle_position(from + Fraction::from_int(1))?;
 		let start_time = if from == Fraction::from_int(0) {
 			at
 		} else {
@@ -885,6 +890,8 @@ impl<C: Clock> Transport<C> {
 			return Ok(false);
 		}
 		let when = when.unwrap_or(now + self.options.start_latency);
+		check_seconds("when", when)?;
+		check_cycle_position(from)?;
 		let Some(mut state) = self.loops[handle.index].state.take() else {
 			return Ok(false);
 		};

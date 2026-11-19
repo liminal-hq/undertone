@@ -1121,6 +1121,62 @@ mod extremes {
 	}
 
 	#[test]
+	fn book_cycles_with_huge_edges_is_an_error() {
+		let mut rig = Rig::new();
+		let pattern = plain(note("c3"));
+		for edge in huge_fractions() {
+			for (begin, end) in [
+				(Fraction::from_int(0), edge),
+				(edge, Fraction::from_int(0)),
+				(edge, edge),
+			] {
+				let result =
+					book_cycles(&mut rig.engine, &pattern, begin, end, 0.0, 1.0, true, None);
+				// An empty window books nothing and is not an error; any other huge one is.
+				assert!(
+					result.is_err() || end <= begin,
+					"{begin:?}..{end:?} gave {result:?}"
+				);
+			}
+		}
+		assert_eq!(rig.engine.voice_count(), 0);
+	}
+
+	#[test]
+	fn a_window_wider_than_the_span_bound_is_an_error_without_querying_it() {
+		let mut rig = Rig::new();
+		let pattern = plain(note("c3"));
+		let wide = Fraction::from_int(undertone_sched::MAX_WINDOW_SPAN_CYCLES + 1);
+		let result = book_cycles(
+			&mut rig.engine,
+			&pattern,
+			Fraction::from_int(0),
+			wide,
+			0.0,
+			1.0,
+			true,
+			None,
+		);
+		assert!(result.is_err());
+		assert_eq!(rig.engine.voice_count(), 0);
+		// The bound itself is allowed (a sparse pattern keeps this cheap).
+		let sparse = plain(note("c3").and_then(|p| p.slow(2_000_000.0)));
+		assert!(
+			book_cycles(
+				&mut rig.engine,
+				&sparse,
+				Fraction::from_int(0),
+				Fraction::from_int(undertone_sched::MAX_WINDOW_SPAN_CYCLES),
+				0.0,
+				1.0,
+				true,
+				None
+			)
+			.is_ok()
+		);
+	}
+
+	#[test]
 	fn times_that_are_not_finite_are_errors() {
 		for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
 			let mut rig = Rig::new();

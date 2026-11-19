@@ -52,8 +52,8 @@ pub mod tempo;
 pub mod transport;
 
 pub use booking::{
-	BookOptions, MAX_WINDOW_CYCLES, WINDOW_GRID, book_cycles, book_voices, book_window,
-	collect_window, window_edge,
+	BookOptions, MAX_WINDOW_CYCLES, MAX_WINDOW_DENOMINATOR, MAX_WINDOW_SPAN_CYCLES, WINDOW_GRID,
+	book_cycles, book_voices, book_window, check_cycle_position, collect_window, window_edge,
 };
 pub use clock::{Clock, ManualClock};
 pub use stats::Stats;

@@ -71,6 +71,61 @@ pub const WINDOW_GRID: i128 = 10_080;
 /// longer fits an `f64` exactly (a deliberate bound; the reference's numbers lose precision there, silently).
 pub const MAX_WINDOW_CYCLES: f64 = 1.0e11;
 
+/// The most cycles one window may span (the offline render's bound too): a wider one is an error rather than
+/// a query that runs out of memory.
+pub const MAX_WINDOW_SPAN_CYCLES: i128 = 1_048_576;
+
+/// The largest denominator of a window edge given as a [`Fraction`]: a larger one makes the pattern's own
+/// arithmetic overflow, so it is an error here.
+pub const MAX_WINDOW_DENOMINATOR: i128 = 1 << 32;
+
+/// Checks that a position in cycles is one a pattern can be queried at: within [`MAX_WINDOW_CYCLES`] of the
+/// start, with a denominator of at most [`MAX_WINDOW_DENOMINATOR`], so that no arithmetic on it overflows.
+///
+/// # Errors
+///
+/// Fails with a message naming the position when it is outside those bounds.
+pub fn check_cycle_position(position: Fraction) -> Result<()> {
+	let (numerator, denominator) = (position.numerator(), position.denominator());
+	let limit = MAX_WINDOW_CYCLES as i128;
+	if denominator > MAX_WINDOW_DENOMINATOR
+		|| numerator.unsigned_abs() > (limit * denominator) as u128
+	{
+		return Err(Error::new(format!(
+			"a position in cycles must be within {} of the start with a denominator of at most {}, got {}/{}",
+			number_to_string(MAX_WINDOW_CYCLES),
+			MAX_WINDOW_DENOMINATOR,
+			numerator,
+			denominator
+		)));
+	}
+	Ok(())
+}
+
+/// Checks that a time is a finite number of seconds.
+pub(crate) fn check_seconds(name: &str, seconds: f64) -> Result<()> {
+	if seconds.is_finite() {
+		Ok(())
+	} else {
+		Err(Error::new(format!(
+			"{name} must be finite, got {}",
+			number_to_string(seconds)
+		)))
+	}
+}
+
+/// Checks that a cycle length is a positive finite number of seconds.
+fn check_cycle_seconds(cycle_seconds: f64) -> Result<()> {
+	if cycle_seconds > 0.0 && cycle_seconds.is_finite() {
+		Ok(())
+	} else {
+		Err(Error::new(format!(
+			"a cycle must last a positive finite number of seconds, got {}",
+			number_to_string(cycle_seconds)
+		)))
+	}
+}
+
 /// What [`book_window`] needs besides the pattern and the window.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BookOptions {
@@ -120,7 +175,8 @@ impl BookOptions {
 ///
 /// # Errors
 ///
-/// Fails when `seconds` or `cycle_seconds` is not finite, or the edge is farther than [`MAX_WINDOW_CYCLES`].
+/// Fails when `seconds` is not finite, `cycle_seconds` is not positive and finite, or the edge is farther than
+/// [`MAX_WINDOW_CYCLES`].
 ///
 /// ```
 /// use undertone_sched::window_edge;
@@ -131,6 +187,7 @@ impl BookOptions {
 /// # Ok::<(), undertone_pattern::Error>(())
 /// ```
 pub fn window_edge(seconds: f64, cycle_seconds: f64) -> Result<Fraction> {
+	check_cycle_seconds(cycle_seconds)?;
 	let cycles = seconds / cycle_seconds;
 	if !cycles.is_finite() || cycles.abs() > MAX_WINDOW_CYCLES {
 		return Err(Error::new(format!(
@@ -170,7 +227,9 @@ fn sort_onset_order(voices: &mut [PendingVoice]) {
 ///
 /// # Errors
 ///
-/// A pattern that fails when queried (a chord whose voicing anchor is wrong) fails with its message.
+/// A pattern that fails when queried (a chord whose voicing anchor is wrong) fails with its message. A window
+/// edge outside [`check_cycle_position`]'s bounds, a window wider than [`MAX_WINDOW_SPAN_CYCLES`], a
+/// `start_time` that is not finite, or a `cycle_seconds` that is not positive and finite, is an error too.
 pub fn collect_window(
 	pattern: &Pattern<ControlMap>,
 	begin: Fraction,
@@ -179,8 +238,17 @@ pub fn collect_window(
 	cycle_seconds: f64,
 	gated: bool,
 ) -> Result<Vec<PendingVoice>> {
+	check_cycle_position(begin)?;
+	check_cycle_position(end)?;
+	check_seconds("start_time", start_time)?;
+	check_cycle_seconds(cycle_seconds)?;
 	if end <= begin {
 		return Ok(Vec::new());
+	}
+	if end - begin > Fraction::from_int(MAX_WINDOW_SPAN_CYCLES) {
+		return Err(Error::new(format!(
+			"a window may span at most {MAX_WINDOW_SPAN_CYCLES} cycles"
+		)));
 	}
 	let mut voices = collect_onsets(
 		pattern,
