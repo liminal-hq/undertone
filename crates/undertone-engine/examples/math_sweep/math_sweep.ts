@@ -58,7 +58,13 @@ for (const shape of ['sine', 'triangle', 'square'] as const) {
   for (const phase of [0.125, 0.25, 0.3, 0.5, 0.7]) {
     let wave: { real: Float32Array; imag: Float32Array } | undefined;
     const param = { setValueAtTime() {}, linearRampToValueAtTime() {} };
-    const node = { connect() {}, gain: param, frequency: param, type: 'sine', setPeriodicWave() {} };
+    const node = {
+      connect() {},
+      gain: param,
+      frequency: param,
+      type: 'sine',
+      setPeriodicWave() {}
+    };
     const ctx = {
       createOscillator: () => node,
       createGain: () => node,
@@ -66,7 +72,10 @@ for (const shape of ['sine', 'triangle', 'square'] as const) {
     };
     connectAutopan(ctx as never, param as never, { rate: 1, depth: 1, shape, phase }, 0);
     if (!wave) throw new Error('no wave');
-    push([...(wave as { real: Float32Array; imag: Float32Array }).real, ...(wave as { real: Float32Array; imag: Float32Array }).imag]);
+    push([
+      ...(wave as { real: Float32Array; imag: Float32Array }).real,
+      ...(wave as { real: Float32Array; imag: Float32Array }).imag
+    ]);
   }
 }
 
