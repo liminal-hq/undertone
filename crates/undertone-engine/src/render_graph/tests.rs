@@ -379,3 +379,265 @@ fn disconnecting_silences_a_node() {
 	graph.render_block(&mut [second.as_mut_slice()]);
 	assert!(peak(&first) > 0.0 && peak(&second) == 0.0);
 }
+
+// ----- Filters, delay, and the convolver through the graph -----
+
+/// A buffer source that plays `samples` once, into the returned node.
+fn once(graph: &mut RenderGraph, samples: &[f32], rate: f64) -> NodeId {
+	let buffer = graph.create_buffer(1, samples.len(), rate);
+	graph.buffer_channel_mut(buffer, 0).copy_from_slice(samples);
+	let source = graph.create_node(NodeKind::BufferSource);
+	graph.set_buffer(source, Some(buffer));
+	graph.start(source, 0.0);
+	source
+}
+
+fn impulse_at_zero() -> [f32; 1] {
+	[1.0]
+}
+
+#[test]
+fn a_lowpass_attenuates_above_its_cutoff_by_the_expected_amount() {
+	let level = |hertz: f64| {
+		let mut graph = RenderGraph::new(RATE, 1, 48_000);
+		let osc = graph.create_node(NodeKind::Oscillator);
+		let frequency = graph.param(osc, ParamKind::Frequency);
+		graph.set_value_at_time(frequency, hertz, 0.0);
+		let filter = graph.create_node(NodeKind::BiquadFilter);
+		let cutoff = graph.param(filter, ParamKind::Frequency);
+		graph.set_value_at_time(cutoff, 1_000.0, 0.0);
+		let q = graph.param(filter, ParamKind::Q);
+		graph.set_value_at_time(q, 0.0, 0.0);
+		graph.connect_node(osc, filter);
+		graph.connect_node(filter, graph.destination());
+		graph.start(osc, 0.0);
+		let out = graph.render_all();
+		20.0 * (rms(&out[0][4_800..]) / core::f64::consts::FRAC_1_SQRT_2).log10()
+	};
+	assert!(level(100.0).abs() < 0.01);
+	assert!((level(1_000.0) + 3.01).abs() < 0.05);
+	// Two octaves up, a Butterworth is about 24 dB down (12 dB an octave).
+	assert!((level(4_000.0) + 24.0).abs() < 1.0, "{}", level(4_000.0));
+}
+
+#[test]
+fn a_highpass_and_a_bandpass_select_their_bands() {
+	let level = |kind: FilterType, hertz: f64| {
+		let mut graph = RenderGraph::new(RATE, 1, 24_000);
+		let osc = graph.create_node(NodeKind::Oscillator);
+		let frequency = graph.param(osc, ParamKind::Frequency);
+		graph.set_value_at_time(frequency, hertz, 0.0);
+		let filter = graph.create_node(NodeKind::BiquadFilter);
+		graph.set_filter_type(filter, kind);
+		let cutoff = graph.param(filter, ParamKind::Frequency);
+		graph.set_value_at_time(cutoff, 2_000.0, 0.0);
+		let q = graph.param(filter, ParamKind::Q);
+		graph.set_value_at_time(q, 5.0, 0.0);
+		graph.connect_node(osc, filter);
+		graph.connect_node(filter, graph.destination());
+		graph.start(osc, 0.0);
+		rms(&graph.render_all()[0][4_800..]) / core::f64::consts::FRAC_1_SQRT_2
+	};
+	assert!(level(FilterType::Highpass, 100.0) < 0.005);
+	assert!((level(FilterType::Highpass, 15_000.0) - 1.0).abs() < 0.03);
+	assert!((level(FilterType::Bandpass, 2_000.0) - 1.0).abs() < 0.01);
+	assert!(level(FilterType::Bandpass, 200.0) < 0.2);
+}
+
+#[test]
+fn a_swept_filter_cutoff_is_followed_per_frame() {
+	// The cutoff ramps from 100 Hz to 10 kHz while a 2 kHz tone plays: quiet at first, loud at the end.
+	let mut graph = RenderGraph::new(RATE, 1, 48_000);
+	let osc = osc_to_destination(&mut graph, 2_000.0);
+	graph.disconnect(osc);
+	let filter = graph.create_node(NodeKind::BiquadFilter);
+	let cutoff = graph.param(filter, ParamKind::Frequency);
+	graph.set_value_at_time(cutoff, 100.0, 0.0);
+	graph.exponential_ramp_to_value_at_time(cutoff, 10_000.0, 1.0);
+	graph.connect_node(osc, filter);
+	graph.connect_node(filter, graph.destination());
+	let out = graph.render_all();
+	assert!(rms(&out[0][2_400..4_800]) < 0.02);
+	assert!(rms(&out[0][43_200..]) > 0.6);
+}
+
+#[test]
+fn a_delay_of_n_frames_moves_an_impulse_n_frames() {
+	let mut graph = RenderGraph::new(1_000.0, 1, 1_000);
+	let source = once(&mut graph, &impulse_at_zero(), 1_000.0);
+	let delay = graph.create_node(NodeKind::Delay);
+	let time = graph.param(delay, ParamKind::DelayTime);
+	graph.set_value_at_time(time, 0.3, 0.0); // 300 frames, across two quanta
+	graph.connect_node(source, delay);
+	graph.connect_node(delay, graph.destination());
+	let out = graph.render_all();
+	assert_eq!(out[0][300], 1.0);
+	assert_eq!(out[0].iter().filter(|s| **s != 0.0).count(), 1);
+}
+
+#[test]
+fn a_delay_inside_a_feedback_loop_repeats_and_decays() {
+	// Delay 200 frames with feedback 0.5: echoes at 200, 400, 600 of 1, 0.5, 0.25.
+	let mut graph = RenderGraph::new(1_000.0, 1, 1_000);
+	let source = once(&mut graph, &impulse_at_zero(), 1_000.0);
+	let delay = graph.create_node(NodeKind::Delay);
+	let time = graph.param(delay, ParamKind::DelayTime);
+	graph.set_value_at_time(time, 0.2, 0.0);
+	let feedback = graph.create_node(NodeKind::Gain);
+	let level = graph.param(feedback, ParamKind::Gain);
+	graph.set_value_at_time(level, 0.5, 0.0);
+	graph.connect_node(source, delay);
+	graph.connect_node(delay, graph.destination());
+	graph.connect_node(delay, feedback);
+	graph.connect_node(feedback, delay);
+	let out = graph.render_all();
+	for (frame, want) in [(200, 1.0), (400, 0.5), (600, 0.25), (800, 0.125)] {
+		assert!(
+			(out[0][frame] - want).abs() < 1e-6,
+			"frame {frame}: {}",
+			out[0][frame]
+		);
+	}
+	assert_eq!(out[0].iter().filter(|s| s.abs() > 1e-6).count(), 4);
+}
+
+#[test]
+fn a_delay_in_a_cycle_has_a_one_quantum_floor() {
+	let mut graph = RenderGraph::new(1_000.0, 1, 1_000);
+	let source = once(&mut graph, &impulse_at_zero(), 1_000.0);
+	let delay = graph.create_node(NodeKind::Delay);
+	let time = graph.param(delay, ParamKind::DelayTime);
+	graph.set_value_at_time(time, 0.01, 0.0); // asked for 10 frames
+	let feedback = graph.create_node(NodeKind::Gain);
+	let level = graph.param(feedback, ParamKind::Gain);
+	graph.set_value_at_time(level, 0.0, 0.0);
+	graph.connect_node(source, delay);
+	graph.connect_node(delay, graph.destination());
+	graph.connect_node(delay, feedback);
+	graph.connect_node(feedback, delay);
+	let out = graph.render_all();
+	assert_eq!(out[0][128], 1.0);
+	assert!(out[0][..128].iter().all(|s| *s == 0.0));
+}
+
+#[test]
+fn a_cycle_without_a_delay_is_muted_and_does_not_hang() {
+	let mut graph = RenderGraph::new(1_000.0, 1, 512);
+	let source = once(&mut graph, &impulse_at_zero(), 1_000.0);
+	let a = graph.create_node(NodeKind::Gain);
+	let b = graph.create_node(NodeKind::Gain);
+	graph.connect_node(source, a);
+	graph.connect_node(a, b);
+	graph.connect_node(b, a);
+	graph.connect_node(b, graph.destination());
+	let out = graph.render_all();
+	assert!(out[0].iter().all(|s| s.is_finite()));
+}
+
+#[test]
+fn a_convolver_with_an_impulse_response_reproduces_it_at_the_normalised_level() {
+	let response = [0.0_f32, 0.5, 0.0, 0.25];
+	let mut graph = RenderGraph::new(44_100.0, 1, 1_024);
+	let source = once(&mut graph, &impulse_at_zero(), 44_100.0);
+	let convolver = graph.create_node(NodeKind::Convolver);
+	let buffer = graph.create_buffer(1, response.len(), 44_100.0);
+	graph
+		.buffer_channel_mut(buffer, 0)
+		.copy_from_slice(&response);
+	graph.set_buffer(convolver, Some(buffer));
+	graph.connect_node(source, convolver);
+	graph.connect_node(convolver, graph.destination());
+	let out = graph.render_all();
+	// rms of the response is sqrt((0.25 + 0.0625) / 4); the scale is 0.00125 over that.
+	let scale = 0.00125 / (0.3125_f64 / 4.0).sqrt();
+	assert!((f64::from(out[0][1]) - 0.5 * scale).abs() < 1e-6);
+	assert!((f64::from(out[0][3]) - 0.25 * scale).abs() < 1e-6);
+	assert!(out[0][4..].iter().all(|s| s.abs() < 1e-7));
+}
+
+#[test]
+fn a_long_reverb_tail_runs_across_many_quanta_then_stops() {
+	let mut graph = RenderGraph::new(8_000.0, 2, 8_000);
+	let source = once(&mut graph, &impulse_at_zero(), 8_000.0);
+	let convolver = graph.create_node(NodeKind::Convolver);
+	let length = 2_000;
+	let buffer = graph.create_buffer(2, length, 8_000.0);
+	for channel in 0..2 {
+		for (i, sample) in graph
+			.buffer_channel_mut(buffer, channel)
+			.iter_mut()
+			.enumerate()
+		{
+			*sample = (((i * (7 + channel as usize * 4)) % 17) as f32 - 8.0) / 8.0;
+		}
+	}
+	graph.set_buffer(convolver, Some(buffer));
+	graph.connect_node(source, convolver);
+	graph.connect_node(convolver, graph.destination());
+	let out = graph.render_all();
+	assert!(out[0][1_900..2_000].iter().any(|s| s.abs() > 0.0));
+	assert!(out[0][2_100..].iter().all(|s| s.abs() < 1e-6));
+	assert_ne!(out[0][..2_000], out[1][..2_000]);
+}
+
+/// Oscillators through a filter, a send into a feedback delay and a convolver, panned: every kind of stateful node.
+fn effects_graph(length: u64) -> RenderGraph {
+	let mut graph = RenderGraph::new(RATE, 2, length);
+	let osc = graph.create_node(NodeKind::Oscillator);
+	graph.set_oscillator_type(osc, OscillatorType::Square);
+	let frequency = graph.param(osc, ParamKind::Frequency);
+	graph.set_value_at_time(frequency, 220.0, 0.0);
+	let filter = graph.create_node(NodeKind::BiquadFilter);
+	let cutoff = graph.param(filter, ParamKind::Frequency);
+	graph.set_value_at_time(cutoff, 400.0, 0.0);
+	graph.linear_ramp_to_value_at_time(cutoff, 4_000.0, 0.4);
+	let panner = graph.create_node(NodeKind::StereoPanner);
+	let position = graph.param(panner, ParamKind::Pan);
+	graph.set_value_at_time(position, 0.3, 0.0);
+	let delay = graph.create_node(NodeKind::Delay);
+	let time = graph.param(delay, ParamKind::DelayTime);
+	graph.set_value_at_time(time, 0.05, 0.0);
+	let feedback = graph.create_node(NodeKind::Gain);
+	let level = graph.param(feedback, ParamKind::Gain);
+	graph.set_value_at_time(level, 0.4, 0.0);
+	let convolver = graph.create_node(NodeKind::Convolver);
+	let buffer = graph.create_buffer(2, 5_000, RATE);
+	for channel in 0..2 {
+		for (i, sample) in graph
+			.buffer_channel_mut(buffer, channel)
+			.iter_mut()
+			.enumerate()
+		{
+			*sample = (((i * 31 + channel as usize * 7) % 23) as f32 - 11.0) / 11.0
+				* (1.0 - i as f32 / 5_000.0);
+		}
+	}
+	graph.set_buffer(convolver, Some(buffer));
+	graph.connect_node(osc, filter);
+	graph.connect_node(filter, panner);
+	graph.connect_node(panner, graph.destination());
+	graph.connect_node(panner, delay);
+	graph.connect_node(delay, graph.destination());
+	graph.connect_node(delay, feedback);
+	graph.connect_node(feedback, delay);
+	graph.connect_node(filter, convolver);
+	graph.connect_node(convolver, graph.destination());
+	graph.start(osc, 0.0);
+	graph.stop(osc, 0.3);
+	graph
+}
+
+#[test]
+fn block_size_does_not_change_effects_either() {
+	let length = 30_000;
+	let whole = effects_graph(length).render_all();
+	assert!(peak(&whole[0]) > 0.0 && whole.iter().flatten().all(|s| s.is_finite()));
+	for block in [1, 7, 128, 4_001] {
+		assert_eq!(
+			render_in_blocks(effects_graph(length), block),
+			whole,
+			"block of {block}"
+		);
+	}
+	assert_eq!(effects_graph(length).render_all(), whole);
+}

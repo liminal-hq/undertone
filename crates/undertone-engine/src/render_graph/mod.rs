@@ -75,7 +75,10 @@
 //! the [`Graph`] trait may be made between blocks (a windowed render does this); a change takes effect from
 //! the next whole quantum. [`Graph::current_time`] is the start of the next quantum to render.
 
+mod convolver;
+mod delay;
 mod fft;
+mod filter;
 mod mix;
 mod oscillator;
 mod source;
@@ -89,6 +92,9 @@ use crate::graph::{
 	OscillatorType, Oversample, ParamId, ParamKind, Target, WaveId,
 };
 use crate::math::{cos, sin};
+use convolver::Convolver;
+use delay::DelayLine;
+use filter::Biquad;
 use mix::{QUANTUM, mix_add};
 use oscillator::WaveTables;
 use source::SourceState;
@@ -112,6 +118,9 @@ enum Proc {
 	Gain,
 	Panner,
 	Merger,
+	Biquad(Biquad),
+	Delay(DelayLine),
+	Convolver(Box<Convolver>),
 	/// Nodes this build does not render yet pass their input through.
 	Passthrough,
 }
@@ -626,6 +635,7 @@ impl RenderGraph {
 					_ => 1,
 				}
 			}
+			(Proc::Convolver(convolver), _) => convolver.output_channels(input_channels),
 			(_, Some(NodeKind::StereoPanner)) => 2,
 			(_, Some(NodeKind::ChannelMerger { inputs })) => {
 				(inputs as usize).clamp(1, MAX_NODE_CHANNELS)
@@ -661,6 +671,12 @@ impl RenderGraph {
 		for node in &mut self.nodes {
 			node.input.resize(node.in_channels * QUANTUM, 0.0);
 			node.out.resize(node.out_channels * QUANTUM, 0.0);
+			match &mut node.proc {
+				Proc::Biquad(filter) => filter.resize(node.in_channels),
+				Proc::Delay(line) => line.resize(node.in_channels),
+				Proc::Convolver(convolver) => convolver.resize(node.in_channels),
+				_ => {}
+			}
 		}
 	}
 
@@ -716,7 +732,7 @@ impl RenderGraph {
 		}
 		for position in 0..self.late.len() {
 			let index = self.late[position];
-			self.finish_late(index, frame);
+			self.finish_late(index);
 		}
 		self.mix_destination();
 		self.frame += QUANTUM as u64;
@@ -745,6 +761,11 @@ impl RenderGraph {
 			}
 			Proc::BufferSource(state) => !state.is_live(frame),
 			Proc::Gain | Proc::Panner | Proc::Merger => !self.any_input_sounding(node),
+			Proc::Biquad(filter) => !self.any_input_sounding(node) && filter.settled(),
+			Proc::Delay(line) => {
+				line.is_clear() && (node.cycle_delay || !self.any_input_sounding(node))
+			}
+			Proc::Convolver(convolver) => convolver.is_finished() && !self.any_input_sounding(node),
 			Proc::Destination | Proc::Passthrough => false,
 		}
 	}
@@ -818,19 +839,35 @@ impl RenderGraph {
 	fn run(&self, node: &mut Node, frame: u64) {
 		self.evaluate_params(node, frame);
 		node.silent = false;
-		match &mut node.proc {
-			Proc::Destination => {
-				self.gather(node);
-			}
-			Proc::Oscillator(_) => self.run_oscillator(node, frame),
-			Proc::BufferSource(_) => self.run_source(node, frame),
+		match node.proc {
+			Proc::Oscillator(_) => return self.run_oscillator(node, frame),
+			Proc::BufferSource(_) => return self.run_source(node, frame),
+			_ => {}
+		}
+		let cycle_delay = node.cycle_delay;
+		if !cycle_delay {
+			self.gather(node);
+		}
+		let silent_input = !self.any_input_sounding(node);
+		let sample_rate = self.sample_rate;
+		let Node {
+			proc,
+			input,
+			out,
+			params,
+			in_channels,
+			out_channels,
+			silent,
+			..
+		} = node;
+		let (channels, size) = (*in_channels, *in_channels * QUANTUM);
+		match proc {
+			Proc::Destination | Proc::Oscillator(_) | Proc::BufferSource(_) => {}
 			Proc::Gain => {
-				self.gather(node);
-				let channels = node.in_channels;
-				let gain = &node.params[0];
+				let gain = &params[0];
 				for channel in 0..channels {
 					let range = channel * QUANTUM..(channel + 1) * QUANTUM;
-					let (from, to) = (&node.input[range.clone()], &mut node.out[range]);
+					let (from, to) = (&input[range.clone()], &mut out[range]);
 					if gain.constant {
 						let g = gain.values[0] as f32;
 						for (o, i) in to.iter_mut().zip(from) {
@@ -843,19 +880,34 @@ impl RenderGraph {
 					}
 				}
 			}
-			Proc::Panner => {
-				self.gather(node);
-				run_panner(node);
+			Proc::Panner => run_panner(input, out, &params[0], channels),
+			Proc::Merger | Proc::Passthrough => {
+				let shared = size.min(*out_channels * QUANTUM);
+				out[..shared].copy_from_slice(&input[..shared]);
 			}
-			Proc::Merger => {
-				self.gather(node);
-				let size = node.in_channels * QUANTUM;
-				node.out[..size].copy_from_slice(&node.input[..size]);
+			Proc::Biquad(filter) => {
+				let (frequency, q) = (&params[0], &params[1]);
+				filter.process(
+					input,
+					out,
+					channels,
+					&frequency.values,
+					&q.values,
+					frequency.constant && q.constant,
+					sample_rate / 2.0,
+				);
 			}
-			Proc::Passthrough => {
-				self.gather(node);
-				let size = node.in_channels.min(node.out_channels) * QUANTUM;
-				node.out[..size].copy_from_slice(&node.input[..size]);
+			Proc::Delay(line) => {
+				if cycle_delay {
+					line.read(&params[0].values, sample_rate, out);
+				} else {
+					line.process(input, silent_input, &params[0].values, sample_rate, out);
+				}
+				*silent = out[..*out_channels * QUANTUM].iter().all(|v| *v == 0.0);
+			}
+			Proc::Convolver(convolver) => {
+				convolver.process(input, channels, silent_input, out);
+				*silent = out[..*out_channels * QUANTUM].iter().all(|v| *v == 0.0);
 			}
 		}
 	}
@@ -922,7 +974,15 @@ impl RenderGraph {
 	}
 
 	/// The write half of a delay inside a cycle: runs after every node of the quantum has been rendered.
-	fn finish_late(&mut self, _index: usize, _frame: u64) {}
+	fn finish_late(&mut self, index: usize) {
+		let mut node = std::mem::replace(&mut self.nodes[index], Node::placeholder());
+		self.gather(&mut node);
+		let silent_input = !self.any_input_sounding(&node);
+		if let Proc::Delay(line) = &mut node.proc {
+			line.write(&node.input, silent_input);
+		}
+		self.nodes[index] = node;
+	}
 
 	/// Mixes the destination's input into the staged output quantum.
 	fn mix_destination(&mut self) {
@@ -950,14 +1010,13 @@ impl RenderGraph {
 }
 
 /// The stereo panner's equal-power law for a mono or stereo input.
-fn run_panner(node: &mut Node) {
-	let pan = &node.params[0];
-	let stereo = node.in_channels == 2;
+fn run_panner(input: &[f32], out: &mut [f32], pan: &Param, channels: usize) {
+	let stereo = channels == 2;
 	for i in 0..QUANTUM {
 		let position = pan.values[if pan.constant { 0 } else { i }];
 		let (left, right);
 		if stereo {
-			let (l, r) = (node.input[i], node.input[QUANTUM + i]);
+			let (l, r) = (input[i], input[QUANTUM + i]);
 			if position <= 0.0 {
 				let angle = (position + 1.0) * core::f64::consts::FRAC_PI_2;
 				left = l + r * cos(angle) as f32;
@@ -969,12 +1028,12 @@ fn run_panner(node: &mut Node) {
 			}
 		} else {
 			let angle = (position + 1.0) * core::f64::consts::FRAC_PI_4;
-			let m = node.input[i];
+			let m = input[i];
 			left = m * cos(angle) as f32;
 			right = m * sin(angle) as f32;
 		}
-		node.out[i] = left;
-		node.out[QUANTUM + i] = right;
+		out[i] = left;
+		out[QUANTUM + i] = right;
 	}
 }
 
@@ -1021,7 +1080,13 @@ impl Graph for RenderGraph {
 			NodeKind::Gain => Proc::Gain,
 			NodeKind::StereoPanner => Proc::Panner,
 			NodeKind::ChannelMerger { .. } => Proc::Merger,
-			_ => Proc::Passthrough,
+			NodeKind::BiquadFilter => Proc::Biquad(Biquad::new()),
+			NodeKind::Delay => Proc::Delay(DelayLine::new(
+				crate::effects::DELAY_MAX_SECONDS,
+				self.sample_rate,
+			)),
+			NodeKind::Convolver => Proc::Convolver(Box::new(Convolver::new())),
+			NodeKind::DynamicsCompressor | NodeKind::WaveShaper => Proc::Passthrough,
 		};
 		self.nodes.push(node);
 		self.dirty = true;
@@ -1080,13 +1145,25 @@ impl Graph for RenderGraph {
 	}
 
 	fn set_filter_type(&mut self, node: NodeId, kind: FilterType) {
-		let _ = (node, kind);
+		let Proc::Biquad(filter) = &mut self.node_mut(node).proc else {
+			panic!("a filter type is not valid on this node");
+		};
+		filter.kind = kind;
 	}
 
 	fn set_buffer(&mut self, node: NodeId, buffer: Option<BufferId>) {
-		let node = self.node_mut(node);
-		if let Proc::BufferSource(state) = &mut node.proc {
-			state.buffer = buffer;
+		let (rate, stored) = (self.sample_rate, buffer.map(|b| &self.buffers[b.index()]));
+		let node = &mut self.nodes[node.index()];
+		match &mut node.proc {
+			Proc::BufferSource(state) => state.buffer = buffer,
+			Proc::Convolver(convolver) => match stored {
+				Some(Stored::Audio {
+					sample_rate,
+					channels,
+				}) => convolver.set_response(Some(channels), *sample_rate, rate),
+				_ => convolver.set_response(None, rate, rate),
+			},
+			_ => panic!("a buffer is not valid on this node"),
 		}
 		self.dirty = true;
 	}

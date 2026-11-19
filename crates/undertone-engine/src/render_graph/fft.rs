@@ -70,7 +70,6 @@ impl Fft {
 		}
 	}
 
-	#[allow(dead_code)] // the convolver uses it
 	/// The inverse transform scaled by `1 / N`, in place (through the conjugate).
 	pub(crate) fn inverse(&self, re: &mut [f64], im: &mut [f64]) {
 		for value in im.iter_mut() {
