@@ -553,8 +553,8 @@ fn a_convolver_with_an_impulse_response_reproduces_it_at_the_normalised_level() 
 	graph.connect_node(source, convolver);
 	graph.connect_node(convolver, graph.destination());
 	let out = graph.render_all();
-	// rms of the response is sqrt((0.25 + 0.0625) / 4); the scale is 0.00125 over that.
-	let scale = 0.00125 / (0.3125_f64 / 4.0).sqrt();
+	// rms of the response is sqrt((0.25 + 0.0625) / 4); the scale is -58 dB (0.0012589, as Chromium's) over that.
+	let scale = 10.0_f64.powf(-58.0 / 20.0) / (0.3125_f64 / 4.0).sqrt();
 	assert!((f64::from(out[0][1]) - 0.5 * scale).abs() < 1e-6);
 	assert!((f64::from(out[0][3]) - 0.25 * scale).abs() < 1e-6);
 	assert!(out[0][4..].iter().all(|s| s.abs() < 1e-7));

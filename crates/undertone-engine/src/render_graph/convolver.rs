@@ -12,13 +12,16 @@
 //! the quantum being rendered.
 //!
 //! Web Audio's normalisation is applied when the response is set: the response is scaled by
-//! `0.00125 * (44100 / sample_rate) / max(rms, 0.000125)` (and by half for four channels), where `rms` is the
+//! `calibration * (44100 / sample_rate) / max(rms, 0.000125)` (and by half for four channels), where `calibration`
+//! is -58 dB, `10^(-58/20)` = 0.0012589 (the specification's 0.00125 is that rounded; Chromium's convolver
+//! measured 0.0012589 at 44100 Hz, `R-layer4.md`), and `rms` is the
 //! root mean square over every sample of every channel. A response of one channel convolves each input
 //! channel with it; a response of two channels makes a stereo output (a mono input feeds both); a response of
 //! four channels is true stereo (left and right inputs each have a response to each output). A response at a
 //! different sample rate than the context is resampled linearly. Setting a new response drops the tail of the
 //! old one.
 
+use crate::math::pow;
 use crate::render_graph::fft::Fft;
 use crate::render_graph::mix::QUANTUM;
 
@@ -28,7 +31,8 @@ const FFT_SIZE: usize = 2 * QUANTUM;
 /// Bins of a real transform of that size, `0..=QUANTUM`.
 const BINS: usize = QUANTUM + 1;
 
-const GAIN_CALIBRATION: f64 = 0.001_25;
+/// The calibration gain in decibels: `10^(-58/20)`, which a browser's convolver applies (0.00125 is that rounded).
+const GAIN_CALIBRATION_DB: f64 = -58.0;
 const CALIBRATION_RATE: f64 = 44_100.0;
 const MIN_POWER: f64 = 0.000_125;
 
@@ -82,7 +86,8 @@ fn normalisation(channels: &[Vec<f32>], sample_rate: f64) -> f64 {
 	if !power.is_finite() || power < MIN_POWER {
 		power = MIN_POWER;
 	}
-	let mut scale = GAIN_CALIBRATION / power * (CALIBRATION_RATE / sample_rate);
+	let mut scale =
+		pow(10.0, GAIN_CALIBRATION_DB / 20.0) / power * (CALIBRATION_RATE / sample_rate);
 	if channels.len() == 4 {
 		scale *= 0.5;
 	}
@@ -415,13 +420,16 @@ mod tests {
 
 	#[test]
 	fn the_normalisation_follows_the_specification() {
-		// One channel of 100 samples of 0.5: rms 0.5, so 0.00125 / 0.5 at 44100 Hz.
+		// One channel of 100 samples of 0.5: rms 0.5, so calibration / 0.5 at 44100 Hz. Chromium's convolver gave
+		// 0.0012589251855 for an impulse through a response of 0.5s at 44100 Hz (0.00125 / 0.5 * 0.5 of -58 dB).
+		let calibration = pow(10.0, -58.0 / 20.0);
+		assert!((calibration - 0.001_258_925_4).abs() < 1e-9);
 		let channels = [vec![0.5_f32; 100]];
-		assert!((normalisation(&channels, 44_100.0) - 0.0025).abs() < 1e-12);
-		assert!((normalisation(&channels, 22_050.0) - 0.005).abs() < 1e-12);
+		assert!((normalisation(&channels, 44_100.0) - calibration / 0.5).abs() < 1e-12);
+		assert!((normalisation(&channels, 22_050.0) - calibration / 0.25).abs() < 1e-12);
 		// A silent response falls back to the minimum power.
-		assert!((normalisation(&[vec![0.0; 10]], 44_100.0) - 10.0).abs() < 1e-9);
-		assert!((normalisation(&vec![vec![0.5; 4]; 4], 44_100.0) - 0.00125).abs() < 1e-12);
+		assert!((normalisation(&[vec![0.0; 10]], 44_100.0) - calibration * 8000.0).abs() < 1e-9);
+		assert!((normalisation(&vec![vec![0.5; 4]; 4], 44_100.0) - calibration).abs() < 1e-12);
 	}
 
 	#[test]
