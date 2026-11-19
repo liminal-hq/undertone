@@ -12,12 +12,12 @@ By default a destination stays stereo and multichannel placements fold down auto
 import { enableMultichannel, note } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
-enableMultichannel(ctx); // widens the destination to the hardware's channel count
+enableMultichannel(ctx); // widens the destination to the hardware's channel count, up to 8
 
 note('c4(5,8)').sound('triangle').surround(135).loop({ ctx, bpm: 120 });
 ```
 
-On plain stereo hardware the same code still sounds right — the fold-down is automatic — so surround placement is safe to ship speculatively.
+`enableMultichannel` never goes past `MAX_CHANNELS` (8), and it returns the channel count the destination ended up with. On hardware with fewer than eight channels, a placement folds down to what the destination has: on four-channel hardware only the first two outputs sound, and on plain stereo hardware the fold-down is automatic, so surround placement is safe to ship speculatively.
 
 ### The gains behind a placement
 

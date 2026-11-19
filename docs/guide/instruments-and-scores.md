@@ -92,4 +92,4 @@ The same seed always gives the same notes on every device, and the seed advances
 
 ## Checking a mix in mono
 
-Many phone speakers are mono. `createMonoFold(ctx)` returns a node that folds whatever plays into it down to one channel; pass it as the `output` of a pattern to hear how a natively stereo cue balances on one speaker. It uses the standard speakers down-mix, `0.5 × (L + R)`: a centred voice keeps its level and a voice panned fully to one side drops 6 dB.
+Many phone speakers are mono. `createMonoFold(ctx)` returns a node that folds whatever plays into it down to one channel; pass it as the `output` of a pattern to hear how a natively stereo cue balances on one speaker. It uses the standard speakers down-mix, `0.5 × (L + R)`: a voice panned fully to one side drops 6 dB, and a centred voice drops about 3 dB, because the equal-power centre pan puts 0.707 of the signal on each side before the fold.
