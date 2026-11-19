@@ -880,6 +880,52 @@ mod clock_jumps {
 		// The loop is positioned at the new horizon, not left a thousand seconds behind.
 		let until = rig.transport.scheduled_until(handle).unwrap().to_f64();
 		assert!(until > 499.0, "scheduled only to cycle {until}");
+		// Every onset is either booked (the first when the loop started) or counted as dropped: 501 notes
+		// start before 1000.3 s.
+		let stats = rig.transport.stats();
+		assert_eq!(stats.voices_booked + stats.dropped_voices, 501, "{stats:?}");
+		assert!(stats.dropped_voices >= 490, "{stats:?}");
+		assert!(stats.late_voices <= 4, "{stats:?}");
+	}
+
+	#[test]
+	fn a_short_stall_still_books_what_it_missed_as_the_reference_does() {
+		let mut rig = Rig::new();
+		rig.transport
+			.play_loop(&mut rig.engine, &plain(note("c3*4")), &looping(240.0))
+			.unwrap();
+		rig.advance_to(3.0);
+		rig.tick();
+		let stats = rig.transport.stats();
+		assert_eq!(stats.dropped_voices, 0);
+		assert!(stats.late_voices >= 8, "{stats:?}");
+	}
+
+	#[test]
+	fn the_catch_up_bound_is_an_option_and_zero_skips_everything_already_past() {
+		let clock = ManualClock::new(48_000.0);
+		let mut engine = Engine::new(LogGraph::new(48_000.0, 2), OutputSetup::default()).unwrap();
+		let options = SchedulerOptions {
+			max_catch_up_seconds: 0.0,
+			..SchedulerOptions::default()
+		};
+		let mut transport = Transport::new(clock.clone(), options).unwrap();
+		transport
+			.play_loop(&mut engine, &plain(note("c3*4")), &looping(240.0))
+			.unwrap();
+		clock.set(3.0);
+		engine.graph_mut().set_current_time(3.0);
+		transport.tick(&mut engine).unwrap();
+		let stats = transport.stats();
+		assert_eq!(stats.late_voices, 0, "{stats:?}");
+		assert!(stats.dropped_voices >= 8, "{stats:?}");
+		for bad in [-1.0, f64::NAN, f64::INFINITY] {
+			let options = SchedulerOptions {
+				max_catch_up_seconds: bad,
+				..SchedulerOptions::default()
+			};
+			assert!(Transport::new(ManualClock::new(48_000.0), options).is_err());
+		}
 	}
 
 	#[test]
@@ -896,6 +942,7 @@ mod clock_jumps {
 			let report = transport.tick(&mut engine).unwrap();
 			assert_eq!(report.booked, 0, "a clock reading {bad} booked voices");
 		}
+		assert_eq!(transport.stats().bad_clock_reads, 5);
 		// Once the clock is back to sensible, ticking carries on.
 		cell.set(12.0);
 		assert!(transport.tick(&mut engine).is_ok());

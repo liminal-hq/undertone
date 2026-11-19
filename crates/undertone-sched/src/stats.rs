@@ -22,6 +22,14 @@ pub struct Stats {
 	/// How many booked voices started before the clock when they were booked, so their attack was clamped:
 	/// the look-ahead was too short for the host's tick rate, or the tick came late.
 	pub late_voices: u64,
+	/// How many onsets a tick skipped, instead of booking them late, because they started more than
+	/// [`SchedulerOptions::max_catch_up_seconds`](crate::SchedulerOptions::max_catch_up_seconds) before the
+	/// clock (the host was suspended or stalled). Counted exactly for up to 4096 skipped cycles at a time;
+	/// beyond that it is a lower bound.
+	pub dropped_voices: u64,
+	/// How many times the transport read a clock time that was not finite or was earlier than an earlier
+	/// reading, and treated it as no time passing.
+	pub bad_clock_reads: u64,
 	/// How many times a loop's booked material had run out by the time of its next tick: the clock passed the
 	/// end of what was booked, and the output went (or would have gone) silent. The host may add its own with
 	/// [`Transport::record_underrun`](crate::Transport::record_underrun) for an output-device underrun.

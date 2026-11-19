@@ -100,6 +100,19 @@ pub struct SchedulerOptions {
 	/// Headroom between a loop being started and pattern time zero, so the very first onset is not booked at
 	/// exactly "now" (already past by the time its nodes exist). Default 0.1.
 	pub start_latency: f64,
+	/// How far behind the clock a tick still books what it missed, in seconds. Default 5.
+	///
+	/// A tick books every onset between what a loop has booked and the look-ahead past the clock. After a
+	/// stall (a tab in the background, a laptop that slept) that span can be minutes long; booking it would
+	/// stall the host for as long again and allocate a node graph for every missed note, all of it already
+	/// in the past. So a tick books only the onsets that start no more than this long before the clock; the
+	/// older ones are skipped, the loop moves on to the look-ahead, and the skipped onsets are counted in
+	/// [`Stats::dropped_voices`](crate::Stats::dropped_voices). Five seconds is far above any scheduling
+	/// hiccup (the look-ahead is 0.3 s, so a stall of a second or two still books everything it missed,
+	/// late, as the reference does) and far below a suspend. `0` skips every onset that is already past.
+	///
+	/// This is a deliberate difference from the reference, whose `loop()` books everything it missed.
+	pub max_catch_up_seconds: f64,
 }
 
 impl Default for SchedulerOptions {
@@ -108,6 +121,7 @@ impl Default for SchedulerOptions {
 			look_ahead: 0.3,
 			tick_interval: 0.1,
 			start_latency: 0.1,
+			max_catch_up_seconds: 5.0,
 		}
 	}
 }
@@ -118,7 +132,7 @@ impl SchedulerOptions {
 	/// # Errors
 	///
 	/// Fails when the look-ahead or the tick interval is not a positive finite number of seconds, or the
-	/// start latency is not a finite number of seconds from zero up.
+	/// start latency or the maximum catch-up is not a finite number of seconds from zero up.
 	pub fn validate(&self) -> Result<()> {
 		let positive = |name: &str, value: f64| {
 			if value > 0.0 && value.is_finite() {
@@ -132,11 +146,16 @@ impl SchedulerOptions {
 		};
 		positive("look_ahead", self.look_ahead)?;
 		positive("tick_interval", self.tick_interval)?;
-		if !(self.start_latency >= 0.0 && self.start_latency.is_finite()) {
-			return Err(Error::new(format!(
-				"start_latency must be zero or more and finite, got {}",
-				number_to_string(self.start_latency)
-			)));
+		for (name, value) in [
+			("start_latency", self.start_latency),
+			("max_catch_up_seconds", self.max_catch_up_seconds),
+		] {
+			if !(value >= 0.0 && value.is_finite()) {
+				return Err(Error::new(format!(
+					"{name} must be zero or more and finite, got {}",
+					number_to_string(value)
+				)));
+			}
 		}
 		Ok(())
 	}
@@ -335,6 +354,36 @@ struct LoopSlot {
 	state: Option<LoopState>,
 }
 
+/// The most cycles of a skipped span that are queried to count the onsets in them, so that counting what a
+/// long stall skipped stays bounded; beyond it the count is a lower bound.
+const MAX_COUNTED_CYCLES: i128 = 4096;
+
+/// How many cycles are queried at a time while counting skipped onsets.
+const COUNT_CHUNK_CYCLES: i128 = 64;
+
+/// How many onsets start in `[begin, end)`, counted in bounded chunks and for at most [`MAX_COUNTED_CYCLES`]
+/// cycles from `begin`. A pattern that fails to query counts as none.
+fn count_onsets(
+	pattern: &Pattern<ControlMap>,
+	begin: Fraction,
+	end: Fraction,
+	start_time: f64,
+	cycle_seconds: f64,
+) -> u64 {
+	let end = end.min(begin + Fraction::from_int(MAX_COUNTED_CYCLES));
+	let mut from = begin;
+	let mut total = 0;
+	while from < end {
+		let to = end.min(from + Fraction::from_int(COUNT_CHUNK_CYCLES));
+		match collect_window(pattern, from, to, start_time, cycle_seconds, true) {
+			Ok(voices) => total += voices.len() as u64,
+			Err(_) => break,
+		}
+		from = to;
+	}
+	total
+}
+
 static NEXT_TRANSPORT_ID: AtomicU64 = AtomicU64::new(1);
 
 /// Plays and loops patterns against a [`Clock`]. See the [module documentation](self).
@@ -352,6 +401,9 @@ pub struct Transport<C: Clock> {
 	loops: Vec<LoopSlot>,
 	free: Vec<usize>,
 	stats: Stats,
+	/// The latest clock reading that was a finite time, so a clock that goes backwards or fails to be a
+	/// number reads as no time passing.
+	last_now: Option<f64>,
 }
 
 impl<C: Clock> Transport<C> {
@@ -370,6 +422,7 @@ impl<C: Clock> Transport<C> {
 			loops: Vec::new(),
 			free: Vec::new(),
 			stats: Stats::default(),
+			last_now: None,
 		})
 	}
 
@@ -470,6 +523,27 @@ impl<C: Clock> Transport<C> {
 		slot.state.as_ref()
 	}
 
+	/// Reads the clock. A reading that is not finite, or is before an earlier one, is no time passing: it
+	/// reads as the latest good time (zero before any) and is counted in
+	/// [`Stats::bad_clock_reads`](crate::Stats::bad_clock_reads).
+	fn read_now(&mut self) -> f64 {
+		let raw = self.clock.now();
+		match self.last_now {
+			Some(last) if !(raw.is_finite() && raw >= last) => {
+				self.stats.bad_clock_reads += 1;
+				last
+			}
+			None if !raw.is_finite() => {
+				self.stats.bad_clock_reads += 1;
+				0.0
+			}
+			_ => {
+				self.last_now = Some(raw);
+				raw
+			}
+		}
+	}
+
 	fn count_late(&mut self, playbacks: &[Playback], now: f64) {
 		self.stats.voices_booked += playbacks.len() as u64;
 		self.stats.late_voices += playbacks.iter().filter(|p| p.start_time < now).count() as u64;
@@ -518,7 +592,7 @@ impl<C: Clock> Transport<C> {
 		options: &PlayOptions,
 	) -> Result<PlaybackHandle> {
 		let cycle_seconds = self.tempo.cycle_seconds(options.bpm, options.cps)?;
-		let now = self.clock.now();
+		let now = self.read_now();
 		let at = options.when.unwrap_or(now);
 		let from = options.from;
 		let start_time = if from == Fraction::from_int(0) {
@@ -560,7 +634,7 @@ impl<C: Clock> Transport<C> {
 		options: &LoopOptions,
 	) -> Result<LoopHandle> {
 		let cycle_seconds = self.tempo.cycle_seconds(options.bpm, options.cps)?;
-		let now = self.clock.now();
+		let now = self.read_now();
 		let state = LoopState {
 			pattern: pattern.clone(),
 			cycle_seconds,
@@ -623,7 +697,7 @@ impl<C: Clock> Transport<C> {
 	///
 	/// The first error of the tick, as above.
 	pub fn tick<G: Graph>(&mut self, engine: &mut Engine<G>) -> Result<TickReport> {
-		let now = self.clock.now();
+		let now = self.read_now();
 		self.stats.ticks += 1;
 		let mut report = TickReport::default();
 		let mut first_error = None;
@@ -692,6 +766,21 @@ impl<C: Clock> Transport<C> {
 			return Ok(0);
 		}
 		state.live.retain(|playback| playback.end_time > now);
+		// Skip what is too far in the past to be worth booking (a suspended host), and count it.
+		let oldest = now - self.options.max_catch_up_seconds - state.start_time;
+		if oldest > 0.0 {
+			let floor = window_edge(oldest, state.cycle_seconds)?.min(horizon);
+			if floor > state.scheduled_until {
+				self.stats.dropped_voices += count_onsets(
+					&state.pattern,
+					state.scheduled_until,
+					floor,
+					state.start_time,
+					state.cycle_seconds,
+				);
+				state.scheduled_until = floor;
+			}
+		}
 		let voices = collect_window(
 			&state.pattern,
 			state.scheduled_until,
@@ -728,7 +817,7 @@ impl<C: Clock> Transport<C> {
 		handle: LoopHandle,
 		options: &LoopStop,
 	) -> Result<()> {
-		let now = self.clock.now();
+		let now = self.read_now();
 		if let Some(state) = self.remove(handle)
 			&& options.voices == LoopVoices::Cut
 		{
@@ -779,7 +868,7 @@ impl<C: Clock> Transport<C> {
 		from: Fraction,
 		when: Option<f64>,
 	) -> Result<bool> {
-		let now = self.clock.now();
+		let now = self.read_now();
 		if self.state(handle).is_none() {
 			return Ok(false);
 		}
