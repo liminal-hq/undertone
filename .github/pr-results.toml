@@ -22,6 +22,7 @@ other_checks = true
 "Rust docs (doc tests + cargo doc)" = "cargo test --doc --workspace --locked"
 "Rust dependencies (cargo deny)" = "cargo deny check licenses bans sources advisories"
 "Rust tests (ARM64)" = "cargo nextest run --workspace --locked"
+"Rust FreeBSD build" = "cargo check --locked --target x86_64-unknown-freebsd -p undertone-pattern -p undertone-engine"
 "Rust WebAssembly build" = "cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine"
 "Rust crate layering" = "scripts/check-layering.sh"
 

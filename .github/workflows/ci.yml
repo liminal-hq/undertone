@@ -228,6 +228,21 @@ jobs:
         if: always()
         run: echo "## Rust tests (ARM64)" >> "${GITHUB_STEP_SUMMARY}"
 
+  rust-freebsd:
+    name: Rust FreeBSD build
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the FreeBSD target
+        run: rustup target add x86_64-unknown-freebsd
+      - name: Check the crates for FreeBSD
+        run: cargo check --locked --target x86_64-unknown-freebsd -p undertone-pattern -p undertone-engine
+      - name: Write summary
+        if: always()
+        run: echo "## Rust FreeBSD build" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-wasm:
     name: Rust WebAssembly build
     runs-on: ubuntu-24.04

@@ -31,6 +31,10 @@ Undertone produces sound without Web Audio: natively in real time, in a browser 
 - **Steps:** (1) the WASI build and CLI; (2) the same render through the package in each runtime; (3) a CI job that builds the WASI target; (4) **documentation:** a "Rendering without a browser" section in `docs/guide/rendering-and-export.md` (and a Rust counterpart), with the commands.
 - **Acceptance:** the same bits as the native render, or within R9's tolerance; a CI job builds the WASI target.
 
+## Platforms
+
+The pure crates are checked for ARM64 (tests, from M2) and FreeBSD (`cargo check` for `x86_64-unknown-freebsd`, from M2) in CI. In this milestone: build and test `undertone-native` on ARM64 Linux (the `ubuntu-24.04-arm` runner and the shared `ci-rust` image, which is published for both architectures); decide whether `cpal` gives FreeBSD an output (its ALSA-compatible and OSS paths are unverified, so this is an open question for RF-28) and, if it does, run the tests in a FreeBSD virtual machine with a third-party action pinned by commit SHA; and list Apple silicon and Windows on ARM in the release matrix (M8) with what was and was not run.
+
 ## Planned stack
 
 Three pull requests, one work package each.
