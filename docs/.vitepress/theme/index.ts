@@ -5,6 +5,7 @@ import { defineAsyncComponent } from 'vue';
 import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
 import Playground from './components/Playground.vue';
+import RustAudio from './components/RustAudio.vue';
 import './custom.css';
 
 export default {
@@ -16,5 +17,6 @@ export default {
       'LiveExample',
       defineAsyncComponent(() => import('./components/LiveExample.vue'))
     );
+    app.component('RustAudio', RustAudio);
   }
 } satisfies Theme;
