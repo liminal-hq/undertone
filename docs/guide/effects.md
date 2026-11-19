@@ -78,7 +78,7 @@ stack(pad, pluck).loop({ bpm: 90 });
 
 **Reaching the buses directly.** `getOrbitBus(ctx, orbit, output?)` returns the shared bus for an orbit on a context, creating it the first time, as an `OrbitBus`: its `reverbInput` and `delayInput` are gain nodes you can feed from your own graph, and `setRoomSize(size)` and `setDelay(time, feedback)` configure it without going through a pattern. `buildImpulseResponse(ctx, seconds, random?)` is the function the bus uses to make its reverb: it returns a buffer of exponentially decaying noise, and passing a seeded `random` such as `seededRandom(1)` makes the room repeatable.
 
-```ts standalone
+```ts standalone audio=effects-orbit-bus
 import { buildImpulseResponse, getOrbitBus, note, seededRandom } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();

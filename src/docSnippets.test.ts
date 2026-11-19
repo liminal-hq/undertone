@@ -49,7 +49,7 @@ function standaloneSnippets(page: string): Snippet[] {
   const lines = readFileSync(join(ROOT, page), 'utf8').split('\n');
   const found: Snippet[] = [];
   for (let i = 0; i < lines.length; i++) {
-    const fence = /^```ts (standalone|live)\s*$/.exec(lines[i]);
+    const fence = /^```ts (standalone|live)( audio=[a-z0-9-]+)?\s*$/.exec(lines[i]);
     if (fence) {
       const start = i + 1;
       let end = start;

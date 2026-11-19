@@ -46,7 +46,7 @@ The pieces:
 
 - **Checking the registry:** `isSampleRegistered(name, bank?)` says whether a name (or a `bank_name` pair) is registered, `getSampleBaseNote(name, bank?)` returns its declared `baseNote`, and `getSampleBuffer(ctx, name, bank?)` returns the decoded buffer, or `undefined` while it is still decoding (asking also starts the decode, and an unregistered name warns once). `clearSamples()` empties the registry, which is mostly useful between tests or when swapping a whole kit.
 
-```ts standalone
+```ts standalone audio=samples-registry
 import {
   clearSamples,
   getSampleBaseNote,

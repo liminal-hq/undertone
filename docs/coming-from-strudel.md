@@ -58,7 +58,7 @@ There's no `mode`, no `dict`, no voicing-dictionary system — `{ anchor }` is t
 
 Strudel gives you a default sample map and soundfonts from its CDN. Undertone ships **nothing** and fetches **nothing** by default — not Strudel's CDN, not anyone's:
 
-```ts standalone
+```ts standalone audio=strudel-samples
 import { loadSamples, registerSamples, s } from '@liminal-hq/undertone';
 
 registerSamples({ bd: '/audio/kick.wav', sd: '/audio/snare.wav' });

@@ -93,9 +93,34 @@ jobs:
         if: always()
         run: echo "## Format" >> "${GITHUB_STEP_SUMMARY}"
 
+  # Renders the audio the TypeScript guide pages play (scripts/render-ts-audio.ts) and hands it to the docs job. node-web-audio-api needs
+  # libasound.so.2, which the ci-web image lacks (liminal-hq/.github issue #54 asks for it); drop the install step once the pinned image has it.
+  docs-audio:
+    name: Docs audio (render)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install libasound2t64 where it is missing
+        run: ldconfig -p | grep -q 'libasound.so.2' || (apt-get update && apt-get install -y --no-install-recommends libasound2t64)
+      - run: bun install --frozen-lockfile
+      - name: Render the example audio
+        run: bun run docs:audio target/ts-audio
+      - name: Upload the example audio
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ts-audio
+          path: target/ts-audio
+          if-no-files-found: error
+          retention-days: 1
+      - name: Write summary
+        if: always()
+        run: echo "## Docs audio" >> "${GITHUB_STEP_SUMMARY}"
+
   docs:
     name: Docs (build + typecheck)
-    needs: rust-doc
+    needs: [rust-doc, docs-audio]
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
@@ -114,6 +139,15 @@ jobs:
         with:
           name: rust-audio
           path: docs/public/rust-audio
+      - name: Download the TypeScript example audio
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ts-audio
+          path: docs/public/ts-audio
+      - name: Test the audio check
+        run: bash scripts/check-ts-audio.test.sh
+      - name: Check the audio
+        run: bash scripts/check-ts-audio.sh
       - name: Test the Rust guide check
         run: bash scripts/check-rust-docs.test.sh
       - name: Check the Rust guide
