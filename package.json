@@ -72,6 +72,7 @@
     "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.10.3",
     "mermaid": "^11.16.1",
+    "node-web-audio-api": "2.2.0",
     "prettier": "^3.9.6",
     "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.12.0",
