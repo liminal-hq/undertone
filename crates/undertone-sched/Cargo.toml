@@ -1,0 +1,29 @@
+[package]
+name = "undertone-sched"
+description = "Windowed booking, clock, and transport for Undertone"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["libm"]
+# Use the pure-Rust `libm` crate for the engine's maths, the same code on every target (D-23). Build with
+# `--no-default-features` to use the platform C library instead.
+libm = ["undertone-engine/libm", "undertone-pattern/libm"]
+
+[dependencies]
+# Default features off here so `--no-default-features` really uses the C library maths; this crate's `libm` feature turns them back on.
+undertone-pattern = { path = "../undertone-pattern", version = "0.0.0", default-features = false, features = ["std"] }
+undertone-engine = { path = "../undertone-engine", version = "0.0.0", default-features = false }
+
+[dev-dependencies]
+proptest = { version = "1.12.0", default-features = false, features = ["std"] }
+
+# This table mirrors `[workspace.lints]` with one difference: `unsafe_code` is `deny`, not `forbid`, so that
+# `tests/allocation.rs` (and only that file) can opt in to the `unsafe` a counting global allocator needs.
+# `forbid` cannot be lowered by an inner `#![allow]`; `deny` can. Nothing under `src/` may use `unsafe`: `scripts/check-layering.sh` (run in CI) fails on it.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"

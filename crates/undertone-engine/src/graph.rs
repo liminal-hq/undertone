@@ -387,6 +387,48 @@ impl ChannelInterpretation {
 	}
 }
 
+/// A group of nodes and buffers a graph made while a scope was open ([`Graph::begin_scope`]), which it can retire
+/// together ([`Graph::retire_scope`]). [`Scope::NONE`] names nothing: it is what a graph that does not retire
+/// anything returns.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Scope {
+	index: u32,
+	generation: u32,
+}
+
+impl Scope {
+	/// The scope that names nothing; retiring it does nothing.
+	pub const NONE: Scope = Scope {
+		index: 0,
+		generation: 0,
+	};
+
+	/// A scope with the given index (`0` is [`Scope::NONE`]) and generation `0`, for a graph that numbers its
+	/// own scopes.
+	pub const fn new(index: u32) -> Self {
+		Self {
+			index,
+			generation: 0,
+		}
+	}
+
+	/// A scope with the given index and generation. A graph that reuses scope numbers gives each use a new
+	/// generation, so a handle kept past its scope's retirement names nothing once the number is used again.
+	pub const fn with_generation(index: u32, generation: u32) -> Self {
+		Self { index, generation }
+	}
+
+	/// The index a graph numbered the scope with.
+	pub const fn index(self) -> u32 {
+		self.index
+	}
+
+	/// The generation of the use of that index (`0` for a graph that does not reuse indices).
+	pub const fn generation(self) -> u32 {
+		self.generation
+	}
+}
+
 /// The Web Audio calls the engine makes, as a trait. See the [module documentation](self) for the idea.
 ///
 /// Methods that act on a node of one kind (`set_oscillator_type` on an oscillator, `start` on an oscillator or
@@ -524,4 +566,40 @@ pub trait Graph {
 		imag: &[f32],
 		disable_normalization: bool,
 	) -> WaveId;
+
+	/// Starts a scope: the nodes and buffers made until the matching [`Graph::end_scope`] belong to it, so
+	/// they can be retired together once a voice is over. Scopes nest; a node belongs to the innermost one.
+	///
+	/// Web Audio has nothing like this (a finished voice's nodes are garbage collected), so the default does
+	/// nothing, and a graph that records or replays calls ([`LogGraph`], a bridge to a browser context) keeps
+	/// everything. A graph that owns its nodes ([`RenderGraph`](crate::render_graph::RenderGraph)) uses it to
+	/// give a finished voice's nodes and buffers back, so a long-running scheduler does not grow without bound.
+	fn begin_scope(&mut self) {}
+
+	/// Ends the innermost scope and names it, to retire later with [`Graph::retire_scope`].
+	fn end_scope(&mut self) -> Scope {
+		Scope::NONE
+	}
+
+	/// Starts a stretch of work whose nodes and buffers are shared (an orbit's reverb and delay, which outlive
+	/// the voice that first needed them): whatever is made until [`Graph::end_shared`] belongs to no scope and
+	/// is never retired.
+	fn begin_shared(&mut self) {}
+
+	/// Ends the stretch of shared work.
+	fn end_shared(&mut self) {}
+
+	/// Retires every node and buffer made in `scope`: they are disconnected, drop what they hold, and their
+	/// numbers may be given to nodes and buffers made later. The engine retires a voice's scope only once the
+	/// voice is over and never touches its nodes again; retiring [`Scope::NONE`], or a scope that was already
+	/// retired, does nothing.
+	fn retire_scope(&mut self, scope: Scope) {
+		let _ = scope;
+	}
+
+	/// Retires one buffer the graph no longer needs (an impulse response a convolver has copied). Does
+	/// nothing by default.
+	fn retire_buffer(&mut self, buffer: BufferId) {
+		let _ = buffer;
+	}
 }

@@ -46,7 +46,7 @@
 
 use crate::effects::OrbitBus;
 use crate::graph::BufferId;
-use crate::graph::{Graph, NodeId, ParamId};
+use crate::graph::{Graph, NodeId, ParamId, Scope};
 use crate::master::{MasterBus, MasterBusOptions, create_master_bus};
 use crate::math::gains::PanEvent;
 use crate::samples::Samples;
@@ -182,6 +182,8 @@ pub(crate) struct BookedVoice {
 	pub(crate) envelope: EnvelopeShape,
 	pub(crate) stoppables: Vec<NodeId>,
 	pub(crate) pan_paths: Vec<(ParamId, Vec<PanEvent>)>,
+	/// The graph nodes and buffers the voice made, to give back once it is over ([`Graph::retire_scope`]).
+	pub(crate) scope: Scope,
 }
 
 /// A number as a map key, with JavaScript's `SameValueZero`: `-0` is `0`, and every `NaN` is the same.
@@ -221,7 +223,14 @@ pub struct Engine<G: Graph> {
 	/// The graph buffers made from registered samples, by registered key: what the reference's context has
 	/// decoded. Kept when the registry is cleared, as the reference keeps it.
 	pub(crate) sample_buffers: HashMap<String, BufferId>,
+	/// The scopes of voices that are over, each with the time the voice ended, waiting out
+	/// [`RETIRE_AFTER_SECONDS`] before the graph is told to retire them.
+	pub(crate) retiring: Vec<(f64, Scope)>,
 }
+
+/// How long after a voice's end its nodes are kept before the graph retires them, in seconds: room for a filter
+/// or a delay in the voice's own chain to ring out its last samples.
+pub const RETIRE_AFTER_SECONDS: f64 = 0.1;
 
 impl<G: Graph> Engine<G> {
 	/// An engine that books on `graph`, with its output set up as `setup` says: multichannel first (when
@@ -247,6 +256,7 @@ impl<G: Graph> Engine<G> {
 			warnings: Warnings::default(),
 			samples: Samples::default(),
 			sample_buffers: HashMap::new(),
+			retiring: Vec::new(),
 		};
 		if setup.multichannel {
 			engine.enable_multichannel();
@@ -271,6 +281,12 @@ impl<G: Graph> Engine<G> {
 	/// How many booked voices the engine still keeps, to stop them early or to cut a group.
 	pub fn voice_count(&self) -> usize {
 		self.voices.len() - self.free_slots.len()
+	}
+
+	/// How many finished voices' nodes the engine is still holding before it retires them on the graph (see
+	/// [`RETIRE_AFTER_SECONDS`]). Zero on a graph that retires nothing.
+	pub fn retiring_count(&self) -> usize {
+		self.retiring.len()
 	}
 
 	/// The graph the engine books on.

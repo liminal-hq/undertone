@@ -142,6 +142,8 @@ impl OrbitBus {
 		let buffer = build_impulse_response(graph, room_size_to_seconds(size), random)?;
 		self.last_room_size = Some(size);
 		graph.set_buffer(self.convolver, Some(buffer));
+		// The convolver has taken its own copy of the response; a graph that stores buffers may drop this one.
+		graph.retire_buffer(buffer);
 		Ok(())
 	}
 

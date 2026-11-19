@@ -12,10 +12,12 @@
 
 use crate::effects::OrbitBus;
 use crate::engine::{
-	BookedVoice, Engine, EnvelopeShape, Playback, VoiceHandle, VoiceSlot, number_key,
+	BookedVoice, Engine, EnvelopeShape, Playback, RETIRE_AFTER_SECONDS, VoiceHandle, VoiceSlot,
+	number_key,
 };
 use crate::graph::{
-	BufferId, FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Target,
+	BufferId, FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Scope,
+	Target,
 };
 use crate::master::output_channels;
 use crate::math::{js_max, js_min};
@@ -235,6 +237,39 @@ impl<G: Graph> Engine<G> {
 			None => None,
 		};
 
+		// Everything the voice makes on the graph is one scope, retired once the voice is over.
+		self.graph.begin_scope();
+		let booked = self.book_voice(output, params, start_time, sample);
+		let scope = self.graph.end_scope();
+		match booked {
+			Ok(playback) => {
+				if scope != Scope::NONE
+					&& let Some(voice) = playback
+						.voice
+						.and_then(|handle| self.voices[handle.slot].voice.as_mut())
+				{
+					voice.scope = scope;
+				}
+				Ok(playback)
+			}
+			Err(error) => {
+				// The nodes made before the failure stay on the graph, never started; give them back soon.
+				if scope != Scope::NONE {
+					self.retiring.push((js_max(start_time, 0.0), scope));
+				}
+				Err(error)
+			}
+		}
+	}
+
+	/// Books the voice's nodes (the part of [`Engine::play_to`] inside the voice's scope).
+	fn book_voice(
+		&mut self,
+		output: NodeId,
+		params: &VoiceParams,
+		start_time: f64,
+		sample: Option<BufferId>,
+	) -> Result<Playback> {
 		// Clamp to the graph's origin: real parameters and sources throw on negative times.
 		let voice_start = js_max(start_time + params.nudge_time, 0.0);
 		// A gate is only meaningful when there is a sustain level to hold; with sustain 0 the voice is silent
@@ -398,6 +433,7 @@ impl<G: Graph> Engine<G> {
 			envelope: gain_envelope,
 			stoppables,
 			pan_paths: placed.pan_paths,
+			scope: Scope::NONE,
 		});
 		let playback = Playback {
 			start_time: voice_start,
@@ -430,11 +466,29 @@ impl<G: Graph> Engine<G> {
 				.iter()
 				.any(|handle| handle.engine == self.id && handle.slot == index);
 			if finished && !held {
-				slot.voice = None;
+				if let Some(voice) = slot.voice.take()
+					&& voice.scope != Scope::NONE
+				{
+					self.retiring.push((voice.end, voice.scope));
+				}
 				slot.generation += 1;
 				self.free_slots.push(index);
 			}
 		}
+		self.retire_due(now);
+	}
+
+	/// Tells the graph to retire the nodes of every voice that ended more than [`RETIRE_AFTER_SECONDS`] ago.
+	fn retire_due(&mut self, now: f64) {
+		let graph = &mut self.graph;
+		self.retiring.retain(|(end, scope)| {
+			if end + RETIRE_AFTER_SECONDS < now {
+				graph.retire_scope(*scope);
+				false
+			} else {
+				true
+			}
+		});
 	}
 
 	/// Keeps a booked voice in the slab, in a freed slot when there is one, and returns its handle.
@@ -605,6 +659,91 @@ impl<G: Graph> Engine<G> {
 		self.graph.connect_node(send, target);
 	}
 
+	/// Makes the bus of `orbit` on `output` the first time it is needed, and returns its key.
+	fn ensure_orbit_bus(&mut self, output: NodeId, orbit: f64) -> (NodeId, u64) {
+		let key = (output, number_key(orbit));
+		if !self.buses.contains_key(&key) {
+			// The bus outlives the voice that first needs it: its nodes belong to no voice's scope.
+			self.graph.begin_shared();
+			let bus = OrbitBus::create(&mut self.graph, output);
+			self.graph.end_shared();
+			self.buses.insert(key, bus);
+		}
+		key
+	}
+
+	/// The shared reverb and delay bus of an orbit, made the first time it is asked for (`getOrbitBus`). `output`
+	/// is where the wet signal goes (the engine's output when `None`): a bus belongs to one output and one orbit
+	/// number, as voices find it. The returned [`OrbitBus`] is a copy that names the bus's two inputs
+	/// ([`OrbitBus::reverb_input`], [`OrbitBus::delay_input`]) so a host can feed them from its own nodes; configure
+	/// the bus with [`Engine::set_orbit_room_size`] and [`Engine::set_orbit_delay`].
+	///
+	/// ```
+	/// use undertone_engine::engine::{Engine, OutputSetup};
+	/// use undertone_engine::graph::LogGraph;
+	///
+	/// let mut engine = Engine::new(LogGraph::new(48_000.0, 2), OutputSetup::default())?;
+	/// let bus = engine.orbit_bus(2.0, None);
+	/// // Asking again finds the same bus.
+	/// assert_eq!(engine.orbit_bus(2.0, None).reverb_input, bus.reverb_input);
+	/// assert_ne!(engine.orbit_bus(3.0, None).reverb_input, bus.reverb_input);
+	/// # Ok::<(), undertone_pattern::Error>(())
+	/// ```
+	pub fn orbit_bus(&mut self, orbit: f64, output: Option<NodeId>) -> OrbitBus {
+		let output = output.unwrap_or(self.output);
+		let key = self.ensure_orbit_bus(output, orbit);
+		self.buses[&key].clone()
+	}
+
+	/// Sets the room size of an orbit's bus (`OrbitBus.setRoomSize`), regenerating its impulse response only when
+	/// the size differs from what is loaded. The response is made from the engine's seed, the orbit, and the size,
+	/// as a voice's `roomsize` makes it, so it is repeatable.
+	///
+	/// # Errors
+	///
+	/// A room that cannot be made (not a number, or over 60 seconds) fails with a message naming the room, and
+	/// leaves the bus as it was.
+	pub fn set_orbit_room_size(
+		&mut self,
+		orbit: f64,
+		output: Option<NodeId>,
+		size: f64,
+	) -> Result<()> {
+		let output = output.unwrap_or(self.output);
+		let key = self.ensure_orbit_bus(output, orbit);
+		let mut bus = self.buses.remove(&key).expect("the bus was just made");
+		let mut made = Ok(());
+		if bus.last_room_size != Some(size) {
+			let mut random = self.keyed_random(&format!(
+				"ir|{}|{}",
+				number_to_string(orbit),
+				number_to_string(size)
+			));
+			self.graph.begin_shared();
+			made = bus.set_room_size(&mut self.graph, size, &mut random);
+			self.graph.end_shared();
+		}
+		self.buses.insert(key, bus);
+		made
+	}
+
+	/// Sets the delay time (seconds) and feedback of an orbit's bus (`OrbitBus.setDelay`), from the graph's clock
+	/// now. A value the bus already has is not set again.
+	pub fn set_orbit_delay(
+		&mut self,
+		orbit: f64,
+		output: Option<NodeId>,
+		time: f64,
+		feedback: f64,
+	) {
+		let output = output.unwrap_or(self.output);
+		let key = self.ensure_orbit_bus(output, orbit);
+		let when = self.graph.current_time();
+		let mut bus = self.buses.remove(&key).expect("the bus was just made");
+		bus.set_delay(&mut self.graph, time, feedback, when);
+		self.buses.insert(key, bus);
+	}
+
 	/// Sends the finished voice to its orbit's shared reverb and delay buses when room or delay levels are
 	/// set. The sends are after placement, so the wet signal follows pan and channels as the dry signal does.
 	/// With neither level set there is no orbit bus lookup at all.
@@ -622,11 +761,7 @@ impl<G: Graph> Engine<G> {
 		}
 
 		let orbit = params.orbit.unwrap_or(DEFAULT_ORBIT);
-		let key = (output, number_key(orbit));
-		if !self.buses.contains_key(&key) {
-			let bus = OrbitBus::create(&mut self.graph, output);
-			self.buses.insert(key, bus);
-		}
+		let key = self.ensure_orbit_bus(output, orbit);
 		let mut bus = self.buses.remove(&key).expect("the bus was just made");
 
 		if let Some(level) = room {
@@ -637,9 +772,10 @@ impl<G: Graph> Engine<G> {
 					number_to_string(orbit),
 					number_to_string(params.room_size)
 				));
-				if let Err(error) =
-					bus.set_room_size(&mut self.graph, params.room_size, &mut random)
-				{
+				self.graph.begin_shared();
+				let made = bus.set_room_size(&mut self.graph, params.room_size, &mut random);
+				self.graph.end_shared();
+				if let Err(error) = made {
 					self.buses.insert(key, bus);
 					return Err(error);
 				}

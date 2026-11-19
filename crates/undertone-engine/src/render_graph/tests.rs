@@ -864,3 +864,183 @@ fn render_all_refuses_a_render_that_could_not_be_held() {
 	let mut graph = RenderGraph::new(RATE, 32, 268_435_456);
 	let _ = graph.render_all();
 }
+
+// ----- Retiring scopes -----
+
+#[test]
+fn a_retired_scope_gives_its_nodes_and_buffers_back_and_their_numbers_are_reused() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	let first = osc_to_destination(&mut graph, 440.0);
+	let gain = graph.create_node(NodeKind::Gain);
+	let buffer = graph.create_buffer(1, 100, RATE);
+	let scope = graph.end_scope();
+	assert_eq!((graph.live_nodes(), graph.live_buffers()), (3, 1));
+
+	graph.retire_scope(scope);
+	assert_eq!((graph.live_nodes(), graph.live_buffers()), (1, 0));
+	graph.retire_scope(scope); // already retired: nothing happens
+	assert_eq!(graph.live_nodes(), 1);
+
+	// The next nodes and buffer take the numbers that were given back.
+	let again = graph.create_node(NodeKind::Gain);
+	let other = graph.create_node(NodeKind::Gain);
+	assert!([first.index(), gain.index()].contains(&again.index()));
+	assert!([first.index(), gain.index()].contains(&other.index()));
+	assert_eq!(graph.create_buffer(1, 10, RATE).index(), buffer.index());
+	assert_eq!(graph.node_slots(), 3);
+}
+
+#[test]
+fn a_retired_source_is_silent_and_a_shared_stretch_is_never_retired() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Gain);
+	graph.connect_node(shared, graph.destination());
+	graph.end_shared();
+	osc_to_destination(&mut graph, 1_000.0);
+	let scope = graph.end_scope();
+	let silent_destination = graph.end_scope();
+	assert_eq!(silent_destination, Scope::NONE, "no scope is open now");
+
+	graph.retire_scope(scope);
+	// The oscillator is gone; the shared node is still a live node of the graph.
+	assert_eq!(graph.live_nodes(), 2);
+	let out = graph.render_all();
+	assert_eq!(peak(&out[0]), 0.0);
+}
+
+#[test]
+fn retiring_none_or_the_destination_does_nothing() {
+	let mut graph = RenderGraph::new(RATE, 1, 480);
+	graph.retire_scope(Scope::NONE);
+	graph.retire_node(0);
+	assert_eq!(graph.live_nodes(), 1);
+	osc_to_destination(&mut graph, 1_000.0);
+	let out = graph.render_all();
+	assert!(peak(&out[0]) > 0.5);
+}
+
+#[test]
+fn a_retired_node_does_not_disturb_the_others_that_play_on() {
+	let mut graph = RenderGraph::new(RATE, 1, 9_600);
+	osc_to_destination(&mut graph, 1_000.0);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 1_500.0);
+	let scope = graph.end_scope();
+	let mut block = vec![0.0_f32; 4_800];
+	assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 4_800);
+	graph.retire_scope(scope);
+	assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 4_800);
+	// The 1 kHz sine alone has an RMS of 1/sqrt(2).
+	assert!((rms(&block) - core::f64::consts::FRAC_1_SQRT_2).abs() < 1e-2);
+}
+
+#[test]
+fn retiring_a_scope_removes_the_edges_that_shared_nodes_had_to_its_nodes() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	// A shared oscillator feeds a gain that belongs to a scope.
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Oscillator);
+	let frequency = graph.param(shared, ParamKind::Frequency);
+	graph.set_value_at_time(frequency, 1_000.0, 0.0);
+	graph.start(shared, 0.0);
+	graph.end_shared();
+	graph.begin_scope();
+	let scoped = graph.create_node(NodeKind::Gain);
+	graph.connect_node(shared, scoped);
+	graph.connect_node(scoped, graph.destination());
+	let scope = graph.end_scope();
+	graph.retire_scope(scope);
+
+	// The next gain takes the retired number, but nothing connects the shared oscillator to it.
+	let again = graph.create_node(NodeKind::Gain);
+	assert_eq!(again.index(), scoped.index());
+	graph.connect_node(again, graph.destination());
+	let out = graph.render_all();
+	assert_eq!(peak(&out[0]), 0.0, "a dangling edge fed the new node");
+}
+
+#[test]
+fn retiring_a_scope_removes_the_parameter_edges_shared_nodes_had_to_its_nodes() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Oscillator);
+	graph.start(shared, 0.0);
+	graph.end_shared();
+	graph.begin_scope();
+	let scoped = graph.create_node(NodeKind::Gain);
+	let gain = graph.param(scoped, ParamKind::Gain);
+	graph.connect(shared, Target::Param(gain), 0, 0);
+	let scope = graph.end_scope();
+	graph.retire_scope(scope);
+
+	let again = graph.create_node(NodeKind::Gain);
+	assert_eq!(again.index(), scoped.index());
+	let carrier = graph.create_node(NodeKind::Oscillator);
+	graph.start(carrier, 0.0);
+	graph.connect_node(carrier, again);
+	graph.connect_node(again, graph.destination());
+	graph.set_value_at_time(graph.param(again, ParamKind::Gain), 0.0, 0.0);
+	let out = graph.render_all();
+	assert_eq!(
+		peak(&out[0]),
+		0.0,
+		"a dangling parameter edge modulated the new node"
+	);
+}
+
+#[test]
+fn retiring_a_stale_scope_twice_does_not_retire_a_newer_scope_that_reused_its_number() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 440.0);
+	let old = graph.end_scope();
+	graph.retire_scope(old);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 660.0);
+	let newer = graph.end_scope();
+	assert_ne!(old, newer, "a reused slot carries a new generation");
+	let before = graph.live_nodes();
+	graph.retire_scope(old);
+	assert_eq!(
+		graph.live_nodes(),
+		before,
+		"the stale scope retired a newer one"
+	);
+	graph.retire_scope(newer);
+	assert_eq!(graph.live_nodes(), before - 1);
+}
+
+#[test]
+fn a_streaming_graph_has_no_end_and_renders_what_a_bounded_graph_does() {
+	let mut bounded = RenderGraph::new(RATE, 1, 5_000);
+	let mut streaming = RenderGraph::try_streaming(RATE, 1).unwrap();
+	assert_eq!(streaming.length_frames(), u64::MAX);
+	osc_to_destination(&mut bounded, 440.0);
+	osc_to_destination(&mut streaming, 440.0);
+	let expected = bounded.render_all();
+	let mut heard = Vec::new();
+	let mut block = vec![0.0_f32; 1_000];
+	for _ in 0..5 {
+		assert_eq!(streaming.render_block(&mut [block.as_mut_slice()]), 1_000);
+		heard.extend_from_slice(&block);
+	}
+	assert_eq!(heard, expected[0]);
+	// Past where the bounded graph ended, it keeps going.
+	assert_eq!(streaming.render_block(&mut [block.as_mut_slice()]), 1_000);
+	assert_eq!(streaming.frames_rendered(), 6_000);
+}
+
+#[test]
+fn a_streaming_graph_checks_its_rate_and_channels_like_any_other() {
+	assert!(RenderGraph::try_streaming(0.0, 2).is_err());
+	assert!(RenderGraph::try_streaming(RATE, 0).is_err());
+}
+
+#[test]
+#[should_panic(expected = "use render_block")]
+fn render_all_on_a_streaming_graph_panics_before_allocating() {
+	RenderGraph::try_streaming(RATE, 2).unwrap().render_all();
+}

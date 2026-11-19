@@ -260,6 +260,35 @@ score({
 }).play();
 ```
 
+## Rust
+
+The Rust API ships with 0.4.0. The crates are not on crates.io yet, so nothing here can be installed today; at release, `cargo add undertone` will be the way in. It is the same engine, with Rust's shapes: patterns are built with `?` because a control the reference would reject is an `Err`, the tempo is always explicit, and there is no `AudioContext`, so a pattern is either rendered offline or played by a `Player` on a clock. Nothing has been listened to; the test suite checks node graphs, automation, and rendered numbers against the TypeScript recordings.
+
+```rust
+use undertone::prelude::*;
+
+let song = note("c3 [e3 g3] <b3 a3> ~")?.sound("triangle").release(0.4)?;
+
+// Two cycles at 110 bpm plus a second of tail, as 24 bit WAV bytes (the tempo is an explicit option).
+let options = RenderOptions::new().cycles(2).bpm(110).tail(1);
+let wav = render_to_wav(&song, &options, &WavOptions::new().bit_depth(BitDepth::TwentyFour))?;
+# Ok::<(), undertone::Error>(())
+```
+
+| TypeScript                                          | Rust                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `note('c4 e4')`, `sound('white')`, `n()`, `chord()` | `note("c4 e4")?`, `sound("white")?`, `n("0 2")?`, `chord("Dm9")?`                        |
+| `.gain(0.5)`, `.lpf(300)`, `.pan(-1)`               | `.gain(0.5)?`, `.lpf(300)?`, `.pan(-1)?` (each returns a `Result`)                       |
+| `stack`, `seq`, `cat`, `arrange`                    | `stack(vec![..])`, `seq(vec![..])`, `cat(vec![..])`, `arrange(vec![(cycles, pattern)])?` |
+| `renderToBuffer(pattern, options)`                  | `render(&pattern, &options)?`, with `RenderOptions` as a builder                         |
+| `encodeWav(buffer, { bitDepth: 24 })`               | `audio.to_wav(&WavOptions::new().bit_depth(BitDepth::TwentyFour))?`                      |
+| `.play()`, `.loop({ bpm })`, `handle.stop()`        | `Player::play`, `Player::play_loop`, `Player::stop_loop`                                 |
+| `setcpm(30)`                                        | `Player::set_cpm(30.0)?`; the tempo is never global                                      |
+| `registerSample(name, url)`                         | `register_sample(name, SampleData, base_note)`; the host supplies PCM                    |
+| `getOrbitBus`                                       | `Engine::orbit_bus`                                                                      |
+
+The full name-by-name mapping is [API-MAPPING.md](docs/rust-migration/API-MAPPING.md), the narrative is the [Rust guide](https://liminalhq.ca/undertone/guide/rust-getting-started) (one page for each page of the guide, each including a compiled example from `crates/undertone/examples/`), and the generated reference is the [Rust API docs](https://liminalhq.ca/undertone/rust/undertone/). Names that exist only in a browser (the autoplay gesture, a shared `AudioContext`, a URL passed to `registerSample`, `URL.createObjectURL`) have no Rust equivalent.
+
 ## Development
 
 ```bash
