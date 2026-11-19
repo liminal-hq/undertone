@@ -242,22 +242,22 @@ impl Player {
 	///
 	/// # Errors
 	///
-	/// [`ErrorKind::Closed`](crate::ErrorKind::Closed) after shutdown, or a tick's error (a loop whose pattern
-	/// fails to query keeps its place and is tried again at the next tick; the audio rendered so far is kept in
-	/// `out`).
-	///
-	/// # Panics
-	///
-	/// Panics if `out` does not hold one slice per channel, or the slices differ in length.
+	/// [`ErrorKind::Closed`](crate::ErrorKind::Closed) after shutdown (checked first, so a callback that races
+	/// a shutdown gets this and not a panic), [`ErrorKind::Invalid`](crate::ErrorKind::Invalid) when `out` does
+	/// not hold one slice per channel or the slices differ in length (nothing is rendered), or a tick's error (a
+	/// loop whose pattern fails to query keeps its place and is tried again at the next tick; the audio rendered
+	/// so far is kept in `out`).
 	pub fn render_block(&mut self, out: &mut [&mut [f32]]) -> Result<usize> {
-		let channels = self.channel_count();
-		assert_eq!(out.len(), channels, "one slice per channel");
-		let total = out.first().map_or(0, |channel| channel.len());
-		assert!(
-			out.iter().all(|channel| channel.len() == total),
-			"slices of one length"
-		);
 		let sample_rate = self.engine()?.graph().sample_rate();
+		if out.len() != self.channel_count() {
+			return Err(Error::new("render_block: one slice per channel"));
+		}
+		let total = out.first().map_or(0, |channel| channel.len());
+		if out.iter().any(|channel| channel.len() != total) {
+			return Err(Error::new(
+				"render_block: every slice must have the same length",
+			));
+		}
 		let mut done = 0;
 		let mut first_error = None;
 		while done < total {
