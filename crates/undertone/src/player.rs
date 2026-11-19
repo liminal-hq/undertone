@@ -902,6 +902,43 @@ mod tests {
 	}
 
 	#[test]
+	fn render_seconds_over_the_sample_bound_is_an_error_and_moves_nothing() {
+		// 3,000 s at 48 kHz in 2 channels is 288,000,000 samples: under the frame bound, over the sample bound.
+		let mut player = Player::new(&PlayerOptions::new()).unwrap();
+		let error = player.render_seconds(3_000.0).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(
+			error.message(),
+			"the render is too large: 288000000 samples in all channels, at most 268435456 are allowed"
+		);
+		// Eight channels at 1 MHz: 40 s is 320,000,000 samples.
+		let mut wide = Player::new(&PlayerOptions::new().sample_rate(1_000_000).channels(8)).unwrap();
+		assert!(wide.render_seconds(40.0).is_err());
+		assert_eq!(player.clock().now(), 0.0);
+		assert_eq!(player.render_seconds(0.1).unwrap().frames(), 4_800);
+	}
+
+	#[test]
+	fn render_seconds_in_blocks_equals_one_render_block() {
+		// Longer than one internal block (65,536 frames), so the collection loop runs more than once.
+		let pattern = note("c3 e3 g3 b3").unwrap().sound("sawtooth");
+		let options = LoopOptions {
+			bpm: Some(240.0),
+			..LoopOptions::default()
+		};
+		let mut collected = offline();
+		collected.play_loop(&pattern, &options).unwrap();
+		let audio = collected.render_seconds(10.0).unwrap();
+		assert_eq!(audio.frames(), 80_000);
+
+		let mut single = offline();
+		single.play_loop(&pattern, &options).unwrap();
+		let (mut a, mut b) = (vec![0.0; 80_000], vec![0.0; 80_000]);
+		assert_eq!(single.render_block(&mut [&mut a, &mut b]).unwrap(), 80_000);
+		assert_eq!(audio.channels(), [a, b].as_slice());
+	}
+
+	#[test]
 	fn a_registered_sample_plays_and_a_bad_one_is_refused() {
 		let mut player = offline();
 		player

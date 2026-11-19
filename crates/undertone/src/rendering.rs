@@ -386,6 +386,62 @@ mod tests {
 	}
 
 	#[test]
+	fn a_render_over_the_sample_bound_is_an_error_before_anything_is_allocated() {
+		// 800 s at 48 kHz in 8 channels is 307,200,000 samples: under the frame bound, over the sample bound.
+		let options = RenderOptions::new()
+			.sample_rate(48_000)
+			.channels(8)
+			.seconds(800);
+		let error = render(&tune(), &options).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(
+			error.message(),
+			"the render is too large: 307200000 samples in all channels, at most 268435456 are allowed"
+		);
+		let wav = render_to_wav(&tune(), &options, &WavOptions::new()).unwrap_err();
+		assert_eq!(wav.message(), error.message());
+	}
+
+	#[test]
+	fn the_sample_bound_is_exact_and_cannot_overflow() {
+		assert_eq!(MAX_RENDER_SAMPLES, 1 << 28);
+		assert!(check_render_size(MAX_RENDER_SAMPLES / 8, 8).is_ok());
+		assert!(check_render_size(MAX_RENDER_SAMPLES / 8 + 1, 8).is_err());
+		assert!(check_render_size(MAX_RENDER_SAMPLES, 1).is_ok());
+		assert!(check_render_size(MAX_RENDER_SAMPLES, 2).is_err());
+		assert!(check_render_size(usize::MAX, 8).is_err());
+		assert!(check_render_size(0, 8).is_ok());
+	}
+
+	#[test]
+	fn a_reservation_that_cannot_be_made_is_an_error_not_an_abort() {
+		let error = reserve_channels(2, usize::MAX).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(
+			error.message(),
+			"could not allocate memory for the render: 18446744073709551615 frames in each of 2 channels"
+		);
+		let channels = reserve_channels(2, 100).unwrap();
+		assert_eq!(channels.len(), 2);
+		assert!(channels.iter().all(|c| c.is_empty() && c.capacity() >= 100));
+	}
+
+	#[test]
+	fn rendering_in_blocks_equals_rendering_in_one_go() {
+		let song = tune();
+		let options = small().cycles(2).tail(1.0).booking_window(1);
+		let (engine_options, samples) = options.clone().into_parts();
+		let plan = RenderPlan::new(&engine_options).unwrap();
+		let whole =
+			render_planned_in_blocks(&plan, samples.clone(), &song, plan.length).unwrap();
+		for block in [1, 7, 128, 1_000, 4_096] {
+			let pieces = render_planned_in_blocks(&plan, samples.clone(), &song, block).unwrap();
+			assert_eq!(whole, pieces, "block of {block} frames");
+		}
+		assert_eq!(whole, render(&song, &options).unwrap());
+	}
+
+	#[test]
 	fn uneven_channels_are_refused_at_construction() {
 		let error = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.0], vec![0.0]]).unwrap_err();
 		assert_eq!(error.kind(), ErrorKind::Invalid);
