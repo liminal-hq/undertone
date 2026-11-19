@@ -7,6 +7,10 @@
 //!
 //! This crate turns a pattern into voices on an [`Engine`](undertone_engine::engine::Engine) over time.
 
+pub mod booking;
 pub mod tempo;
 
+pub use booking::{
+	BookOptions, MAX_WINDOW_CYCLES, WINDOW_GRID, book_cycles, book_window, window_edge,
+};
 pub use tempo::Tempo;
