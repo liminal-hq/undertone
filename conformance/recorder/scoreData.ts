@@ -291,7 +291,7 @@ function rendering(): GraphCase[] {
       'render-seeded-noise',
       `${GENERATED}the render seed reaches a noise voice`,
       {
-        events: [{ tick: 0, midi: 60, gate: 100, voice: { soundType: 'noise' } }]
+        events: [{ tick: 0, midi: 60, gate: 100, voice: { soundType: 'pink' } }]
       },
       { seed: 'cue' }
     )

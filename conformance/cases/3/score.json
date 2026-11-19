@@ -778,27 +778,29 @@
       "group": "score",
       "from": "generated: the render seed reaches a noise voice",
       "baseline": true,
-      "definition": {"events":[{"gate":100,"midi":60,"tick":0,"voice":{"soundType":"noise"}}],"lengthTicks":1120,"ticksPerSecond":560},
+      "definition": {"events":[{"gate":100,"midi":60,"tick":0,"voice":{"soundType":"pink"}}],"lengthTicks":1120,"ticksPerSecond":560},
       "render": {"sampleRate":1280,"seed":"cue"},
       "cps": 0.5,
       "seconds": 2,
       "score": [
-        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":261.6255653005986,\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"noise\",\"sustain\":0}"
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":261.6255653005986,\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"pink\",\"sustain\":0}"
       ],
       "graph": {
         "sampleRate": 1280,
         "length": 2560,
         "channels": 2,
-        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "counts": {"destination":1,"gain":3,"compressor":1,"bufferSource":1,"total":6},
         "nodes": [
           {"id":"n0","kind":"destination"},
           {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
           {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
           {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
           {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
-          {"id":"n5","kind":"oscillator","fields":{"type":"noise"},"params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]}
+          {"id":"n5","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.18],"to":["n4"]}
         ],
-        "buffers": [],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":205,"sampleRate":1280,"channels":[{"rms":0.199999233,"peak":0.576608777,"head":[0.100938365,0.0747190639,0.0127429618,-0.144684896]}]}
+        ],
         "waves": []
       }
     },
