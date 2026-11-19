@@ -7,10 +7,12 @@
 //! and the rest.
 //!
 //! In the TypeScript these are values exported from the package (`import { sine2 } from '@liminal-hq/undertone'`).
-//! In Rust a pattern is built by a call, so each is a function returning a fresh [`Pattern<f64>`](Pattern)
+//! In Rust a pattern is built by a call, so each is a function returning a fresh [`Pattern<Value>`](Pattern)
 //! (building one costs a node and queries nothing). They are thin wrappers over the pattern crate's
 //! [`periodic`](undertone_pattern::signal::periodic), [`rand`](undertone_pattern::signal::rand), and friends,
-//! fixed to `f64` so a control can take them without a type annotation.
+//! fixed to [`Value`] numbers: a control takes one as it takes a number or a string, and `n()` takes one that
+//! has events (`n_pattern(&saw().range(0.0, 8.0).segment(8.0)?)`). For a pattern of plain `f64`s, use the
+//! pattern crate's generic functions (`periodic::<f64>(Shape::Sine, false)`).
 //!
 //! ```
 //! use undertone::prelude::*;
@@ -23,14 +25,14 @@
 
 use undertone_pattern::random::Seed;
 use undertone_pattern::signal::{self, Shape};
-use undertone_pattern::{Pattern, Result};
+use undertone_pattern::{Pattern, Result, Value};
 
 macro_rules! periodic_signals {
 	($($(#[$doc:meta])* $name:ident => ($shape:ident, $bipolar:literal);)*) => {
 		$(
 			$(#[$doc])*
-			pub fn $name() -> Pattern<f64> {
-				signal::periodic(Shape::$shape, $bipolar)
+			pub fn $name() -> Pattern<Value> {
+				signal::periodic::<Value>(Shape::$shape, $bipolar)
 			}
 		)*
 	};
@@ -65,23 +67,23 @@ periodic_signals! {
 
 /// `rand`: a random number from 0 up to (not including) 1 at each instant. Choose a seed with
 /// [`Pattern::seed`] directly on it.
-pub fn rand() -> Pattern<f64> {
-	signal::rand()
+pub fn rand() -> Pattern<Value> {
+	signal::rand::<Value>()
 }
 
 /// `rand2`: `2·rand - 1`, from -1 up to 1.
-pub fn rand2() -> Pattern<f64> {
-	signal::rand2()
+pub fn rand2() -> Pattern<Value> {
+	signal::rand2::<Value>()
 }
 
 /// `perlin`: smooth random motion from 0 to 1.
-pub fn perlin() -> Pattern<f64> {
-	signal::perlin()
+pub fn perlin() -> Pattern<Value> {
+	signal::perlin::<Value>()
 }
 
 /// `brand`: 1 with probability one half, otherwise 0.
-pub fn brand() -> Pattern<f64> {
-	signal::brand()
+pub fn brand() -> Pattern<Value> {
+	signal::brand::<Value>()
 }
 
 /// `brandBy(p)`: 1 with probability `p` (0 to 1), otherwise 0.
@@ -89,8 +91,8 @@ pub fn brand() -> Pattern<f64> {
 /// # Errors
 ///
 /// `p` outside 0 to 1 fails with the reference's message.
-pub fn brand_by(p: f64) -> Result<Pattern<f64>> {
-	signal::brand_by(p)
+pub fn brand_by(p: f64) -> Result<Pattern<Value>> {
+	signal::brand_by::<Value>(p)
 }
 
 /// `irand(n)`: a random whole number from 0 to `n - 1`.
@@ -98,8 +100,8 @@ pub fn brand_by(p: f64) -> Result<Pattern<f64>> {
 /// # Errors
 ///
 /// `n` must be a positive integer.
-pub fn irand(n: f64) -> Result<Pattern<f64>> {
-	signal::irand(n)
+pub fn irand(n: f64) -> Result<Pattern<Value>> {
+	signal::irand::<Value>(n)
 }
 
 /// `choose(...values)`: one of the values, picked at random.
@@ -107,14 +109,14 @@ pub fn irand(n: f64) -> Result<Pattern<f64>> {
 /// # Errors
 ///
 /// An empty list fails with the reference's message.
-pub fn choose(values: Vec<f64>) -> Result<Pattern<f64>> {
-	signal::choose(values)
+pub fn choose(values: Vec<f64>) -> Result<Pattern<Value>> {
+	signal::choose(values.into_iter().map(Value::Num).collect())
 }
 
 /// `signal(fn)`: your own signal. `f` receives the cycle time as a number (3.25 a quarter into cycle 3, not its
 /// phase) and must be a pure function of it, so `|t| t % 1.0` is `saw`.
-pub fn signal(f: impl Fn(f64) -> f64 + Send + Sync + 'static) -> Pattern<f64> {
-	signal::signal_from_fn(f)
+pub fn signal(f: impl Fn(f64) -> f64 + Send + Sync + 'static) -> Pattern<Value> {
+	signal::signal_from_fn(move |t| Value::Num(f(t)))
 }
 
 /// The seed argument of [`Pattern::seed`], so `rand().seed(seed(7.0))` reads like the reference's `rand.seed(7)`.
@@ -130,13 +132,13 @@ mod tests {
 	#[test]
 	fn the_unipolar_and_bipolar_forms_agree_with_the_reference() {
 		let quarter = Fraction::new(1, 4);
-		assert_eq!(sine().sample_at(quarter), Some(1.0));
-		assert_eq!(sine2().sample_at(quarter), Some(1.0));
-		assert_eq!(saw().sample_at(quarter), Some(0.25));
-		assert_eq!(saw2().sample_at(quarter), Some(-0.5));
-		assert_eq!(isaw().sample_at(quarter), Some(0.75));
-		assert_eq!(square().sample_at(quarter), Some(0.0));
-		assert_eq!(square2().sample_at(quarter), Some(-1.0));
+		assert_eq!(sine().sample_at(quarter), Some(Value::Num(1.0)));
+		assert_eq!(sine2().sample_at(quarter), Some(Value::Num(1.0)));
+		assert_eq!(saw().sample_at(quarter), Some(Value::Num(0.25)));
+		assert_eq!(saw2().sample_at(quarter), Some(Value::Num(-0.5)));
+		assert_eq!(isaw().sample_at(quarter), Some(Value::Num(0.75)));
+		assert_eq!(square().sample_at(quarter), Some(Value::Num(0.0)));
+		assert_eq!(square2().sample_at(quarter), Some(Value::Num(-1.0)));
 	}
 
 	#[test]
@@ -152,7 +154,7 @@ mod tests {
 			("perlin", perlin()),
 			("brand", brand()),
 		] {
-			let theirs = signal::by_name::<f64>(name).unwrap();
+			let theirs = signal::by_name::<Value>(name).unwrap();
 			assert_eq!(ours.sample_at(at), theirs.sample_at(at), "{name}");
 		}
 	}
@@ -177,6 +179,6 @@ mod tests {
 	#[test]
 	fn a_closure_makes_a_signal() {
 		let ramp = signal(|t| t % 1.0);
-		assert_eq!(ramp.sample_at(Fraction::new(13, 4)), Some(0.25));
+		assert_eq!(ramp.sample_at(Fraction::new(13, 4)), Some(Value::Num(0.25)));
 	}
 }

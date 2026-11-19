@@ -313,7 +313,11 @@ impl Player {
 	pub fn render_seconds(&mut self, seconds: f64) -> Result<RenderedAudio> {
 		let sample_rate = self.engine()?.graph().sample_rate();
 		let frames = (seconds * sample_rate).round();
-		if !(seconds > 0.0) || !frames.is_finite() || frames > MAX_RENDER_LENGTH_FRAMES as f64 {
+		if seconds.is_nan()
+			|| seconds <= 0.0
+			|| !frames.is_finite()
+			|| frames > MAX_RENDER_LENGTH_FRAMES as f64
+		{
 			return Err(Error::new(format!(
 				"seconds must be positive and render at most {MAX_RENDER_LENGTH_FRAMES} frames, got {}",
 				undertone_pattern::js::number_to_string(seconds)
