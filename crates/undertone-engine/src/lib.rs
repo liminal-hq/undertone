@@ -25,6 +25,7 @@
 
 extern crate alloc;
 
+pub mod effects;
 pub mod graph;
 pub mod master;
 pub mod math;
