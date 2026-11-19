@@ -459,4 +459,31 @@ mod tests {
 		};
 		let _ = engine.play(&params, 0.0);
 	}
+
+	#[test]
+	fn a_playback_from_another_engine_is_a_no_op() {
+		let mut a = engine();
+		let mut b = engine();
+		let from_a = a.play(&voice(), 0.0).unwrap();
+		// B has no voices at all: an index into B's list would be out of bounds.
+		b.stop(from_a, Some(0.05), None);
+		assert_eq!(b.into_graph().finish(None).nodes.len(), 1);
+	}
+
+	#[test]
+	fn a_playback_from_another_engine_does_not_stop_this_engines_voice() {
+		let mut a = engine();
+		let mut b = engine();
+		let from_a = a.play(&voice(), 0.0).unwrap();
+		let _from_b = b.play(&voice(), 0.0).unwrap();
+		// Both are slot 0 of their engine, so only an engine id tells them apart.
+		b.stop(from_a, Some(0.05), None);
+		let record = b.into_graph().finish(None);
+		let calls = &record.nodes[1].params[0].1;
+		assert!(
+			!calls.iter().any(|call| call.starts_with("cancel")),
+			"{calls:?}"
+		);
+		assert_eq!(record.nodes[2].stop.len(), 1);
+	}
 }
