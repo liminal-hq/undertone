@@ -45,8 +45,12 @@
 //! # Differences from a browser
 //!
 //! The renderer follows the Web Audio specification, but a browser's own code is not reproduced, so the
-//! sample values differ in the places below. The conformance corpus compares summaries within tolerances for
-//! this reason (see `docs/rust-migration/CONFORMANCE.md`). Nothing here has been listened to.
+//! sample values differ in the places below. Layer 4 of the conformance plan will compare renders with a
+//! browser's within tolerances for this reason (see `docs/rust-migration/CONFORMANCE.md`), but that comparison
+//! has not been made: no browser reference is recorded yet. Today `tests/render_corpus.rs` renders every
+//! layer 3 score and checks only that the output is finite and its peak is under a broad bound (it lists the
+//! silent cases, without checking them); the unit tests assert each node's behaviour against the specification's
+//! formulas. Nothing here has been listened to.
 //!
 //! - **Oscillators** are band-limited by wave tables (one per third of an octave of pitch, linearly
 //!   interpolated), as browsers do, but the table sizes, the band edges, and so the exact partials near
