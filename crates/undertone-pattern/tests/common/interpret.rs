@@ -10,8 +10,10 @@
 #![allow(dead_code)]
 
 use super::json::Json;
+use undertone_pattern::chord::{self, VoicingOptions};
 use undertone_pattern::control;
 use undertone_pattern::controls::{ArgKind, Control, ControlInput, control_spec};
+use undertone_pattern::drift::{self, DriftOptions};
 use undertone_pattern::random::Seed;
 use undertone_pattern::signal;
 use undertone_pattern::{
@@ -140,7 +142,10 @@ fn construct(step: &Json) -> Built<Pat> {
 			program if is_program(program) => Ok(control::n_pattern(&interpret(program)?)?),
 			_ => uncovered("n() with another argument type"),
 		},
-		"chord" => uncovered("chord() and voicing() (chord.ts is the chords group, RF-15)"),
+		"chord" => match &raw[0] {
+			Json::Str(s) => Ok(chord::chord(s)?),
+			_ => uncovered("chord() with a non-string"),
+		},
 		"stack" | "seq" | "cat" => {
 			let patterns = raw.iter().map(pattern_arg).collect::<Built<Vec<_>>>()?;
 			Ok(match name {
@@ -229,6 +234,74 @@ fn arithmetic(pattern: &Pat, op: ArithOp, arg: &Json) -> Built<Pat> {
 			op.name()
 		)),
 	}
+}
+
+/// A number as the corpus writes it: plain, or one of the `$num` specials.
+fn json_number(json: &Json) -> Option<f64> {
+	match json {
+		Json::Num(_, n) => Some(*n),
+		Json::Obj(_) => match json.get("$num").and_then(Json::as_str)? {
+			"NaN" => Some(f64::NAN),
+			"Infinity" => Some(f64::INFINITY),
+			"-Infinity" => Some(f64::NEG_INFINITY),
+			"-0" => Some(-0.0),
+			_ => None,
+		},
+		_ => None,
+	}
+}
+
+/// The options object of a `drift` step.
+///
+/// The reference takes any JavaScript value for an option, and the corpus holds a few that a typed Rust struct cannot: `null` (which acts as the default) and a string. A string is refused by the reference's own checks, with the string in the message, so this reads those checks in the reference's order (`cyclesPerPass`, `timing`, `level`, `cents`, `pan`) and reports the message itself. A bridge from JavaScript has to do the same coercion before it builds `DriftOptions`.
+fn drift_options(object: &Json) -> Built<DriftOptions> {
+	// A missing seed is `undefined`, which the key prints as the word.
+	let seed = match object.get("seed") {
+		Some(Json::Str(s) | Json::Wide(_, s)) => Seed::Str(s.clone()),
+		Some(other) => match json_number(other) {
+			Some(n) => Seed::Num(n),
+			None => return uncovered("drift() with another seed type"),
+		},
+		None => Seed::Str("undefined".into()),
+	};
+	let mut options = DriftOptions::new(seed);
+	if let Some(Json::Wide(units, _)) = object.get("seed") {
+		options.seed_utf16 = Some(units.clone());
+	}
+	for name in ["cyclesPerPass", "timing", "level", "cents", "pan", "push"] {
+		let Some(value) = object.get(name) else {
+			continue;
+		};
+		let number = match value {
+			Json::Null => continue,
+			Json::Str(text) => {
+				// What the reference's checks say about a string, after the checks of the options before it.
+				options.validate()?;
+				let n = undertone_pattern::js::string_to_number(text);
+				return match name {
+					"cyclesPerPass" => Err(drift::cycles_per_pass_error(text).into()),
+					"push" => uncovered("drift() push as a string"),
+					_ if n.is_nan() || n < 0.0 => {
+						Err(drift::negative_range_error(name, text).into())
+					}
+					_ => uncovered("drift() with a numeric string for a range"),
+				};
+			}
+			other => match json_number(other) {
+				Some(n) => n,
+				None => return uncovered("drift() with another option type"),
+			},
+		};
+		match name {
+			"cyclesPerPass" => options.cycles_per_pass = number,
+			"timing" => options.timing = number,
+			"level" => options.level = number,
+			"cents" => options.cents = number,
+			"pan" => options.pan = number,
+			_ => options.push = number,
+		}
+	}
+	Ok(options)
 }
 
 /// Methods that run side effects or leave the data model, so a program may not name them.
@@ -328,7 +401,19 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 				None => Ok(result?),
 			}
 		}
-		"voicing" => uncovered("chord() and voicing() (chord.ts is the chords group, RF-15)"),
+		"voicing" => {
+			let options = match raw.first() {
+				None => VoicingOptions::default(),
+				Some(object) => match object.get("anchor") {
+					None => VoicingOptions::default(),
+					Some(Json::Num(_, midi)) => VoicingOptions::anchor_midi(*midi),
+					Some(Json::Str(name)) => VoicingOptions::anchor_name(name),
+					Some(_) => return uncovered("voicing() with another anchor type"),
+				},
+			};
+			Ok(pattern.voicing(options))
+		}
+		"drift" => Ok(drift::drift(pattern, drift_options(&raw[0])?)?),
 		other => uncovered(&format!("method {other}() (not in the spike's scope)")),
 	}
 }

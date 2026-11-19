@@ -17,9 +17,11 @@ extern crate alloc;
 #[macro_use]
 extern crate std;
 
+pub mod chord;
 pub mod control;
 pub mod controls;
 pub(crate) mod ddpow;
+pub mod drift;
 pub mod error;
 pub mod fraction;
 pub mod hap;

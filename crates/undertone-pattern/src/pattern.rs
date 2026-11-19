@@ -7,7 +7,9 @@
 //!
 //! A pattern is a function from a span of cycle time to the haps overlapping it. Here that function is not a closure but a tree of [`Node`]s that every consumer can walk: print, hash, send to another thread, or (later) serialise. The nodes are immutable and shared through `Arc`, so a transform builds a new root over the old tree.
 
+use crate::chord::VoicingOptions;
 use crate::controls::{Control, ControlSource, query_with_control};
+use crate::drift::DriftOptions;
 use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::hap::{Hap, Span};
@@ -177,6 +179,7 @@ fn next_custom_id() -> u32 {
 pub struct Pattern<T> {
 	node: Arc<Node<T>>,
 	sampler: bool,
+	fallible: bool,
 }
 
 impl<T> Clone for Pattern<T> {
@@ -184,6 +187,7 @@ impl<T> Clone for Pattern<T> {
 		Pattern {
 			node: Arc::clone(&self.node),
 			sampler: self.sampler,
+			fallible: self.fallible,
 		}
 	}
 }
@@ -234,13 +238,14 @@ fn query_shifted<T: Datum>(
 	span: Span,
 	offset: Fraction,
 	out: &mut Vec<Hap<T>>,
+	err: &mut Option<Error>,
 ) {
 	if offset == Fraction::from_int(0) {
-		pattern.query_into(span, out);
+		pattern.run(span, out, err);
 		return;
 	}
 	let start = out.len();
-	pattern.query_into(span.map(|t| t - offset), out);
+	pattern.run(span.map(|t| t - offset), out, err);
 	retime(&mut out[start..], |t| t + offset);
 }
 
@@ -254,6 +259,52 @@ fn keep_tail<T>(out: &mut Vec<Hap<T>>, start: usize, mut keep: impl FnMut(&mut H
 		}
 	}
 	out.truncate(write);
+}
+
+/// Replaces the haps from `start` on by their voiced haps: one per tone of a chord, sharing its whole and part. A hap whose voicing fails is dropped, and the first error goes to `err`.
+fn voice_tail<T: Datum>(
+	out: &mut Vec<Hap<T>>,
+	start: usize,
+	options: &VoicingOptions,
+	err: &mut Option<Error>,
+) {
+	let tail: Vec<Hap<T>> = out.drain(start..).collect();
+	for hap in tail {
+		match hap.value.voice(options) {
+			Ok(values) => out.extend(values.into_iter().map(|value| Hap {
+				whole: hap.whole,
+				part: hap.part,
+				value,
+			})),
+			Err(e) => {
+				err.get_or_insert(e);
+			}
+		}
+	}
+}
+
+/// Applies drift to the haps from `start` on, in place: a hap without a whole passes through, and one that fails is dropped, with the first error going to `err`.
+fn drift_tail<T: Datum>(
+	out: &mut Vec<Hap<T>>,
+	start: usize,
+	options: &DriftOptions,
+	err: &mut Option<Error>,
+) {
+	keep_tail(out, start, |hap| {
+		let Some(whole) = hap.whole else {
+			return true;
+		};
+		match hap.value.drifted(options, whole) {
+			Ok(value) => {
+				hap.value = value;
+				true
+			}
+			Err(e) => {
+				err.get_or_insert(e);
+				false
+			}
+		}
+	});
 }
 
 /// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
@@ -276,9 +327,11 @@ impl<T: Datum> Pattern<T> {
 	/// A pattern from a node.
 	pub fn from_node(node: Node<T>) -> Pattern<T> {
 		let sampler = node.has_sampler();
+		let fallible = node.can_fail();
 		Pattern {
 			node: Arc::new(node),
 			sampler,
+			fallible,
 		}
 	}
 
@@ -321,6 +374,45 @@ impl<T: Datum> Pattern<T> {
 	/// ```
 	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
 		self.node.query_into(span, out);
+	}
+
+	/// Like [`Pattern::query`], but a failure that only shows when the pattern is queried is an error instead of a silent gap.
+	///
+	/// A few patterns can fail at query time, as the reference's can: [`Pattern::voicing`] with an `anchor` note name that does not parse fails when the first chord is voiced, not when the pattern is built, and `drift` fails on a pitch it cannot read. [`Pattern::query`] leaves out the haps of the event that failed; this returns the first error, with the reference's message.
+	///
+	/// ```
+	/// use undertone_pattern::chord::{chord, VoicingOptions};
+	/// use undertone_pattern::{Fraction, Span};
+	/// let span = Span::new(Fraction::from_int(0), Fraction::from_int(1));
+	/// let p = chord("C").unwrap().voicing(VoicingOptions::anchor_name("zz"));
+	/// // Building worked; the query is where it fails.
+	/// assert_eq!(
+	///     p.try_query(span).unwrap_err().message(),
+	///     "Invalid note name: \"zz\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+	/// );
+	/// assert!(p.query(span).is_empty());
+	/// ```
+	pub fn try_query(&self, span: Span) -> Result<Vec<Hap<T>>> {
+		let mut out = Vec::new();
+		self.try_query_into(span, &mut out)?;
+		Ok(out)
+	}
+
+	/// The form of [`Pattern::try_query`] that appends to a vector the caller reuses. On an error the vector holds the haps found before and around the failing event.
+	pub fn try_query_into(&self, span: Span, out: &mut Vec<Hap<T>>) -> Result<()> {
+		let mut err = None;
+		self.node.run(span, out, &mut err);
+		err.map_or(Ok(()), Err)
+	}
+
+	/// Queries into `out` and records the first query-time error in `err`.
+	pub(crate) fn run(&self, span: Span, out: &mut Vec<Hap<T>>, err: &mut Option<Error>) {
+		self.node.run(span, out, err);
+	}
+
+	/// Whether querying this pattern can fail (it holds a `voicing` or `drift` node somewhere a query reaches).
+	pub fn can_fail(&self) -> bool {
+		self.fallible
 	}
 
 	/// The pattern's value at the instant `t`: the sampler's when there is one, otherwise the value of the first hap over `[t, next cycle)` whose part covers `t` (`None` in a rest).
@@ -704,6 +796,32 @@ impl<T: Datum> Node<T> {
 		}
 	}
 
+	/// Whether a query of a pattern with this root can fail: the node itself can (`voicing`, `drift`), or a child the query goes through can.
+	fn can_fail(&self) -> bool {
+		match self {
+			Node::Silence
+			| Node::Pure(_)
+			| Node::Signal(_)
+			| Node::Sample { .. }
+			| Node::Segment { .. }
+			| Node::Custom { .. }
+			| Node::Foreign { .. } => false,
+			Node::Stack(children) | Node::Cat(children) => children.iter().any(Pattern::can_fail),
+			Node::Compress { child, .. }
+			| Node::Fast { child, .. }
+			| Node::Slow { child, .. }
+			| Node::Rev(child)
+			| Node::Degrees(child)
+			| Node::WithControl { child, .. } => child.can_fail(),
+			Node::Map { child, f } => f.can_fail() || child.can_fail(),
+			Node::Every {
+				base, transformed, ..
+			} => base.can_fail() || transformed.can_fail(),
+			Node::Arrange(sections) => sections.iter().any(|(_, p)| p.can_fail()),
+			Node::Arith { left, .. } => left.can_fail(),
+		}
+	}
+
 	/// The haps overlapping `span`.
 	pub fn query(&self, span: Span) -> Vec<Hap<T>> {
 		let mut out = Vec::new();
@@ -715,6 +833,12 @@ impl<T: Datum> Node<T> {
 	///
 	/// This is the query itself: a node asks its children to append straight into the same vector and then rewrites the new tail in place (shifting or mirroring time, changing values, dropping haps), so a query allocates only the output, not one list per node and cycle.
 	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
+		let mut ignored = None;
+		self.run(span, out, &mut ignored);
+	}
+
+	/// [`Node::query_into`] with the error slot: a node that fails at query time (a bad `voicing` anchor, an invalid pitch under `drift`) stores the first message in `err` and adds no haps for the failing event; the query goes on, and [`Pattern::try_query`] turns the slot into an `Err`.
+	fn run(&self, span: Span, out: &mut Vec<Hap<T>>, err: &mut Option<Error>) {
 		match self {
 			Node::Silence => {}
 			Node::Pure(value) => {
@@ -729,12 +853,12 @@ impl<T: Datum> Node<T> {
 			}
 			Node::Stack(children) => {
 				for child in children {
-					child.query_into(span, out);
+					child.run(span, out, err);
 				}
 			}
 			Node::Cat(children) => for_each_cycle(span, |cycle_span| {
 				let (index, offset) = cat_choice(cycle_span.begin.floor(), children.len());
-				query_shifted(&children[index], cycle_span, offset, out);
+				query_shifted(&children[index], cycle_span, offset, out, err);
 			}),
 			Node::Compress { begin, end, child } => {
 				// Both are needed only for a clipped query or an event inside the child's cycle, so they are worked out on demand.
@@ -748,7 +872,7 @@ impl<T: Datum> Node<T> {
 						return;
 					};
 					if whole_cycle {
-						child.query_into(clipped, out);
+						child.run(clipped, out, err);
 						return;
 					}
 					// A query that covers the whole window asks for the child's whole cycle.
@@ -761,7 +885,7 @@ impl<T: Datum> Node<T> {
 						}
 					};
 					let start = out.len();
-					child.query_into(inner, out);
+					child.run(inner, out, err);
 					// The ends of the child's cycle (what `pure` and most leaves return) map to the ends of the window without arithmetic.
 					let next_cycle = cycle + one;
 					retime(&mut out[start..], |t| {
@@ -777,13 +901,13 @@ impl<T: Datum> Node<T> {
 			}
 			Node::Fast { factor, child } => {
 				let start = out.len();
-				child.query_into(span.map(|t| t * *factor), out);
+				child.run(span.map(|t| t * *factor), out, err);
 				let inverse = Fraction::from_int(1) / *factor;
 				retime(&mut out[start..], |t| t * inverse);
 			}
 			Node::Slow { factor, child } => {
 				let start = out.len();
-				child.query_into(span.map(|t| t / *factor), out);
+				child.run(span.map(|t| t / *factor), out, err);
 				retime(&mut out[start..], |t| t * *factor);
 			}
 			Node::Rev(child) => for_each_cycle(span, |cycle_span| {
@@ -791,7 +915,7 @@ impl<T: Datum> Node<T> {
 				let axis = cycle_span.begin.sam() * Fraction::from_int(2) + Fraction::from_int(1);
 				let reflect = |s: Span| Span::new(axis - s.end, axis - s.begin);
 				let start = out.len();
-				child.query_into(reflect(cycle_span), out);
+				child.run(reflect(cycle_span), out, err);
 				for hap in &mut out[start..] {
 					hap.whole = hap.whole.map(reflect);
 					hap.part = reflect(hap.part);
@@ -807,17 +931,24 @@ impl<T: Datum> Node<T> {
 				} else {
 					base
 				};
-				pick.query_into(cycle_span, out);
+				pick.run(cycle_span, out, err);
 			}),
 			Node::Arrange(sections) => for_each_cycle(span, |cycle_span| {
 				let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
-				query_shifted(pattern, cycle_span, offset, out);
+				query_shifted(pattern, cycle_span, offset, out, err);
 			}),
 			Node::WithControl {
 				child,
 				control,
 				input,
-			} => out.extend(query_with_control(child, *control, input, span)),
+			} => {
+				if child.can_fail() {
+					// The control code below queries the child itself, without an error slot, so look for the child's error first.
+					let mut scratch = Vec::new();
+					child.run(span, &mut scratch, err);
+				}
+				out.extend(query_with_control(child, *control, input, span));
+			}
 			Node::Signal(signal) => {
 				if span.begin < span.end {
 					out.push(Hap {
@@ -833,14 +964,20 @@ impl<T: Datum> Node<T> {
 			} => out.extend(read_at(source, structure, span)),
 			Node::Map { child, f } => {
 				let start = out.len();
-				child.query_into(span, out);
-				for hap in &mut out[start..] {
-					hap.value = hap.value.apply(f);
+				child.run(span, out, err);
+				match f {
+					MapFn::Voicing(options) => voice_tail(out, start, options, err),
+					MapFn::Drift(drift) => drift_tail(out, start, drift, err),
+					_ => {
+						for hap in &mut out[start..] {
+							hap.value = hap.value.apply(f);
+						}
+					}
 				}
 			}
 			Node::Arith { left, op, right } => {
 				let start = out.len();
-				left.query_into(span, out);
+				left.run(span, out, err);
 				keep_tail(out, start, |hap| {
 					let Some(other) = right.sample_at(hap.onset()) else {
 						return false;
@@ -854,7 +991,7 @@ impl<T: Datum> Node<T> {
 			}
 			Node::Degrees(child) => {
 				let start = out.len();
-				child.query_into(span, out);
+				child.run(span, out, err);
 				keep_tail(out, start, |hap| {
 					let Some(n) = hap.value.as_number().filter(|n| n.is_finite()) else {
 						return false;

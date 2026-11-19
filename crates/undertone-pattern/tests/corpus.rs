@@ -21,15 +21,7 @@ use undertone_pattern::{Fraction, Span, js};
 /// How many cases of each group the interpreter does not implement yet, with the reason. Every other case of every group must be equal.
 ///
 /// The runner finds the groups by listing `conformance/cases/1/`, so a new group runs without a change here. If its cases cannot all run yet, add the group below with the exact count; the test fails whenever a count changes (a case became covered, or a new one is not), so nothing drops out silently.
-const NOT_COVERED: &[(&str, usize, &str)] = &[
-	("chords", 123, "RF-15: chord() and voicing() need chord.ts"),
-	("drift", 97, "RF-17: drift() needs the seeded random source"),
-	(
-		"notes",
-		1,
-		"RF-15: notes-chord-01 needs chord() and voicing()",
-	),
-];
+const NOT_COVERED: &[(&str, usize, &str)] = &[];
 
 /// The cases recorded in the groups that were already in the corpus when the runner was written, so a file that silently loses cases fails. Groups not listed here may have any size.
 const KNOWN_SIZES: &[(&str, usize)] = &[
@@ -205,10 +197,32 @@ fn check_case(case: &Json) -> Result<bool, String> {
 		let q = query.as_arr().unwrap();
 		let (from, to) = (q[0].as_str().unwrap(), q[1].as_str().unwrap());
 		let span = Span::new(Fraction::parse(from).unwrap(), Fraction::parse(to).unwrap());
-		let actual: Vec<Json> = sort_haps(pattern.query(span))
-			.iter()
-			.map(|h| json::parse(&encode_hap(h)).expect("encoded haps are JSON"))
-			.collect();
+		if let Some(message) = expected.get("error").and_then(Json::as_str) {
+			// The reference throws when this span is queried (a lazy error, such as a bad voicing anchor).
+			match pattern.try_query(span) {
+				Err(e) if e.message() == message => continue,
+				Err(e) => {
+					return Err(format!(
+						"{id}: query {from} to {to}: wrong error\n  expected: {message}\n  actual:   {}",
+						e.message()
+					));
+				}
+				Ok(_) => {
+					return Err(format!(
+						"{id}: query {from} to {to}: expected the error {message:?} but the query worked"
+					));
+				}
+			}
+		}
+		let actual: Vec<Json> = sort_haps(pattern.try_query(span).map_err(|e| {
+			format!(
+				"{id}: query {from} to {to}: unexpected error {:?}",
+				e.message()
+			)
+		})?)
+		.iter()
+		.map(|h| json::parse(&encode_hap(h)).expect("encoded haps are JSON"))
+		.collect();
 		let wanted = expected.as_arr().unwrap();
 		if actual.len() != wanted.len() {
 			return Err(format!(
@@ -319,6 +333,11 @@ fn layer_one_corpus_is_equal() {
 		tolerant_ids.join(", ")
 	));
 	println!("{report}");
+	for (group, t) in &groups {
+		if !t.not_covered_ids.is_empty() {
+			println!("not covered in {group}: {:?}", t.not_covered_ids);
+		}
+	}
 	let failures: Vec<&String> = groups.values().flat_map(|t| &t.failed).collect();
 	assert!(
 		failures.is_empty(),
