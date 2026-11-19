@@ -11,7 +11,9 @@ export default tseslint.config(
       'docs/.vitepress/cache/**',
       'docs/api/**',
       'target/**',
-      'test-results/**'
+      'test-results/**',
+      // Throwaway spike code (docs/rust-migration/milestones/M2-spikes.md) is not linted; Prettier still checks it.
+      'spikes/**'
     ]
   },
   js.configs.recommended,
