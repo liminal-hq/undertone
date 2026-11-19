@@ -207,6 +207,7 @@ jobs:
         # The real C library back-end on x86-64 with glibc, where R9 measured it. UNDERTONE_EXPECT_MATHS makes a test fail if feature unification switches `libm` back on.
         run: |
           UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone-engine --no-default-features --locked
+          UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone --no-default-features --locked
           UNDERTONE_EXPECT_MATHS=std cargo nextest run -p undertone-pattern --no-default-features --locked
       - name: Upload Rust test results
         if: always()
@@ -265,6 +266,7 @@ jobs:
         # UNDERTONE_EXPECT_MATHS makes a test fail if feature unification switches `libm` back on.
         run: |
           UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone-engine --no-default-features --locked
+          UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone --no-default-features --locked
           UNDERTONE_EXPECT_MATHS=std cargo nextest run -p undertone-pattern --no-default-features --locked
       - name: Write summary
         if: always()
@@ -295,7 +297,7 @@ jobs:
       - name: Add the wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Build for wasm32
-        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine -p undertone-sched
+        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine -p undertone-sched -p undertone
       - name: Write summary
         if: always()
         run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
