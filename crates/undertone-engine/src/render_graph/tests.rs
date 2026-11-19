@@ -412,7 +412,7 @@ fn a_lowpass_attenuates_above_its_cutoff_by_the_expected_amount() {
 		let cutoff = graph.param(filter, ParamKind::Frequency);
 		graph.set_value_at_time(cutoff, 1_000.0, 0.0);
 		let q = graph.param(filter, ParamKind::Q);
-		graph.set_value_at_time(q, 0.0, 0.0);
+		graph.set_value_at_time(q, -3.0103, 0.0); // a Butterworth: 10^(Q/20) = 1/sqrt(2)
 		graph.connect_node(osc, filter);
 		graph.connect_node(filter, graph.destination());
 		graph.start(osc, 0.0);

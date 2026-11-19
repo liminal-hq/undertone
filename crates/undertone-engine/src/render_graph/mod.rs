@@ -62,9 +62,9 @@
 //!   detector that releases over a few milliseconds, an attack that reaches the target in the attack time,
 //!   and automatic makeup gain), but its release is a single constant rate rather than the browsers'
 //!   adaptive curve. The look-ahead details therefore differ, and so do the peaks it lets through.
-//! - **Biquad filters** use the specification's coefficients for every type except the low-pass and
-//!   high-pass resonance, which uses the parameterisation browsers use (the dB `Q` is the height of the
-//!   resonant peak), so a given `Q` in decibels matches a browser rather than the specification text.
+//! - **Biquad filters** use the specification's coefficients for every type, the low-pass and high-pass
+//!   with their `Q` in decibels as a linear `10^(Q/20)`, which is what Chromium 149 does (layer 4 measured its
+//!   frequency response).
 //! - **The convolver** convolves exactly (partitioned FFT) and normalises the impulse response as the
 //!   specification says, but it does not cross-fade when the buffer changes: the old tail is dropped.
 //! - **Wave shapers** with oversampling add the latency of their anti-aliasing filters (16 frames).

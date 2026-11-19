@@ -9,10 +9,11 @@
 //!
 //! The band-pass, notch, all-pass, peaking, and shelving types are the audio-EQ-cookbook forms the
 //! specification gives (`Q` is linear; the engine has no `gain` or `detune` parameter, so peaking and the
-//! shelves have 0 dB gain and pass the signal). The low-pass and high-pass types take `Q` in decibels and use
-//! the parameterisation browsers use, in which the decibel value is the height of the resonant peak above the
-//! pass band; a `Q` of 0 dB is a Butterworth response (a half-power point at the cutoff). A `Q` below 0 dB is
-//! treated as 0 dB.
+//! shelves have 0 dB gain and pass the signal). The low-pass and high-pass types take `Q` in decibels, as the
+//! specification says: the cookbook form with a linear quality factor of `10^(Q/20)`, so the response at the
+//! cutoff is `Q` decibels (0 dB at a `Q` of 0, and a negative `Q` is allowed). Chromium 149 does this (layer 4
+//! measured it with `getFrequencyResponse`); older browsers used a different parameterisation in which the
+//! decibel value was the height of the resonant peak and a `Q` of 0 was a Butterworth response.
 
 use crate::graph::FilterType;
 use crate::math::{cos, pow, sin};
@@ -44,20 +45,17 @@ pub(crate) fn coefficients(kind: FilterType, hertz: f64, q: f64, nyquist: f64) -
 					PASS
 				};
 			}
-			let g = pow(10.0, 0.05 * q.max(0.0));
-			let d = ((4.0 - (16.0 - 16.0 / (g * g)).max(0.0).sqrt()) / 2.0).sqrt();
-			let theta = core::f64::consts::PI * f;
-			let sn = 0.5 * d * sin(theta);
-			let beta = 0.5 * (1.0 - sn) / (1.0 + sn);
-			let gamma = (0.5 + beta) * cos(theta);
+			// The cookbook form with the linear quality factor 10^(Q/20), as the specification gives.
+			let w0 = core::f64::consts::PI * f;
+			let alpha = sin(w0) / (2.0 * pow(10.0, q / 20.0));
+			let k = cos(w0);
+			let a0 = 1.0 + alpha;
 			let (b0, b1) = if kind == FilterType::Lowpass {
-				let alpha = 0.25 * (0.5 + beta - gamma);
-				(2.0 * alpha, 4.0 * alpha)
+				((1.0 - k) / 2.0, 1.0 - k)
 			} else {
-				let alpha = 0.25 * (0.5 + beta + gamma);
-				(2.0 * alpha, -4.0 * alpha)
+				((1.0 + k) / 2.0, -(1.0 + k))
 			};
-			[b0, b1, b0, -2.0 * gamma, 2.0 * beta]
+			[b0 / a0, b1 / a0, b0 / a0, -2.0 * k / a0, (1.0 - alpha) / a0]
 		}
 		FilterType::Bandpass | FilterType::Notch | FilterType::Allpass => {
 			if f <= 0.0 || f >= 1.0 {
@@ -181,32 +179,35 @@ mod tests {
 	}
 
 	#[test]
-	fn a_butterworth_lowpass_is_3_db_down_at_the_cutoff() {
-		let c = coefficients(FilterType::Lowpass, 1_000.0, 0.0, 24_000.0);
+	fn a_lowpass_with_a_q_of_minus_3_db_is_butterworth() {
+		// Q' = 10^(Q/20) = 1/sqrt(2): half power at the cutoff.
+		let c = coefficients(FilterType::Lowpass, 1_000.0, -3.0103, 24_000.0);
 		assert!((decibels(magnitude(c, 1_000.0, 48_000.0)) + 3.0103).abs() < 1e-3);
 		assert!(decibels(magnitude(c, 10.0, 48_000.0)).abs() < 1e-3);
 	}
 
 	#[test]
 	fn a_lowpass_falls_12_db_an_octave_above_the_cutoff() {
-		let c = coefficients(FilterType::Lowpass, 250.0, 0.0, 24_000.0);
+		let c = coefficients(FilterType::Lowpass, 250.0, -3.0103, 24_000.0);
 		let at = |hertz: f64| decibels(magnitude(c, hertz, 48_000.0));
 		let slope = at(2_000.0) - at(4_000.0);
 		assert!((slope - 12.0).abs() < 0.5, "{slope}");
 	}
 
 	#[test]
-	fn the_resonance_is_the_height_of_the_peak() {
-		let c = coefficients(FilterType::Lowpass, 2_000.0, 12.0, 24_000.0);
-		let peak = (1..200)
-			.map(|k| decibels(magnitude(c, f64::from(k) * 20.0, 48_000.0)))
-			.fold(f64::MIN, f64::max);
-		assert!((peak - 12.0).abs() < 0.6, "{peak}");
+	fn the_gain_at_the_cutoff_is_q_in_decibels() {
+		for q in [-6.0, 0.0, 1.0, 12.0] {
+			let c = coefficients(FilterType::Lowpass, 2_000.0, q, 24_000.0);
+			let at_cutoff = decibels(magnitude(c, 2_000.0, 48_000.0));
+			assert!((at_cutoff - q).abs() < 0.02, "{q}: {at_cutoff}");
+			let h = coefficients(FilterType::Highpass, 2_000.0, q, 24_000.0);
+			assert!((decibels(magnitude(h, 2_000.0, 48_000.0)) - q).abs() < 0.02);
+		}
 	}
 
 	#[test]
 	fn a_highpass_mirrors_the_lowpass() {
-		let c = coefficients(FilterType::Highpass, 1_000.0, 0.0, 24_000.0);
+		let c = coefficients(FilterType::Highpass, 1_000.0, -3.0103, 24_000.0);
 		assert!((decibels(magnitude(c, 1_000.0, 48_000.0)) + 3.0103).abs() < 1e-3);
 		assert!(decibels(magnitude(c, 23_000.0, 48_000.0)).abs() < 0.05);
 		assert!(decibels(magnitude(c, 50.0, 48_000.0)) < -50.0);
