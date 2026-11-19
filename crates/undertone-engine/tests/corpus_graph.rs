@@ -22,8 +22,9 @@
 //! of a gain parameter's automation call. Cases that pass only through the floor are listed.
 //!
 //! Two further tests keep the writer honest without any booking: a graph built by hand through the [`Graph`]
-//! trait for `placement-pan-default` must write the corpus bytes, and every recorded graph without buffers is
-//! replayed through the trait and must write itself back byte for byte.
+//! trait for `placement-pan-default` must write the corpus bytes, and every recorded graph that can be remade (no
+//! buffers, or only the samples a case registers) is replayed through the trait and must write itself back byte
+//! for byte, buffer summaries included. A case with a `registry` registers the same PCM before booking.
 
 #[allow(dead_code)]
 #[path = "../../undertone-pattern/tests/common/mod.rs"]
@@ -41,8 +42,9 @@ use undertone_engine::graph::{
 };
 use undertone_engine::instruments::{FmVoiceDefinition, LayerOptions, fm_voice, layer};
 use undertone_engine::master::{Limiter, LimiterOptions, MasterBusOptions};
-use undertone_engine::params::resolve_params;
+use undertone_engine::params::{Pitch, resolve_params};
 use undertone_engine::render::{MasterSetting, RenderOptions, RenderPlan};
+use undertone_engine::samples::{SampleData, Samples};
 use undertone_engine::score::{
 	Score, ScoreAutopan, ScoreDefinition, ScoreEvent, ScoreNote, ScorePanPoint, Seam,
 };
@@ -90,6 +92,10 @@ struct Case {
 	render: Option<Value>,
 	/// The score's own `cps` and `seconds`, which a score case records.
 	tempo: Option<(f64, f64)>,
+	/// The decoded samples to register, each with the voice index it is registered before.
+	registry: Vec<(usize, String, SampleData, Option<Pitch>)>,
+	/// The voice indices the registry is cleared before.
+	clear_before: Vec<usize>,
 	/// The recorded graph, or the message a case that must fail gives.
 	expected: Expected,
 }
@@ -211,7 +217,18 @@ fn book_voices(case: &Case) -> Booked {
 		} else {
 			engine.output()
 		};
-		for voice in pending_voices(case) {
+		for (index, voice) in pending_voices(case).into_iter().enumerate() {
+			if case.clear_before.contains(&index) {
+				engine.samples_mut().clear_samples();
+			}
+			for (_, name, data, base_note) in case.registry.iter().filter(|entry| entry.0 == index)
+			{
+				engine.samples_mut().register_sample(
+					name.clone(),
+					data.clone(),
+					base_note.clone(),
+				)?;
+			}
 			engine.play_to(output, &voice.params, voice.start_time)?;
 		}
 		Ok(engine)
@@ -311,7 +328,12 @@ fn book_render(case: &Case, program: &Value, render: &Value) -> Booked {
 			Err(Failure::Uncovered(what)) => panic!("{}: not covered: {what}", case.id),
 		};
 		let plan = RenderPlan::new(&options)?;
-		let engine = plan.book_pattern(graph_for(&plan), &pattern, pause_at)?;
+		let mut samples = Samples::default();
+		for (_, name, data, base_note) in &case.registry {
+			samples.register_sample(name.clone(), data.clone(), base_note.clone())?;
+		}
+		let engine =
+			plan.book_pattern_with_samples(graph_for(&plan), samples, &pattern, pause_at)?;
 		check_onsets(case, &plan.collect_voices(&pattern)?)?;
 		Ok((engine, plan.length))
 	};
@@ -483,6 +505,34 @@ fn parse_score_line(line: &str) -> ScoreLine {
 	}
 }
 
+/// The `registry` of a case: the decoded samples the recorder registered, with the voice each is registered before.
+fn parse_registry(value: &Value) -> Vec<(usize, String, SampleData, Option<Pitch>)> {
+	value
+		.get("registry")
+		.and_then(Value::as_array)
+		.into_iter()
+		.flatten()
+		.map(|sample| {
+			let channels = sample["channels"]
+				.as_array()
+				.expect("channels")
+				.iter()
+				.map(f32s)
+				.collect();
+			let base_note = sample.get("baseNote").map(|note| match note {
+				Value::String(name) => Pitch::Name(name.clone()),
+				other => Pitch::Hz(other.as_f64().expect("a frequency")),
+			});
+			(
+				sample.get("before").and_then(Value::as_u64).unwrap_or(0) as usize,
+				sample["name"].as_str().expect("name").to_string(),
+				SampleData::new(sample["sampleRate"].as_f64().expect("sampleRate"), channels),
+				base_note,
+			)
+		})
+		.collect()
+}
+
 fn parse_case(value: &Value) -> Case {
 	let text = |key: &str| value[key].as_str().expect(key).to_string();
 	// Shapes: `voices` cases carry `voices` (`{at, patch}`) or a `score`, `render` cases a `program` and
@@ -518,6 +568,14 @@ fn parse_case(value: &Value) -> Case {
 					seconds.as_f64().expect("seconds"),
 				)
 			}),
+		registry: parse_registry(value),
+		clear_before: value
+			.get("clearBefore")
+			.and_then(Value::as_array)
+			.into_iter()
+			.flatten()
+			.map(|index| index.as_u64().expect("a voice index") as usize)
+			.collect(),
 		expected,
 	}
 }
@@ -863,16 +921,42 @@ fn f32s(values: &Value) -> Vec<f32> {
 		.collect()
 }
 
-/// Replays a recorded graph without buffers through the `Graph` trait. Returns `None` for a graph with buffers
-/// (their samples are not in the corpus, only their summaries).
-fn replay(graph: &Value) -> Option<LogGraph> {
-	if !graph["buffers"].as_array().expect("buffers").is_empty() {
-		return None;
-	}
+/// Replays a recorded graph through the `Graph` trait. A graph with buffers is replayed only when every buffer
+/// is a sample of the case's `registry` (the corpus holds summaries, not samples, so any other buffer cannot be
+/// remade); each is found by its frames, sample rate, and channel count, and the replay must then write the
+/// recorded summary back, which checks the summaries too.
+fn replay(
+	graph: &Value,
+	registry: &[(usize, String, SampleData, Option<Pitch>)],
+) -> Option<LogGraph> {
 	let mut log = LogGraph::new(
 		graph["sampleRate"].as_f64().expect("rate"),
 		graph["channels"].as_u64().expect("channels") as u32,
 	);
+	let mut recorded_buffers = Vec::new();
+	for buffer in graph["buffers"].as_array().expect("buffers") {
+		if buffer["kind"] != "audio" {
+			return None;
+		}
+		let (length, rate) = (
+			buffer["length"].as_u64()? as usize,
+			buffer["sampleRate"].as_f64()?,
+		);
+		let count = buffer["channels"].as_array()?.len();
+		let mut found = registry.iter().filter(|(_, _, data, _)| {
+			data.frames() == length && data.sample_rate == rate && data.channels.len() == count
+		});
+		let (_, _, data, _) = found.next()?;
+		if found.next().is_some_and(|(_, _, other, _)| other != data) {
+			return None; // ambiguous
+		}
+		let id = log.create_buffer(count as u32, length, rate);
+		for (channel, samples) in data.channels.iter().enumerate() {
+			log.buffer_channel_mut(id, channel as u32)
+				.copy_from_slice(samples);
+		}
+		recorded_buffers.push(id);
+	}
 	let nodes = graph["nodes"].as_array().expect("nodes");
 	let waves: Vec<_> = graph["waves"]
 		.as_array()
@@ -923,6 +1007,10 @@ fn replay(graph: &Value) -> Option<LogGraph> {
 					("wave", Value::String(text)) => {
 						let number: usize = text[1..].parse().expect("a wave number");
 						log.set_periodic_wave(id, waves[number]);
+					}
+					("buffer", Value::String(text)) => {
+						let number: usize = text[1..].parse().expect("a buffer number");
+						log.set_buffer(id, Some(recorded_buffers[number]));
 					}
 					("loop", Value::Bool(flag)) => log.set_loop(id, *flag),
 					("oversample", Value::String(text)) => log.set_oversample(
@@ -1015,9 +1103,10 @@ fn replay(graph: &Value) -> Option<LogGraph> {
 	Some(log)
 }
 
-/// Every recorded graph without buffers, replayed through the trait, writes itself back byte for byte.
+/// Every recorded graph that can be remade (no buffers, or only samples of the case's registry), replayed through
+/// the trait, writes itself back byte for byte.
 #[test]
-fn recorded_graphs_without_buffers_replay_to_the_same_bytes() {
+fn recorded_graphs_replay_to_the_same_bytes() {
 	let (mut replayed, mut skipped) = (0usize, 0usize);
 	for (group, cases) in groups() {
 		for case in &cases {
@@ -1025,7 +1114,7 @@ fn recorded_graphs_without_buffers_replay_to_the_same_bytes() {
 			if case.get("graph").is_none() {
 				continue; // an error case records no graph
 			}
-			let Some(log) = replay(&case["graph"]) else {
+			let Some(log) = replay(&case["graph"], &parse_registry(case)) else {
 				skipped += 1;
 				continue;
 			};
@@ -1038,7 +1127,9 @@ fn recorded_graphs_without_buffers_replay_to_the_same_bytes() {
 			replayed += 1;
 		}
 	}
-	println!("replayed {replayed} recorded graphs; {skipped} skipped because they hold buffers");
+	println!(
+		"replayed {replayed} recorded graphs; {skipped} skipped because they hold buffers that are not samples"
+	);
 	assert!(replayed > 0);
 }
 

@@ -19,8 +19,10 @@ use std::path::Path;
 use undertone_engine::engine::{Engine, OutputSetup};
 use undertone_engine::graph::Graph;
 use undertone_engine::master::{Limiter, LimiterOptions, MasterBusOptions};
+use undertone_engine::params::Pitch;
 use undertone_engine::params::resolve_params;
 use undertone_engine::render_graph::RenderGraph;
+use undertone_engine::samples::SampleData;
 use undertone_engine::surround::create_mono_fold;
 use undertone_engine::window::{PendingVoice, sort_booking_order};
 use undertone_pattern::Value as PatternValue;
@@ -159,6 +161,36 @@ fn render_case(case: &Value) -> Option<Rendered> {
 	} else {
 		engine.output()
 	};
+	// The decoded samples a case registers, all up front (the `before` and `clearBefore` timing is the layer 3
+	// runner's concern).
+	for sample in case
+		.get("registry")
+		.and_then(Value::as_array)
+		.into_iter()
+		.flatten()
+	{
+		let channels = sample["channels"]
+			.as_array()?
+			.iter()
+			.map(|channel| {
+				channel
+					.as_array()
+					.into_iter()
+					.flatten()
+					.map(|value| value.as_f64().unwrap_or(0.0) as f32)
+					.collect()
+			})
+			.collect();
+		let base_note = sample.get("baseNote").map(|note| match note {
+			Value::String(name) => Pitch::Name(name.clone()),
+			other => Pitch::Hz(other.as_f64().unwrap_or(261.63)),
+		});
+		let data = SampleData::new(sample["sampleRate"].as_f64()?, channels);
+		engine
+			.samples_mut()
+			.register_sample(sample["name"].as_str()?, data, base_note)
+			.ok()?;
+	}
 	let mut pending = voices(case);
 	sort_booking_order(&mut pending);
 	let mut end = 0.0_f64;
