@@ -329,7 +329,8 @@ impl<T: Datum> Pattern<T> {
 	/// ```
 	/// use undertone_pattern::{pure, seq, Fraction, Span};
 	/// let p = seq(vec![pure(1.0), pure(2.0)]).rev();
-	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// let mut haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// haps.sort_by_key(|h| h.part.begin);
 	/// assert_eq!(haps[0].value, 2.0);
 	/// ```
 	pub fn rev(&self) -> Pattern<T> {
@@ -344,8 +345,12 @@ impl<T: Datum> Pattern<T> {
 	/// use undertone_pattern::{pure, seq, Fraction, Span};
 	/// let p = seq(vec![pure(1.0), pure(2.0)]);
 	/// let every = p.every(2.0, |p| p.rev()).unwrap();
-	/// let first: Vec<f64> = every.query(Span::new(Fraction::from_int(0), Fraction::from_int(1))).iter().map(|h| h.value).collect();
-	/// let second: Vec<f64> = every.query(Span::new(Fraction::from_int(1), Fraction::from_int(2))).iter().map(|h| h.value).collect();
+	/// let values = |a, b| {
+	///     let mut haps = every.query(Span::new(Fraction::from_int(a), Fraction::from_int(b)));
+	///     haps.sort_by_key(|h| h.part.begin);
+	///     haps.iter().map(|h| h.value).collect::<Vec<f64>>()
+	/// };
+	/// let (first, second) = (values(0, 1), values(1, 2));
 	/// assert_eq!(first, [2.0, 1.0]);
 	/// assert_eq!(second, [1.0, 2.0]);
 	/// ```
