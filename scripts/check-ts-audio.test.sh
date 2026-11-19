@@ -62,7 +62,7 @@ JSON
   for f in one/render two/audio two/second three/audio; do echo RIFF >"$work/t/audio/$f.wav"; done
 }
 
-runenv() { status=0; out=$(env "$@" TS_AUDIO_PAGES="$work/t/a.md $work/t/b.md" TS_AUDIO_MANIFEST="$work/t/manifest.json" TS_AUDIO_DIR="${DIR:-$work/t/audio}" bash "$script" 2>&1) || status=$?; }
+runenv() { status=0; out=$(env -u CI "$@" TS_AUDIO_PAGES="$work/t/a.md $work/t/b.md" TS_AUDIO_MANIFEST="$work/t/manifest.json" TS_AUDIO_DIR="${DIR:-$work/t/audio}" bash "$script" 2>&1) || status=$?; }
 expect_fail() { # NAME PATTERN...
   local name=$1 pattern
   shift
