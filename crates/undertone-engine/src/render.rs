@@ -78,6 +78,18 @@ pub const DEFAULT_BPM: f64 = 120.0;
 /// Seconds one cycle lasts at one beat per minute: four beats to a cycle.
 const SECONDS_PER_CYCLE_AT_1_BPM: f64 = 240.0;
 
+/// The most cycles a render queries. The reference has no bound (an infinite count hangs it); this one keeps the
+/// pattern queries of [`RenderPlan::collect_voices`] finite. A deliberate difference, listed in
+/// `conformance/README.md`.
+pub const MAX_RENDER_CYCLES: f64 = 1_048_576.0;
+
+/// The most frames a render may be (tail included), about an hour and a half at 48000 Hz. The reference has no
+/// bound (a context that size fails to allocate); this one makes the error a message instead of an abort.
+pub const MAX_RENDER_FRAMES: f64 = 268_435_456.0;
+
+/// The highest sample rate a render accepts, in hertz. Well above any real audio rate.
+pub const MAX_SAMPLE_RATE: f64 = 1_000_000.0;
+
 /// The output channel counts a render accepts.
 const CHANNEL_COUNTS: [f64; 5] = [1.0, 2.0, 4.0, 6.0, 8.0];
 
@@ -140,6 +152,9 @@ pub struct RenderOptions {
 /// # Errors
 ///
 /// Fails with the reference's message when both `bpm` and `cps` are given, or the one given is not positive.
+/// Beyond the reference, which would turn an infinite `cps` into a zero-length cycle, it also fails when
+/// `cps`, `bpm`, or `default_cpm` is infinite, and when `default_cpm` is not positive (a deliberate
+/// difference, listed in `conformance/README.md`).
 ///
 /// ```
 /// use undertone_engine::render::cycle_seconds_for;
@@ -168,6 +183,12 @@ pub fn cycle_seconds_for(
 				number_to_string(cps)
 			)));
 		}
+		if !cps.is_finite() {
+			return Err(Error::new(format!(
+				"cps must be finite, got {}",
+				number_to_string(cps)
+			)));
+		}
 		return Ok(1.0 / cps);
 	}
 	if let Some(bpm) = bpm {
@@ -177,9 +198,21 @@ pub fn cycle_seconds_for(
 				number_to_string(bpm)
 			)));
 		}
+		if !bpm.is_finite() {
+			return Err(Error::new(format!(
+				"bpm must be finite, got {}",
+				number_to_string(bpm)
+			)));
+		}
 		return Ok(SECONDS_PER_CYCLE_AT_1_BPM / bpm);
 	}
 	if let Some(cpm) = default_cpm {
+		if !(cpm > 0.0) || !cpm.is_finite() {
+			return Err(Error::new(format!(
+				"default_cpm must be positive and finite, got {}",
+				number_to_string(cpm)
+			)));
+		}
 		return Ok(60.0 / cpm);
 	}
 	Ok(SECONDS_PER_CYCLE_AT_1_BPM / DEFAULT_BPM)
@@ -312,6 +345,10 @@ impl RenderPlan {
 	/// that is not 1, 2, 4, 6, or 8; a sample rate that is not positive; a tail that is negative or not finite; a
 	/// booking window that is not positive or covers under two render quanta (256 frames); both `bpm` and `cps`,
 	/// or one that is not positive; `seconds` that is not positive; `cycles` that is not a positive whole number.
+	/// Then the limits the reference lacks (deliberate differences): a tempo that is infinite or a `default_cpm`
+	/// that is not positive and finite, a sample rate above [`MAX_SAMPLE_RATE`], more than [`MAX_RENDER_CYCLES`]
+	/// cycles, and a render longer than [`MAX_RENDER_FRAMES`] frames. Each is an error, where the reference
+	/// would hang or fail to allocate.
 	#[allow(clippy::neg_cmp_op_on_partial_ord)]
 	pub fn new(options: &RenderOptions) -> Result<RenderPlan> {
 		if options.cycles.is_some() && options.seconds.is_some() {
@@ -326,6 +363,13 @@ impl RenderPlan {
 		}
 		let sample_rate = options.sample_rate.unwrap_or(DEFAULT_SAMPLE_RATE);
 		require_positive("sampleRate", sample_rate)?;
+		if sample_rate > MAX_SAMPLE_RATE {
+			return Err(Error::new(format!(
+				"sampleRate must be at most {}, got {}",
+				number_to_string(MAX_SAMPLE_RATE),
+				number_to_string(sample_rate)
+			)));
+		}
 		let tail = options.tail.unwrap_or(0.0);
 		if !(tail >= 0.0) || !tail.is_finite() {
 			return Err(Error::new(format!(
@@ -354,6 +398,21 @@ impl RenderPlan {
 				(cycles, cycles * cycle_seconds)
 			}
 		};
+		if !(cycles <= MAX_RENDER_CYCLES) {
+			return Err(Error::new(format!(
+				"too many cycles ({}): a render is at most {}",
+				number_to_string(cycles),
+				number_to_string(MAX_RENDER_CYCLES)
+			)));
+		}
+		let longest = js_max(1.0, round((pass_seconds + tail) * sample_rate));
+		if !(longest <= MAX_RENDER_FRAMES) {
+			return Err(Error::new(format!(
+				"the render is too long: {} frames, at most {} are allowed",
+				number_to_string(longest),
+				number_to_string(MAX_RENDER_FRAMES)
+			)));
+		}
 		let frames = |seconds: f64| js_max(1.0, round(seconds * sample_rate)) as usize;
 		Ok(RenderPlan {
 			sample_rate,

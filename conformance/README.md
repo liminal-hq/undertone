@@ -155,6 +155,7 @@ Layer 4 compares a render of the Rust engine with a browser's `OfflineAudioConte
 - **A `setTarget` followed by a ramp** starts the ramp from the target's start value, not from the point the curve has reached (the specification leaves this to the implementation).
 - **A wave shaper with oversampling** has 16 frames of latency from its anti-aliasing filters.
 - **A cycle without a delay is muted** at one node, where a browser mutes the cycle's nodes.
+- **Render options are bounded.** The reference accepts an infinite `cps` or `bpm` (a zero-length cycle and an infinite cycle count, so its loop never ends), a `defaultCyclesPerMinute` that is not positive, and any length or sample rate (a context too large fails to allocate). `RenderPlan::new` returns an error instead: an infinite `cps`, `bpm`, or `default_cpm`, a `default_cpm` that is not positive, a sample rate above 1,000,000 Hz, more than 1,048,576 cycles, or more than 268,435,456 frames (tail included). Every option the reference accepts and renders within those bounds renders the same.
 - **Samples are `f32`; filter, compressor, and convolver state is `f64`**, so last-bit differences against a browser's all-`f32` chain are expected everywhere; they are far below the tolerances.
 
 ## Properties
