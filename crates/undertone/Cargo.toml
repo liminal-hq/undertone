@@ -1,0 +1,31 @@
+[package]
+name = "undertone"
+description = "The Rust API of Undertone: patterns, a synth engine, offline rendering, and a scheduler"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["libm"]
+# Use the pure-Rust `libm` crate for the engine's maths, the same code on every target (D-23). Build with
+# `--no-default-features` to use the platform C library instead.
+libm = ["undertone-engine/libm", "undertone-pattern/libm", "undertone-sched/libm"]
+# Derive `Serialize` and `Deserialize` for `VoiceParams` and its parts (the engine's `serde` feature). Off by
+# default; the corpus runner turns it on through the dev-dependency below.
+serde = ["undertone-engine/serde"]
+
+[dependencies]
+# Default features off here so `--no-default-features` really uses the C library maths; this crate's `libm` feature turns them back on.
+undertone-pattern = { path = "../undertone-pattern", version = "0.0.0", default-features = false, features = ["std"] }
+undertone-engine = { path = "../undertone-engine", version = "0.0.0", default-features = false }
+undertone-sched = { path = "../undertone-sched", version = "0.0.0", default-features = false }
+
+[dev-dependencies]
+# Turns this crate's own `serde` feature on for the corpus runner, without switching the default `libm` feature back on under `--no-default-features`.
+undertone = { path = ".", default-features = false, features = ["serde"] }
+serde_json = "1"
+
+[lints]
+workspace = true

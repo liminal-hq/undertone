@@ -8,6 +8,8 @@
 #   - undertone-pattern depends on no other workspace crate.
 #   - undertone-engine depends on no workspace crate except undertone-pattern.
 #   - undertone-sched depends on no workspace crate except undertone-pattern and undertone-engine.
+#   - undertone (the facade) depends on no workspace crate except undertone-pattern, undertone-engine, and
+#     undertone-sched; nothing below it may depend on it (the three rules above leave it out of their lists).
 #   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
 #   - Nothing under crates/*/src uses `unsafe` (a block, fn, impl, trait, or extern) or lifts the lint with
@@ -29,7 +31,8 @@ metadata="$(cargo metadata --format-version 1 --no-deps --locked)"
 allowed_workspace_deps='{
   "undertone-pattern": [],
   "undertone-engine": ["undertone-pattern"],
-  "undertone-sched": ["undertone-pattern", "undertone-engine"]
+  "undertone-sched": ["undertone-pattern", "undertone-engine"],
+  "undertone": ["undertone-pattern", "undertone-engine", "undertone-sched"]
 }'
 
 violations="$(
