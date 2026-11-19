@@ -664,6 +664,127 @@ mod seek {
 		);
 	}
 
+	/// The calls on the `gain` parameter of every gain node, in creation order.
+	fn gain_calls(rig: &Rig) -> Vec<Vec<String>> {
+		rig.record()
+			.nodes
+			.iter()
+			.filter(|n| n.kind == "gain")
+			.map(|n| {
+				n.params
+					.iter()
+					.find(|(name, _)| name == "gain")
+					.unwrap()
+					.1
+					.clone()
+			})
+			.collect()
+	}
+
+	#[test]
+	fn a_cut_stop_still_fades_what_a_seek_to_a_future_time_had_scheduled_to_stop() {
+		let mut rig = Rig::new();
+		// A cycle is 8 s at 30 bpm, so the one note is long.
+		let handle = rig
+			.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3").and_then(|p| p.release(20.0))),
+				&looping(30.0),
+			)
+			.unwrap();
+		// Seek to a time 5 s ahead: the booked note is scheduled to stop then.
+		rig.transport
+			.seek(&mut rig.engine, handle, Fraction::from_int(0), Some(5.0))
+			.unwrap();
+		// Stopping the loop with a cut at 1 s must fade it there, not leave it to sound until 5 s.
+		rig.advance_to(1.0);
+		rig.transport
+			.stop_loop(
+				&mut rig.engine,
+				handle,
+				&LoopStop {
+					voices: LoopVoices::Cut,
+					fade: None,
+				},
+			)
+			.unwrap();
+		for (i, calls) in gain_calls(&rig).iter().enumerate() {
+			assert!(
+				calls.contains(&"cancel @1".to_string()),
+				"voice {i} was not cut at 1 s: {calls:?}"
+			);
+		}
+	}
+
+	#[test]
+	fn two_seeks_into_the_future_leave_every_voice_reachable_by_a_cut() {
+		let mut rig = Rig::new();
+		let handle = rig
+			.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3").and_then(|p| p.release(20.0))),
+				&looping(30.0),
+			)
+			.unwrap();
+		for when in [5.0, 6.0] {
+			rig.transport
+				.seek(&mut rig.engine, handle, Fraction::from_int(0), Some(when))
+				.unwrap();
+		}
+		rig.advance_to(1.0);
+		rig.transport
+			.stop_loop(
+				&mut rig.engine,
+				handle,
+				&LoopStop {
+					voices: LoopVoices::Cut,
+					fade: None,
+				},
+			)
+			.unwrap();
+		let all = gain_calls(&rig);
+		assert_eq!(all.len(), 1, "nothing is booked until the clock nears 5 s");
+		for (i, calls) in all.iter().enumerate() {
+			assert!(
+				calls.contains(&"cancel @1".to_string()),
+				"voice {i} was not cut at 1 s: {calls:?}"
+			);
+		}
+	}
+
+	#[test]
+	fn a_cut_does_not_reopen_a_voice_a_seek_already_faded() {
+		let mut rig = Rig::new();
+		let handle = rig
+			.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3").and_then(|p| p.release(20.0))),
+				&looping(30.0),
+			)
+			.unwrap();
+		rig.transport
+			.seek(&mut rig.engine, handle, Fraction::from_int(0), Some(0.5))
+			.unwrap();
+		rig.advance_to(2.0);
+		rig.tick();
+		rig.transport
+			.stop_loop(
+				&mut rig.engine,
+				handle,
+				&LoopStop {
+					voices: LoopVoices::Cut,
+					fade: None,
+				},
+			)
+			.unwrap();
+		// The first voice was stopped at 0.5 s; a cut at 2 s must not schedule a new level for it.
+		let first = &gain_calls(&rig)[0];
+		assert!(!first.contains(&"cancel @2".to_string()), "{first:?}");
+	}
+
 	#[test]
 	fn defaults_to_now_plus_the_start_latency() {
 		let mut rig = Rig::new();
