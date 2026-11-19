@@ -33,6 +33,17 @@ impl Rig {
 		}
 	}
 
+	/// A rig whose transport books `look_ahead` seconds ahead of the clock.
+	fn with_look_ahead(look_ahead: f64) -> Self {
+		let mut rig = Self::new();
+		let options = SchedulerOptions {
+			look_ahead,
+			..SchedulerOptions::default()
+		};
+		rig.transport = Transport::new(rig.clock.clone(), options).unwrap();
+		rig
+	}
+
 	/// Moves the clock, and the graph's, to `seconds`.
 	fn advance_to(&mut self, seconds: f64) {
 		self.clock.set(seconds);
@@ -1496,5 +1507,181 @@ mod following {
 		run(&mut rig, 3.0);
 		let times = rig.oscillator_starts();
 		approx(times[times.len() - 1] - times[times.len() - 2], 0.5);
+	}
+}
+
+/// A failed booking leaves nothing sounding (D-38): `play` and the first window of `play_loop` roll back
+/// what they booked before the error, and a steady-state tick keeps what it booked reachable for a stop.
+mod rollback {
+	use super::*;
+
+	/// `c3 e3 g3` with the middle note's pitch replaced by one the engine refuses.
+	fn valid_then_invalid() -> Pattern<ControlMap> {
+		plain(note("c3 e3 g3")).fmap_with(|value| {
+			if value.get("pitch") == Some(&undertone_pattern::Value::Str("e3".into())) {
+				undertone_pattern::Value::field("pitch", undertone_pattern::Value::Str("zz".into()))
+			} else {
+				value.clone()
+			}
+		})
+	}
+
+	/// The start times of the oscillators that were started (a voice the engine refused can leave an orphan
+	/// node that never starts).
+	fn started(rig: &Rig) -> Vec<f64> {
+		rig.record()
+			.nodes
+			.iter()
+			.filter(|node| node.kind == "oscillator")
+			.filter_map(|node| node.start.first().copied())
+			.collect()
+	}
+
+	/// The `gain` automation of every voice's gain node, in booking order.
+	fn gain_calls(rig: &Rig) -> Vec<Vec<String>> {
+		rig.record()
+			.nodes
+			.iter()
+			.filter(|node| node.kind == "gain")
+			.map(|node| {
+				node.params
+					.iter()
+					.find(|(name, _)| name == "gain")
+					.map(|(_, calls)| calls.clone())
+					.unwrap_or_default()
+			})
+			.collect()
+	}
+
+	/// Whether a gain's calls end in a fade to silence (`engine.stop`'s `setTarget 0`).
+	fn is_stopped(calls: &[String]) -> bool {
+		calls.iter().any(|call| call.starts_with("target 0"))
+	}
+
+	#[test]
+	fn a_play_that_fails_after_booking_a_voice_stops_it() {
+		let mut rig = Rig::new();
+		rig.advance_to(3.0);
+		let result = rig.transport.play(
+			&mut rig.engine,
+			&valid_then_invalid(),
+			&PlayOptions::default(),
+		);
+		assert!(result.is_err());
+		// One voice sounded (the failing voice's oscillator never started); it is cut.
+		assert_eq!(started(&rig).len(), 1);
+		let gains = gain_calls(&rig);
+		assert!(is_stopped(&gains[0]), "{gains:?}");
+		// Nothing rolled back counts as booked or late.
+		let stats = rig.transport.stats();
+		assert_eq!((stats.voices_booked, stats.late_voices), (0, 0));
+	}
+
+	#[test]
+	fn a_loops_first_window_that_fails_after_booking_a_voice_stops_it_and_starts_no_loop() {
+		let mut rig = Rig::with_look_ahead(2.0);
+		rig.advance_to(3.0);
+		let options = LoopOptions {
+			bpm: Some(240.0),
+			..LoopOptions::default()
+		};
+		let result = rig
+			.transport
+			.play_loop(&mut rig.engine, &valid_then_invalid(), &options);
+		assert!(result.is_err());
+		// One voice sounded (the failing voice's oscillator never started); it is cut.
+		assert_eq!(started(&rig).len(), 1);
+		let gains = gain_calls(&rig);
+		assert!(is_stopped(&gains[0]), "{gains:?}");
+		assert_eq!(rig.transport.stats().voices_booked, 0);
+		// No loop is left running to book more.
+		let report = rig.transport.tick(&mut rig.engine).unwrap();
+		assert_eq!(report.loops, 0);
+	}
+
+	#[test]
+	fn a_steady_state_tick_that_fails_keeps_its_booked_voices_reachable_for_a_stop() {
+		let mut rig = Rig::with_look_ahead(0.5);
+		rig.advance_to(3.0);
+		let options = LoopOptions {
+			bpm: Some(240.0), // one-second cycles: the notes start 0.25 s apart from 3.1 s
+			..LoopOptions::default()
+		};
+		let bad = plain(note("c3 e3 g3 b3")).fmap_with(|value| {
+			if value.get("pitch") == Some(&undertone_pattern::Value::Str("b3".into())) {
+				undertone_pattern::Value::field("pitch", undertone_pattern::Value::Str("zz".into()))
+			} else {
+				value.clone()
+			}
+		});
+		// The first window (3.1 s to 3.5 s) holds the two good notes.
+		let looping = rig
+			.transport
+			.play_loop(&mut rig.engine, &bad, &options)
+			.unwrap();
+		assert_eq!(started(&rig).len(), 2);
+		// The next window holds g3 (fine), then b3 (refused): the tick reports the error and keeps g3.
+		rig.advance_to(3.4);
+		assert!(rig.transport.tick(&mut rig.engine).is_err());
+		assert_eq!(started(&rig).len(), 3);
+		// A stop at 3.4 s reaches the voices not yet finished, including g3 booked before the failure (the
+		// first voice ended at 3.26 s and is left alone).
+		rig.transport
+			.stop_loop(
+				&mut rig.engine,
+				looping,
+				&LoopStop {
+					voices: LoopVoices::Cut,
+					fade: None,
+				},
+			)
+			.unwrap();
+		let gains = gain_calls(&rig);
+		assert!(!is_stopped(&gains[0]), "{gains:?}");
+		assert!(is_stopped(&gains[1]) && is_stopped(&gains[2]), "{gains:?}");
+	}
+
+	#[test]
+	fn a_seek_whose_window_fails_keeps_the_loop_and_its_booked_voices_reachable_for_a_stop() {
+		let mut rig = Rig::with_look_ahead(0.5);
+		rig.advance_to(3.0);
+		let options = LoopOptions {
+			bpm: Some(240.0),
+			..LoopOptions::default()
+		};
+		let bad = plain(note("c3 e3 g3 b3")).fmap_with(|value| {
+			if value.get("pitch") == Some(&undertone_pattern::Value::Str("g3".into())) {
+				undertone_pattern::Value::field("pitch", undertone_pattern::Value::Str("zz".into()))
+			} else {
+				value.clone()
+			}
+		});
+		// The first window holds c3 and e3 (the bad note is later). Seek to the start again: the new
+		// window is c3, e3 as well, so move the bad note into it by seeking a half cycle ahead instead.
+		let looping = rig
+			.transport
+			.play_loop(&mut rig.engine, &bad, &options)
+			.unwrap();
+		let before = started(&rig).len();
+		// From half a cycle in: g3 (refused) comes first in the window, so nothing new books; seek to 0.25
+		// instead so e3 books and then g3 fails.
+		let result = rig
+			.transport
+			.seek(&mut rig.engine, looping, Fraction::new(1, 4), Some(3.2));
+		assert!(result.is_err());
+		assert!(started(&rig).len() > before);
+		// The loop is still there and a stop reaches the voices the seek booked before the failure.
+		rig.transport
+			.stop_loop(
+				&mut rig.engine,
+				looping,
+				&LoopStop {
+					voices: LoopVoices::Cut,
+					fade: None,
+				},
+			)
+			.unwrap();
+		let gains = gain_calls(&rig);
+		assert!(is_stopped(&gains[before]), "{gains:?}");
 	}
 }
