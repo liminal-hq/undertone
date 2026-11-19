@@ -1,0 +1,1906 @@
+{
+  "corpus": 1,
+  "layer": 3,
+  "group": "voices",
+  "cases": [
+    {
+      "id": "voices-wave-sine",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds oscillator -> gain -> destination for a plain pitched voice",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"gainLevel\":0.7,\"pitch\":\"a4\",\"soundType\":\"sine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.7 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-wave-triangle",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds oscillator -> gain -> destination for a plain pitched voice",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"gainLevel\":0.7,\"pitch\":\"a4\",\"soundType\":\"triangle\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.7 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-wave-square",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds oscillator -> gain -> destination for a plain pitched voice",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"gainLevel\":0.7,\"pitch\":\"a4\",\"soundType\":\"square\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.7 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-wave-sawtooth",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds oscillator -> gain -> destination for a plain pitched voice",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"gainLevel\":0.7,\"pitch\":\"a4\",\"soundType\":\"sawtooth\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.7 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-wave-halfsine",
+      "group": "voices",
+      "from": "src/waves.test.ts: set a periodic wave on the carrier, shared between notes",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"pitch\":\"c3\",\"soundType\":\"halfsine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,5.88914744e-17,-0.212206721,2.61024039e-17,-0.0424414426,1.93061291e-17,-0.0181892607,-4.81460707e-17,-0.010105201,3.9304893e-17,-0.00643062778,2.38243088e-17,-0.00445201155,-3.37801802e-17,-0.00326484162,-3.88743331e-18,-0.00249667303,-2.08769129e-19,-0.00197108393,1.25012782e-17,-0.00159566314,-3.41986144e-17,-0.00131817826,2.6222259e-17,-0.00110728969,-4.05472232e-18,-0.000943265273,-7.14978029e-18,-0.000813176914,-4.24879874e-18,-0.000708266976,-1.41893652e-17,-0.000622431573,2.57966324e-18,-0.000551310775,-3.93889147e-17,-0.000491723127,1.48034079e-17,-0.000441302807,-2.04195043e-17,-0.000398261065,-3.03545672e-17,-0.000361225131,1.99183114e-19,-0.000329127331,3.6096642e-19,-0.000301127118,1.54926809e-17,-0.000276555511,1.27275419e-17,-0.000254874671,9.92035723e-17,-0.000235648287,2.29090897e-17,-0.000218519315,-3.49800102e-19,-0.000203193384,2.97523731e-17,-0.000189426035,-1.03819521e-17,-0.000177012844,-3.48678673e-18,-0.000165781865,1.94841194e-18,-0.000155587593],"imag":[0,0.5,3.57161104e-17,4.33776319e-16,-2.2554618e-17,-5.62334983e-17,8.94808087e-18,6.64155622e-17,-6.86848429e-18,-2.36537425e-18,1.90238637e-17,-1.10012044e-18,-9.75618173e-19,5.54741432e-17,4.74379148e-18,-3.07705828e-17,1.95247513e-17,2.64315969e-17,-1.07323376e-17,-5.71053069e-18,-7.37799777e-18,2.24154365e-17,-1.91145227e-18,-1.89816146e-17,1.07574772e-17,-8.73141414e-18,-8.80972499e-18,8.28307563e-18,-9.15100647e-18,6.24646432e-18,6.68937653e-19,3.84689939e-18,-2.00197561e-19,-9.28683615e-17,6.16589164e-17,4.85338761e-17,4.67297489e-19,-1.6848822e-17,-1.18450278e-18,-7.43778969e-18,6.19678055e-18,5.49453068e-18,2.28418316e-17,3.04402465e-18,3.51172581e-18,-1.04260491e-18,6.26803057e-18,-8.76483886e-18,4.49814861e-18,-1.157182e-17,-6.02180868e-19,-3.86904996e-17,3.20822993e-18,2.01374672e-17,4.27289741e-18,-4.00819961e-18,-1.88948434e-17,-4.04018966e-17,4.60334614e-18,1.1625686e-17,3.23170863e-17,1.55785241e-17,7.8288476e-18,-5.29128247e-18,-4.20948905e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "voices-wave-abssine",
+      "group": "voices",
+      "from": "src/waves.test.ts: set a periodic wave on the carrier, shared between notes",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"pitch\":\"c3\",\"soundType\":\"abssine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.81093538e-17,-0.424413443,-7.95363937e-18,-0.0848828852,-3.71274658e-17,-0.0363785215,1.56435339e-17,-0.0202104021,6.57448974e-17,-0.0128612556,3.73342477e-17,-0.0089040231,-2.19571057e-17,-0.00652968325,-1.52836507e-18,-0.00499334605,2.3511517e-17,-0.00394216785,-1.98357117e-17,-0.00319132628,-4.99095106e-17,-0.00263635651,2.96996221e-17,-0.00221457938,-3.74070925e-18,-0.00188653055,-2.81981503e-17,-0.00162635383,-2.10359574e-17,-0.00141653395,-1.8114329e-17,-0.00124486315,2.92734587e-18,-0.00110262155,-5.74107285e-17,-0.000983446254,-5.22640504e-18,-0.000882605615,-1.62947963e-18,-0.00079652213,-2.16807612e-17,-0.000722450262,1.16960427e-17,-0.000658254663,3.89943264e-17,-0.000602254237,-3.96909051e-18,-0.000553111022,1.41825079e-17,-0.000509749341,1.20683349e-16,-0.000471296575,-6.48304195e-17,-0.00043703863,1.38153191e-17,-0.000406386767,-7.84103693e-17,-0.00037885207,1.16165275e-17,-0.000354025688,-8.28292343e-18,-0.00033156373,9.87746296e-19,-0.000311175187],"imag":[0,-2.94710456e-17,1.8522264e-16,-3.17841834e-17,-7.16561418e-17,-8.06204967e-17,4.04022474e-17,5.86383307e-17,4.03833943e-17,2.80776996e-17,8.51467793e-18,-4.59953217e-17,5.96138678e-17,3.23942093e-17,7.58634736e-17,8.78683855e-18,-6.97153445e-18,1.06261779e-16,-3.84158558e-17,3.24805107e-17,-8.90776905e-18,2.20036296e-17,1.84339483e-17,-1.44032493e-17,-1.44628063e-17,2.97269522e-18,-1.91843301e-17,4.81499717e-17,-6.72997455e-18,-1.05292283e-17,4.34208941e-18,3.81277985e-17,-6.3640497e-18,-2.83699127e-18,-5.5918938e-17,4.39342027e-17,5.2222162e-18,-2.04427961e-17,3.62639951e-18,-1.40446334e-17,1.58613537e-19,-4.88384771e-17,2.18385145e-17,2.82479003e-17,4.34752895e-19,1.23571996e-16,6.62353957e-18,-1.12279114e-17,-4.28918956e-18,-2.25981177e-17,7.76264139e-17,-1.4643274e-17,-6.50238077e-18,5.32939101e-17,-4.64911636e-17,-2.6119505e-17,-2.42630735e-17,3.50142906e-17,3.98638454e-17,5.116214e-17,2.93549062e-17,2.81034944e-17,-1.10583857e-17,1.613746e-17,-3.60816183e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "voices-wave-pulsesine",
+      "group": "voices",
+      "from": "src/waves.test.ts: set a periodic wave on the carrier, shared between notes",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"pitch\":\"c3\",\"soundType\":\"pulsesine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,4.07686487e-17,-0.21171844,1.89583761e-16,-0.0429297239,6.47709154e-17,-0.0177009795,-2.08989286e-16,-0.0105934823,-7.16987979e-17,-0.00594234653,3.49248625e-17,-0.0049402928,-3.63072203e-17,-0.00277656037,-3.49977073e-17,-0.00298495428,1.92899895e-16,-0.00148280268,-6.27566711e-17,-0.00208394439,2.4062512e-17,-0.000829896948,1.03134732e-17,-0.00159557094,-7.14895807e-18,-0.000454983994,3.57447904e-18,-0.00130145822,3.57447904e-18,-0.000219985726,-1.20278679e-17,-0.00111071276,2.74641963e-17,-0.0000630295544,-5.7408505e-17,-0.000980004435,-3.88483191e-17,0.00004697845,-3.27666225e-17,-0.000886542315,-3.65376132e-17,0.000127056119,-2.02542518e-17,-0.000817408552,-7.18283939e-18,0.000187154132,5.86824426e-18,-0.00076483679,2.92734587e-17,0.000233406565,-6.67190912e-17,-0.000723929552,8.59230222e-18,0.000269761949,1.20549729e-17,-0.000691474648,-6.27685295e-17,0.000298855215,1.97460321e-17,-0.000665294123,5.33291944e-18,0.000322499371,2.02678044e-17,-0.000643868872],"imag":[0,-2.21502504e-16,0.424412936,-5.5890622e-17,-0.169764772,5.29632761e-17,0.109134071,-2.28766658e-17,-0.0808396041,5.68664039e-17,0.0643037781,-2.35976603e-16,-0.0534211397,0,0.0457042865,-1.05926552e-16,-0.0399427712,7.54062611e-17,0.0354750156,-1.0966705e-16,-0.03190827,1.61004023e-17,0.028994428,-1.00776592e-16,-0.0265689604,-1.62088225e-17,0.0245184042,-5.05238212e-17,-0.0227619633,-1.25767452e-17,0.0212405194,-5.63243029e-17,-0.0199098196,4.87890978e-18,0.0187360775,-6.25042552e-17,-0.0176930446,3.25260652e-19,0.0167600177,-7.51352106e-17,-0.0159204546,6.11490025e-17,0.0151609676,-5.24753851e-17,-0.0144706154,6.71663246e-17,0.0138403606,1.9461429e-17,-0.0132626779,1.05167611e-16,0.0127312476,-8.49472402e-17,-0.0122407246,4.81927866e-17,0.0117865577,2.95445092e-17,-0.0113648446,1.60299291e-16,0.0109722251,-3.28513258e-17,-0.0106057869,4.73796349e-17,0.0102629913,2.52077005e-17,-0.00994162261],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "voices-wave-shared",
+      "group": "voices",
+      "from": "src/waves.test.ts: creates one wave per shape per context and reuses it",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"pitch\":\"c3\",\"soundType\":\"halfsine\"}",
+        "v1 @0.25 {\"pitch\":\"e3\",\"soundType\":\"halfsine\"}",
+        "v2 @0.5 {\"pitch\":\"g3\",\"soundType\":\"abssine\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":3,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0.25","lin 0.8 @0.26","lin 0 @0.36","lin 0 @0.41"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 164.813778 @0.25"]},"start":[0.25],"stop":[0.43],"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n0"]},
+          {"id":"n6","kind":"oscillator","fields":{"type":"custom","wave":"w1"},"params":{"frequency":["set 195.997718 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n5"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,5.88914744e-17,-0.212206721,2.61024039e-17,-0.0424414426,1.93061291e-17,-0.0181892607,-4.81460707e-17,-0.010105201,3.9304893e-17,-0.00643062778,2.38243088e-17,-0.00445201155,-3.37801802e-17,-0.00326484162,-3.88743331e-18,-0.00249667303,-2.08769129e-19,-0.00197108393,1.25012782e-17,-0.00159566314,-3.41986144e-17,-0.00131817826,2.6222259e-17,-0.00110728969,-4.05472232e-18,-0.000943265273,-7.14978029e-18,-0.000813176914,-4.24879874e-18,-0.000708266976,-1.41893652e-17,-0.000622431573,2.57966324e-18,-0.000551310775,-3.93889147e-17,-0.000491723127,1.48034079e-17,-0.000441302807,-2.04195043e-17,-0.000398261065,-3.03545672e-17,-0.000361225131,1.99183114e-19,-0.000329127331,3.6096642e-19,-0.000301127118,1.54926809e-17,-0.000276555511,1.27275419e-17,-0.000254874671,9.92035723e-17,-0.000235648287,2.29090897e-17,-0.000218519315,-3.49800102e-19,-0.000203193384,2.97523731e-17,-0.000189426035,-1.03819521e-17,-0.000177012844,-3.48678673e-18,-0.000165781865,1.94841194e-18,-0.000155587593],"imag":[0,0.5,3.57161104e-17,4.33776319e-16,-2.2554618e-17,-5.62334983e-17,8.94808087e-18,6.64155622e-17,-6.86848429e-18,-2.36537425e-18,1.90238637e-17,-1.10012044e-18,-9.75618173e-19,5.54741432e-17,4.74379148e-18,-3.07705828e-17,1.95247513e-17,2.64315969e-17,-1.07323376e-17,-5.71053069e-18,-7.37799777e-18,2.24154365e-17,-1.91145227e-18,-1.89816146e-17,1.07574772e-17,-8.73141414e-18,-8.80972499e-18,8.28307563e-18,-9.15100647e-18,6.24646432e-18,6.68937653e-19,3.84689939e-18,-2.00197561e-19,-9.28683615e-17,6.16589164e-17,4.85338761e-17,4.67297489e-19,-1.6848822e-17,-1.18450278e-18,-7.43778969e-18,6.19678055e-18,5.49453068e-18,2.28418316e-17,3.04402465e-18,3.51172581e-18,-1.04260491e-18,6.26803057e-18,-8.76483886e-18,4.49814861e-18,-1.157182e-17,-6.02180868e-19,-3.86904996e-17,3.20822993e-18,2.01374672e-17,4.27289741e-18,-4.00819961e-18,-1.88948434e-17,-4.04018966e-17,4.60334614e-18,1.1625686e-17,3.23170863e-17,1.55785241e-17,7.8288476e-18,-5.29128247e-18,-4.20948905e-18],"disableNormalization":false},
+          {"id":"w1","real":[0,4.81093538e-17,-0.424413443,-7.95363937e-18,-0.0848828852,-3.71274658e-17,-0.0363785215,1.56435339e-17,-0.0202104021,6.57448974e-17,-0.0128612556,3.73342477e-17,-0.0089040231,-2.19571057e-17,-0.00652968325,-1.52836507e-18,-0.00499334605,2.3511517e-17,-0.00394216785,-1.98357117e-17,-0.00319132628,-4.99095106e-17,-0.00263635651,2.96996221e-17,-0.00221457938,-3.74070925e-18,-0.00188653055,-2.81981503e-17,-0.00162635383,-2.10359574e-17,-0.00141653395,-1.8114329e-17,-0.00124486315,2.92734587e-18,-0.00110262155,-5.74107285e-17,-0.000983446254,-5.22640504e-18,-0.000882605615,-1.62947963e-18,-0.00079652213,-2.16807612e-17,-0.000722450262,1.16960427e-17,-0.000658254663,3.89943264e-17,-0.000602254237,-3.96909051e-18,-0.000553111022,1.41825079e-17,-0.000509749341,1.20683349e-16,-0.000471296575,-6.48304195e-17,-0.00043703863,1.38153191e-17,-0.000406386767,-7.84103693e-17,-0.00037885207,1.16165275e-17,-0.000354025688,-8.28292343e-18,-0.00033156373,9.87746296e-19,-0.000311175187],"imag":[0,-2.94710456e-17,1.8522264e-16,-3.17841834e-17,-7.16561418e-17,-8.06204967e-17,4.04022474e-17,5.86383307e-17,4.03833943e-17,2.80776996e-17,8.51467793e-18,-4.59953217e-17,5.96138678e-17,3.23942093e-17,7.58634736e-17,8.78683855e-18,-6.97153445e-18,1.06261779e-16,-3.84158558e-17,3.24805107e-17,-8.90776905e-18,2.20036296e-17,1.84339483e-17,-1.44032493e-17,-1.44628063e-17,2.97269522e-18,-1.91843301e-17,4.81499717e-17,-6.72997455e-18,-1.05292283e-17,4.34208941e-18,3.81277985e-17,-6.3640497e-18,-2.83699127e-18,-5.5918938e-17,4.39342027e-17,5.2222162e-18,-2.04427961e-17,3.62639951e-18,-1.40446334e-17,1.58613537e-19,-4.88384771e-17,2.18385145e-17,2.82479003e-17,4.34752895e-19,1.23571996e-16,6.62353957e-18,-1.12279114e-17,-4.28918956e-18,-2.25981177e-17,7.76264139e-17,-1.4643274e-17,-6.50238077e-18,5.32939101e-17,-4.64911636e-17,-2.6119505e-17,-2.42630735e-17,3.50142906e-17,3.98638454e-17,5.116214e-17,2.93549062e-17,2.81034944e-17,-1.10583857e-17,1.613746e-17,-3.60816183e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "voices-pitch-default",
+      "group": "voices",
+      "from": "src/engine.test.ts: fills a patch out with the documented defaults",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"soundType\":\"square\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 440 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-pitch-hz",
+      "group": "voices",
+      "from": "generated: a pitch given as a raw frequency",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"pitch\":261.63}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 261.63 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-white",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds a buffer source (not an oscillator) for noise sound types",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"release\":0.2,\"soundType\":\"white\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"bufferSource":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.31"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.33],"to":["n1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":13671,"sampleRate":44100,"channels":[{"rms":0.580002495,"peak":0.999998927,"head":[0.0461412594,-0.887243152,-0.586815715,0.802354276]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-pink",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds a buffer source (not an oscillator) for noise sound types",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"release\":0.2,\"soundType\":\"pink\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"bufferSource":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.31"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.33],"to":["n1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":13671,"sampleRate":44100,"channels":[{"rms":0.187681408,"peak":0.610091686,"head":[-0.148031399,-0.0628634021,0.000913184078,0.0221366454]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-brown",
+      "group": "voices",
+      "from": "src/engine.test.ts: builds a buffer source (not an oscillator) for noise sound types",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"release\":0.2,\"soundType\":\"brown\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"bufferSource":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.31"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.33],"to":["n1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":13671,"sampleRate":44100,"channels":[{"rms":0.192560506,"peak":0.682449281,"head":[-0.0260396041,-0.0192345325,-0.000714470167,0.00154534599]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-long-gate",
+      "group": "voices",
+      "from": "src/engine.test.ts: caps and loops the noise buffer for long gates instead of generating huge buffers",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"duration\":3,\"soundType\":\"white\",\"sustain\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"bufferSource":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0.4 @0.11","set 0.4 @3","lin 0 @3.05"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0","loop":true},"start":[0],"stop":[3.07],"to":["n1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":88200,"sampleRate":44100,"channels":[{"rms":0.578525498,"peak":0.999998927,"head":[0.0461412594,-0.887243152,-0.586815715,0.802354276]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-same-onset",
+      "group": "voices",
+      "from": "src/noise.test.ts: gives two same-onset white-noise voices different buffers, reproducibly",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"soundType\":\"white\"}",
+        "v1 @0 {\"soundType\":\"white\"}",
+        "v2 @0.5 {\"soundType\":\"brown\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"bufferSource":3,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n4","kind":"bufferSource","fields":{"buffer":"b1"},"start":[0],"stop":[0.18],"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n0"]},
+          {"id":"n6","kind":"bufferSource","fields":{"buffer":"b2"},"start":[0.5],"stop":[0.68],"to":["n5"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":7056,"sampleRate":44100,"channels":[{"rms":0.583729141,"peak":0.999998927,"head":[0.0461412594,-0.887243152,-0.586815715,0.802354276]}]},
+          {"id":"b1","kind":"audio","length":7056,"sampleRate":44100,"channels":[{"rms":0.576194446,"peak":0.999959767,"head":[-0.106192254,0.618538082,-0.90154314,-0.773669124]}]},
+          {"id":"b2","kind":"audio","length":7056,"sampleRate":44100,"channels":[{"rms":0.199092196,"peak":0.790368795,"head":[0.0495025925,0.0913584754,0.0517245457,0.00110986643]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-noise-ignores-pitch-curve",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: is ignored by noise voices",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"fmIndex\":3,\"pitch\":\"c3\",\"pitchEnvAmount\":7,\"slideTime\":0.1,\"soundType\":\"white\"}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"bufferSource":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"bufferSource","fields":{"buffer":"b0"},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":7056,"sampleRate":44100,"channels":[{"rms":0.583729141,"peak":0.999998927,"head":[0.0461412594,-0.887243152,-0.586815715,0.802354276]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-percussive",
+      "group": "voices",
+      "from": "src/engine.test.ts: schedules a percussive attack/decay/release gain envelope with no held plateau",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"pitch\":\"c3\",\"release\":0.05,\"sustain\":0.3}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0.24 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.18],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-gated",
+      "group": "voices",
+      "from": "src/engine.test.ts: holds the sustain level until the gate ends when duration is set",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-gate-sustain-zero",
+      "group": "voices",
+      "from": "src/engine.test.ts: skips gating entirely when sustain is 0 — a silent hold would only waste node lifetime",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0 @0.12","lin 0 @0.27"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.29],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-outlasts-gate",
+      "group": "voices",
+      "from": "src/engine.test.ts: stays percussive (no hold) when the envelope outlasts the gate",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.3,\"decay\":0.3,\"duration\":0.2,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.3","lin 0.3 @0.6","lin 0 @0.75"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.77],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-zero-attack",
+      "group": "voices",
+      "from": "generated: a zero attack",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","set 0.5 @0","lin 0.3 @0.1","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-zero-release",
+      "group": "voices",
+      "from": "generated: a zero release",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.42],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-all-zero",
+      "group": "voices",
+      "from": "generated: every envelope time zero",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0,\"decay\":0,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","set 0.5 @0","set 0.3 @0","set 0.3 @0.4"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.42],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-env-long",
+      "group": "voices",
+      "from": "generated: long attack, decay and release",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":2,\"decay\":3,\"duration\":8,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":5,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @2","lin 0.3 @5","set 0.3 @8","lin 0 @13"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[13.02],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-gain-zero",
+      "group": "voices",
+      "from": "generated: a gain level of zero",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0 @0.02","lin 0 @0.12","set 0 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-gain-over-unity",
+      "group": "voices",
+      "from": "generated: a gain level above full scale",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":1.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 1.5 @0.02","lin 0.9 @0.12","set 0.9 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-gain-velocity",
+      "group": "voices",
+      "from": "src/gate.test.ts: scales the carrier peak only, leaving the envelope shape alone",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6,\"velocity\":0.5}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.25 @0.02","lin 0.15 @0.12","set 0.15 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-start-negative",
+      "group": "voices",
+      "from": "src/engine.test.ts: clamps negative start times to the context origin",
+      "baseline": true,
+      "score": [
+        "v0 @-0.5 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-nudge",
+      "group": "voices",
+      "from": "src/engine.test.ts: offsets everything by nudgeTime relative to the shared start time",
+      "baseline": true,
+      "score": [
+        "v0 @0.5 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"nudgeTime\":0.125,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0.625","lin 0.5 @0.645","lin 0.3 @0.745","set 0.3 @1.025","lin 0 @1.175"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.625"]},"start":[0.625],"stop":[1.195],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-filter-lpf",
+      "group": "voices",
+      "from": "src/engine.test.ts: inserts a lowpass filter between source and gain, enveloped between lpf and lpf+lpenv",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"filterCutoff\":800,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sawtooth\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"filter":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n3"]},
+          {"id":"n3","kind":"filter","params":{"frequency":["set 800 @0","set 800 @0","set 800 @0","set 800 @0.4"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-filter-envelope",
+      "group": "voices",
+      "from": "src/engine.test.ts: inserts a lowpass filter between source and gain, enveloped between lpf and lpf+lpenv",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"filterAttack\":0.05,\"filterCutoff\":400,\"filterDecay\":0.2,\"filterEnvAmount\":2000,\"filterRelease\":0.3,\"filterSustain\":0.5,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sawtooth\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"filter":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.72],"to":["n3"]},
+          {"id":"n3","kind":"filter","params":{"frequency":["set 400 @0","lin 2400 @0.05","lin 1400 @0.25","set 1400 @0.4","lin 400 @0.7"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-filter-gated",
+      "group": "voices",
+      "from": "src/engine.test.ts: applies the same gate to the filter envelope",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"filterCutoff\":500,\"filterDecay\":0.1,\"filterEnvAmount\":1500,\"filterSustain\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"square\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"filter":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n3"]},
+          {"id":"n3","kind":"filter","params":{"frequency":["set 500 @0","set 2000 @0","lin 1100 @0.1","set 1100 @0.4"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-hpf",
+      "group": "voices",
+      "from": "src/engine.test.ts: inserts a highpass filter in series after the lowpass",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"filterCutoff\":2000,\"gainLevel\":0.5,\"hpfCutoff\":300,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sawtooth\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"filter":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n3"]},
+          {"id":"n3","kind":"filter","params":{"frequency":["set 2000 @0","set 2000 @0","set 2000 @0","set 2000 @0.4"]},"to":["n4"]},
+          {"id":"n4","kind":"filter","fields":{"type":"highpass"},"params":{"frequency":["set 300 @0"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-phaser",
+      "group": "voices",
+      "from": "src/engine.test.ts: inserts a 4-stage allpass phaser driven by one LFO through a shared depth gain",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"phaserRate\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sawtooth\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"filter":4,"total":9},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"sawtooth"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n5"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 0.5 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 600 @0"]},"to":["n5.frequency","n6.frequency","n7.frequency","n8.frequency"]},
+          {"id":"n5","kind":"filter","fields":{"type":"allpass"},"params":{"frequency":["set 1000 @0"]},"to":["n6"]},
+          {"id":"n6","kind":"filter","fields":{"type":"allpass"},"params":{"frequency":["set 1000 @0"]},"to":["n7"]},
+          {"id":"n7","kind":"filter","fields":{"type":"allpass"},"params":{"frequency":["set 1000 @0"]},"to":["n8"]},
+          {"id":"n8","kind":"filter","fields":{"type":"allpass"},"params":{"frequency":["set 1000 @0"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-slide",
+      "group": "voices",
+      "from": "src/engine.test.ts: glides from an octave above down to the target note when slideTime is set",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"slideTime\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 440 @0","exp 220 @0.15"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-penv-rise",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: starts below the note and rises to it",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"pitchDecay\":0.1,\"pitchEnvAmount\":-12,\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 110 @0","exp 220 @0.1"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-penv-fall-default-decay",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: starts above the note and falls to it, with a default decay of 0.1s",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"pitchEnvAmount\":7,\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 329.627557 @0","exp 220 @0.1"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-penv-attack-decay",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: sweeps up to the offset over the attack, then back down over the decay",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"pitchAttack\":0.05,\"pitchDecay\":0.2,\"pitchEnvAmount\":12,\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0","exp 440 @0.05","exp 220 @0.25"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-pitch-steps",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: jumps to each offset at the given frame rate and holds the last",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"pitchStepRate\":20,\"pitchSteps\":[12,7,3,0,-2],\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 440 @0","set 329.627557 @0.05","set 261.625565 @0.1","set 220 @0.15","set 195.997718 @0.2"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-pitch-steps-priority",
+      "group": "voices",
+      "from": "src/pitchCurve.test.ts: lets steps beat penv beat slide, and warns once",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"pitchEnvAmount\":12,\"pitchSteps\":[5,0],\"release\":0.15,\"slideTime\":0.2,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 293.664768 @0","set 220 @0.00714285714"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-wired",
+      "group": "voices",
+      "from": "src/fm.test.ts: wires modulator -> depth gain -> carrier frequency",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmIndex\":4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 880 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-harmonicity",
+      "group": "voices",
+      "from": "src/fm.test.ts: sets the modulator to harmonicity × pitch and the depth to index × modulator Hz",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmHarmonicity\":3.5,\"fmIndex\":2,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 770 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1540 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-wave-square",
+      "group": "voices",
+      "from": "src/fm.test.ts: defaults the harmonicity to 1 and the waveform to sine, and honours fmwave",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmIndex\":2,\"fmWave\":\"square\",\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 440 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-wave-shaped",
+      "group": "voices",
+      "from": "src/waves.test.ts: give the modulator a periodic wave while the carrier keeps its native type",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmIndex\":2,\"fmWave\":\"halfsine\",\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 440 @0"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,5.88914744e-17,-0.212206721,2.61024039e-17,-0.0424414426,1.93061291e-17,-0.0181892607,-4.81460707e-17,-0.010105201,3.9304893e-17,-0.00643062778,2.38243088e-17,-0.00445201155,-3.37801802e-17,-0.00326484162,-3.88743331e-18,-0.00249667303,-2.08769129e-19,-0.00197108393,1.25012782e-17,-0.00159566314,-3.41986144e-17,-0.00131817826,2.6222259e-17,-0.00110728969,-4.05472232e-18,-0.000943265273,-7.14978029e-18,-0.000813176914,-4.24879874e-18,-0.000708266976,-1.41893652e-17,-0.000622431573,2.57966324e-18,-0.000551310775,-3.93889147e-17,-0.000491723127,1.48034079e-17,-0.000441302807,-2.04195043e-17,-0.000398261065,-3.03545672e-17,-0.000361225131,1.99183114e-19,-0.000329127331,3.6096642e-19,-0.000301127118,1.54926809e-17,-0.000276555511,1.27275419e-17,-0.000254874671,9.92035723e-17,-0.000235648287,2.29090897e-17,-0.000218519315,-3.49800102e-19,-0.000203193384,2.97523731e-17,-0.000189426035,-1.03819521e-17,-0.000177012844,-3.48678673e-18,-0.000165781865,1.94841194e-18,-0.000155587593],"imag":[0,0.5,3.57161104e-17,4.33776319e-16,-2.2554618e-17,-5.62334983e-17,8.94808087e-18,6.64155622e-17,-6.86848429e-18,-2.36537425e-18,1.90238637e-17,-1.10012044e-18,-9.75618173e-19,5.54741432e-17,4.74379148e-18,-3.07705828e-17,1.95247513e-17,2.64315969e-17,-1.07323376e-17,-5.71053069e-18,-7.37799777e-18,2.24154365e-17,-1.91145227e-18,-1.89816146e-17,1.07574772e-17,-8.73141414e-18,-8.80972499e-18,8.28307563e-18,-9.15100647e-18,6.24646432e-18,6.68937653e-19,3.84689939e-18,-2.00197561e-19,-9.28683615e-17,6.16589164e-17,4.85338761e-17,4.67297489e-19,-1.6848822e-17,-1.18450278e-18,-7.43778969e-18,6.19678055e-18,5.49453068e-18,2.28418316e-17,3.04402465e-18,3.51172581e-18,-1.04260491e-18,6.26803057e-18,-8.76483886e-18,4.49814861e-18,-1.157182e-17,-6.02180868e-19,-3.86904996e-17,3.20822993e-18,2.01374672e-17,4.27289741e-18,-4.00819961e-18,-1.88948434e-17,-4.04018966e-17,4.60334614e-18,1.1625686e-17,3.23170863e-17,1.55785241e-17,7.8288476e-18,-5.29128247e-18,-4.20948905e-18],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "voices-fm-envelope",
+      "group": "voices",
+      "from": "src/fm.test.ts: routes depth -> envelope -> carrier frequency and shapes the envelope",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmAttack\":0.02,\"fmDecay\":0.2,\"fmIndex\":5,\"fmRelease\":0.1,\"fmSustain\":0.3,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1100 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","exp 1 @0.02","exp 0.3 @0.22","set 0.3 @0.4","exp 0.0001 @0.5"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-envelope-linear",
+      "group": "voices",
+      "from": "src/fm.test.ts: defaults to an exponential curve with a floor above silence",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmDecay\":0.2,\"fmEnvCurve\":\"lin\",\"fmIndex\":5,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1100 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0","set 1 @0","lin 0 @0.2"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-decay-only",
+      "group": "voices",
+      "from": "src/fm.test.ts: lets a bare fmdecay fall toward silence",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmDecay\":0.3,\"fmIndex\":5,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1100 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.0001 @0.3"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-gate-own-sustain",
+      "group": "voices",
+      "from": "src/fm.test.ts: gates the depth on its own sustain, independent of the amplitude sustain",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmDecay\":0.1,\"fmIndex\":3,\"fmSustain\":0.5,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0 @0.12","lin 0 @0.27"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.29],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.29],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 660 @0"]},"to":["n5"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.0001 @0","set 1 @0","exp 0.5 @0.1","set 0.5 @0.4"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-fm-slide",
+      "group": "voices",
+      "from": "src/fm.test.ts: scales slide automation at each stage (carrier x1, modulator x harmonicity, depth x both)",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"fmHarmonicity\":2,\"fmIndex\":2,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"slideTime\":0.1,\"soundType\":\"sine\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 440 @0","exp 220 @0.1"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 880 @0","exp 440 @0.1"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1760 @0","exp 880 @0.1"]},"to":["n2.frequency"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-cut-choke",
+      "group": "voices",
+      "from": "src/gate.test.ts: stops the previous voice in the group when the next one starts",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"c3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.2 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"e3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55","cancel @0.2","set 0.3 @0.2","target 0 @0.2 tau 0.001"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.57,0.205],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0.2","lin 0.5 @0.22","lin 0.3 @0.32","set 0.3 @0.6","lin 0 @0.75"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 164.813778 @0.2"]},"start":[0.2],"stop":[0.77],"to":["n3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-cut-other-groups",
+      "group": "voices",
+      "from": "src/gate.test.ts: leaves other groups and ungrouped voices alone",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"c3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.1 {\"attack\":0.02,\"cutGroup\":2,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"e3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v2 @0.2 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"g3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v3 @0.3 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"b3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"oscillator":4,"total":9},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55","cancel @0.3","set 0.3 @0.3","target 0 @0.3 tau 0.001"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 130.812783 @0"]},"start":[0],"stop":[0.57,0.305],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0.1","lin 0.5 @0.12","lin 0.3 @0.22","set 0.3 @0.5","lin 0 @0.65"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 164.813778 @0.1"]},"start":[0.1],"stop":[0.67],"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0 @0.2","lin 0.5 @0.22","lin 0.3 @0.32","set 0.3 @0.6","lin 0 @0.75"]},"to":["n0"]},
+          {"id":"n6","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 195.997718 @0.2"]},"start":[0.2],"stop":[0.77],"to":["n5"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @0.3","lin 0.5 @0.32","lin 0.3 @0.42","set 0.3 @0.7","lin 0 @0.85"]},"to":["n0"]},
+          {"id":"n8","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 246.941651 @0.3"]},"start":[0.3],"stop":[0.87],"to":["n7"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-cut-out-of-order",
+      "group": "voices",
+      "from": "src/gate.test.ts: chokes an earlier-booked voice at the onset of a later one that already holds the group",
+      "baseline": true,
+      "score": [
+        "v0 @0.5 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"c3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.1 {\"attack\":0.02,\"cutGroup\":1,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"e3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.5 @0.52","lin 0.3 @0.62","set 0.3 @0.9","lin 0 @1.05"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 130.812783 @0.5"]},"start":[0.5],"stop":[1.07],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @0.1","lin 0.5 @0.12","lin 0.3 @0.22","set 0.3 @0.5","lin 0 @0.65","cancel @0.5","set 0.3 @0.5","target 0 @0.5 tau 0.001"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 164.813778 @0.1"]},"start":[0.1],"stop":[0.67,0.505],"to":["n3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-room",
+      "group": "voices",
+      "from": "src/engine.test.ts: sends the placed voice to the default orbit (0) reverb bus, post-pan",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pan\":0.3,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.4,\"roomSize\":4,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"oscillator":1,"panner":1,"convolver":1,"delay":1,"total":11},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.3 @0"]},"to":["n0","n10"]},
+          {"id":"n4","kind":"gain","to":["n5"]},
+          {"id":"n5","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"delay","to":["n8","n9"]},
+          {"id":"n8","kind":"gain","to":["n0"]},
+          {"id":"n9","kind":"gain","to":["n7"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0.4 @0"]},"to":["n4"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":67620,"sampleRate":44100,"channels":[{"rms":0.155761353,"peak":0.98323518,"head":[-0.765812755,0.748845935,0.0734408572,0.955816269]},{"rms":0.154833232,"peak":0.986857295,"head":[0.466303259,-0.0650541186,-0.0115499645,0.505842328]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-delay",
+      "group": "voices",
+      "from": "src/engine.test.ts: sends to the delay bus as well when delayLevel is set, using delayTime/delayFeedback",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayFeedback\":0.5,\"delayLevel\":0.3,\"delayTime\":0.2,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"oscillator":1,"convolver":1,"delay":1,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","params":{"delayTime":["set 0.2 @0"]},"to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n5"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-room-and-delay",
+      "group": "voices",
+      "from": "src/engine.test.ts: sends to the delay bus as well when delayLevel is set, using delayTime/delayFeedback",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayFeedback\":0.4,\"delayLevel\":0.2,\"delayTime\":0.25,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":6,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":7,"oscillator":1,"convolver":1,"delay":1,"total":11},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9","n10"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","params":{"delayTime":["set 0.25 @0"]},"to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.4 @0"]},"to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n3"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n5"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":103880,"sampleRate":44100,"channels":[{"rms":0.154414278,"peak":0.988951385,"head":[-0.820534766,0.512698114,-0.61182791,0.168386281]},{"rms":0.156585192,"peak":0.993422151,"head":[-0.550637126,-0.700134575,0.486252993,0.401299655]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-orbit-buses",
+      "group": "voices",
+      "from": "src/engine.test.ts: routes different orbit numbers to different buses",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"orbit\":0,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":2,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.25 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"orbit\":1,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":5,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v2 @0.5 {\"attack\":0.02,\"decay\":0.1,\"delayLevel\":0.3,\"duration\":0.4,\"gainLevel\":0.5,\"orbit\":1,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":14,"oscillator":3,"convolver":2,"delay":2,"total":22},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n3"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.25","lin 0.5 @0.27","lin 0.3 @0.37","set 0.3 @0.65","lin 0 @0.8"]},"to":["n0","n18"]},
+          {"id":"n11","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.25"]},"start":[0.25],"stop":[0.82],"to":["n10"]},
+          {"id":"n12","kind":"gain","to":["n13"]},
+          {"id":"n13","kind":"convolver","heard":[["first","b1"]],"to":["n0"]},
+          {"id":"n14","kind":"gain","to":["n15"]},
+          {"id":"n15","kind":"delay","params":{"delayTime":["set 0.3 @0.5"]},"to":["n16","n17"]},
+          {"id":"n16","kind":"gain","to":["n0"]},
+          {"id":"n17","kind":"gain","params":{"gain":["set 0.35 @0.5"]},"to":["n15"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0.3 @0.25"]},"to":["n12"]},
+          {"id":"n19","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.5 @0.52","lin 0.3 @0.62","set 0.3 @0.9","lin 0 @1.05"]},"to":["n0","n21"]},
+          {"id":"n20","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.5"]},"start":[0.5],"stop":[1.07],"to":["n19"]},
+          {"id":"n21","kind":"gain","params":{"gain":["set 0.3 @0.5"]},"to":["n14"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":31360,"sampleRate":44100,"channels":[{"rms":0.155689971,"peak":0.992963731,"head":[0.225098699,0.683379233,0.0176943466,0.104489423]},{"rms":0.157482351,"peak":0.976297319,"head":[-0.1536441,-0.279752076,-0.330524594,0.799550593]}]},
+          {"id":"b1","kind":"audio","length":85750,"sampleRate":44100,"channels":[{"rms":0.15550085,"peak":0.983601153,"head":[-0.857646942,-0.876162469,0.4951002,-0.186244234]},{"rms":0.15502249,"peak":0.990056574,"head":[-0.47078383,0.259172052,-0.990056574,0.812788427]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-delay-changes-per-onset",
+      "group": "voices",
+      "from": "src/engine.test.ts: applies each voice's delay change at its own onset",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayFeedback\":0.2,\"delayLevel\":0.3,\"delayTime\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.5 {\"attack\":0.02,\"decay\":0.1,\"delayFeedback\":0.6,\"delayLevel\":0.3,\"delayTime\":0.3,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":8,"oscillator":2,"convolver":1,"delay":1,"total":13},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","params":{"delayTime":["set 0.1 @0","set 0.3 @0.5"]},"to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.2 @0","set 0.6 @0.5"]},"to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n5"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.5 @0.52","lin 0.3 @0.62","set 0.3 @0.9","lin 0 @1.05"]},"to":["n0","n12"]},
+          {"id":"n11","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.5"]},"start":[0.5],"stop":[1.07],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.3 @0.5"]},"to":["n5"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-room-last-size-wins",
+      "group": "voices",
+      "from": "src/effects.test.ts: regenerates when a later voice on the same orbit sets a different size",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":2,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0.25 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":2,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v2 @0.5 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":7,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":10,"oscillator":3,"convolver":1,"delay":1,"total":16},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","heard":[["first","b1"]],"to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n3"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.25","lin 0.5 @0.27","lin 0.3 @0.37","set 0.3 @0.65","lin 0 @0.8"]},"to":["n0","n12"]},
+          {"id":"n11","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.25"]},"start":[0.25],"stop":[0.82],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.3 @0.25"]},"to":["n3"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.5 @0.52","lin 0.3 @0.62","set 0.3 @0.9","lin 0 @1.05"]},"to":["n0","n15"]},
+          {"id":"n14","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0.5"]},"start":[0.5],"stop":[1.07],"to":["n13"]},
+          {"id":"n15","kind":"gain","params":{"gain":["set 0.3 @0.5"]},"to":["n3"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":31360,"sampleRate":44100,"channels":[{"rms":0.155689971,"peak":0.992963731,"head":[0.225098699,0.683379233,0.0176943466,0.104489423]},{"rms":0.157482351,"peak":0.976297319,"head":[-0.1536441,-0.279752076,-0.330524594,0.799550593]}]},
+          {"id":"b1","kind":"audio","length":122010,"sampleRate":44100,"channels":[{"rms":0.154784476,"peak":0.997213364,"head":[0.876107335,0.694344699,-0.799678862,0.145135596]},{"rms":0.154863624,"peak":0.980543613,"head":[-0.83156985,-0.150148228,0.393575579,0.861069739]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-room-tiny-size",
+      "group": "voices",
+      "from": "src/effects.test.ts: floors the impulse response length instead of going degenerate for a tiny or non-positive size",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"roomSize\":0,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"oscillator":1,"convolver":1,"delay":1,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"gain","to":["n4"]},
+          {"id":"n4","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n5","kind":"gain","to":["n6"]},
+          {"id":"n6","kind":"delay","to":["n7","n8"]},
+          {"id":"n7","kind":"gain","to":["n0"]},
+          {"id":"n8","kind":"gain","to":["n6"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n3"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":13230,"sampleRate":44100,"channels":[{"rms":0.156014385,"peak":0.982182384,"head":[0.352364123,-0.982182384,-0.676459372,0.716814637]},{"rms":0.156077093,"peak":0.961479187,"head":[0.204277888,0.159888774,-0.662213862,0.210265368]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-sends-level-zero",
+      "group": "voices",
+      "from": "src/engine.test.ts: skips the send entirely when the level is 0",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayLevel\":0,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-sends-placed",
+      "group": "voices",
+      "from": "src/engine.test.ts: sends the placed voice to the default orbit (0) reverb bus, post-pan",
+      "baseline": true,
+      "output": {"channels":4},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[1,0.5,0,0],\"decay\":0.1,\"delayLevel\":0.2,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 4,
+        "counts": {"destination":1,"gain":9,"oscillator":1,"merger":1,"convolver":1,"delay":1,"total":14},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0","n12","n13"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n3 out 0 in 1"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"convolver","heard":[["first","b0"]],"to":["n0"]},
+          {"id":"n8","kind":"gain","to":["n9"]},
+          {"id":"n9","kind":"delay","params":{"delayTime":["set 0.3 @0"]},"to":["n10","n11"]},
+          {"id":"n10","kind":"gain","to":["n0"]},
+          {"id":"n11","kind":"gain","params":{"gain":["set 0.35 @0"]},"to":["n9"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n6"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n8"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":49490,"sampleRate":44100,"channels":[{"rms":0.155158734,"peak":0.975742757,"head":[-0.519331098,-0.1701269,-0.428244472,0.288116783]},{"rms":0.154952807,"peak":0.985308886,"head":[-0.589772642,0.81913811,0.718032122,0.397718191]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-pan",
+      "group": "voices",
+      "from": "src/engine.test.ts: routes through a stereo panner when pan is set",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pan\":-0.6,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set -0.6 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-pan-mono-destination",
+      "group": "voices",
+      "from": "generated: a pan on a mono destination",
+      "baseline": true,
+      "output": {"channels":1},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pan\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 1,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"panner":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":1}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n3"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"panner","params":{"pan":["set 0.5 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-four",
+      "group": "voices",
+      "from": "src/engine.test.ts: routes channelGains through per-speaker gains into a merger on a multichannel destination",
+      "baseline": true,
+      "output": {"channels":4},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[1,0.5,0,0.25],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 4,
+        "counts": {"destination":1,"gain":4,"oscillator":1,"merger":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4","n5","n6"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n3 out 0 in 1"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0.25 @0"]},"to":["n3 out 0 in 3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-fold-stereo",
+      "group": "voices",
+      "from": "src/engine.test.ts: folds channelGains down to stereo when the destination cannot address them",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[0,0,1,0,0.5,0.5,0,0],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1.06066017 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1.06066017 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-fold-six",
+      "group": "voices",
+      "from": "src/engine.test.ts: folds 7.1 placement to 5.1 (not stereo) on a six-channel destination",
+      "baseline": true,
+      "output": {"channels":6},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[0.2,0.2,0.2,0.2,0.2,0.2,1,1],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 6,
+        "counts": {"destination":1,"gain":7,"oscillator":1,"merger":1,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":6,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4","n5","n6","n7","n8","n9"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n3 out 0 in 1"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n3 out 0 in 2"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n3 out 0 in 3"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.907106781 @0"]},"to":["n3 out 0 in 4"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0.907106781 @0"]},"to":["n3 out 0 in 5"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-unplaced-wide",
+      "group": "voices",
+      "from": "src/engine.test.ts: routes unplaced voices through a centred stereo merger on a widened destination",
+      "baseline": true,
+      "output": {"channels":6},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 6,
+        "counts": {"destination":1,"gain":3,"oscillator":1,"merger":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":6,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4","n5"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n3 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-empty",
+      "group": "voices",
+      "from": "src/engine.test.ts: treats empty channelGains as no placement at all",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":1,"oscillator":1,"total":3},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-channels-single",
+      "group": "voices",
+      "from": "src/engine.test.ts: pads single-entry channelGains to two so the merger cannot up-mix mono to both speakers",
+      "baseline": true,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[0.7],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":1,"merger":1,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n4"]},
+          {"id":"n2","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n1"]},
+          {"id":"n3","kind":"merger","to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0.7 @0"]},"to":["n3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-default",
+      "group": "voices",
+      "from": "src/masterBus.test.ts: connects gain -> limiter -> makeup compensation -> destination, creating nothing else",
+      "baseline": true,
+      "output": {"master":true},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-tuned-limiter",
+      "group": "voices",
+      "from": "src/masterBus.test.ts: takes a level, a custom output and tuned limiter settings",
+      "baseline": true,
+      "output": {"master":{"gain":0.5,"limiter":{"threshold":-6,"knee":3,"ratio":8,"attack":0.01,"release":0.25}}},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -6 @0"],"knee":["set 3 @0"],"ratio":["set 8 @0"],"attack":["set 0.01 @0"],"release":["set 0.25 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.695824955 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-no-limiter",
+      "group": "voices",
+      "from": "src/masterBus.test.ts: is gain only when the limiter is turned off",
+      "baseline": true,
+      "output": {"master":{"limiter":false,"gain":0.8}},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0.8 @0"]},"to":["n0"]},
+          {"id":"n2","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n1"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n2"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-surround",
+      "group": "voices",
+      "from": "src/masterBus.test.ts: skips the limiter above two channels so surround is not folded to stereo",
+      "baseline": true,
+      "output": {"master":true,"channels":4},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"channelGains\":[1,1,0,0],\"decay\":0.1,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 4,
+        "counts": {"destination":1,"gain":4,"oscillator":1,"merger":1,"total":7},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n0"]},
+          {"id":"n2","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n5","n6"]},
+          {"id":"n3","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n2"]},
+          {"id":"n4","kind":"merger","to":["n1"]},
+          {"id":"n5","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n4 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-orbit",
+      "group": "voices",
+      "from": "src/masterBus.test.ts: works as the output of a pattern, so voices reach the destination only through it",
+      "baseline": true,
+      "output": {"master":true},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayLevel\":0.2,\"duration\":0.4,\"gainLevel\":0.5,\"pitch\":\"a3\",\"release\":0.15,\"roomLevel\":0.3,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":9,"compressor":1,"oscillator":1,"convolver":1,"delay":1,"total":14},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.5 @0.02","lin 0.3 @0.12","set 0.3 @0.4","lin 0 @0.55"]},"to":["n1","n12","n13"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n6","kind":"gain","to":["n7"]},
+          {"id":"n7","kind":"convolver","heard":[["first","b0"]],"to":["n1"]},
+          {"id":"n8","kind":"gain","to":["n9"]},
+          {"id":"n9","kind":"delay","params":{"delayTime":["set 0.3 @0"]},"to":["n10","n11"]},
+          {"id":"n10","kind":"gain","to":["n1"]},
+          {"id":"n11","kind":"gain","params":{"gain":["set 0.35 @0"]},"to":["n9"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.3 @0"]},"to":["n6"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 0.2 @0"]},"to":["n8"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":49490,"sampleRate":44100,"channels":[{"rms":0.155158734,"peak":0.975742757,"head":[-0.519331098,-0.1701269,-0.428244472,0.288116783]},{"rms":0.154952807,"peak":0.985308886,"head":[-0.589772642,0.81913811,0.718032122,0.397718191]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "voices-master-two-loud-voices",
+      "group": "voices",
+      "from": "generated: two loud voices into the limiter",
+      "baseline": true,
+      "output": {"master":true},
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":1.5,\"pitch\":\"a3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}",
+        "v1 @0 {\"attack\":0.02,\"decay\":0.1,\"duration\":0.4,\"gainLevel\":1.5,\"pitch\":\"e3\",\"release\":0.15,\"soundType\":\"triangle\",\"sustain\":0.6}"
+      ],
+      "graph": {
+        "sampleRate": 44100,
+        "length": null,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"total":8},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 1.5 @0.02","lin 0.9 @0.12","set 0.9 @0.4","lin 0 @0.55"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.57],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0","lin 1.5 @0.02","lin 0.9 @0.12","set 0.9 @0.4","lin 0 @0.55"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 164.813778 @0"]},"start":[0],"stop":[0.57],"to":["n6"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    }
+  ]
+}
