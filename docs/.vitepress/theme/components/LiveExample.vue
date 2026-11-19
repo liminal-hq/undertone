@@ -10,11 +10,20 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
 import { runSnippet } from '../live/runSnippet';
+import { wrapFragment } from '../live/fragment';
+import type { ExampleKind } from '../live/fragment';
 import type { SnippetRun } from '../live/runSnippet';
 import { claimActive, releaseActive } from '../live/activeRun';
 import type { ActiveRun } from '../live/activeRun';
 
-const props = defineProps<{ code: string }>();
+// `live` runs the code as written; `play` and `mini` wrap a fragment first (see ../live/fragment.ts).
+const props = withDefaults(defineProps<{ code: string; kind?: ExampleKind }>(), { kind: 'live' });
+
+const labels: Record<ExampleKind, string> = {
+  live: 'Live example: edit the code, then press Play.',
+  play: 'Live pattern: edit it, then press Play. It loops until you press Stop.',
+  mini: 'Live mini-notation: edit the notes or sounds, then press Play. It loops until you press Stop.'
+};
 
 const hintId = `live-keys-${useId()}`;
 const mounted = ref(false);
@@ -55,8 +64,16 @@ function play(): void {
   stop();
   error.value = '';
   output.value = [];
+  let prepared: string;
+  try {
+    prepared = wrapFragment(source.value, props.kind);
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : String(caught);
+    status.value = 'There is nothing to play.';
+    return;
+  }
   claimActive(self);
-  const current = runSnippet(source.value, {
+  const current = runSnippet(prepared, {
     log: (line) => output.value.push(line)
   });
   run = current;
@@ -107,7 +124,7 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
   <div v-if="!mounted"><slot /></div>
   <div v-else class="live-example">
-    <p class="live-label">Live example: edit the code, then press Play.</p>
+    <p class="live-label">{{ labels[kind] }}</p>
     <textarea
       ref="area"
       v-model="source"

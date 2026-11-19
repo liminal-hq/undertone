@@ -6,13 +6,13 @@ title: Recipes
 
 Complete patterns to copy, run, and bend into your own. Each one works as written — the synth-only recipes need no assets at all. Two ground rules apply to all of them: the first `play()` or `loop()` in your app must happen inside a user gesture (click, tap, keypress — browser autoplay policy), and every `loop()` returns a handle whose `stop()` ends it.
 
-A code block marked `ts standalone` runs as written: it imports everything it uses, defines everything it refers to, and plays or renders what it builds. The test suite executes every such block against the library on a fake `AudioContext` (`src/docSnippets.test.ts`), on this page, the guides and the README, so a missing import or a pattern that is built but never played fails the build. A plain `ts` block is a fragment that depends on its surroundings, and says so.
+A code block marked `ts standalone` runs as written: it imports everything it uses, defines everything it refers to, and plays or renders what it builds. The test suite executes every such block against the library on a fake `AudioContext` (`src/docSnippets.test.ts`), on this page, the guides and the README, so a missing import or a pattern that is built but never played fails the build. A plain `ts` block is a fragment that depends on its surroundings, and says so. Most of the blocks on this page are `ts live`, the same promise with a **Play** button: they run the real library in your browser, and you can edit them first (see [live examples](/guide/getting-started#live-examples)). The ones left static need your own sample files, create their own `AudioContext`, or render offline instead of playing.
 
 ## A drum machine, no samples required
 
 Kick, snare, and hats synthesized from scratch: the kick is a low sine with a downward pitch `slide` (the classic thump), the snare is highpassed white noise over a short tone, and the hats are eighth-note white noise with a patterned gain for accents.
 
-```ts standalone
+```ts live
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 const kick = note('c1 ~ [~ c1] ~')
@@ -64,7 +64,7 @@ Undertone bundles no samples — see the [samples guide](/guide/samples) for reg
 
 Three slow layers on a 4-second cycle (`bpm: 60`): a chord progression voiced into real pitches, a filtered sawtooth drone with a slow phaser, and a sparse pentatonic shimmer echoing through a delay. The pad and drone share reverb on orbit 1; the shimmer gets its own delay bus on orbit 2 so the two effect characters don't fight (see [effects](/guide/effects) for why orbits exist).
 
-```ts standalone
+```ts live
 import { chord, n, note, stack } from '@liminal-hq/undertone';
 
 const pad = chord('<Am9 FM7 CM7 G6>')
@@ -114,7 +114,7 @@ The long attacks only work because `loop()` gates each envelope by its event's l
 
 One-shots want the opposite envelope: near-zero attack, short decay, `sustain: 0`. Build the patterns once at module scope, then call `.play()` whenever the game event fires — patterns are immutable, so one object serves unlimited plays. These four are adapted from the [playground](/playground)'s "Game SFX" examples:
 
-```ts standalone
+```ts live
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 // Menu click / toggle: a bright sine tick with a tiny noise transient.
@@ -194,7 +194,7 @@ Two one-shot habits worth building: `nudge(seconds)` is how you arpeggiate insid
 
 A sawtooth line where the movement comes from patterned parameters: the resting cutoff walks between values per cycle via a `<...>` alternation in `.lpf()`, a filter envelope snaps each note open, and `jux(rev)` plays the reversed line hard right against the original hard left.
 
-```ts standalone
+```ts live
 import { note, rev } from '@liminal-hq/undertone';
 
 const acid = note('a1 [a1 a2] c2 <e2 g1>')
@@ -221,7 +221,7 @@ Every numeric control takes a mini-notation string like that `.lpf()` — see [p
 
 `arrange()` plays each `[cycles, pattern]` entry for its span of whole cycles, then loops the whole thing. Build sections from shared parts, then lay them out — this reuses the drum machine from the first recipe:
 
-```ts standalone
+```ts live
 import { arrange, chord, n, note, sound, stack } from '@liminal-hq/undertone';
 
 // The drum machine from the first recipe, condensed.
@@ -275,7 +275,7 @@ You don't need FM to get most of the way to a rich, FM-flavoured sound. These fo
 
 In a two-operator FM voice, a quick-decaying modulator gives a bright attack that mellows as the note settles. A lowpass with a filter envelope does the same job: it opens at the attack and closes as the note sustains. Remember that `.lpenv()` is added on top of `.lpf()`, so the filter peaks at `lpf + lpenv`.
 
-```ts standalone
+```ts live
 import { note } from '@liminal-hq/undertone';
 
 const pluck = note('e4 g4 b4 a4')
@@ -299,7 +299,7 @@ pluck.loop({ bpm: 100 });
 
 Two voices on the same notes, with a different waveform, more sustain, a few milliseconds of `.nudge()` and opposite `.pan()` positions, sound much fuller than either alone. The tiny start offset reads as width rather than as an echo.
 
-```ts standalone
+```ts live
 import { note, stack } from '@liminal-hq/undertone';
 
 const melody = 'e5 g5 b5 a5';
@@ -316,7 +316,7 @@ lead.loop({ bpm: 110 });
 
 A note's gate (how long the key is held) and its release (how long it rings afterwards) are separate ideas. In a looped pattern each event is held for its own share of the cycle, then released, so a long `.release()` gives a short hit with a ringing body. For drums, use very short notes with a fast decay and a `.slide()`.
 
-```ts standalone
+```ts live
 import { note, stack } from '@liminal-hq/undertone';
 
 // Short notes, long ring-out: a mallet-like tone.
@@ -338,7 +338,7 @@ stack(mallet, tom).loop({ bpm: 100 });
 
 Keep one instrument definition and put the expression in the gain pattern, so a ghost note and an accent are the same instrument at different levels rather than two different sounds.
 
-```ts standalone
+```ts live
 import { note } from '@liminal-hq/undertone';
 
 const groove = note('e2 e2 g2 e2').sound('sawtooth').lpf(700).sustain(0.2).gain('.6 .25 .5 .25');
@@ -376,7 +376,7 @@ Four ways to move a sound across the stereo field, from the smallest change to t
 
 A pad with a slow autopan: an LFO swings the pan, smoothly, at any rate. `.autopan(0.25)` is one sweep every four seconds (it is in hertz, so it does not follow `bpm`).
 
-```ts standalone
+```ts live
 import { chord } from '@liminal-hq/undertone';
 
 chord('<Dm9 Gm9 Bbmaj7 A7>')
@@ -395,7 +395,7 @@ chord('<Dm9 Gm9 Bbmaj7 A7>')
 
 A lead that flies in from the left: `.panslide(from, seconds)` is `.slide()` for the pan. Each note starts at `from` and moves to its own `.pan()`.
 
-```ts standalone
+```ts live
 import { note } from '@liminal-hq/undertone';
 
 note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop({ bpm: 100 });
@@ -403,7 +403,7 @@ note('e4 g4 b4 a4 g4 e4 d4 ~').sound('square').pan(0.4).panslide(-1, 0.12).loop(
 
 A melody with a path inside each note: `{ time, pan }` points ramp, and an array of pans steps frame by frame.
 
-```ts standalone
+```ts live
 import { cat, note } from '@liminal-hq/undertone';
 
 // A sweep from hard right to hard left over half a second, every note.
@@ -427,7 +427,7 @@ cat(sweep, flutter).loop({ bpm: 100 });
 
 Hats can drift across the field one hit at a time with a signal, instead of a path inside each note. `.pan(sine2.slow(4))` reads a bipolar sine at each hat's onset, so the field is swept once every four cycles (use `sine2`, not `sine`: pan runs -1 to 1):
 
-```ts standalone
+```ts live
 import { sine2, sound } from '@liminal-hq/undertone';
 
 sound('white*8').attack(0.001).decay(0.03).gain(0.4).pan(sine2.slow(4)).loop({ bpm: 120 });
@@ -435,7 +435,7 @@ sound('white*8').attack(0.001).decay(0.03).gain(0.4).pan(sine2.slow(4)).loop({ b
 
 Finally the pan law, which says how loud a voice is in the middle. `.panlaw(db)` gives each side's level at the centre, from -6 to 0 dB; the default is -3, the stereo panner's equal-power law. To hear the difference, play the same notes under each law, one per cycle:
 
-```ts standalone
+```ts live
 import { cat, note } from '@liminal-hq/undertone';
 
 const crossing = note('c3 e3 g3 e3 c4 e4 g4 e4')
@@ -453,7 +453,7 @@ A signal is a value that changes through time (see the [Signals guide](/guide/si
 
 A bass with a filter that wanders on its own: `perlin` is smooth random motion, and `.range()` puts it between two frequencies.
 
-```ts standalone
+```ts live
 import { note, perlin } from '@liminal-hq/undertone';
 
 note('c2*8')
@@ -467,7 +467,7 @@ note('c2*8')
 
 Random accents that come out the same every time you play: a random signal is a pure function of its seed and the time, so `.seed(7)` gives the same sequence of velocities on every run and in every render. The sequence does not repeat from one cycle to the next, because each cycle reads its own stretch of time. To repeat one cycle's accents, wrap the signal in `arrange([1, …])`, which makes it live through its first cycle again every cycle. Change the seed for another take.
 
-```ts standalone
+```ts live
 import { arrange, rand, sound } from '@liminal-hq/undertone';
 
 sound('white*16')
@@ -481,7 +481,7 @@ sound('white*16')
 
 An autopan whose LFO carries on from where the last note left it, as if one LFO ran under the whole loop. `.autopanphase()` takes a pattern, and the phase a note needs at its onset is `hz × seconds` modulo 1, which is `saw` sped up to turn that many times per pattern cycle. A cycle is four beats, so at 80 BPM it lasts three seconds, and a 0.5 Hz LFO turns 1.5 times in it. `saw.fast(1.5)` then reads 0 at the first chord, 0.5 at the second, 0 at the third, and so on (the saw's own value is the fraction of a turn, and `autopanphase()` is a fraction of a turn too). Change the rate or the tempo and the phase signal follows.
 
-```ts standalone
+```ts live
 import { chord, saw } from '@liminal-hq/undertone';
 
 const bpm = 80;

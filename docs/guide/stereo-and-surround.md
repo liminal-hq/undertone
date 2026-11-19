@@ -23,7 +23,7 @@ note('c4(5,8)').sound('triangle').surround(135).loop({ ctx, bpm: 120 });
 
 A surround placement is eight channel gains in a fixed order, exported as `CHANNEL_ORDER` (`FL`, `FR`, `C`, `LFE`, `SL`, `SR`, `RL`, `RR`), and `MAX_CHANNELS` is how many there are (8). `surroundGains(angleDegrees)` returns the gains `.surround()` uses for an angle: 0 is front-centre, positive angles run clockwise, and the LFE channel is always silent. `foldToStereo(gains)` returns the `[left, right]` pair those gains fold down to on a stereo destination, which is what plain hardware plays.
 
-```ts standalone
+```ts live
 import {
   CHANNEL_ORDER,
   MAX_CHANNELS,

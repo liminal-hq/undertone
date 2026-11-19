@@ -27,7 +27,7 @@ flowchart LR
 
 **The lowpass and its envelope.** `.lpf(hz)` sets the resting cutoff; `.lpenv(hz)` adds a filter envelope that sweeps between `lpf` and `lpf + lpenv`, shaped by its own ADSR (`.lpa`/`.lpd`/`.lps`/`.lpr`, same semantics as the amplitude envelope). A slow filter attack over a sawtooth is the classic rising-sweep — this is the [playground](/playground)'s "Power On" example almost verbatim:
 
-```ts
+```ts play
 note('a3')
   .sound('sawtooth')
   .attack(0.02)
@@ -52,7 +52,7 @@ A filter envelope is also a good stand-in for the decaying modulator of an FM vo
 
 **Why orbits exist.** A convolver-based reverb is one of the most expensive nodes Web Audio has, and undertone creates a fresh node graph per onset — a busy song can run 15–20 simultaneous voices, and a convolver per voice would be unshippable. So reverb and delay live on shared per-orbit buses: every voice sending to the same orbit number (default 0) feeds one convolver and one delay line. The cost is shared state — `roomsize`, `delaytime`, and `delayfeedback` are last-writer-wins across every voice on the orbit. When two layers need genuinely different rooms (a tight slap on the drums, a wash on the pad), give each its own `.orbit(n)`:
 
-```ts
+```ts play
 const pad = chord('<Dm9 Gm9>')
   .voicing()
   .sound('sine')

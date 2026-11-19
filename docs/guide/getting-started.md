@@ -19,7 +19,7 @@ Once you hold onto this, the rest of the API is just vocabulary: mini-notation d
 
 ## Your first sound
 
-```ts
+```ts live
 import { note } from '@liminal-hq/undertone';
 
 // Call this from a click handler or other user gesture:
@@ -38,7 +38,7 @@ The one environmental catch: when you don't pass your own context, undertone laz
 
 For a richer one-shot, layer voices with `stack()` — this is the [playground](/playground)'s "Place Building" example, a low thunk plus a high sparkle plus a noise click, all starting together:
 
-```ts
+```ts live
 import { note, sound, stack } from '@liminal-hq/undertone';
 
 const placeBuilding = stack(
@@ -61,7 +61,13 @@ placeBuilding.play();
 
 ## Live examples
 
-Code blocks with a **Play** button on the guide's pages are live: they run the real library in your browser. Press Play to hear one (the first press is also what lets the browser start audio), Stop to silence it, and edit the code in the box before pressing Play again to hear your change. Reset puts the original code back. Only one example sounds at a time, so starting another stops the first, and leaving the page stops it too. Errors your edit causes appear under the example. Keep the `import` line as it is, or import any other name the library exports. Without scripts the same blocks show as ordinary highlighted code.
+Code blocks with a **Play** button on the guide's pages are live: they run the real library in your browser. Press Play to hear one (the first press is also what lets the browser start audio), Stop to silence it, and edit the code in the box before pressing Play again to hear your change. Reset puts the original code back. Only one example sounds at a time, so starting another stops the first, and leaving the page stops it too. Errors your edit causes appear under the example. Without scripts the same blocks show as ordinary highlighted code. There are three kinds:
+
+- **Live (`ts live`)** is a complete program: it imports what it uses and plays what it builds, and runs exactly as written. Keep the `import` line as it is, or import any other name the library exports.
+- **Play (`ts play`)** is a fragment, such as `note('c3 e3 g3').sound('triangle')` or a few lines that build a pattern. The box shows the code as written; when you press Play the player adds the `import` line for every library name the code uses, evaluates the last expression (or the name its last `const` declares) and **loops** it until you press Stop. A fragment that already calls `.play()` or `.loop()` is left to do that. If the last line is not a pattern, the example says what it got instead.
+- **Mini (`mini`)** is a bare mini-notation string, such as `c3 e3 g3` or `white*4 ~ pink`. It plays as pitches through `note()` when it parses as them and otherwise as the built-in sounds through `sound()`, looping until you press Stop; see [Mini-notation](/guide/mini-notation#try-a-string-on-its-own).
+
+Everything that needs files, hardware or an offline render stays a plain code block: it has no Play button.
 
 ## Looking inside a pattern
 

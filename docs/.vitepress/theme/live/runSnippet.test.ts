@@ -5,6 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as lib from '../../../../src/index';
+import { cycleSecondsFor } from '../../../../src/scheduler';
 import { FakeAudioContext } from '../../../../src/test-utils/fakeAudioContext';
 import { prepareSnippet } from './sourceEngine';
 import { runSnippet, setSnippetEngine } from './runSnippet';
@@ -103,6 +104,23 @@ describe('runSnippet', () => {
     await expect(
       runSnippet("import { nope } from '@liminal-hq/undertone';", { log: () => undefined }).done
     ).rejects.toThrow(/nope/);
+  });
+
+  it('does not let one snippet setcpm() change the tempo of the next', async () => {
+    const first = runSnippet("import { setcpm } from '@liminal-hq/undertone';\nsetcpm(90);", {
+      log: () => undefined
+    });
+    await first.done;
+    expect(cycleSecondsFor(undefined)).toBeCloseTo(60 / 90);
+    first.stop();
+    const lines: string[] = [];
+    const second = runSnippet(
+      "import { note } from '@liminal-hq/undertone';\nconst p = note('c4').loop();\np.stop();\nconsole.log('ok');",
+      { log: (line) => lines.push(line) }
+    );
+    await second.done;
+    expect(lines).toEqual(['ok']);
+    expect(cycleSecondsFor(undefined)).toBe(2); // the plain 120 bpm default, not setcpm(90)
   });
 
   it('runs on whichever engine was set', async () => {

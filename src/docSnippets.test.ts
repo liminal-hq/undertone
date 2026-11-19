@@ -12,12 +12,15 @@ import { clearSamples } from './samples';
 import { resetTempo } from './scheduler';
 import { resetWarnings } from './warn';
 import { runSnippet } from '../docs/.vitepress/theme/live/runSnippet';
+import { wrapFragment } from '../docs/.vitepress/theme/live/fragment';
 import { EXAMPLE_GROUPS } from '../docs/.vitepress/theme/playground/examples';
 import { FakeAudioContext, FakeOfflineAudioContext } from './test-utils/fakeAudioContext';
 
 // A fenced block whose info string is `ts standalone` or `ts live` promises that it runs as written: it imports
 // everything it uses, defines everything it refers to, and plays or renders what it builds. This
-// file executes each one. A plain `ts` block is a fragment and is not run. See the top of recipes.md.
+// file executes each one. A `ts play` block or a `mini` block is a fragment the site's player wraps (it adds the
+// imports and loops the last expression); this file wraps and plays each of those through the player's own
+// runner. A plain `ts` block is a fragment that is not run. See the top of recipes.md.
 
 const ROOT = join(__dirname, '..');
 const PAGES = [
@@ -35,6 +38,13 @@ interface Snippet {
   live: boolean;
 }
 
+interface Fragment {
+  page: string;
+  line: number;
+  code: string;
+  kind: 'play' | 'mini';
+}
+
 function standaloneSnippets(page: string): Snippet[] {
   const lines = readFileSync(join(ROOT, page), 'utf8').split('\n');
   const found: Snippet[] = [];
@@ -49,6 +59,27 @@ function standaloneSnippets(page: string): Snippet[] {
         line: start,
         code: lines.slice(start, end).join('\n'),
         live: fence[1] === 'live'
+      });
+      i = end;
+    }
+  }
+  return found;
+}
+
+function fragmentSnippets(page: string): Fragment[] {
+  const lines = readFileSync(join(ROOT, page), 'utf8').split('\n');
+  const found: Fragment[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const fence = /^```(ts play|mini)\s*$/.exec(lines[i]);
+    if (fence) {
+      const start = i + 1;
+      let end = start;
+      while (end < lines.length && !lines[end].startsWith('```')) end++;
+      found.push({
+        page,
+        line: start,
+        code: lines.slice(start, end).join('\n'),
+        kind: fence[1] === 'mini' ? 'mini' : 'play'
       });
       i = end;
     }
@@ -176,6 +207,33 @@ describe('standalone documentation snippets', () => {
           expect(startedVoices(), 'a loop kept sounding after stop()').toBe(afterStop);
         });
       }
+    }
+  }
+});
+
+describe('fragment documentation snippets', () => {
+  it('finds the ts play and mini blocks on the mini-notation page', () => {
+    expect(
+      fragmentSnippets(join('docs', 'guide', 'mini-notation.md')).length
+    ).toBeGreaterThanOrEqual(7);
+  });
+
+  for (const page of PAGES) {
+    for (const fragment of fragmentSnippets(page)) {
+      it(`${fragment.page}:${fragment.line} (${fragment.kind}) wraps, plays something and stops`, async () => {
+        const before = startedVoices();
+        const run = runSnippet(wrapFragment(fragment.code, fragment.kind), {
+          log: () => undefined
+        });
+        await run.done;
+        runClocks(6);
+        expect(startedVoices() - before, 'the player played nothing').toBeGreaterThan(0);
+        expect(console.warn, 'it makes the library warn').not.toHaveBeenCalled();
+        run.stop();
+        const afterStop = startedVoices();
+        runClocks(6);
+        expect(startedVoices(), 'a loop kept sounding after stop()').toBe(afterStop);
+      });
     }
   }
 });

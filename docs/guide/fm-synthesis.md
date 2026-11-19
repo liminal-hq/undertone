@@ -6,7 +6,7 @@ title: FM Synthesis
 
 A plain oscillator has a fixed timbre. **FM (frequency modulation)** gives it a second oscillator, the _modulator_, that wobbles the first one's frequency at audio rate. The result is a spectrum of extra overtones whose strength you control with a single number, and it is how a small two-oscillator voice can sound like a bell, a reed, a bass or a metallic hit. Undertone's FM controls follow Strudel's `fm`/`fmh` family, with the same two ideas behind them as Tone.js's `FMSynth`: a **harmonicity** (the modulator's frequency as a multiple of the note's) and a **modulation index** (how hard it pushes).
 
-```ts
+```ts live
 import { note } from '@liminal-hq/undertone';
 
 // A glassy bell: an inharmonic ratio, a strong index, and a long ring-out.
@@ -31,7 +31,7 @@ The index is _relative_ to the modulator's frequency. Because of that, a bass no
 
 By default the index is constant for the whole note. Set any of the four `fm` envelope stages and the depth follows its own attack, decay, sustain and release, the same shape as the amplitude envelope but applied to the modulation:
 
-```ts
+```ts play
 // A pluck: bright at the start, then mellowing to a soft tone.
 note('a2 ~ a2 e2')
   .sound('sine')
@@ -50,7 +50,7 @@ A decay on its own falls toward silence, as in Strudel; add `.fmsustain()` to se
 
 `.slide()`, `.penv()` and `.pitchsteps()` shape the note's pitch over time, and the modulator follows exactly, keeping its ratio and its depth in step. A laser zap or a rising sweep with an FM edge is a single chain:
 
-```ts
+```ts play
 note('a3').fm(3).fmh(2).penv(-12).pdecay(0.25).decay(0.3).play();
 ```
 
@@ -62,7 +62,7 @@ Three more waveforms are cut from a sine, and they work both as a voice's sound 
 - `abssine`: both halves of the sine flipped positive. It sounds an octave up and buzzier, because the shape repeats twice per cycle.
 - `pulsesine`: a short pulse of sine at the start of each half-cycle. Thin and nasal, and like `abssine` it repeats twice per cycle, so it also sounds an octave up.
 
-```ts
+```ts play
 note('c3 e3 g3 e3').sound('abssine').fm(1.5).fmh(2).fmwave('halfsine').loop();
 ```
 
