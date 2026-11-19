@@ -96,7 +96,7 @@ An event-level `Synth` trait for other backends (OPL chips, MIDI) is the lab's c
 flowchart LR
 	App["app code: note('c4 e4').gain(sine).every(2, p => p.rev()).loop()"]
 	subgraph Bridge["@liminal-hq/undertone (packages/undertone)"]
-		Wr["Pattern wrappers holding handles\n(freed by FinalizationRegistry)"]
+		Wr["Pattern wrappers holding handles\n(freed by FinalizationRegistry,\nor at once by free() / Symbol.dispose)"]
 		Da["VoiceParams, ScoreEvent, options:\nplain objects"]
 		WA["Web Audio backend: replays Graph operations\non the caller's AudioContextLike (default)"]
 		WK["worklet backend (opt-in)"]
