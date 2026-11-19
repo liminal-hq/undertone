@@ -35,10 +35,27 @@ const NAMED_MAPS: Record<string, (arg: number) => (value: number) => number> = {
   floor: () => (value) => Math.floor(value)
 };
 
-/** The leaf rules `mini` takes: what each word of a mini-notation string becomes. */
-const LEAF_RULES: Record<string, (word: string) => unknown> = {
-  word: (word) => word,
-  number: (word) => Number(word)
+/**
+ * The leaf rules `mini` takes: what each word of a mini-notation string becomes.
+ * - `word` keeps the word, and `number` is `Number(word)`.
+ * - `pitch` is the leaf of `note()`: `{ pitch }` with a Hz number (digits only) or the note name, validated eagerly.
+ * - `drum` is the leaf of `s()`: `{ soundType }` for one of the synth sound types, `{ sampleName }` for any other word.
+ */
+const LEAF_RULES: Record<string, (ref: Reference) => (word: string) => unknown> = {
+  word: () => (word) => word,
+  number: () => (word) => Number(word),
+  pitch: (ref) => (word) => {
+    if (/^\d+(\.\d+)?$/.test(word)) {
+      const hz = Number(word);
+      ref.lib.noteToFrequency(hz);
+      return { pitch: hz };
+    }
+    ref.lib.noteToFrequency(word);
+    return { pitch: word };
+  },
+  drum: (ref) => (word) =>
+    ref.lib.s(word).query({ begin: new ref.lib.Fraction(0), end: new ref.lib.Fraction(1) })[0]
+      ?.value
 };
 
 /** Methods that run side effects or leave the data model, so a program may not name them. */
@@ -78,9 +95,9 @@ function construct(ref: Reference, step: Step): AnyPattern {
   const value = lib[name];
   if (name === 'mini') {
     const [source, rule] = raw;
-    const leaf = LEAF_RULES[String(rule)];
-    if (leaf === undefined) throw new Error(`Unknown leaf rule "${String(rule)}"`);
-    return ref.lib.mini(String(source), leaf) as AnyPattern;
+    const make = LEAF_RULES[String(rule)];
+    if (make === undefined) throw new Error(`Unknown leaf rule "${String(rule)}"`);
+    return ref.lib.mini(String(source), make(ref)) as AnyPattern;
   }
   if (name === 'pure') return ref.lib.pure(raw[0]) as AnyPattern;
   if (value instanceof ref.lib.Pattern) return value as AnyPattern;
