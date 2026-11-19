@@ -26,6 +26,7 @@
 extern crate alloc;
 
 pub mod graph;
+pub mod master;
 pub mod math;
 pub mod noise;
 pub mod pan;
