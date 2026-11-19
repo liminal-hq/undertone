@@ -7,8 +7,13 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+# Use the pure-Rust `libm` crate for the engine's maths instead of the platform C library.
+libm = ["dep:libm"]
+
 [dependencies]
 undertone-pattern = { path = "../undertone-pattern", version = "0.0.0" }
+libm = { version = "0.2.16", optional = true }
 
 [lints]
 workspace = true
