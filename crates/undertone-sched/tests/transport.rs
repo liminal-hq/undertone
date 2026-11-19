@@ -1069,3 +1069,193 @@ mod clock_jumps {
 		assert!(transport.tick(&mut engine).is_ok());
 	}
 }
+
+/// Extreme numbers at every public entry: each is an error or a harmless call, never a panic.
+mod extremes {
+	use super::*;
+	use undertone_sched::{BookOptions, book_cycles, book_window, window_edge};
+
+	fn huge_fractions() -> Vec<Fraction> {
+		vec![
+			Fraction::from_int(i128::MAX),
+			Fraction::from_int(-i128::MAX),
+			Fraction::new(i128::MAX, 3),
+			Fraction::new(1, i128::MAX),
+			Fraction::new(i128::MAX - 1, i128::MAX),
+			Fraction::from_int(1_000_000_000_000),
+		]
+	}
+
+	#[test]
+	fn play_from_a_huge_cycle_is_an_error() {
+		for from in huge_fractions() {
+			let mut rig = Rig::new();
+			let options = PlayOptions {
+				from,
+				..PlayOptions::default()
+			};
+			let result = rig
+				.transport
+				.play(&mut rig.engine, &plain(note("c3")), &options);
+			assert!(result.is_err(), "from {from:?} gave {result:?}");
+		}
+	}
+
+	#[test]
+	fn seek_to_a_huge_cycle_is_an_error_and_leaves_the_loop_alone() {
+		for from in huge_fractions() {
+			let mut rig = Rig::new();
+			let handle = rig
+				.transport
+				.play_loop(&mut rig.engine, &plain(note("c3")), &looping(240.0))
+				.unwrap();
+			let before = rig.transport.scheduled_until(handle);
+			assert!(
+				rig.transport
+					.seek(&mut rig.engine, handle, from, None)
+					.is_err()
+			);
+			assert_eq!(rig.transport.scheduled_until(handle), before);
+			assert!(rig.transport.is_running(handle));
+		}
+	}
+
+	#[test]
+	fn times_that_are_not_finite_are_errors() {
+		for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+			let mut rig = Rig::new();
+			let options = PlayOptions {
+				when: Some(bad),
+				..PlayOptions::default()
+			};
+			assert!(
+				rig.transport
+					.play(&mut rig.engine, &plain(note("c3")), &options)
+					.is_err(),
+				"when {bad}"
+			);
+			let handle = rig
+				.transport
+				.play_loop(&mut rig.engine, &plain(note("c3")), &looping(240.0))
+				.unwrap();
+			assert!(
+				rig.transport
+					.seek(&mut rig.engine, handle, Fraction::from_int(0), Some(bad))
+					.is_err(),
+				"seek when {bad}"
+			);
+			assert!(rig.transport.is_running(handle));
+			// A fade that is not a number is a plain stop, not a failure.
+			rig.transport
+				.stop_loop(
+					&mut rig.engine,
+					handle,
+					&LoopStop {
+						voices: LoopVoices::Cut,
+						fade: Some(bad),
+					},
+				)
+				.unwrap();
+		}
+	}
+
+	#[test]
+	fn extreme_tempos_are_errors_or_play_without_panicking() {
+		for bpm in [1e-300, 1e-320, f64::MAX, f64::MIN_POSITIVE, 1e300] {
+			let mut rig = Rig::new();
+			let _ = rig.transport.play(
+				&mut rig.engine,
+				&plain(note("c3 e3")),
+				&PlayOptions {
+					bpm: Some(bpm),
+					..PlayOptions::default()
+				},
+			);
+			let _ = rig
+				.transport
+				.play_loop(&mut rig.engine, &plain(note("c3 e3")), &looping(bpm));
+			rig.advance_to(1.0);
+			let _ = rig.transport.tick(&mut rig.engine);
+			let _ = book_window(
+				&mut rig.engine,
+				&plain(note("c3")),
+				0.0,
+				1.0,
+				&BookOptions {
+					bpm: Some(bpm),
+					..BookOptions::default()
+				},
+			);
+		}
+	}
+
+	#[test]
+	fn extreme_scheduler_options_do_not_panic() {
+		for value in [1e300, f64::MAX, 1e-300] {
+			let clock = ManualClock::new(48_000.0);
+			let options = SchedulerOptions {
+				look_ahead: value,
+				start_latency: value,
+				max_catch_up_seconds: value,
+				tick_interval: value,
+			};
+			let mut engine =
+				Engine::new(LogGraph::new(48_000.0, 2), OutputSetup::default()).unwrap();
+			let mut transport = Transport::new(clock.clone(), options).unwrap();
+			let _ = transport.play_loop(&mut engine, &plain(note("c3")), &looping(240.0));
+			clock.set(10.0);
+			let _ = transport.tick(&mut engine);
+		}
+	}
+
+	#[test]
+	fn a_window_edge_needs_a_positive_finite_cycle_length() {
+		for cycle in [f64::INFINITY, -1.0, 0.0, -0.0, f64::NAN, f64::NEG_INFINITY] {
+			assert!(
+				window_edge(1.0, cycle).is_err(),
+				"cycle length {cycle} was accepted"
+			);
+		}
+		assert!(window_edge(1.0, 2.0).is_ok());
+	}
+
+	#[test]
+	fn book_cycles_needs_a_positive_finite_cycle_length_and_start() {
+		let mut rig = Rig::new();
+		let pattern = plain(note("c3"));
+		let (begin, end) = (Fraction::from_int(0), Fraction::from_int(1));
+		for cycle in [f64::INFINITY, -1.0, 0.0, f64::NAN] {
+			assert!(
+				book_cycles(
+					&mut rig.engine,
+					&pattern,
+					begin,
+					end,
+					0.0,
+					cycle,
+					true,
+					None
+				)
+				.is_err(),
+				"cycle length {cycle}"
+			);
+		}
+		for start in [f64::INFINITY, f64::NAN] {
+			assert!(
+				book_cycles(
+					&mut rig.engine,
+					&pattern,
+					begin,
+					end,
+					start,
+					1.0,
+					true,
+					None
+				)
+				.is_err(),
+				"start {start}"
+			);
+		}
+		assert_eq!(rig.engine.voice_count(), 0);
+	}
+}
