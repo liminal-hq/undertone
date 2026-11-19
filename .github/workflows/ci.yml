@@ -295,7 +295,7 @@ jobs:
       - name: Add the wasm32 target
         run: rustup target add wasm32-unknown-unknown
       - name: Build for wasm32
-        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine
+        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine -p undertone-sched
       - name: Write summary
         if: always()
         run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
