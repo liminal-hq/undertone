@@ -61,6 +61,7 @@ use crate::graph::{Graph, NodeId};
 use crate::master::{MasterBusOptions, ceiling_top};
 use crate::math::{js_max, js_min, js_pow};
 use crate::params::resolve_params;
+use crate::samples::Samples;
 use crate::window::{
 	PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window, last_room_sizes,
 	sort_booking_order,
@@ -485,7 +486,8 @@ impl RenderPlan {
 	/// renders up to that time in `pause`; a recording graph sets its clock there.
 	///
 	/// A voice that fails to book fails the render with its message, and later voices are not booked. The graph
-	/// keeps what was made before the failure. A sample voice is skipped (RF-21 brings samples).
+	/// keeps what was made before the failure. The engine has no samples, so a sample voice is skipped; use
+	/// [`RenderPlan::book_pattern_with_samples`] to render a pattern that plays registered recordings.
 	///
 	/// # Errors
 	///
@@ -495,9 +497,28 @@ impl RenderPlan {
 		&self,
 		graph: G,
 		pattern: &Pattern<ControlMap>,
+		pause: impl FnMut(&mut G, f64) -> Result<()>,
+	) -> Result<Engine<G>> {
+		self.book_pattern_with_samples(graph, Samples::default(), pattern, pause)
+	}
+
+	/// As [`RenderPlan::book_pattern`], with the registered recordings sample voices play (the reference's
+	/// `renderToBuffer` preloads the samples the pattern names on the render's context; here the host has
+	/// already decoded them into `samples`). A voice that names a sample that is not registered is skipped and
+	/// gives the engine's once-only warning ([`Engine::warnings`]).
+	///
+	/// # Errors
+	///
+	/// As [`RenderPlan::book_pattern`].
+	pub fn book_pattern_with_samples<G: Graph>(
+		&self,
+		graph: G,
+		samples: Samples,
+		pattern: &Pattern<ControlMap>,
 		mut pause: impl FnMut(&mut G, f64) -> Result<()>,
 	) -> Result<Engine<G>> {
 		let mut engine = Engine::new(graph, self.output_setup())?;
+		*engine.samples_mut() = samples;
 		let voices = self.collect_voices(pattern)?;
 		let Some(window) = self.booking_window else {
 			for voice in &voices {
