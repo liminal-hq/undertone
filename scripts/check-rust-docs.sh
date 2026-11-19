@@ -6,9 +6,10 @@
 #   scripts/check-rust-docs.sh                 every check, over docs/guide/rust-*.md
 #   scripts/check-rust-docs.sh --names FILE... only the inline names, over the given files (used by scripts/check-rust-docs.test.sh)
 #   scripts/check-rust-docs.sh --audio FILE... only the RustAudio check, over the given files (used by scripts/check-rust-docs.test.sh)
+#   scripts/check-rust-docs.sh --site-bar      only the site bar check, over the rustdoc directory (used by scripts/check-rust-docs.test.sh)
 #
 # The rustdoc directory is $RUSTDOC_DIR, default docs/public/rust (where CI downloads the rustdoc artifact, the contents of target/doc).
-# Locally, build it with `cargo doc --no-deps --workspace` and run `RUSTDOC_DIR=target/doc scripts/check-rust-docs.sh`. When the directory
+# Locally, build it with `scripts/build-rust-docs.sh` and run `RUSTDOC_DIR=target/doc scripts/check-rust-docs.sh`. When the directory
 # is absent, CI (the `CI` variable is set) fails, and a local run skips the rustdoc checks with a loud notice and checks the rest.
 #
 # Source-level checks (no rustdoc needed):
@@ -27,7 +28,9 @@
 #      re-export is an element with id `reexport.Name` in the module's index.html, followed through its link (or, for `pub use crate as
 #      alias;`, to the crate's directory). A glob re-export (`pub use prelude::*;`) is searched too. A segment after an item page must be one
 #      of that page's anchors (a method, an associated constant, a variant, or a field);
-#   6. the rustdoc index the site's nav links to (undertone/index.html) exists.
+#   6. the rustdoc index the site's nav links to (undertone/index.html) exists;
+#   7. every rustdoc page sampled (each crate's index, one item page, one source page, and help.html) holds the site bar, an element with
+#      the attribute data-site-bar, which scripts/build-rust-docs.sh adds with --html-before-content. A build without its flags fails here.
 # A failure names the page and the anchor or file it looked for.
 #
 # It does not type-check prose, check what a method takes or returns, or read the code blocks, which are the example files that
@@ -186,6 +189,29 @@ check_audio() {
   done
 }
 
+# check_site_bar: the sampled pages of the rustdoc directory each hold the site bar marker.
+check_site_bar() {
+  local -a sample=()
+  local f
+  for f in "$rd"/*/index.html "$rd/help.html"; do [ -f "$f" ] && sample+=("$f"); done
+  f=$(find "$rd" \( -path "$rd/static.files" -o -path "$rd/trait.impl" -o -path "$rd/type.impl" -o -path "$rd/src" \) -prune -o -name 'struct.*.html' -print | sort | sed -n 1p)
+  [ -n "$f" ] && sample+=("$f")
+  f=$(find "$rd/src" -name '*.html' 2>/dev/null | sort | sed -n 1p)
+  [ -n "$f" ] && sample+=("$f")
+  if [ "${#sample[@]}" -eq 0 ]; then note "no rustdoc pages to sample under $rd"; return; fi
+  for f in "${sample[@]}"; do
+    grep -q 'data-site-bar' "$f" || note "$f: no data-site-bar (the Undertone site bar): build the docs with scripts/build-rust-docs.sh, which passes --html-before-content"
+  done
+  [ "$fail" -eq 0 ] && echo "check-rust-docs: ${#sample[@]} rustdoc pages sampled, each has the site bar"
+  return 0
+}
+
+if [ "${1:-}" = "--site-bar" ]; then
+  [ -d "$rd" ] || { echo "check-rust-docs: no rustdoc at $rd (set RUSTDOC_DIR)" >&2; exit 2; }
+  check_site_bar
+  exit "$fail"
+fi
+
 if [ "${1:-}" = "--audio" ]; then
   shift
   check_audio "$@"
@@ -224,6 +250,7 @@ done
 
 if [ -f "$rd/undertone/index.html" ]; then
   check_names "${pages[@]}"
+  check_site_bar
 elif [ -d "$rd" ]; then
   note "$rd exists but has no undertone/index.html"
 elif [ -n "${CI:-}" ]; then
@@ -233,7 +260,7 @@ else
     echo "check-rust-docs: ============================================================"
     echo "check-rust-docs: SKIPPED the rustdoc checks (no rustdoc at $rd)."
     echo "check-rust-docs: Page names (Type::method, undertone::path) were NOT checked."
-    echo "check-rust-docs: Run 'cargo doc --no-deps --workspace' and then"
+    echo "check-rust-docs: Run 'scripts/build-rust-docs.sh' and then"
     echo "check-rust-docs:   RUSTDOC_DIR=target/doc scripts/check-rust-docs.sh"
     echo "check-rust-docs: ============================================================"
   } >&2
