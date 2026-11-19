@@ -137,6 +137,20 @@ jobs:
         if: always()
         run: echo "## Conformance corpus" >> "${GITHUB_STEP_SUMMARY}"
 
+  test-classes:
+    name: Test classification
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check every test is classified
+        run: bun run test-classes:check
+      - name: Write summary
+        if: always()
+        run: echo "## Test classification" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-fmt:
     name: Rust format
     runs-on: ubuntu-24.04

@@ -17,6 +17,7 @@ other_checks = true
 "Docs (build + typecheck)" = "bun run typecheck:docs && bun run docs:build"
 "API report" = "bun run api:check"
 "Conformance corpus" = "bun run conformance:check"
+"Test classification" = "bun run test-classes:check"
 "Rust format" = "cargo fmt --all -- --check"
 "Rust Clippy" = "cargo clippy --workspace --all-targets --locked -- -D warnings"
 "Rust docs (doc tests + cargo doc)" = "cargo test --doc --workspace --locked"
