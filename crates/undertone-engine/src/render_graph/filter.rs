@@ -95,7 +95,8 @@ pub(crate) struct Biquad {
 	pub(crate) kind: FilterType,
 	/// Per channel: the last two inputs and the last two outputs.
 	state: Vec<[f64; 4]>,
-	last: Option<(f64, f64, Coefficients)>,
+	/// The type, frequency, and `Q` the coefficients were worked out for.
+	last: Option<(FilterType, f64, f64, Coefficients)>,
 }
 
 impl Biquad {
@@ -139,10 +140,10 @@ impl Biquad {
 				(frequency[i], q[i])
 			};
 			let [b0, b1, b2, a1, a2] = match self.last {
-				Some((f, k, c)) if f == hertz && k == quality => c,
+				Some((t, f, k, c)) if t == self.kind && f == hertz && k == quality => c,
 				_ => {
 					let c = coefficients(self.kind, hertz, quality, nyquist);
-					self.last = Some((hertz, quality, c));
+					self.last = Some((self.kind, hertz, quality, c));
 					c
 				}
 			};
