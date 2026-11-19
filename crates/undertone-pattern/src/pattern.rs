@@ -223,6 +223,52 @@ fn section_at<T>(sections: &[(i128, Pattern<T>)], cycle: i128) -> (&Pattern<T>, 
 	unreachable!("local is below the total, so a section holds it")
 }
 
+/// Calls `f` with each piece of `span` that lies within one cycle, in order (the allocation-free form of [`Span::split_into_cycles`]).
+fn for_each_cycle(span: Span, mut f: impl FnMut(Span)) {
+	let mut begin = span.begin;
+	while begin < span.end {
+		let end = begin.next_sam().min(span.end);
+		f(Span::new(begin, end));
+		begin = end;
+	}
+}
+
+/// Applies `f` to every time of the haps in `haps`, in place.
+fn retime<T>(haps: &mut [Hap<T>], f: impl Fn(Fraction) -> Fraction) {
+	for hap in haps {
+		hap.whole = hap.whole.map(|w| w.map(&f));
+		hap.part = hap.part.map(&f);
+	}
+}
+
+/// Queries `pattern` over `span` as if it were `offset` cycles earlier, and appends the haps moved back to their place.
+fn query_shifted<T: Datum>(
+	pattern: &Pattern<T>,
+	span: Span,
+	offset: Fraction,
+	out: &mut Vec<Hap<T>>,
+) {
+	if offset == Fraction::from_int(0) {
+		pattern.query_into(span, out);
+		return;
+	}
+	let start = out.len();
+	pattern.query_into(span.map(|t| t - offset), out);
+	retime(&mut out[start..], |t| t + offset);
+}
+
+/// Keeps the haps from `start` on for which `keep` returns true (it may also change them), preserving order.
+fn keep_tail<T>(out: &mut Vec<Hap<T>>, start: usize, mut keep: impl FnMut(&mut Hap<T>) -> bool) {
+	let mut write = start;
+	for read in start..out.len() {
+		if keep(&mut out[read]) {
+			out.swap(write, read);
+			write += 1;
+		}
+	}
+	out.truncate(write);
+}
+
 /// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
 fn read_at<T: Datum>(source: &Pattern<T>, structure: &Pattern<bool>, span: Span) -> Vec<Hap<T>> {
 	structure
@@ -269,7 +315,25 @@ impl<T: Datum> Pattern<T> {
 	/// assert_eq!(haps[1].whole.unwrap().end, Fraction::from_int(2));
 	/// ```
 	pub fn query(&self, span: Span) -> Vec<Hap<T>> {
-		self.node.query(span)
+		let mut out = Vec::new();
+		self.node.query_into(span, &mut out);
+		out
+	}
+
+	/// Appends every hap overlapping `span` to `out`, in the order [`Pattern::query`] returns them: the form for a caller that queries many times and reuses one vector (clear it between queries).
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span};
+	/// let mut haps = Vec::new();
+	/// let p = pure(1.0);
+	/// for cycle in 0..3 {
+	///     haps.clear();
+	///     p.query_into(Span::new(Fraction::from_int(cycle), Fraction::from_int(cycle + 1)), &mut haps);
+	///     assert_eq!(haps.len(), 1);
+	/// }
+	/// ```
+	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
+		self.node.query_into(span, out);
 	}
 
 	/// The pattern's value at the instant `t`: the sampler's when there is one, otherwise the value of the first hap over `[t, next cycle)` whose part covers `t` (`None` in a rest).
@@ -575,168 +639,171 @@ impl<T: Datum> Node<T> {
 
 	/// The haps overlapping `span`.
 	pub fn query(&self, span: Span) -> Vec<Hap<T>> {
+		let mut out = Vec::new();
+		self.query_into(span, &mut out);
+		out
+	}
+
+	/// Appends the haps overlapping `span` to `out`, in the order [`Node::query`] returns them.
+	///
+	/// This is the query itself: a node asks its children to append straight into the same vector and then rewrites the new tail in place (shifting or mirroring time, changing values, dropping haps), so a query allocates only the output, not one list per node and cycle.
+	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
 		match self {
-			Node::Silence => Vec::new(),
-			Node::Pure(value) => span
-				.split_into_cycles()
-				.into_iter()
-				.map(|part| Hap {
-					whole: Some(Span::new(part.begin.sam(), part.begin.next_sam())),
-					part,
-					value: value.clone(),
-				})
-				.collect(),
-			Node::Stack(children) => children
-				.iter()
-				.flat_map(|child| child.query(span))
-				.collect(),
-			Node::Cat(children) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let (index, offset) = cat_choice(cycle_span.begin.floor(), children.len());
-					let shifted = cycle_span.map(|t| t - offset);
-					children[index]
-						.query(shifted)
-						.into_iter()
-						.map(move |hap| hap.map_time(|t| t + offset))
-						.collect::<Vec<_>>()
-				})
-				.collect(),
-			Node::Compress { begin, end, child } => {
-				let width = *end - *begin;
-				span.split_into_cycles()
-					.into_iter()
-					.flat_map(|cycle_span| {
-						let cycle = cycle_span.begin.sam();
-						let window = Span::new(cycle + *begin, cycle + *end);
-						let Some(clipped) = cycle_span.intersect(&window) else {
-							return Vec::new();
-						};
-						let to_inner = |t: Fraction| cycle + (t - window.begin) / width;
-						let to_outer = |t: Fraction| window.begin + (t - cycle) * width;
-						child
-							.query(clipped.map(to_inner))
-							.into_iter()
-							.map(|hap| hap.map_time(to_outer))
-							.collect()
-					})
-					.collect()
+			Node::Silence => {}
+			Node::Pure(value) => {
+				for_each_cycle(span, |part| {
+					let sam = part.begin.sam();
+					out.push(Hap {
+						whole: Some(Span::new(sam, sam + Fraction::from_int(1))),
+						part,
+						value: value.clone(),
+					});
+				});
 			}
-			Node::Fast { factor, child } => child
-				.query(span.map(|t| t * *factor))
-				.into_iter()
-				.map(|hap| hap.map_time(|t| t / *factor))
-				.collect(),
-			Node::Slow { factor, child } => child
-				.query(span.map(|t| t / *factor))
-				.into_iter()
-				.map(|hap| hap.map_time(|t| t * *factor))
-				.collect(),
-			Node::Rev(child) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
+			Node::Stack(children) => {
+				for child in children {
+					child.query_into(span, out);
+				}
+			}
+			Node::Cat(children) => for_each_cycle(span, |cycle_span| {
+				let (index, offset) = cat_choice(cycle_span.begin.floor(), children.len());
+				query_shifted(&children[index], cycle_span, offset, out);
+			}),
+			Node::Compress { begin, end, child } => {
+				// Both are needed only for a clipped query or an event inside the child's cycle, so they are worked out on demand.
+				let width = || *end - *begin;
+				let one = Fraction::from_int(1);
+				let whole_cycle = *begin == Fraction::from_int(0) && *end == one;
+				for_each_cycle(span, |cycle_span| {
 					let cycle = cycle_span.begin.sam();
-					// Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t).
-					let mirror = |t: Fraction| cycle + (cycle + Fraction::from_int(1) - t);
-					let reflect = |s: Span| Span::new(mirror(s.end), mirror(s.begin));
-					child
-						.query(reflect(cycle_span))
-						.into_iter()
-						.map(|hap| Hap {
-							whole: hap.whole.map(reflect),
-							part: reflect(hap.part),
-							value: hap.value,
-						})
-						.collect::<Vec<_>>()
-				})
-				.collect(),
+					let window = Span::new(cycle + *begin, cycle + *end);
+					let Some(clipped) = cycle_span.intersect(&window) else {
+						return;
+					};
+					if whole_cycle {
+						child.query_into(clipped, out);
+						return;
+					}
+					// A query that covers the whole window asks for the child's whole cycle.
+					let inner = if clipped == window {
+						Span::new(cycle, cycle + one)
+					} else {
+						{
+							let inverse = one / width();
+							clipped.map(|t| cycle + (t - window.begin) * inverse)
+						}
+					};
+					let start = out.len();
+					child.query_into(inner, out);
+					// The ends of the child's cycle (what `pure` and most leaves return) map to the ends of the window without arithmetic.
+					let next_cycle = cycle + one;
+					retime(&mut out[start..], |t| {
+						if t == cycle {
+							window.begin
+						} else if t == next_cycle {
+							window.end
+						} else {
+							window.begin + (t - cycle) * width()
+						}
+					});
+				});
+			}
+			Node::Fast { factor, child } => {
+				let start = out.len();
+				child.query_into(span.map(|t| t * *factor), out);
+				let inverse = Fraction::from_int(1) / *factor;
+				retime(&mut out[start..], |t| t * inverse);
+			}
+			Node::Slow { factor, child } => {
+				let start = out.len();
+				child.query_into(span.map(|t| t / *factor), out);
+				retime(&mut out[start..], |t| t * *factor);
+			}
+			Node::Rev(child) => for_each_cycle(span, |cycle_span| {
+				// Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t).
+				let axis = cycle_span.begin.sam() * Fraction::from_int(2) + Fraction::from_int(1);
+				let reflect = |s: Span| Span::new(axis - s.end, axis - s.begin);
+				let start = out.len();
+				child.query_into(reflect(cycle_span), out);
+				for hap in &mut out[start..] {
+					hap.whole = hap.whole.map(reflect);
+					hap.part = reflect(hap.part);
+				}
+			}),
 			Node::Every {
 				n,
 				base,
 				transformed,
-			} => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let pick = if cycle_span.begin.floor().rem_euclid(*n) == 0 {
-						transformed
-					} else {
-						base
-					};
-					pick.query(cycle_span)
-				})
-				.collect(),
-			Node::Arrange(sections) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
-					pattern
-						.query(cycle_span.map(|t| t - offset))
-						.into_iter()
-						.map(move |hap| hap.map_time(|t| t + offset))
-						.collect::<Vec<_>>()
-				})
-				.collect(),
+			} => for_each_cycle(span, |cycle_span| {
+				let pick = if cycle_span.begin.floor().rem_euclid(*n) == 0 {
+					transformed
+				} else {
+					base
+				};
+				pick.query_into(cycle_span, out);
+			}),
+			Node::Arrange(sections) => for_each_cycle(span, |cycle_span| {
+				let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
+				query_shifted(pattern, cycle_span, offset, out);
+			}),
 			Node::WithControl {
 				child,
 				control,
 				input,
-			} => query_with_control(child, *control, input, span),
+			} => out.extend(query_with_control(child, *control, input, span)),
 			Node::Signal(signal) => {
 				if span.begin < span.end {
-					alloc::vec![Hap {
+					out.push(Hap {
 						whole: None,
 						part: span,
 						value: signal.at(span.begin),
-					}]
-				} else {
-					Vec::new()
+					});
 				}
 			}
 			Node::Sample { source, structure }
 			| Node::Segment {
 				source, structure, ..
-			} => read_at(source, structure, span),
-			Node::Map { child, f } => child
-				.query(span)
-				.into_iter()
-				.map(|hap| {
-					let value = hap.value.apply(f);
-					hap.with_value(value)
-				})
-				.collect(),
-			Node::Arith { left, op, right } => left
-				.query(span)
-				.into_iter()
-				.filter_map(|hap| {
-					let other = right.sample_at(hap.onset())?;
-					let value = match (hap.value.as_number(), other.as_number()) {
+			} => out.extend(read_at(source, structure, span)),
+			Node::Map { child, f } => {
+				let start = out.len();
+				child.query_into(span, out);
+				for hap in &mut out[start..] {
+					hap.value = hap.value.apply(f);
+				}
+			}
+			Node::Arith { left, op, right } => {
+				let start = out.len();
+				left.query_into(span, out);
+				keep_tail(out, start, |hap| {
+					let Some(other) = right.sample_at(hap.onset()) else {
+						return false;
+					};
+					hap.value = match (hap.value.as_number(), other.as_number()) {
 						(Some(a), Some(b)) => T::from_number(op.apply(a, b)),
 						_ => T::from_number(f64::NAN),
 					};
-					Some(hap.with_value(value))
-				})
-				.collect(),
-			Node::Degrees(child) => child
-				.query(span)
-				.into_iter()
-				.filter_map(|hap| {
-					let n = hap.value.as_number().filter(|n| n.is_finite())?;
-					Some(hap.with_value(T::from_degree(crate::math::floor(n))))
-				})
-				.collect(),
-			Node::Foreign { child, f } => child
-				.query(span)
-				.into_iter()
-				.map(|hap| {
-					let value = f.call(&hap.value);
-					hap.with_value(value)
-				})
-				.collect(),
-			Node::Custom(custom) => custom.query(span),
+					true
+				});
+			}
+			Node::Degrees(child) => {
+				let start = out.len();
+				child.query_into(span, out);
+				keep_tail(out, start, |hap| {
+					let Some(n) = hap.value.as_number().filter(|n| n.is_finite()) else {
+						return false;
+					};
+					hap.value = T::from_degree(crate::math::floor(n));
+					true
+				});
+			}
+			Node::Foreign { child, f } => {
+				let start = out.len();
+				child.query_into(span, out);
+				for hap in &mut out[start..] {
+					hap.value = f.call(&hap.value);
+				}
+			}
+			Node::Custom(custom) => out.extend(custom.query(span)),
 		}
 	}
 
