@@ -420,7 +420,12 @@ fn summarise(samples: &[f32]) -> ChannelSummary {
 	for sample in samples {
 		let v = f64::from(*sample);
 		sum += v * v;
-		peak = peak.max(v.abs());
+		// `Math.max` propagates a NaN; `f64::max` would ignore it.
+		peak = if peak.is_nan() || v.is_nan() {
+			f64::NAN
+		} else {
+			peak.max(v.abs())
+		};
 	}
 	ChannelSummary {
 		rms: if samples.is_empty() {
@@ -1020,7 +1025,10 @@ mod tests {
 		let source = graph.create_node(NodeKind::BufferSource);
 		graph.set_buffer(source, Some(buffer));
 		let record = graph.finish(None);
-		for summary in [&record.buffers[0].channels[0], &record.buffers[1].channels[0]] {
+		for summary in [
+			&record.buffers[0].channels[0],
+			&record.buffers[1].channels[0],
+		] {
 			assert!(summary.peak.is_nan() && summary.rms.is_nan());
 		}
 		assert!(record.to_json("").contains(r#""peak":{"$num":"NaN"}"#));
