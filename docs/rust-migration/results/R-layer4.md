@@ -1,112 +1,102 @@
-# R-layer4: the Rust renderer against Chromium 149 (layer 4 measured)
+# R-layer4: the Rust renderer against Chromium 149 (layer 4 measured and enforced)
 
 RF-20 step 5. Every figure here comes from `crates/undertone-engine/tests/layer4.rs` run against `conformance/cases/4/renders.json`. **Nothing was listened to.** The browser summaries were recorded by hand in headless Chromium and are summaries only (RMS, peak, octave-band RMS, RMS per 100 ms window); the definitions are in `conformance/README.md` (layer 4) and `conformance/recorder/renderSummary.ts`.
 
-- **Browser:** Chrome for Testing 149.0.7827.55, headless, Linux (`~/.cache/ms-playwright/chromium-1228`), driven by `playwright-core` 1.65.1; 17 cases of 1.8 to 4 s at 44.1 and 48 kHz, stereo.
-- **Determinism:** two runs on the same machine wrote files that differ in 6 of 17 cases (the pan-law, limiter, and mix cases), by at most a relative 5.6e-8 in a single value (a band of 5e-4 amplitude): float noise, far below any tolerance. The other 11 cases are byte-identical. Across browser versions or machines no claim is made.
-- **Difference:** Rust minus browser, in decibels (`20 log10(rust / browser)`), so positive means louder in Rust. RMS and peak are the worst of the two channels; band and window are the worst compared value (band index 0 to 7, window index in 100 ms steps in brackets). A band or window is compared only when one of the two is at least 1e-4 (-80 dBFS). `X` marks a figure outside the proposed tolerance for that case (limiter off: RMS 0.01, peak 0.02, band 0.1, window 0.05; limiter on: RMS 0.05, peak 0.1, and the band and window figures are compared against the same 0.1 and 0.05 for information, the proposal gives none).
+- **Browser:** Chrome for Testing 149.0.7827.55, headless, Linux (`~/.cache/ms-playwright/chromium-1228`), driven by `playwright-core` 1.65.1; 20 cases of 1.8 to 4 s at 32768, 48000, and 49152 Hz, stereo.
+- **Decision (D-32):** option 1 below. The proposed tolerances are kept and enforced, the cases are recorded so that Chromium's two quirks do not apply, and two clearly labelled cases keep the quirks on record against a wider guard.
+- **Determinism:** two runs on the same machine wrote files that differ in 6 of 20 cases (the pan-law, limiter-off, limiter-on, ceiling, and mix cases), by at most a relative 1.5e-7 in a single value (a band of tiny amplitude): float noise, about 1e-6 dB. The other 14 cases are byte-identical. Across browser versions or machines no claim is made.
+- **Difference:** Rust minus browser, in decibels (`20 log10(rust / browser)`), so positive means louder in Rust. RMS and peak are the worst of the two channels; band and window are the worst compared value (band index 0 to 7, window index in 100 ms steps in brackets). A band or window is compared only when one of the two is at least 1e-4 (-80 dBFS). `X` marks a figure outside what the case is held to: the proposed tolerances (limiter off: RMS 0.01, peak 0.02, band 0.1, window 0.05; limiter on: RMS 0.05, peak 0.1, with the band and window figures of the limiter-off row), or for a quirk case its guard.
 
-## What the first run found, and the two renderer fixes
+## What was decided and why the cases changed
 
-Before any change, the first run gave the table below. Two renderer differences explained most of it, and both were measured against the browser directly (not assumed) before being fixed, each in its own commit:
+The first measurements (below) found two Chromium quirks that no renderer following the specification would copy, and the person chose to keep the proposed tolerances and re-record the cases to avoid them, rather than widen the tolerances to cover them (which would not have caught a real 1 dB error in a peak).
 
-1. **Built-in oscillators were not normalised.** Chromium scales a square or sawtooth to 0.848 of the ideal wave (one over the Gibbs overshoot of the many-partial sum; a sine and triangle are unchanged), and the in-house tables were left at 1.0. The square and sawtooth voices were +1.478 and +1.521 dB too loud in RMS; the filter, reverb, delay, and mix cases 1.2 to 1.8 dB. Fixed in `fix: normalise the built-in oscillator waves like Chromium`.
-2. **The low-pass and high-pass `Q` had the old browsers' meaning.** Chromium 149's `getFrequencyResponse` gives the gain at the cutoff as `Q` decibels (1.000, 1.122, 3.981 for `Q` 0, 1, 12; 0.501 for -6), the specification's linear `10^(Q/20)`. The renderer treated the dB value as the height of the peak with 0 dB as Butterworth, so with the engine's default `Q` of 1 it was about 0.7 dB too quiet in the pass band's upper part. On seeded white noise through the engine's `lpf` 1500 the difference went from -0.717 dB to 0.000 dB (relative sample error 3.4e-7); a `hpf` 3000 from -0.226 dB to 0.000 dB. Fixed in `fix: give the low-pass and high-pass Q the specification's decibel meaning`.
+- **A voice that starts inside a render quantum runs its oscillator at the wrong frequency for the rest of that quantum in Chromium.** An oscillator whose `frequency` has a `setValueAtTime(f, t0)` event with `t0` not a multiple of 128 frames runs at the previous frequency (440 Hz) for the rest of that quantum. Measured in isolation: a sine at 164.8 Hz started at 0.25 s (frame 12000, 96 frames into a quantum) has 0.0576 at frame 1 where the specification gives 0.0216; started at 0 or on a quantum boundary it is exact. Every case's onset is now a multiple of 128 frames at the case's sample rate.
+- **Chromium adds one render quantum (128 frames) to every pass through a delay feedback loop.** Echoes of a 0.25 s delay with feedback 0.5 start at 12001, 24129, 36257 frames in Chromium and 12001, 24001, 36001 in Rust. The first echo matches; later ones are 128 frames late per pass. No normal case has a delay feedback loop now (an echo with feedback 0 has the first echo only).
+- **The onset must also be exact in a double.** A first re-recording at 48000 Hz and 150 bpm had every onset on a whole quantum but not exact (`0.4 * 3` is `1.2000000000000002`); Chromium treats such a `setValueAtTime` as one instant late, so the voice's first sample sat at the unset gain (a click of up to full scale in the white noise case). The cases therefore use 49152 Hz (3 times 2^14) and 32768 Hz at one cycle a second (120 bpm for the Acid line, 2 s a cycle), where every onset is a multiple of 1/128 s and exact. The Acid line's playground tempo is 150 bpm; here it is 120 bpm.
+- **Check:** `checkRenderQuirks` in `conformance/recorder/renders.ts` fails `conformance:check` (no browser) and the browser script for a case with no label that has an onset not exactly on a 128-frame boundary or a voice with a delay send with feedback, and for a labelled case that does not have its quirk.
 
-### Before (the first run)
+## Measured (the committed code, the 20 recorded cases)
 
-| case                                 | limiter |    RMS dB |   peak dB | band dB (band) | window dB (window) | bands / windows compared |
-| ------------------------------------ | ------- | --------: | --------: | -------------: | -----------------: | ------------------------ |
-| `render-voice-sine`                  | off     | +0.0178 X | -0.1160 X |  +11.863 X (7) |       +0.107 X (2) | 16 / 40                  |
-| `render-voice-triangle`              | off     |   +0.0089 | -0.5457 X |   +0.921 X (7) |       +0.101 X (2) | 16 / 40                  |
-| `render-voice-square`                | off     | +1.4780 X | +1.2691 X |   +1.813 X (7) |      +1.837 X (10) | 16 / 40                  |
-| `render-voice-sawtooth`              | off     | +1.5208 X | +1.7626 X |   +1.835 X (2) |       +2.145 X (2) | 16 / 40                  |
-| `render-voice-white`                 | off     |   -0.0000 |   +0.0000 |     -0.000 (1) |        -0.000 (11) | 16 / 24                  |
-| `render-filter-sweep`                | off     | +1.2700 X | -1.7283 X |   +1.446 X (2) |       +1.596 X (9) | 16 / 60                  |
-| `render-envelope`                    | off     |   -0.0017 |   -0.0005 |     +0.096 (7) |        -0.002 (10) | 14 / 46                  |
-| `render-reverb`                      | off     | +1.2848 X | +0.5524 X |   +1.421 X (1) |      +1.314 X (10) | 16 / 41                  |
-| `render-delay`                       | off     | +1.8319 X | +1.9986 X |   +1.994 X (7) |      +3.090 X (27) | 16 / 36                  |
-| `render-pan-law`                     | off     | -0.0345 X | +0.4561 X |   -0.807 X (7) |       -0.236 X (4) | 16 / 39                  |
-| `render-pan-law-6`                   | off     | -0.0345 X | +0.4561 X |   -0.807 X (7) |       -0.236 X (4) | 16 / 39                  |
-| `render-limiter-off`                 | off     | +1.3142 X | +2.4235 X |   +2.237 X (7) |      +2.459 X (15) | 16 / 40                  |
-| `render-limiter-on`                  | on      | +0.3903 X | +0.5542 X |   +1.858 X (0) |       +1.304 X (0) | 16 / 44                  |
-| `render-limiter-ceiling`             | on      | +0.1835 X |   -0.0000 |   -1.093 X (0) |      +0.932 X (21) | 16 / 44                  |
-| `render-playground-acid-line`        | off     | +1.3051 X | +0.5641 X |   +1.514 X (6) |      +1.375 X (16) | 15 / 64                  |
-| `render-playground-acid-line-master` | on      | +1.4530 X | +0.2598 X |   +1.649 X (6) |       +5.251 X (0) | 16 / 64                  |
-| `render-mix-four-bars`               | on      | +0.4183 X | +1.7071 X |   +1.340 X (3) |       +3.410 X (0) | 16 / 80                  |
+| case                                 | limiter | held to                        |  RMS dB | peak dB | band dB (band) | window dB (window) | bands / windows compared |
+| ------------------------------------ | ------- | ------------------------------ | ------: | ------: | -------------: | -----------------: | ------------------------ |
+| `render-voice-sine`                  | off     | proposed                       | -0.0000 | -0.0000 |     +0.000 (7) |        +0.000 (20) | 16 / 42                  |
+| `render-voice-triangle`              | off     | proposed                       | -0.0000 | +0.0000 |     +0.000 (7) |        +0.000 (20) | 16 / 42                  |
+| `render-voice-square`                | off     | proposed                       | -0.0000 | -0.0001 |     +0.000 (7) |        +0.000 (10) | 16 / 42                  |
+| `render-voice-sawtooth`              | off     | proposed                       | +0.0000 | +0.0007 |     +0.000 (7) |        -0.000 (20) | 16 / 42                  |
+| `render-voice-white`                 | off     | proposed                       | -0.0000 | -0.0000 |     -0.000 (0) |        -0.000 (11) | 16 / 24                  |
+| `render-voice-pink-brown`            | off     | proposed                       | +0.0000 | -0.0000 |     +0.000 (1) |        +0.000 (11) | 16 / 24                  |
+| `render-filter-sweep`                | off     | proposed                       | -0.0000 | -0.0004 |     -0.000 (1) |        -0.000 (25) | 16 / 60                  |
+| `render-envelope`                    | off     | proposed                       | -0.0000 | -0.0000 |     -0.000 (6) |        -0.000 (10) | 14 / 46                  |
+| `render-reverb`                      | off     | proposed                       | +0.0000 | -0.0000 |     -0.000 (7) |         -0.000 (9) | 16 / 42                  |
+| `render-delay`                       | off     | proposed                       | +0.0000 | -0.0000 |     -0.000 (1) |         +0.000 (3) | 16 / 12                  |
+| `render-quirk-delay-feedback`        | off     | quirk guard: delay-feedback    | +0.1700 | +0.5266 |     +0.472 (3) |        -6.820 (28) | 16 / 36                  |
+| `render-quirk-mid-quantum-start`     | off     | quirk guard: mid-quantum-start | +0.0178 | -0.1160 |    +11.863 (7) |         +0.107 (2) | 16 / 40                  |
+| `render-pan-law`                     | off     | proposed                       | -0.0000 | -0.0000 |     -0.000 (7) |        -0.000 (20) | 16 / 41                  |
+| `render-pan-law-6`                   | off     | proposed                       | -0.0000 | -0.0000 |     -0.000 (7) |        -0.000 (20) | 16 / 41                  |
+| `render-limiter-off`                 | off     | proposed                       | -0.0000 | +0.0006 |     +0.000 (7) |        -0.000 (14) | 16 / 40                  |
+| `render-limiter-on`                  | on      | proposed                       | +0.0014 | +0.0004 |     +0.060 (0) |         +0.034 (0) | 16 / 44                  |
+| `render-limiter-ceiling`             | on      | proposed                       | +0.0015 | -0.0000 |     +0.037 (0) |         +0.036 (0) | 16 / 44                  |
+| `render-playground-acid-line`        | off     | proposed                       | +0.0000 | -0.0000 |     +0.000 (5) |        -0.000 (40) | 16 / 82                  |
+| `render-playground-acid-line-master` | on      | proposed                       | +0.0008 | +0.0001 |     +0.001 (1) |         +0.022 (0) | 14 / 82                  |
+| `render-mix-four-bars`               | on      | proposed                       | +0.0005 | +0.0001 |     +0.001 (7) |         +0.019 (0) | 16 / 80                  |
 
-### After both fixes (the committed code)
-
-| case                                 | limiter |    RMS dB |   peak dB | band dB (band) | window dB (window) | bands / windows compared |
-| ------------------------------------ | ------- | --------: | --------: | -------------: | -----------------: | ------------------------ |
-| `render-voice-sine`                  | off     | +0.0178 X | -0.1160 X |  +11.863 X (7) |       +0.107 X (2) | 16 / 40                  |
-| `render-voice-triangle`              | off     | +0.0106 X | -0.5440 X |   +0.923 X (7) |       +0.102 X (2) | 16 / 40                  |
-| `render-voice-square`                | off     | +0.0478 X | -0.1610 X |   +0.383 X (7) |      +0.407 X (10) | 16 / 40                  |
-| `render-voice-sawtooth`              | off     | +0.0943 X | +0.3361 X |   -0.474 X (3) |       +0.719 X (2) | 16 / 40                  |
-| `render-voice-white`                 | off     |   -0.0000 |   +0.0000 |     -0.000 (1) |        -0.000 (11) | 16 / 24                  |
-| `render-filter-sweep`                | off     | -0.0996 X | -2.7517 X |   -0.398 X (1) |       -0.379 X (5) | 16 / 60                  |
-| `render-envelope`                    | off     |   -0.0000 |   +0.0012 |     +0.098 (7) |        -0.000 (10) | 14 / 46                  |
-| `render-reverb`                      | off     |   -0.0022 |   -0.0039 |     -0.094 (0) |       -0.090 X (9) | 16 / 41                  |
-| `render-delay`                       | off     | +0.4018 X | +0.5685 X |   +0.564 X (7) |      -3.920 X (28) | 16 / 36                  |
-| `render-pan-law`                     | off     | -0.0328 X | +0.4578 X |   -0.806 X (7) |       -0.234 X (4) | 16 / 39                  |
-| `render-pan-law-6`                   | off     | -0.0328 X | +0.4578 X |   -0.806 X (7) |       -0.234 X (4) | 16 / 39                  |
-| `render-limiter-off`                 | off     | -0.1123 X | +0.9969 X |   -0.905 X (2) |      +1.033 X (15) | 16 / 40                  |
-| `render-limiter-on`                  | on      | +0.2195 X | +0.3607 X |   +1.649 X (0) |       +1.095 X (0) | 16 / 44                  |
-| `render-limiter-ceiling`             | on      | +0.1022 X |   -0.0000 |   -1.306 X (0) |       +0.724 X (0) | 16 / 44                  |
-| `render-playground-acid-line`        | off     |   +0.0039 |   +0.0001 |   +0.116 X (6) |        +0.038 (25) | 15 / 64                  |
-| `render-playground-acid-line-master` | on      | +0.1920 X |   +0.0076 |   +0.337 X (5) |       +3.928 X (0) | 16 / 64                  |
-| `render-mix-four-bars`               | on      | -0.1050 X | +1.4081 X |   -0.405 X (1) |       +2.655 X (0) | 16 / 80                  |
-
-Per band, the worst difference over the channels after both fixes (dB; `.` means below the floor in both renders):
+Per band, the worst difference over the channels (dB; `.` below the floor in both renders):
 
 | case                                 |  <125 |   125 |   250 |   500 |    1k |    2k |     4k |   >=8k |
 | ------------------------------------ | ----: | ----: | ----: | ----: | ----: | ----: | -----: | -----: |
-| `render-voice-sine`                  | +0.04 | +0.01 | +0.00 | +1.79 | +6.03 | +9.59 | +11.27 | +11.86 |
-| `render-voice-triangle`              | +0.04 | +0.01 | -0.02 | -0.07 | -0.06 | +0.07 |  +0.16 |  +0.92 |
-| `render-voice-square`                | +0.04 | +0.01 | +0.07 | +0.18 | +0.12 | -0.09 |  -0.03 |  +0.38 |
-| `render-voice-sawtooth`              | +0.04 | +0.02 | +0.41 | -0.47 | +0.40 | +0.17 |  -0.03 |  +0.34 |
+| `render-voice-sine`                  | -0.00 | -0.00 | -0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-voice-triangle`              | -0.00 | -0.00 | -0.00 | -0.00 | -0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-voice-square`                | -0.00 | -0.00 | +0.00 | +0.00 | -0.00 | -0.00 |  +0.00 |  +0.00 |
+| `render-voice-sawtooth`              | +0.00 | -0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
 | `render-voice-white`                 | -0.00 | -0.00 | -0.00 | -0.00 | -0.00 | -0.00 |  -0.00 |  -0.00 |
-| `render-filter-sweep`                | -0.08 | -0.40 | +0.15 | -0.01 | +0.12 | -0.00 |  +0.01 |  -0.21 |
-| `render-envelope`                    |     . | +0.00 | -0.00 | -0.00 | +0.00 | -0.00 |  -0.00 |  +0.10 |
-| `render-reverb`                      | -0.09 | -0.00 | +0.00 | -0.01 | -0.00 | -0.01 |  -0.01 |  +0.00 |
-| `render-delay`                       | +0.22 | +0.23 | +0.44 | +0.18 | +0.21 | +0.36 |  +0.29 |  +0.56 |
-| `render-pan-law`                     | -0.35 | -0.05 | +0.02 | +0.14 | +0.02 | +0.10 |  -0.24 |  -0.81 |
-| `render-pan-law-6`                   | -0.35 | -0.05 | +0.02 | +0.14 | +0.02 | +0.10 |  -0.24 |  -0.81 |
-| `render-limiter-off`                 | -0.11 | -0.03 | -0.90 | +0.28 | +0.34 | +0.17 |  +0.19 |  +0.81 |
-| `render-limiter-on`                  | +1.65 | +0.38 | -0.66 | +0.44 | +0.61 | +0.45 |  +0.47 |  +1.09 |
-| `render-limiter-ceiling`             | -1.31 | +0.23 | -0.77 | +0.62 | +0.45 | +0.30 |  +0.32 |  +0.87 |
-| `render-playground-acid-line`        | +0.00 | +0.00 | +0.01 | -0.00 | +0.04 | +0.11 |  +0.12 |  +0.00 |
-| `render-playground-acid-line-master` | +0.22 | +0.27 | +0.23 | +0.21 | +0.27 | +0.34 |  +0.24 |  +0.01 |
-| `render-mix-four-bars`               | +0.09 | -0.40 | -0.14 | +0.33 | +0.23 | +0.10 |  +0.22 |  +0.25 |
+| `render-voice-pink-brown`            | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-filter-sweep`                | +0.00 | -0.00 | +0.00 | +0.00 | -0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-envelope`                    |     . | -0.00 | -0.00 | -0.00 | +0.00 | -0.00 |  -0.00 |  +0.00 |
+| `render-reverb`                      | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  -0.00 |  -0.00 |
+| `render-delay`                       | +0.00 | -0.00 | +0.00 | +0.00 | -0.00 | +0.00 |  -0.00 |  -0.00 |
+| `render-quirk-delay-feedback`        | +0.36 | +0.27 | +0.13 | +0.47 | +0.31 | +0.20 |  +0.22 |  +0.28 |
+| `render-quirk-mid-quantum-start`     | +0.04 | +0.01 | +0.00 | +1.79 | +6.03 | +9.59 | +11.27 | +11.86 |
+| `render-pan-law`                     | +0.00 | -0.00 | -0.00 | -0.00 | -0.00 | -0.00 |  -0.00 |  -0.00 |
+| `render-pan-law-6`                   | +0.00 | -0.00 | -0.00 | -0.00 | -0.00 | -0.00 |  -0.00 |  -0.00 |
+| `render-limiter-off`                 | +0.00 | +0.00 | -0.00 | +0.00 | -0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-limiter-on`                  | +0.06 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-limiter-ceiling`             | +0.04 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
+| `render-playground-acid-line`        | +0.00 | +0.00 | +0.00 | -0.00 | -0.00 | +0.00 |  +0.00 |  -0.00 |
+| `render-playground-acid-line-master` | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |      . |
+| `render-mix-four-bars`               | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 | +0.00 |  +0.00 |  +0.00 |
 
-## What still deviates, and why
+- **Normal cases (18):** every case without a quirk label meets the proposed tolerances, and by a wide margin: limiter off, RMS within 0.0001 dB, peak within 0.001 dB (the worst, sawtooth, +0.0007 dB), bands and windows within 0.001 dB; limiter on, RMS within 0.002 dB and peak within 0.001 dB, the worst band +0.06 dB (below 125 Hz, `render-limiter-on`) and the worst window +0.036 dB (the first 100 ms, where the compressor's start-up shows).
+- **Delay feedback (quirk, `render-quirk-delay-feedback`):** RMS +0.17 dB, peak +0.53 dB, band +0.47 dB, window -6.8 dB (the window holding the third echo's edge). Asserted against a guard of RMS 0.25, peak 0.75, band 0.75, window 7.5 dB.
+- **Mid-quantum start (quirk, `render-quirk-mid-quantum-start`):** RMS +0.018 dB, peak -0.116 dB, window +0.107 dB, and the bands above 500 Hz +1.8 to +11.9 dB (the sine's partials there are at -70 to -80 dBFS, where the changed phase shows). Asserted against a guard of RMS 0.05, peak 0.25, band 12.5, window 0.25 dB.
 
-Each cause below was isolated with a probe (a single note started at time 0 so that the first two causes do not apply, rendered in both engines, compared sample by sample), not guessed.
+## What the first run found (history)
 
-- **Chromium starts a voice that begins inside a render quantum at the wrong phase (not fixed; a browser quirk).** An oscillator whose `frequency` has a `setValueAtTime(f, t0)` event with `t0` not a multiple of 128 frames runs at the previous frequency (440 Hz) for the rest of that quantum. Measured in isolation: a sine at 164.8 Hz started at 0.25 s (frame 12000, 96 frames into a quantum) has 0.0576 at frame 1 where the specification gives 0.0216; started at 0 or on a quantum boundary it is exact. The engine always sets the frequency with such an event, so every voice that starts mid-quantum has another phase in Chromium. A single `e3` at time 0 matches to 2.6e-6; the same note at 0.25 s differs by up to 0.54. The effect is invisible in a whole-render RMS but changes the sum of overlapping voices (peaks) and, through where an envelope's kinks fall on the wave, the level of the quietest bands: the sine's bands above 1 kHz (at -70 to -80 dBFS) differ by 6 to 12 dB for this reason. It accounts for the remaining voice, pan-law, limiter-off, and mix differences (peak up to 1.4 dB, 2.75 dB for the filter sweep, whose resonant peaks add coherently). The Rust follows the specification and does not emulate it.
-- **Chromium adds one render quantum (128 frames) to every pass through a delay feedback loop (not fixed; a browser quirk).** Echoes of the delay case start at 12001, 24129, 36257 frames in Chromium and 12001, 24001, 36001 in Rust. The first echo matches; later ones are 128 frames late per pass, so a window holding an echo edge differs by up to 3.9 dB, while RMS differs by only 0.40 dB. The specification clamps the delay time of a cycle to one quantum at minimum and adds nothing; the Rust follows it.
-- **The master limiter differs (known by design).** Limiter-on cases: RMS +0.22 (limiter on), +0.10 (ceiling), +0.19 (Acid line), -0.11 dB (mix); peak +0.36, 0.00 (the ceiling holds exactly), +0.01, +1.41 dB. A loud chord pair starting at time 0 through the limiter, which the phase quirk does not touch, is +0.39 dB RMS and +0.26 dB peak, so this is the compressor's release and look-ahead, as `conformance/README.md` lists.
-- **Band-limited oscillator tables differ in their partials near Nyquist (known by design).** The triangle's peak is -0.54 dB and the square and sawtooth peaks -0.16 and +0.34 dB with RMS within 0.1 dB; this is mixed with the phase quirk and was not separated.
+The first run, on the earlier 17 cases (onsets at 0.25 s steps at 48 kHz, a delay with feedback in two of them), gave RMS differences of up to +1.8 dB, peaks up to 2.75 dB, and a band up to 11.9 dB; 15 of the 17 cases missed the proposed figures. Two renderer differences explained most of it, and both were measured against the browser directly before being fixed, each in its own commit:
 
-What matches closely (single causes ruled out): white noise (0.0000 dB everywhere: the seeded noise buffers are identical), the envelope with a note at 0 (0.000 dB, band 0.098 dB at 8 kHz), the reverb (RMS -0.002 dB, peak -0.004 dB, worst window -0.09 dB: the convolver and its seeded impulse response are right), Acid line without the master (RMS +0.004 dB, peak +0.0001 dB, worst band 0.12 dB), and a swept low-pass on a note at 0 s (1.4e-4 relative sample error).
+1. **Built-in oscillators were not normalised.** Chromium scales a square or sawtooth to 0.848 of the ideal wave (one over the Gibbs overshoot of the many-partial sum; a sine and triangle are unchanged), and the in-house tables were left at 1.0 (square and sawtooth +1.48 and +1.52 dB in RMS). Fixed in `fix: normalise the built-in oscillator waves like Chromium`.
+2. **The low-pass and high-pass `Q` had the old browsers' meaning.** Chromium 149's `getFrequencyResponse` gives the gain at the cutoff as `Q` decibels, the specification's linear `10^(Q/20)`; the renderer was 0.7 dB too quiet through the engine's default `Q` of 1. Fixed in `fix: give the low-pass and high-pass Q the specification's decibel meaning`.
 
-## Against the proposed tolerances
+After those two fixes the old table still missed in most cases because of the two quirks above (a limiter-off sine band +11.9 dB, filter sweep peak -2.75 dB, delay window -3.9 dB), a loose limiter (RMS +0.10 to +0.22 dB, peak up to 1.41 dB), and small differences in the oscillator's partials near Nyquist (band +0.3 to +0.9 dB). The old table is not kept; the sections above replace it.
 
-- **Limiter off, per case:** white noise and the envelope meet every proposed figure (RMS 0.000, peak 0.001 dB, band 0.098, window 0.000). The reverb meets RMS (0.002), peak (0.004), and band (0.094) and misses the window figure (0.090 against 0.05); Acid line meets RMS (0.004), peak (0.0001), and window (0.038) and misses the band (0.116 against 0.1). Everything with a mid-quantum voice start or a delay feedback misses, by the causes above. Worst: RMS 0.40 dB (delay), peak 2.75 dB (filter sweep), band 11.9 dB (the sine's quiet bands), window 3.9 dB (delay).
-- **Limiter on:** RMS 0.10 to 0.22 dB against 0.05, peak 0.00 to 1.41 dB against 0.1; the ceiling case holds its peak exactly.
+## What the re-recorded cases found, and three more renderer fixes
 
-## Suggested final numbers (for the person to decide; nothing in CONFORMANCE.md has been loosened)
+With the quirks avoided, the 18 normal cases still missed the proposed tolerances for three renderer reasons, found by probing single notes and impulses in Chromium rather than assumed, and fixed each in its own commit (before and after numbers in the commit bodies):
 
-The proposed numbers are reachable for the cases the quirks do not touch, and not otherwise. The choices:
+1. **The oscillator's tables.** Chromium keeps 36 tables per wave, table `i` with `floor(2048 / 2^(i/3))` partials, the lowest fundamental being Nyquist over 2048, and blends the two neighbouring tables for the frequency (range `1 + 3 log2(f / lowest)`); the partials of a sawtooth at 440 Hz and 32768 Hz, 26 to 32, come out at 0.656 of their level, the blend of the tables with 32 and 25 partials. The renderer picked one table with a sharp edge. The ≥ 8 kHz band missed by +0.2 to +0.9 dB and the square and sawtooth peaks by 0.05 to 0.23 dB; now a single note at 440 Hz matches Chromium to 1.5e-7 of full scale (other pitches drift by up to 1e-3 from a float32 frequency in the browser, about -70 dB). Fixed in `fix: blend two neighbouring wave tables like Chromium's oscillators`.
+2. **The convolver's calibration gain.** Chromium's convolver gives 0.0012589 at 44100 Hz for a response of constant 0.5 whatever its length, which is `10^(-58/20)`, not the specification's rounded 0.00125; the reverb sat a constant -0.0618 dB under the browser (correlation 0.9999999999). Fixed in `fix: use the convolver's -58 dB calibration gain` (window -0.0625 dB to 0.000 dB).
+3. **The compressor.** Chromium resets the detector to 0 (the first tens of milliseconds are held down while it climbs: up to +3.9 dB in the first window), decides the envelope every 32 frames with the gain warped by `asin` and `sin`, and releases by an adaptive 5 dB-per-curve rate; the renderer had a constant 10 dB per release time and a detector at 1. Fixed in `fix: follow Chromium's compressor envelope and start-up state` (limiter-on RMS +0.145 dB to +0.001 dB, peak -0.339 dB to +0.000 dB, worst window +3.93 dB to +0.02 dB). The quartic's constants are Chromium's as recalled by the author; the measurement confirms them to 0.002 dB on four loud renders.
 
-1. **Keep 0.01 / 0.02 / 0.1 / 0.05 dB, and re-record the layer 4 cases with every voice starting on a multiple of 128 frames and without delay feedback** (for example a cycle of 0.768 s at 48 kHz, 288 quanta). Then the browser's quirks do not apply and the tolerances test the renderer. The cost is cases that sound less like the playground.
-2. **Or widen to what a mid-quantum start costs:** RMS 0.15 dB, peak 3 dB, band 1.5 dB above -60 dBFS (not -80), window 1.5 dB, and for the limiter on RMS 0.5 dB and peak 1.5 dB, with the delay feedback case excluded from the window check. These are only the measured worst values rounded up; they would not catch a real 1 dB error in a peak.
+## What still deviates
 
-The recommendation is option 1 for the oscillator and filter cases and keeping a few musical cases (Acid line, the four-bar mix) at the wider numbers as smoke checks.
+- **The two quirks, on purpose** (the labelled cases above). The Rust follows the specification and does not emulate them.
+- **Table size at other sample rates.** Chromium uses 2048-sample tables up to 24 kHz and 8192 above 88.2 kHz; this renderer uses 4096 at every rate and was measured only at 32768, 48000, and 49152 Hz.
+- **The limiter on other signals.** It was measured on four loud renders (chords, a bass line, a mix), all within 0.002 dB RMS; the constants of the adaptive release were not probed one by one, so a signal that exercises a different part of the curve is not covered.
 
 ## Not verified
 
 - No case was listened to; automated summaries cannot say how anything sounds.
-- Chromium only, one version, one machine. Firefox and Safari were not run, so the quirks above are Chromium's, and `Q` and the built-in wave normalisation are as Chromium 149 does them.
-- The limiter's release and look-ahead were left alone; the differences above are measured, not diagnosed further.
+- Chromium only, one version, one machine. Firefox and Safari were not run, so the quirks and the table, calibration, and compressor details above are Chromium 149's.
+- A voice that starts mid-quantum is held only to the wide guard of its labelled case; the renderer does not copy the quirk, so a real phase error on such a voice would only be caught by the other cases.
 - Booking in windows (`bookingWindow`) was not compared (the cases book up front).
+- 44100 Hz was not used: its quanta (128 / 44100 s) are not exact in a double at any musical cycle length, so no case could be both aligned and exact there.
