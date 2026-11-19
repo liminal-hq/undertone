@@ -59,3 +59,29 @@ pub(crate) fn ln(x: f64) -> f64 {
 	#[cfg(all(feature = "std", not(feature = "libm")))]
 	return x.ln();
 }
+
+/// The name of the maths back-end in use: `"libm"` or `"std"`.
+#[cfg(test)]
+pub(crate) const BACKEND: &str = if cfg!(feature = "libm") {
+	"libm"
+} else {
+	"std"
+};
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	/// CI sets `UNDERTONE_EXPECT_MATHS=std` for its `--no-default-features --features std` run, so a
+	/// dependency that switches `libm` back on through feature unification fails the run instead of
+	/// passing silently on the wrong back-end. Unset, the test does nothing.
+	#[test]
+	fn the_expected_back_end_is_the_one_in_use() {
+		if let Ok(expected) = std::env::var("UNDERTONE_EXPECT_MATHS") {
+			assert_eq!(
+				BACKEND, expected,
+				"the pattern crate is not using the maths back-end CI asked for"
+			);
+		}
+	}
+}

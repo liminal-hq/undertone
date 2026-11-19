@@ -184,6 +184,29 @@ mod tests {
 	}
 
 	#[test]
+	fn the_active_type_is_the_back_end_the_name_says() {
+		let type_name = core::any::type_name::<Active>();
+		assert!(type_name.ends_with(if ACTIVE_NAME == "libm" {
+			"Libm"
+		} else {
+			"Native"
+		}));
+	}
+
+	/// CI sets `UNDERTONE_EXPECT_MATHS=native` for its `--no-default-features` run, so a dependency
+	/// that switches `libm` back on through feature unification fails the run instead of passing
+	/// silently on the wrong back-end. Unset, the test does nothing.
+	#[test]
+	fn the_expected_back_end_is_the_one_in_use() {
+		if let Ok(expected) = std::env::var("UNDERTONE_EXPECT_MATHS") {
+			assert_eq!(
+				ACTIVE_NAME, expected,
+				"the engine is not using the maths back-end CI asked for"
+			);
+		}
+	}
+
+	#[test]
 	fn known_values_on_the_native_back_end() {
 		assert_eq!(Native::sin(0.0), 0.0);
 		assert_eq!(Native::cos(0.0), 1.0);
