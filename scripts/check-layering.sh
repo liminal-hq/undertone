@@ -10,6 +10,10 @@
 #   - undertone-sched depends on no workspace crate except undertone-pattern and undertone-engine.
 #   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
+#   - Nothing under crates/*/src uses `unsafe` (a block, fn, impl, trait, or extern) or lifts the lint with
+#     `allow(unsafe_code)` or `expect(unsafe_code)`. `undertone-sched` sets `unsafe_code = "deny"` (not
+#     `forbid`) so its allocation test can opt in, which would let a `src/` module opt in just as quietly;
+#     this check closes that. Lines that are comments are ignored.
 #
 # Needs `cargo` and `jq` (both are in the shared ci-rust image). Run from anywhere.
 
@@ -56,4 +60,19 @@ if [[ -n "${violations}" ]]; then
 	exit 1
 fi
 
-echo "Crate layering OK."
+# Unsafe code under src/. Comment lines (`//`, `///`, `//!`) are dropped before matching.
+unsafe_uses="$(
+	grep -rnE --include='*.rs' \
+		-e '\bunsafe[[:space:]]*(\{|fn\b|impl\b|trait\b|extern\b)' \
+		-e '(allow|expect)[[:space:]]*\([^)]*unsafe_code' \
+		crates/*/src 2>/dev/null |
+		grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true
+)"
+
+if [[ -n "${unsafe_uses}" ]]; then
+	echo "Unsafe code under crates/*/src (only the allocation test may use it):" >&2
+	echo "${unsafe_uses}" | sed 's/^/  - /' >&2
+	exit 1
+fi
+
+echo "Crate layering OK, and no unsafe code under crates/*/src."

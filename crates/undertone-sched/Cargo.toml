@@ -23,7 +23,7 @@ proptest = { version = "1.12.0", default-features = false, features = ["std"] }
 
 # This table mirrors `[workspace.lints]` with one difference: `unsafe_code` is `deny`, not `forbid`, so that
 # `tests/allocation.rs` (and only that file) can opt in to the `unsafe` a counting global allocator needs.
-# `forbid` cannot be lowered by an inner `#![allow]`; `deny` can. Nothing under `src/` may use `unsafe`.
+# `forbid` cannot be lowered by an inner `#![allow]`; `deny` can. Nothing under `src/` may use `unsafe`: `scripts/check-layering.sh` (run in CI) fails on it.
 [lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"

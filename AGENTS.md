@@ -3,7 +3,7 @@
 ## Coding Standards
 
 - **Spelling:** Use Canadian English for comments, documentation, commit messages, and pull request descriptions unless exact external spelling is required by tooling, APIs, or published identifiers.
-- **Unsafe code:** the Rust workspace forbids `unsafe_code`. Only the scheduler's allocation test may use `unsafe`: `crates/undertone-sched/tests/allocation.rs` is a test-only counting global allocator, and `undertone-sched` has its own `[lints]` table that mirrors the workspace's with `unsafe_code = "deny"` (a `forbid` cannot be lowered by an inner `#![allow]`) so that one file can opt in with a safety comment. Nothing under `src/` in any crate may use `unsafe`; do not add a second exception without recording it here.
+- **Unsafe code:** the Rust workspace forbids `unsafe_code`. Only the scheduler's allocation test may use `unsafe`: `crates/undertone-sched/tests/allocation.rs` is a test-only counting global allocator, and `undertone-sched` has its own `[lints]` table that mirrors the workspace's with `unsafe_code = "deny"` (a `forbid` cannot be lowered by an inner `#![allow]`) so that one file can opt in with a safety comment. Nothing under `src/` in any crate may use `unsafe`, and CI enforces it: `scripts/check-layering.sh` fails on `unsafe` blocks, fns, impls, traits, or externs and on `allow(unsafe_code)` or `expect(unsafe_code)` anywhere under `crates/*/src` (comment lines are ignored). Do not add a second exception without recording it here.
 - **Naming:** Keep public API names outcome-focused and readable, matching the existing Strudel-flavoured vocabulary (`note`, `sound`, `stack`, `.attack`/`.decay`/`.sustain`/`.release`, `.lpf`/`.lpenv`).
 
 ## Repository Layout
