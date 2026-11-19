@@ -397,11 +397,11 @@ impl Pattern<Value> {
 	/// ```
 	pub fn scale(&self, spec: &str) -> Result<Pattern<Value>> {
 		let parsed = parse_scale(spec)?;
-		Ok(self.map(MapFn::Scale(parsed)))
+		Ok(self.fmap(MapFn::Scale(parsed)))
 	}
 
 	fn patch(&self, fields: Vec<(&str, Option<Value>)>) -> Pattern<Value> {
-		self.map(MapFn::Merge(
+		self.fmap(MapFn::Merge(
 			fields.into_iter().map(|(k, v)| (k.into(), v)).collect(),
 		))
 	}
@@ -497,12 +497,26 @@ impl Pattern<Value> {
 		}))
 	}
 
-	/// Juxtaposes the pattern with a transformed copy: the original plays hard left, `transformed` (the caller builds it from a copy of this pattern) plays hard right.
-	pub fn jux(&self, transformed: &Pattern<Value>) -> Result<Pattern<Value>> {
-		Ok(crate::pattern::stack(alloc::vec![
-			self.control(Control::Pan, ControlArg::Number(-1.0))?,
-			transformed.control(Control::Pan, ControlArg::Number(1.0))?,
-		]))
+	/// Juxtaposes the pattern with a transformed copy of itself: the original plays hard left (`pan(-1)`), `transform(self)` plays hard right (`pan(1)`), as `pat.jux(rev)` does in the reference.
+	///
+	/// The transform is a function of the pattern that runs once, here, and the tree stores both patterns, the closure-at-construction rule of [`Pattern::every`].
+	///
+	/// ```
+	/// use undertone_pattern::control::note;
+	/// use undertone_pattern::{Fraction, Span, Value};
+	/// let p = note("c3 e3").unwrap().jux(|p| p.rev()).unwrap();
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// let pans: Vec<_> = haps.iter().map(|h| h.value.get("pan").cloned()).collect();
+	/// assert_eq!(pans.iter().filter(|p| **p == Some(Value::Num(-1.0))).count(), 2);
+	/// assert_eq!(pans.iter().filter(|p| **p == Some(Value::Num(1.0))).count(), 2);
+	/// ```
+	pub fn jux(
+		&self,
+		transform: impl FnOnce(&Pattern<Value>) -> Pattern<Value>,
+	) -> Result<Pattern<Value>> {
+		let left = self.control(Control::Pan, ControlArg::Number(-1.0))?;
+		let right = transform(self).control(Control::Pan, ControlArg::Number(1.0))?;
+		Ok(crate::pattern::stack(alloc::vec![left, right]))
 	}
 }
 

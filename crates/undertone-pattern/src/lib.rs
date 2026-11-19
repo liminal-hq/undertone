@@ -25,6 +25,7 @@ pub mod js;
 pub(crate) mod math;
 pub mod mini;
 pub mod pattern;
+pub mod query;
 pub mod random;
 pub mod signal;
 pub mod value;
@@ -33,9 +34,12 @@ pub use error::{Error, Result};
 pub use fraction::Fraction;
 pub use hap::{Hap, Span};
 pub use pattern::{
-	ArithOp, CustomQuery, ForeignFn, Node, Pattern, arrange, cat, compress, fast, pure, seq,
-	silence, slow, stack, timecat,
+	ArithOp, Node, Pattern, arrange, cat, compress, fast, mini, pure, seq, silence, slow, stack,
+	timecat,
 };
+#[cfg(feature = "std")]
+pub use query::ForeignTable;
+pub use query::{ForeignHost, ForeignId, Query};
 pub use value::{Datum, MapFn, ParsedScale, Value};
 
 /// The name of this crate, as a placeholder item until the pattern core lands.

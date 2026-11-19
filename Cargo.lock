@@ -152,4 +152,5 @@ version = "0.0.0"
 dependencies = [
  "libm",
  "proptest",
+ "undertone-pattern",
 ]

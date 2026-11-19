@@ -214,7 +214,7 @@ fn control_arg(json: &Json) -> Built<ControlArg> {
 
 fn arithmetic(pattern: &Pat, op: ArithOp, arg: &Json) -> Built<Pat> {
 	match arg {
-		Json::Num(_, n) => Ok(pattern.map(match op {
+		Json::Num(_, n) => Ok(pattern.fmap(match op {
 			ArithOp::Add => MapFn::Add(*n),
 			ArithOp::Sub => MapFn::Sub(*n),
 			ArithOp::Mul => MapFn::Mul(*n),
@@ -236,7 +236,7 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 	if name == "fmap" {
 		let map = raw[0].as_str().expect("a map name");
 		let arg = raw.get(1).map_or(0.0, num);
-		return Ok(pattern.map(named_map(map, arg)?));
+		return Ok(pattern.fmap(named_map(map, arg)?));
 	}
 	if FORBIDDEN.contains(&name) {
 		return err(format!("Method \"{name}\" is not allowed in a program"));
@@ -298,8 +298,18 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 			_ => uncovered("a scalar control with another type"),
 		},
 		"jux" => {
-			let transformed = transform(&raw[0], pattern)?;
-			Ok(pattern.jux(&transformed)?)
+			let mut failure = None;
+			let result = pattern.jux(|p| match transform(&raw[0], p) {
+				Ok(transformed) => transformed,
+				Err(e) => {
+					failure = Some(e);
+					p.clone()
+				}
+			});
+			match failure {
+				Some(e) => Err(e),
+				None => Ok(result?),
+			}
 		}
 		"voicing" => uncovered("chord() and voicing() (chord.ts is the chords group, RF-15)"),
 		other => uncovered(&format!("method {other}() (not in the spike's scope)")),

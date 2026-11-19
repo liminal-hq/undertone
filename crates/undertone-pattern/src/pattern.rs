@@ -12,6 +12,7 @@ use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::hap::{Hap, Span};
 use crate::js;
+use crate::query::{ForeignHost, ForeignId, Query};
 use crate::signal::Signal;
 use crate::value::{Datum, MapFn};
 use alloc::string::String;
@@ -21,7 +22,7 @@ use core::fmt;
 
 /// One node of a pattern tree. Every variant holds data only: fractions, numbers, and child patterns.
 ///
-/// The two exceptions are [`Node::Foreign`] and [`Node::Custom`], the escape hatches for behaviour that only the host can supply (a JavaScript function, a hand-written query). No other variant holds a function.
+/// The two exceptions are [`Node::Custom`] (a [`Query`] written in Rust) and [`Node::Foreign`] (a callback registered by the host), the escape hatches for behaviour that is not data. No other variant holds a function.
 pub enum Node<T> {
 	/// No haps, ever.
 	Silence,
@@ -112,15 +113,20 @@ pub enum Node<T> {
 	},
 	/// `n(pattern)`: each number of the child floored into a scale degree; anything else is a rest.
 	Degrees(Pattern<T>),
-	/// Escape hatch: the child with each value changed by a function only the host has (a JavaScript `fmap` callback). The tree prints and hashes the function by its [`ForeignFn::id`].
-	Foreign {
-		/// The pattern whose values the host function changes.
-		child: Pattern<T>,
-		/// The host's function.
-		f: Arc<dyn ForeignFn<T>>,
+	/// Escape hatch for Rust: a pattern defined by a [`Query`] object, such as a closure given to [`Pattern::from_fn`] or [`Pattern::fmap_with`]. The tree prints and hashes it by `id`, a number unique to the process, so a tree holding one is not structural.
+	Custom {
+		/// A number unique to the process, for printing and hashing.
+		id: u32,
+		/// The query.
+		query: Arc<dyn Query<T>>,
 	},
-	/// Escape hatch: a pattern the host defines by its own query (the reference's `new Pattern(query)`).
-	Custom(Arc<dyn CustomQuery<T>>),
+	/// Escape hatch for the host: a query that lives outside Rust, such as a JavaScript function behind the bridge. The tree holds the callback's [`ForeignId`] (which is what prints and hashes) and the [`ForeignHost`] that resolves it. See [`crate::query`].
+	Foreign {
+		/// The callback's handle in the host.
+		id: ForeignId,
+		/// The host that answers for it.
+		host: Arc<dyn ForeignHost<T>>,
+	},
 }
 
 /// A binary operation on two numbers.
@@ -158,30 +164,11 @@ impl ArithOp {
 	}
 }
 
-/// A value-changing function supplied by the host, for [`Node::Foreign`].
-///
-/// This is one of the two places the tree holds behaviour it cannot inspect, so the pattern is queried on the host's thread of control and cannot be sent to a worklet.
-pub trait ForeignFn<T>: Send + Sync {
-	/// The new value for `value`.
-	fn call(&self, value: &T) -> T;
-	/// A stable name for printing and hashing: a handle number, say.
-	fn id(&self) -> u64;
-}
-
-/// A pattern defined by a host query, for [`Node::Custom`].
-pub trait CustomQuery<T>: Send + Sync {
-	/// The haps overlapping `span`.
-	fn query(&self, span: Span) -> Vec<Hap<T>>;
-	/// The value at the instant `t`, when [`CustomQuery::has_sampler`] is true.
-	fn sample(&self, _t: Fraction) -> Option<T> {
-		None
-	}
-	/// Whether the pattern is continuous and can be read at a point.
-	fn has_sampler(&self) -> bool {
-		false
-	}
-	/// A stable name for printing and hashing.
-	fn id(&self) -> u64;
+/// The next number for a [`Node::Custom`]: unique within the process. A `u32` counter, because 32-bit targets such as `thumbv7em` have no 64-bit atomics.
+fn next_custom_id() -> u32 {
+	use core::sync::atomic::{AtomicU32, Ordering};
+	static NEXT: AtomicU32 = AtomicU32::new(0);
+	NEXT.fetch_add(1, Ordering::Relaxed)
 }
 
 /// A pattern: an immutable, cheaply clonable tree of [`Node`]s.
@@ -453,8 +440,18 @@ impl<T: Datum> Pattern<T> {
 		}))
 	}
 
-	/// The pattern with each value changed by a named map: `fmap` without a closure.
-	pub fn map(&self, f: MapFn) -> Pattern<T> {
+	/// The pattern with each value changed by a named map ([`MapFn`]): `fmap` for the cases that are data.
+	///
+	/// The map is stored in the tree, so the pattern stays printable, hashable, and sendable; the corpus's `["fmap", "add", 7]` is `fmap(MapFn::Add(7.0))`. For a closure use [`Pattern::fmap_with`].
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, MapFn, Span};
+	/// let p = pure(1.5).fmap(MapFn::Mul(2.0));
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 3.0);
+	/// assert_eq!(p.to_string(), "(map Mul(2.0) (pure 1.5))");
+	/// ```
+	pub fn fmap(&self, f: MapFn) -> Pattern<T> {
 		Pattern::from_node(Node::Map {
 			child: self.clone(),
 			f,
@@ -472,12 +469,12 @@ impl<T: Datum> Pattern<T> {
 
 	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping).
 	pub fn range(&self, lo: f64, hi: f64) -> Pattern<T> {
-		self.map(MapFn::Range { lo, hi })
+		self.fmap(MapFn::Range { lo, hi })
 	}
 
 	/// Maps values from -1..1 onto `lo..hi`, linearly.
 	pub fn range2(&self, lo: f64, hi: f64) -> Pattern<T> {
-		self.map(MapFn::Range2 { lo, hi })
+		self.fmap(MapFn::Range2 { lo, hi })
 	}
 
 	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies. Both bounds must be above 0.
@@ -489,30 +486,92 @@ impl<T: Datum> Pattern<T> {
 				js::number_to_string(hi)
 			)));
 		}
-		Ok(self.map(MapFn::Rangex { lo, ratio: hi / lo }))
+		Ok(self.fmap(MapFn::Rangex { lo, ratio: hi / lo }))
 	}
 
 	/// Rounds each value to the nearest whole number (halves round up).
 	pub fn round(&self) -> Pattern<T> {
-		self.map(MapFn::Round)
+		self.fmap(MapFn::Round)
 	}
 
 	/// Rounds each value down (-4.2 becomes -5).
 	pub fn floor(&self) -> Pattern<T> {
-		self.map(MapFn::Floor)
+		self.fmap(MapFn::Floor)
 	}
 
-	/// The pattern with each value changed by a host function: the escape hatch for `fmap` with a closure.
-	pub fn foreign_map(&self, f: Arc<dyn ForeignFn<T>>) -> Pattern<T> {
-		Pattern::from_node(Node::Foreign {
-			child: self.clone(),
-			f,
+	/// A pattern defined by a [`Query`] object: the escape hatch for a hand-written pattern. See [`crate::query`].
+	pub fn custom(query: Arc<dyn Query<T>>) -> Pattern<T> {
+		Pattern::from_node(Node::Custom {
+			id: next_custom_id(),
+			query,
 		})
 	}
 
-	/// A pattern defined by a host query: the escape hatch for `new Pattern(query)`.
-	pub fn custom(query: Arc<dyn CustomQuery<T>>) -> Pattern<T> {
-		Pattern::from_node(Node::Custom(query))
+	/// A pattern defined by a closure that appends the haps overlapping a span: the Rust form of the reference's `new Pattern(query)`.
+	///
+	/// The closure is not data, so the tree prints it as `(custom #n)` and a pattern holding one is not structural (and cannot be rebuilt in another process).
+	///
+	/// ```
+	/// use undertone_pattern::{Fraction, Hap, Pattern, Span};
+	/// // A signal-like pattern: one hap with no whole, holding the span's start.
+	/// let ramp = Pattern::from_fn(|span: Span, out: &mut Vec<Hap<f64>>| {
+	///     out.push(Hap { whole: None, part: span, value: span.begin.to_f64() });
+	/// });
+	/// let haps = ramp.query(Span::new(Fraction::new(1, 2), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 0.5);
+	/// ```
+	pub fn from_fn(query: impl Fn(Span, &mut Vec<Hap<T>>) + Send + Sync + 'static) -> Pattern<T> {
+		struct FromFn<F>(F);
+		impl<T, F: Fn(Span, &mut Vec<Hap<T>>) + Send + Sync> Query<T> for FromFn<F> {
+			fn query(&self, span: Span, out: &mut Vec<Hap<T>>) {
+				(self.0)(span, out);
+			}
+		}
+		Pattern::custom(Arc::new(FromFn(query)))
+	}
+
+	/// A pattern that calls the callback `id` of `host`: the escape hatch for a query that lives outside Rust. See [`crate::query`].
+	pub fn foreign(host: Arc<dyn ForeignHost<T>>, id: ForeignId) -> Pattern<T> {
+		Pattern::from_node(Node::Foreign { id, host })
+	}
+
+	/// The pattern with each value changed by a closure: `fmap` for any function, where [`Pattern::fmap`] takes a named map.
+	///
+	/// Every value goes through the closure on every query, so the tree holds a [`Node::Custom`] (printed `(custom #n)`), is not structural, and the closure must be pure. Prefer [`Pattern::fmap`] with a [`MapFn`] when one fits. A continuous pattern stays continuous: the closure is applied to its point samples too.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span, Value};
+	/// let words = pure(2.0).fmap_with(|n: &f64| Value::Str(format!("x{n}")));
+	/// let haps = words.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, Value::Str("x2".into()));
+	/// ```
+	pub fn fmap_with<U: Datum>(&self, f: impl Fn(&T) -> U + Send + Sync + 'static) -> Pattern<U> {
+		struct Mapped<T, F> {
+			child: Pattern<T>,
+			f: F,
+		}
+		impl<T: Datum, U: Datum, F: Fn(&T) -> U + Send + Sync> Query<U> for Mapped<T, F> {
+			fn query(&self, span: Span, out: &mut Vec<Hap<U>>) {
+				for hap in self.child.query(span) {
+					let value = (self.f)(&hap.value);
+					out.push(Hap {
+						whole: hap.whole,
+						part: hap.part,
+						value,
+					});
+				}
+			}
+			fn sample(&self, t: Fraction) -> Option<U> {
+				self.child.sample_at(t).map(|value| (self.f)(&value))
+			}
+			fn has_sampler(&self) -> bool {
+				self.child.has_sampler()
+			}
+		}
+		Pattern::custom(Arc::new(Mapped {
+			child: self.clone(),
+			f,
+		}))
 	}
 
 	/// Distributes the pattern over a euclidean rhythm: `pulses` onsets spread as evenly as possible across `steps` slots per cycle (Bjorklund's algorithm), rotated left by `rotation` slots. The whole pattern is squeezed into each onset slot.
@@ -621,8 +680,7 @@ impl<T: Datum> Node<T> {
 			| Node::Fast { child, .. }
 			| Node::Slow { child, .. }
 			| Node::Rev(child)
-			| Node::Map { child, .. }
-			| Node::Foreign { child, .. } => child.has_sampler(),
+			| Node::Map { child, .. } => child.has_sampler(),
 			Node::Every {
 				base, transformed, ..
 			} => base.has_sampler() || transformed.has_sampler(),
@@ -633,7 +691,8 @@ impl<T: Datum> Node<T> {
 			| Node::Sample { .. }
 			| Node::Segment { .. }
 			| Node::Degrees(_) => false,
-			Node::Custom(custom) => custom.has_sampler(),
+			Node::Custom { query, .. } => query.has_sampler(),
+			Node::Foreign { id, host } => host.has_sampler(*id),
 		}
 	}
 
@@ -796,14 +855,8 @@ impl<T: Datum> Node<T> {
 					true
 				});
 			}
-			Node::Foreign { child, f } => {
-				let start = out.len();
-				child.query_into(span, out);
-				for hap in &mut out[start..] {
-					hap.value = f.call(&hap.value);
-				}
-			}
-			Node::Custom(custom) => out.extend(custom.query(span)),
+			Node::Custom { query, .. } => query.query(span, out),
+			Node::Foreign { id, host } => host.query(*id, span, out),
 		}
 	}
 
@@ -861,8 +914,8 @@ impl<T: Datum> Node<T> {
 			| Node::Sample { .. }
 			| Node::Segment { .. }
 			| Node::Degrees(_) => None,
-			Node::Foreign { child, f } => child.sample_at(t).map(|value| f.call(&value)),
-			Node::Custom(custom) => custom.sample(t),
+			Node::Custom { query, .. } => query.sample(t),
+			Node::Foreign { id, host } => host.sample(*id, t),
 		}
 	}
 }
@@ -1000,6 +1053,20 @@ pub fn arrange<T: Datum>(sections: Vec<(f64, Pattern<T>)>) -> Result<Pattern<T>>
 	)))
 }
 
+/// Parses a mini-notation string into a pattern, turning each word into a value with `leaf`: the same as [`crate::mini::parse`], under the name the reference's `mini` has.
+///
+/// ```
+/// use undertone_pattern::{mini, Fraction, Span, Value};
+/// let p = mini("a [b c]", |word| Ok(Value::Str(word.into()))).unwrap();
+/// assert_eq!(p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1))).len(), 3);
+/// ```
+pub fn mini<T: Datum>(
+	source: &str,
+	leaf: impl Fn(&str) -> core::result::Result<T, String>,
+) -> Result<Pattern<T>> {
+	crate::mini::parse(source, leaf)
+}
+
 /// The pattern with its time sped up by `factor`: the free-function form of [`Pattern::fast`].
 pub fn fast<T: Datum>(pattern: &Pattern<T>, factor: f64) -> Result<Pattern<T>> {
 	pattern.fast(factor)
@@ -1116,13 +1183,132 @@ impl<T: Datum> Node<T> {
 				child.node.write_tree(f)?;
 				f.write_str(")")
 			}
-			Node::Foreign { child, f: foreign } => {
-				write!(f, "(foreign #{} ", foreign.id())?;
-				child.node.write_tree(f)?;
-				f.write_str(")")
-			}
-			Node::Custom(custom) => write!(f, "(custom #{})", custom.id()),
+			Node::Custom { id, .. } => write!(f, "(custom #{id})"),
+			Node::Foreign { id, .. } => write!(f, "(foreign #{})", id.0),
 		}
+	}
+}
+
+impl<T: Datum> Node<T> {
+	/// Writes this node and its children as an indented outline, one node a line. Every variant is matched without a wildcard, so a new node cannot be added without saying how it prints.
+	fn write_outline(&self, depth: usize, out: &mut String) {
+		fn line(out: &mut String, depth: usize, text: &str) {
+			for _ in 0..depth {
+				out.push_str("  ");
+			}
+			out.push_str(text);
+			out.push('\n');
+		}
+		match self {
+			Node::Silence => line(out, depth, "silence"),
+			Node::Pure(value) => line(out, depth, &alloc::format!("pure {value:?}")),
+			Node::Stack(children) => {
+				line(out, depth, "stack");
+				for child in children {
+					child.node.write_outline(depth + 1, out);
+				}
+			}
+			Node::Cat(children) => {
+				line(out, depth, "cat");
+				for child in children {
+					child.node.write_outline(depth + 1, out);
+				}
+			}
+			Node::Compress { begin, end, child } => {
+				line(out, depth, &alloc::format!("compress {begin} {end}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Fast { factor, child } => {
+				line(out, depth, &alloc::format!("fast {factor}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Slow { factor, child } => {
+				line(out, depth, &alloc::format!("slow {factor}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Rev(child) => {
+				line(out, depth, "rev");
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Every {
+				n,
+				base,
+				transformed,
+			} => {
+				line(out, depth, &alloc::format!("every {n}"));
+				base.node.write_outline(depth + 1, out);
+				transformed.node.write_outline(depth + 1, out);
+			}
+			Node::Arrange(sections) => {
+				line(out, depth, "arrange");
+				for (cycles, pattern) in sections {
+					line(out, depth + 1, &alloc::format!("for {cycles} cycles"));
+					pattern.node.write_outline(depth + 2, out);
+				}
+			}
+			Node::WithControl {
+				child,
+				control,
+				input,
+			} => {
+				let (kind, source) = match input {
+					ControlInput::Literal(p) => ("literal", p),
+					ControlInput::Pattern(p) => ("pattern", p),
+				};
+				line(
+					out,
+					depth,
+					&alloc::format!("control {} {kind}", control.name()),
+				);
+				source.node.write_outline(depth + 1, out);
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Signal(signal) => line(out, depth, &alloc::format!("signal {signal:?}")),
+			Node::Sample { source, structure } => {
+				line(out, depth, "sample");
+				source.node.write_outline(depth + 1, out);
+				structure.node.write_outline(depth + 1, out);
+			}
+			Node::Segment { source, count, .. } => {
+				line(out, depth, &alloc::format!("segment {count}"));
+				source.node.write_outline(depth + 1, out);
+			}
+			Node::Map { child, f } => {
+				line(out, depth, &alloc::format!("map {f:?}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Arith { left, op, right } => {
+				line(out, depth, op.name());
+				left.node.write_outline(depth + 1, out);
+				right.node.write_outline(depth + 1, out);
+			}
+			Node::Degrees(child) => {
+				line(out, depth, "degrees");
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Custom { id, .. } => line(out, depth, &alloc::format!("custom #{id}")),
+			Node::Foreign { id, .. } => line(out, depth, &alloc::format!("foreign #{}", id.0)),
+		}
+	}
+}
+
+impl<T: Datum> Pattern<T> {
+	/// The tree as an indented outline, one node a line, for reading in a log or a test.
+	///
+	/// The one-line form is [`Display`](core::fmt::Display), and the hash covers that form. Both name every node, so a pattern of any shape can be printed.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, seq};
+	/// let p = seq(vec![pure(1.0), pure(2.0)]).fast(2.0).unwrap();
+	/// assert_eq!(
+	///     p.describe(),
+	///     "fast 2\n  stack\n    compress 0 1/2\n      pure 1.0\n    compress 1/2 1\n      pure 2.0\n"
+	/// );
+	/// ```
+	pub fn describe(&self) -> String {
+		let mut out = String::new();
+		self.node.write_outline(0, &mut out);
+		out
 	}
 }
 
@@ -1257,38 +1443,24 @@ mod tests {
 		assert_eq!(from_thread, onsets(&p, 0, 2));
 	}
 
-	struct AddOne;
-	impl ForeignFn<f64> for AddOne {
-		fn call(&self, value: &f64) -> f64 {
-			value + 1.0
-		}
-		fn id(&self) -> u64 {
-			7
-		}
-	}
-
 	struct Everything;
-	impl CustomQuery<f64> for Everything {
-		fn query(&self, span: Span) -> Vec<Hap<f64>> {
-			alloc::vec![Hap {
+	impl Query<f64> for Everything {
+		fn query(&self, span: Span, out: &mut Vec<Hap<f64>>) {
+			out.push(Hap {
 				whole: None,
 				part: span,
 				value: span.begin.to_f64(),
-			}]
-		}
-		fn id(&self) -> u64 {
-			9
+			});
 		}
 	}
 
 	#[test]
 	fn the_escape_hatches_work_and_print() {
-		let mapped = seq(vec![pure(1.0), pure(2.0)]).foreign_map(Arc::new(AddOne));
-		let values: Vec<f64> = onsets(&mapped, 0, 1).into_iter().map(|(_, v)| v).collect();
-		assert_eq!(values, [2.0, 3.0]);
 		let custom = Pattern::custom(Arc::new(Everything));
 		assert_eq!(onsets(&custom, 2, 3), [(Fraction::from_int(2), 2.0)]);
-		assert_eq!(custom.to_string(), "(custom #9)");
-		assert!(mapped.to_string().starts_with("(foreign #7 "));
+		assert!(custom.to_string().starts_with("(custom #"));
+		let mapped = seq(vec![pure(1.0), pure(2.0)]).fmap_with(|v: &f64| v + 1.0);
+		let values: Vec<f64> = onsets(&mapped, 0, 1).into_iter().map(|(_, v)| v).collect();
+		assert_eq!(values, [2.0, 3.0]);
 	}
 }
