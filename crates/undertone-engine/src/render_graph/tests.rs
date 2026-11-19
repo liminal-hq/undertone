@@ -641,3 +641,145 @@ fn block_size_does_not_change_effects_either() {
 	}
 	assert_eq!(effects_graph(length).render_all(), whole);
 }
+
+// ----- The wave shaper, the compressor, and the destination -----
+
+#[test]
+fn a_wave_shaper_applies_its_curve_and_clips_at_a_ceiling() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	let osc = graph.create_node(NodeKind::Oscillator);
+	let frequency = graph.param(osc, ParamKind::Frequency);
+	graph.set_value_at_time(frequency, 200.0, 0.0);
+	let shaper = graph.create_node(NodeKind::WaveShaper);
+	let gain = graph.create_node(NodeKind::Gain);
+	let level = graph.param(gain, ParamKind::Gain);
+	graph.set_value_at_time(level, 3.0, 0.0);
+	let curve = crate::master::ceiling_curve(0.5);
+	let curve = graph.create_curve(&curve);
+	graph.set_curve(shaper, Some(curve));
+	graph.set_oversample(shaper, Oversample::None);
+	graph.connect_node(osc, gain);
+	graph.connect_node(gain, shaper);
+	graph.connect_node(shaper, graph.destination());
+	graph.start(osc, 0.0);
+	let out = graph.render_all();
+	let top = crate::master::ceiling_top(0.5) as f32;
+	assert!(
+		out[0].iter().all(|s| s.abs() <= top),
+		"never over the ceiling"
+	);
+	assert!((peak(&out[0]) - top).abs() < 1e-6, "clipped flat at it");
+}
+
+#[test]
+fn the_master_bus_limits_a_loud_sine_with_the_ceiling_as_a_backstop() {
+	use crate::master::{Limiter, MasterBusOptions, create_master_bus};
+	use crate::warn::Warnings;
+	let mut graph = RenderGraph::new(RATE, 2, 48_000);
+	let bus = create_master_bus(
+		&mut graph,
+		&mut Warnings::default(),
+		MasterBusOptions {
+			ceiling: Some(-0.5),
+			limiter: Limiter::Default,
+			..MasterBusOptions::default()
+		},
+	)
+	.unwrap();
+	let osc = graph.create_node(NodeKind::Oscillator);
+	let loud = graph.create_node(NodeKind::Gain);
+	let level = graph.param(loud, ParamKind::Gain);
+	graph.set_value_at_time(level, 4.0, 0.0);
+	graph.connect_node(osc, loud);
+	graph.connect_node(loud, bus.input);
+	graph.start(osc, 0.0);
+	let out = graph.render_all();
+	let ceiling = 10.0_f32.powf(-0.5 / 20.0);
+	assert!(peak(&out[0]) <= ceiling, "{}", peak(&out[0]));
+	// The limiter brings a +12 dB sine to about the ceiling of its curve; the makeup stage takes the makeup out.
+	let settled = peak(&out[0][24_000..]);
+	assert!(settled > 0.7 && settled <= ceiling, "{settled}");
+	assert_eq!(out[0], out[1]);
+}
+
+#[test]
+fn the_compressor_node_applies_its_parameters_and_follows_them_per_quantum() {
+	let mut graph = RenderGraph::new(RATE, 1, 48_000);
+	let osc = graph.create_node(NodeKind::Oscillator);
+	let frequency = graph.param(osc, ParamKind::Frequency);
+	graph.set_value_at_time(frequency, 1_000.0, 0.0);
+	let compressor = graph.create_node(NodeKind::DynamicsCompressor);
+	for (kind, value) in [
+		(ParamKind::Threshold, -20.0),
+		(ParamKind::Knee, 0.0),
+		(ParamKind::Ratio, 4.0),
+	] {
+		let param = graph.param(compressor, kind);
+		graph.set_value_at_time(param, value, 0.0);
+	}
+	graph.connect_node(osc, compressor);
+	graph.connect_node(compressor, graph.destination());
+	graph.start(osc, 0.0);
+	let out = graph.render_all();
+	// Steady state: the curve gives -15 dB at full scale; the node's makeup is 0.6 of the 15 dB it gave away.
+	let measured = 20.0 * f64::from(peak(&out[0][24_000..])).log10();
+	assert!((measured - (-15.0 + 9.0)).abs() < 0.5, "{measured}");
+}
+
+#[test]
+fn every_destination_width_from_one_to_eight_mixes_a_stereo_source() {
+	for channels in 1..=8_u32 {
+		let mut graph = RenderGraph::new(1_000.0, channels, 256);
+		let two = graph.create_buffer(2, 1, 1_000.0);
+		graph.buffer_channel_mut(two, 0)[0] = 1.0;
+		graph.buffer_channel_mut(two, 1)[0] = 0.5;
+		let source = graph.create_node(NodeKind::BufferSource);
+		graph.set_buffer(source, Some(two));
+		graph.set_loop(source, true);
+		graph.connect_node(source, graph.destination());
+		graph.start(source, 0.0);
+		let out = graph.render_all();
+		assert_eq!(out.len(), channels as usize);
+		let column: Vec<f32> = out.iter().map(|c| c[200]).collect();
+		let want: Vec<f32> = match channels {
+			1 => vec![0.75],
+			2 => vec![1.0, 0.5],
+			4 | 6 => {
+				let mut v = vec![0.0; channels as usize];
+				v[0] = 1.0;
+				v[1] = 0.5;
+				v
+			}
+			// Three, five, seven, and eight channels have no speaker layout: discrete, the first two carry it.
+			_ => {
+				let mut v = vec![0.0; channels as usize];
+				v[0] = 1.0;
+				v[1] = 0.5;
+				v
+			}
+		};
+		assert_eq!(column, want, "{channels} channels");
+	}
+}
+
+#[test]
+fn the_multichannel_setup_of_the_engine_gives_a_discrete_eight_channel_destination() {
+	use crate::engine::{Engine, OutputSetup};
+	let graph = RenderGraph::new(RATE, 8, 4_800);
+	let setup = OutputSetup {
+		multichannel: true,
+		..OutputSetup::default()
+	};
+	let mut engine = Engine::new(graph, setup).unwrap();
+	assert_eq!(engine.graph().destination_channels(), 8);
+	let voice = crate::params::VoiceParams {
+		sound_type: Some(crate::params::SoundType::Sine),
+		pitch: Some(crate::params::Pitch::Name("a4".into())),
+		duration: Some(0.05),
+		..crate::params::VoiceParams::empty()
+	};
+	engine.play(&voice, 0.0).unwrap();
+	let out = engine.into_graph().render_all();
+	assert_eq!(out.len(), 8);
+	assert!(out.iter().any(|c| peak(c) > 0.01));
+}

@@ -75,12 +75,14 @@
 //! the [`Graph`] trait may be made between blocks (a windowed render does this); a change takes effect from
 //! the next whole quantum. [`Graph::current_time`] is the start of the next quantum to render.
 
+mod compressor;
 mod convolver;
 mod delay;
 mod fft;
 mod filter;
 mod mix;
 mod oscillator;
+mod shaper;
 mod source;
 mod timeline;
 
@@ -92,11 +94,13 @@ use crate::graph::{
 	OscillatorType, Oversample, ParamId, ParamKind, Target, WaveId,
 };
 use crate::math::{cos, sin};
+use compressor::Compressor;
 use convolver::Convolver;
 use delay::DelayLine;
 use filter::Biquad;
 use mix::{QUANTUM, mix_add};
 use oscillator::WaveTables;
+use shaper::Shaper;
 use source::SourceState;
 use std::collections::VecDeque;
 use timeline::Timeline;
@@ -121,8 +125,8 @@ enum Proc {
 	Biquad(Biquad),
 	Delay(DelayLine),
 	Convolver(Box<Convolver>),
-	/// Nodes this build does not render yet pass their input through.
-	Passthrough,
+	Compressor(Compressor),
+	Shaper(Shaper),
 }
 
 #[derive(Debug, Clone)]
@@ -273,7 +277,6 @@ enum Stored {
 		sample_rate: f64,
 		channels: Vec<Vec<f32>>,
 	},
-	#[allow(dead_code)] // the wave shaper reads it
 	Curve(Vec<f32>),
 }
 
@@ -675,6 +678,8 @@ impl RenderGraph {
 				Proc::Biquad(filter) => filter.resize(node.in_channels),
 				Proc::Delay(line) => line.resize(node.in_channels),
 				Proc::Convolver(convolver) => convolver.resize(node.in_channels),
+				Proc::Compressor(compressor) => compressor.resize(node.in_channels),
+				Proc::Shaper(shaper) => shaper.resize(node.in_channels),
 				_ => {}
 			}
 		}
@@ -766,7 +771,7 @@ impl RenderGraph {
 				line.is_clear() && (node.cycle_delay || !self.any_input_sounding(node))
 			}
 			Proc::Convolver(convolver) => convolver.is_finished() && !self.any_input_sounding(node),
-			Proc::Destination | Proc::Passthrough => false,
+			Proc::Compressor(_) | Proc::Shaper(_) | Proc::Destination => false,
 		}
 	}
 
@@ -881,7 +886,7 @@ impl RenderGraph {
 				}
 			}
 			Proc::Panner => run_panner(input, out, &params[0], channels),
-			Proc::Merger | Proc::Passthrough => {
+			Proc::Merger => {
 				let shared = size.min(*out_channels * QUANTUM);
 				out[..shared].copy_from_slice(&input[..shared]);
 			}
@@ -905,6 +910,17 @@ impl RenderGraph {
 				}
 				*silent = out[..*out_channels * QUANTUM].iter().all(|v| *v == 0.0);
 			}
+			Proc::Compressor(compressor) => {
+				let [threshold, knee, ratio, attack, release] =
+					[0, 1, 2, 3, 4].map(|slot| params[slot].values[0]);
+				compressor.process(
+					input,
+					out,
+					channels,
+					[threshold, knee, ratio, attack, release],
+				);
+			}
+			Proc::Shaper(shaper) => shaper.process(input, out, channels),
 			Proc::Convolver(convolver) => {
 				convolver.process(input, channels, silent_input, out);
 				*silent = out[..*out_channels * QUANTUM].iter().all(|v| *v == 0.0);
@@ -1086,7 +1102,8 @@ impl Graph for RenderGraph {
 				self.sample_rate,
 			)),
 			NodeKind::Convolver => Proc::Convolver(Box::new(Convolver::new())),
-			NodeKind::DynamicsCompressor | NodeKind::WaveShaper => Proc::Passthrough,
+			NodeKind::DynamicsCompressor => Proc::Compressor(Compressor::new(self.sample_rate)),
+			NodeKind::WaveShaper => Proc::Shaper(Shaper::new()),
 		};
 		self.nodes.push(node);
 		self.dirty = true;
@@ -1177,11 +1194,22 @@ impl Graph for RenderGraph {
 	}
 
 	fn set_curve(&mut self, node: NodeId, curve: Option<BufferId>) {
-		let _ = (node, curve);
+		let samples = curve.map(|b| match &self.buffers[b.index()] {
+			Stored::Curve(samples) => samples.clone(),
+			Stored::Audio { channels, .. } => channels[0].clone(),
+		});
+		let Proc::Shaper(shaper) = &mut self.node_mut(node).proc else {
+			panic!("a curve is not valid on this node");
+		};
+		shaper.set_curve(samples);
 	}
 
 	fn set_oversample(&mut self, node: NodeId, oversample: Oversample) {
-		let _ = (node, oversample);
+		let Proc::Shaper(shaper) = &mut self.node_mut(node).proc else {
+			panic!("oversample is not valid on this node");
+		};
+		shaper.set_oversample(oversample);
+		self.dirty = true;
 	}
 
 	fn set_channel_count(&mut self, node: NodeId, count: u32) {

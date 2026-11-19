@@ -205,8 +205,8 @@ impl Timeline {
 		}
 	}
 
-	#[allow(dead_code)] // the compressor's k-rate parameters use it
 	/// The value at one time (no cursor use that outlasts the call).
+	#[cfg(test)]
 	pub(crate) fn value_at(&mut self, time: f64) -> f64 {
 		self.position = usize::MAX;
 		self.seek(time);
