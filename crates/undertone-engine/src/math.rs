@@ -140,6 +140,22 @@ pub fn pow(x: f64, y: f64) -> f64 {
 	Active::pow(x, y)
 }
 
+/// `x ** y` as JavaScriptCore computes it, rounded correctly (D-25), on every back-end.
+///
+/// The engine uses `**` with a fractional exponent for a semitone ratio (`2 ** (n / 12)`), a pan law
+/// (`10 ** (law / 20)`), and the master bus's makeup gain. [`pow`] follows the platform or `libm` and can be one
+/// unit in the last place away from JavaScriptCore; this is the pattern crate's `js::pow` (a double-double
+/// `exp(y * ln x)` with the `x ** -0.5` rule), so a booked number is the one the reference wrote.
+///
+/// ```
+/// use undertone_engine::math::js_pow;
+/// assert_eq!(js_pow(2.0, 12.0 / 12.0), 2.0);
+/// assert_eq!(js_pow(2.0, -0.5), 0.7071067811865475);
+/// ```
+pub fn js_pow(x: f64, y: f64) -> f64 {
+	undertone_pattern::js::pow(x, y)
+}
+
 /// JavaScript's `Math.min` for two numbers: `NaN` if either is `NaN`.
 pub(crate) fn js_min(a: f64, b: f64) -> f64 {
 	if a.is_nan() || b.is_nan() {

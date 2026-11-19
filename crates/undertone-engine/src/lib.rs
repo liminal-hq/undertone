@@ -14,6 +14,12 @@
 //! The [`graph`] module holds the [`graph::Graph`] trait, the Web Audio calls the engine books voices with, and
 //! [`graph::LogGraph`], which records them in the layer 3 corpus format.
 //!
+//! The [`engine`] module holds [`engine::Engine`], which books [`params::VoiceParams`] on a graph the way the
+//! TypeScript's `playVoice` does. [`voice`] is the voice itself, [`pan`] its placement, [`effects`] the shared
+//! orbit reverb and delay, [`master`] the master bus, and [`waves`], [`noise`], and [`pitch_curve`] its sound.
+//! [`surround`] folds channel gains down to the output, [`window`] plans an offline render booked in windows,
+//! and [`warn`] holds the warnings the engine gives once.
+//!
 //! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
 //! support is behind the `serde` cargo feature.
 
@@ -21,8 +27,13 @@ extern crate alloc;
 
 pub mod graph;
 pub mod math;
+pub mod noise;
 pub mod params;
+pub mod pitch_curve;
 pub mod random;
+pub mod surround;
+pub mod warn;
+pub mod waves;
 
 /// The name of this crate, as a placeholder item until the engine lands.
 ///
