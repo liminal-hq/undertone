@@ -145,7 +145,7 @@ The table is written from the reference's exports and field names; the exact fie
 
 ## The frozen `VoiceParams` vocabulary
 
-The JSON field names are frozen: they are what saved settings hold (City Sim 1000 saves `VoiceParams` overrides; the studio's song format takes them directly under its D50). RF-14 writes every field below; the lab's `Params` has all of them except the eight marked 0.4.0.
+The JSON field names are frozen: they are what saved settings hold (City Sim 1000 saves `VoiceParams` overrides; the studio's song format takes them directly under its D50). RF-14 writes every field below; the lab's `Params` has all of them except the eight marked 0.4.0. **Status:** the `VoiceParams` struct is written (`undertone-engine::params`, 52 fields, behind the `serde` feature) and checked against `conformance/api/voice-params.json`; `soundType` is an `Option` because `.s(name)` leaves it out for a sample voice; `resolve_params` is still to come.
 
 - **Required in the TypeScript type:** `soundType`, `gainLevel`, `attack`, `decay`, `sustain`, `release`, `filterEnvAmount`, `filterAttack`, `filterDecay`, `filterSustain`, `filterRelease`, `roomSize`, `delayTime`, `delayFeedback`, `slideTime`, `nudgeTime`.
 - **Optional:** `pitch`, `sampleName`, `sampleBank`, `filterCutoff`, `hpfCutoff`, `phaserRate`, `roomLevel`, `delayLevel`, `orbit`, `pitchEnvAmount`, `pitchAttack`, `pitchDecay`, `pitchSteps`, `pitchStepRate`, `fmIndex`, `fmHarmonicity`, `fmAttack`, `fmDecay`, `fmSustain`, `fmRelease`, `fmEnvCurve`, `fmWave`, `pan`, `channelGains`, `duration`, `legato`, `velocity`, `cutGroup`.
