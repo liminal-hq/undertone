@@ -14,7 +14,7 @@
 //! The tempo is an explicit part of the options (`bpm`, `cps`, or `default_cpm`), never a global (decision
 //! D-29). Samples a pattern plays are registered on the options (decision D-30).
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::options::{RenderOptions, WavOptions};
 use undertone_engine::render::RenderPlan;
 use undertone_engine::render_graph::RenderGraph;
@@ -34,13 +34,34 @@ pub struct RenderedAudio {
 }
 
 impl RenderedAudio {
-	/// Audio from channels already rendered, one `Vec` per channel, at `sample_rate` hertz. The channels
-	/// should have the same length ([`RenderedAudio::to_wav`] checks it).
-	pub fn new(sample_rate: f64, channels: Vec<Vec<f32>>) -> Self {
-		RenderedAudio {
+	/// Audio from channels already rendered, one `Vec` per channel, at `sample_rate` hertz.
+	///
+	/// # Errors
+	///
+	/// Fails with the reference's `encodeWav` message when the channels are not all the same length, so a
+	/// `RenderedAudio` always holds a rectangle of samples and [`RenderedAudio::interleaved`] cannot index past
+	/// the end of a channel. No channels at all is allowed here; [`RenderedAudio::to_wav`] refuses it.
+	///
+	/// ```
+	/// use undertone::prelude::*;
+	///
+	/// let audio = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.5], vec![0.0, -0.5]])?;
+	/// assert_eq!(audio.interleaved(), [0.0, 0.0, 0.5, -0.5]);
+	/// let uneven = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.0], vec![0.0]]);
+	/// assert_eq!(uneven.unwrap_err().message(), "encodeWav: every channel must have the same length");
+	/// # Ok::<(), undertone::Error>(())
+	/// ```
+	pub fn new(sample_rate: f64, channels: Vec<Vec<f32>>) -> Result<Self> {
+		let frames = channels.first().map_or(0, Vec::len);
+		if channels.iter().any(|channel| channel.len() != frames) {
+			return Err(Error::new(
+				"encodeWav: every channel must have the same length",
+			));
+		}
+		Ok(RenderedAudio {
 			sample_rate,
 			channels,
-		}
+		})
 	}
 
 	/// The sample rate in hertz.
@@ -96,13 +117,13 @@ impl RenderedAudio {
 	///
 	/// # Errors
 	///
-	/// Fails with the reference's message when there are no channels, more than eight, channels of different
-	/// lengths, or more audio than a WAV file holds (over 4 GiB).
+	/// Fails with the reference's message when there are no channels, more than eight, or more audio than a WAV
+	/// file holds (over 4 GiB). Channels of different lengths cannot get this far: [`RenderedAudio::new`] refuses them.
 	///
 	/// ```
 	/// use undertone::prelude::*;
 	///
-	/// let audio = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.5, -0.5, 0.0]]);
+	/// let audio = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.5, -0.5, 0.0]])?;
 	/// let wav = audio.to_wav(&WavOptions::new().bit_depth(BitDepth::ThirtyTwo))?;
 	/// assert_eq!(&wav[8..12], b"WAVE");
 	/// # Ok::<(), undertone::Error>(())
@@ -359,27 +380,36 @@ mod tests {
 
 	#[test]
 	fn interleaving_walks_frame_by_frame() {
-		let audio = RenderedAudio::new(1.0, vec![vec![1.0, 2.0], vec![3.0, 4.0]]);
+		let audio = RenderedAudio::new(1.0, vec![vec![1.0, 2.0], vec![3.0, 4.0]]).unwrap();
 		assert_eq!(audio.interleaved(), [1.0, 3.0, 2.0, 4.0]);
 		assert_eq!(audio.seconds(), 2.0);
 	}
 
 	#[test]
-	fn uneven_channels_never_panic() {
-		// Review finding: `interleaved` indexed every channel by the first one's length.
-		let outcome = std::panic::catch_unwind(|| {
-			let audio = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.0], vec![0.0]]);
-			audio.interleaved()
-		});
-		assert!(outcome.is_ok(), "building or interleaving uneven channels panicked");
+	fn uneven_channels_are_refused_at_construction() {
+		let error = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.0], vec![0.0]]).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(
+			error.message(),
+			"encodeWav: every channel must have the same length"
+		);
+		assert!(RenderedAudio::new(8_000.0, vec![vec![0.0; 3], vec![0.0; 4]]).is_err());
+		assert!(RenderedAudio::new(8_000.0, vec![vec![0.0], vec![]]).is_err());
+		// Even rectangles, including none and empty ones, are fine and interleave without a panic.
+		assert!(
+			RenderedAudio::new(8_000.0, vec![])
+				.unwrap()
+				.interleaved()
+				.is_empty()
+		);
+		let silent = RenderedAudio::new(8_000.0, vec![vec![], vec![]]).unwrap();
+		assert!(silent.interleaved().is_empty());
+		assert_eq!(silent.frames(), 0);
 	}
 
 	#[test]
-	fn mismatched_channels_are_refused_by_the_encoder() {
-		let audio = RenderedAudio::new(8_000.0, vec![vec![0.0; 3], vec![0.0; 4]]);
-		assert_eq!(
-			audio.to_wav(&WavOptions::new()).unwrap_err().message(),
-			"encodeWav: every channel must have the same length"
-		);
+	fn no_channels_are_refused_by_the_encoder() {
+		let audio = RenderedAudio::new(8_000.0, vec![]).unwrap();
+		assert!(audio.to_wav(&WavOptions::new()).is_err());
 	}
 }

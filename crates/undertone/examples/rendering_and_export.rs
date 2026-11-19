@@ -129,8 +129,8 @@ fn main() -> Outcome {
 		println!("{what}: {}", render(&song, &options).unwrap_err());
 	}
 
-	// WAV files have limits: one to eight channels, all of one length.
-	let none = RenderedAudio::new(48_000.0, vec![]);
+	// WAV files have limits: one to eight channels, and a `RenderedAudio` holds channels of one length.
+	let none = RenderedAudio::new(48_000.0, vec![])?;
 	println!("{}", none.to_wav(&WavOptions::new()).unwrap_err());
 	Ok(())
 }

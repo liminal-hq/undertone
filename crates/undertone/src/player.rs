@@ -330,7 +330,7 @@ impl Player {
 		for channel in &mut channels {
 			channel.truncate(written);
 		}
-		Ok(RenderedAudio::new(sample_rate, channels))
+		RenderedAudio::new(sample_rate, channels)
 	}
 }
 
