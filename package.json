@@ -31,6 +31,7 @@
     "docs:dev": "bun run docs:api && vitepress dev docs",
     "docs:build": "bun run docs:api && vitepress build docs",
     "docs:preview": "vitepress preview docs",
+    "docs:audio": "bun scripts/render-ts-audio.ts",
     "api:record": "bun conformance/api/report.ts record",
     "api:check": "bun conformance/api/report.ts check",
     "voice-params:record": "bun conformance/api/voice-params.ts record",

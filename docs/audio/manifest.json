@@ -1,0 +1,73 @@
+{
+  "rendering-wav": {
+    "page": "docs/guide/rendering-and-export.md",
+    "kind": "run",
+    "labels": ["render"]
+  },
+  "rendering-booking-window": {
+    "page": "docs/guide/rendering-and-export.md",
+    "kind": "run",
+    "labels": ["render"]
+  },
+  "samples-registry": {
+    "page": "docs/guide/samples.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1
+  },
+  "effects-orbit-bus": {
+    "page": "docs/guide/effects.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 2,
+    "note": "The room and delay the code sets on orbit 2 are applied to the render."
+  },
+  "surround-multichannel": {
+    "page": "docs/guide/stereo-and-surround.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1,
+    "channels": [2, 6]
+  },
+  "surround-play-params": {
+    "page": "docs/guide/stereo-and-surround.md",
+    "kind": "direct",
+    "seconds": 2,
+    "note": "One second of the sweep, then its release."
+  },
+  "recipes-drum-kit": {
+    "page": "docs/recipes.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1
+  },
+  "recipes-master-bus": {
+    "page": "docs/recipes.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1
+  },
+  "recipes-ceiling": {
+    "page": "docs/recipes.md",
+    "kind": "run",
+    "labels": ["limited", "safe"],
+    "note": "The limited file has no ceiling, so its peaks pass full scale and the WAV file clips them; the safe file has one."
+  },
+  "recipes-arrange": {
+    "page": "docs/recipes.md",
+    "kind": "run",
+    "labels": ["render"]
+  },
+  "recipes-score": {
+    "page": "docs/recipes.md",
+    "kind": "run",
+    "labels": ["render"],
+    "trimSeconds": 12
+  },
+  "strudel-samples": {
+    "page": "docs/coming-from-strudel.md",
+    "kind": "capture",
+    "cycles": 4,
+    "tail": 1
+  }
+}

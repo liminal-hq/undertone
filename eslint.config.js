@@ -12,6 +12,7 @@ export default tseslint.config(
       'docs/api/**',
       'docs/public/rust/**',
       'docs/public/rust-audio/**',
+      'docs/public/ts-audio/**',
       'target/**',
       'test-results/**',
       // Throwaway spike code (docs/rust-migration/milestones/M2-spikes.md) is not linted; Prettier still checks it.
