@@ -1,0 +1,12 @@
+{
+  "name": "r3-vitepress-app",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "vitepress": "1.6.4",
+    "vue": "3.5.13"
+  },
+  "dependencies": {
+    "@liminal-hq/undertone": "file:../../liminal-hq-undertone-0.0.0-r3-spike.tgz"
+  }
+}
