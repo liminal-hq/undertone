@@ -25,7 +25,18 @@ export interface OutputSetup {
   master?: boolean | Record<string, unknown>;
   /** Output channels of the destination (default 2); more than two enables multichannel output. */
   channels?: number;
+  /** The most channels the hardware offers (`maxChannelCount`); defaults to `channels`. */
+  maxChannels?: number;
+  /** Whether `enableMultichannel` is called on the context; defaults to `channels` being more than two. */
+  multichannel?: boolean;
+  /** Voices play through `createMonoFold`, which feeds the master bus when there is one. */
+  monoFold?: boolean;
 }
+
+/** An instrument merged over a voice's patch, as `.voice(patch)` does: a preset by name, or an `fmVoice()` definition. */
+export type Instrument =
+  | { preset: 'glassBell' | 'roundBass' | 'softPad' | 'pluck' | 'lead' }
+  | { fmVoice: Record<string, unknown> };
 
 interface CaseBase {
   id: string;
@@ -38,7 +49,14 @@ interface CaseBase {
 /** Voices booked directly on a realtime fake context: `patch` is a partial `VoiceParams`, `at` the start in seconds. */
 export interface VoicesGraphCase extends CaseBase {
   kind: 'voices';
-  voices: readonly { at: number; patch: ControlPatch }[];
+  voices: readonly {
+    at: number;
+    patch: ControlPatch;
+    /** `.voice(patch)`: an instrument merged over the patch. */
+    instrument?: Instrument;
+    /** `.surround(angle)`: sets `channelGains` to `surroundGains(angle)`. */
+    surround?: number;
+  }[];
   output?: OutputSetup;
 }
 
@@ -296,11 +314,20 @@ function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[]
   );
 }
 
-function configure(ref: Reference, ctx: FakeAudioContext, channels: number | undefined): void {
-  if (channels === undefined || channels === 2) return;
-  ctx.destination.channelCount = channels;
-  ctx.destination.maxChannelCount = channels;
-  if (channels > 2) ref.lib.enableMultichannel(ctx as never);
+function configure(ref: Reference, ctx: FakeAudioContext, setup: OutputSetup | undefined): void {
+  const { channels, maxChannels, multichannel } = setup ?? {};
+  if (channels !== undefined && channels !== 2) ctx.destination.channelCount = channels;
+  const max = maxChannels ?? channels;
+  if (max !== undefined && max !== 2) ctx.destination.maxChannelCount = max;
+  if (multichannel ?? (channels !== undefined && channels > 2)) {
+    ref.lib.enableMultichannel(ctx as never);
+  }
+}
+
+/** The patch an instrument gives: a preset's, or the conversion of an `fmVoice()` definition. */
+function instrumentPatch(ref: Reference, instrument: Instrument): ControlPatch {
+  if ('preset' in instrument) return { ...ref.lib.fmPresets[instrument.preset] };
+  return ref.lib.fmVoice(instrument.fmVoice);
 }
 
 /** Books a voices case on a fresh recording context and describes its graph. */
@@ -309,7 +336,7 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
   const created = track(ctx);
   // Noise and reverb draw from the context's seeded source, as a render does (seed 0).
   ref.random.seedContext(ctx as never, 0);
-  configure(ref, ctx, spec.output?.channels);
+  configure(ref, ctx, spec.output);
   let output: unknown;
   const master = spec.output?.master;
   if (master !== undefined && master !== false) {
@@ -319,7 +346,21 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
     );
     output = bus.input;
   }
-  for (const voice of spec.voices) {
+  if (spec.output?.monoFold) {
+    output = ref.lib.createMonoFold(ctx as never, (output ?? ctx.destination) as never);
+  }
+  // `.voice(patch)`: the instrument's fields overwrite the note's, and the score keeps what was booked.
+  const voices = spec.voices.map((voice) => ({
+    at: voice.at,
+    patch: {
+      ...voice.patch,
+      ...(voice.instrument === undefined ? {} : instrumentPatch(ref, voice.instrument)),
+      ...(voice.surround === undefined
+        ? {}
+        : { channelGains: ref.lib.surroundGains(voice.surround) })
+    }
+  }));
+  for (const voice of voices) {
     ref.engine.playVoice(ctx as never, ref.engine.resolveParams(voice.patch), voice.at, {
       output: output as never
     });
@@ -327,7 +368,7 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
   return {
     ...head(spec),
     ...(spec.output === undefined ? {} : { output: spec.output as Json }),
-    score: scoreLines(spec.voices),
+    score: scoreLines(voices),
     graph: describeGraph(ctx, created, null)
   };
 }
