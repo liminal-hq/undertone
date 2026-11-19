@@ -74,5 +74,41 @@ status=0
 out=$(env -u CI RUSTDOC_DIR="$work/absent" bash "$script" 2>&1) || status=$?
 if [ "$status" -eq 0 ] && grep -q 'SKIPPED' <<<"$out"; then pass "a local run skips the rustdoc checks loudly"; else bad "a local run without rustdoc did not skip loudly (status $status): $out"; fi
 
+# The audio player: exactly one <RustAudio> per page, naming an example the page imports.
+audio_page() { printf '%s\n' "$@" >"$work/audio.md"; }
+audio_check() { status=0; out=$(bash "$script" --audio "$work/audio.md" 2>&1) || status=$?; }
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '' '<RustAudio example="signals" />'
+audio_check
+if [ "$status" -eq 0 ]; then pass "a RustAudio matching the imported example is accepted"; else bad "a matching RustAudio was refused: $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'found 0' <<<"$out"; then pass "a page with no RustAudio fails"; else bad "a page with no RustAudio was accepted (status $status): $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="signals" />' '<RustAudio example="signals" />'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'found 2' <<<"$out"; then pass "a page with two RustAudio tags fails"; else bad "two RustAudio tags were accepted (status $status): $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="fm_synthesis" />'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'fm_synthesis' <<<"$out"; then pass "a RustAudio for an example the page does not import fails"; else bad "a mismatched RustAudio was accepted (status $status): $out"; fi
+
+# The site bar: every sampled page holds data-site-bar. A tree built without the flags fails and names the page.
+bar="$work/bar"
+mkdir -p "$bar"/{undertone/player,src/undertone,undertone_pattern}
+for page in undertone/index.html undertone_pattern/index.html undertone/player/struct.Player.html src/undertone/player.rs.html help.html; do
+  echo '<body><nav data-site-bar></nav></body>' >"$bar/$page"
+done
+status=0
+out=$(RUSTDOC_DIR="$bar" bash "$script" --site-bar 2>&1) || status=$?
+if [ "$status" -eq 0 ]; then pass "pages with the site bar are accepted"; else bad "pages with the site bar were refused: $out"; fi
+echo '<body>no bar</body>' >"$bar/undertone/player/struct.Player.html"
+status=0
+out=$(RUSTDOC_DIR="$bar" bash "$script" --site-bar 2>&1) || status=$?
+if [ "$status" -ne 0 ] && grep -q 'struct.Player.html' <<<"$out" && grep -q 'data-site-bar' <<<"$out" && ! grep -q 'undertone/index.html' <<<"$out"; then
+  pass "a page without the site bar fails and names the page"
+else bad "a page without the site bar was accepted or reported wrongly (status $status): $out"; fi
+echo '<body>no bar</body>' >"$bar/src/undertone/player.rs.html"
+status=0
+out=$(RUSTDOC_DIR="$bar" bash "$script" --site-bar 2>&1) || status=$?
+if [ "$status" -ne 0 ] && grep -q 'player.rs.html' <<<"$out"; then pass "a source page without the site bar fails"; else bad "a source page without the site bar was accepted (status $status): $out"; fi
+
 [ "$failures" -eq 0 ] && echo "check-rust-docs.test: all passed"
 exit "$failures"

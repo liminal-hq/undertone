@@ -22,6 +22,8 @@ The whole of `crates/undertone/examples/tempo_and_note_length.rs` is below, incl
 
 <<< @/../crates/undertone/examples/tempo_and_note_length.rs
 
+<RustAudio example="tempo_and_note_length" />
+
 The pattern transforms (`fast`, `slow`, `rev`, `every`, `euclid`, `jux`) have the same names as in TypeScript and return `Result` where the reference can reject an argument.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

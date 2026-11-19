@@ -1,0 +1,29 @@
+<script>
+  // Follow the site's light/dark choice. VitePress keeps it in localStorage ("auto", "dark" or "light"; absent means "auto") under
+  // vitepress-theme-appearance, on the same origin as these pages. rustdoc reads its own keys (rustdoc-theme, rustdoc-use-system-theme and
+  // rustdoc-preferred-{light,dark}-theme) in storage.js, which has already run, so this writes them and asks it to apply them again,
+  // before the body is painted.
+  //
+  // The site's choice is applied when it differs from the one applied last time (rustdoc-site-appearance), so a theme picked in rustdoc's
+  // own settings (such as ayu) is kept until the site's choice changes.
+  (function () {
+    try {
+      var ls = window.localStorage;
+      var site = ls.getItem('vitepress-theme-appearance') || 'auto';
+      if (site !== 'auto' && site !== 'dark' && site !== 'light') site = 'auto';
+      if (ls.getItem('rustdoc-site-appearance') === site) return;
+      ls.setItem('rustdoc-site-appearance', site);
+      ls.setItem('rustdoc-preferred-light-theme', 'light');
+      ls.setItem('rustdoc-preferred-dark-theme', 'dark');
+      if (site === 'auto') {
+        ls.setItem('rustdoc-use-system-theme', 'true');
+      } else {
+        ls.setItem('rustdoc-use-system-theme', 'false');
+        ls.setItem('rustdoc-theme', site);
+      }
+      if (typeof updateTheme === 'function') updateTheme();
+    } catch (e) {
+      // Storage is blocked: rustdoc keeps its own default theme.
+    }
+  })();
+</script>

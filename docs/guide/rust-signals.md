@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/signals.rs` is below, included from the 
 
 <<< @/../crates/undertone/examples/signals.rs
 
+<RustAudio example="signals" />
+
 Segment a signal with `segment(n)` to give it a rhythm, or hand it to a control, which reads it at each onset.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

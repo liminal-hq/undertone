@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/patterned_parameters.rs` is below, inclu
 
 <<< @/../crates/undertone/examples/patterned_parameters.rs
 
+<RustAudio example="patterned_parameters" />
+
 Mistakes surface when the pattern is built, not in the middle of a song.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

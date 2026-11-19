@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/samples.rs` is below, included from the 
 
 <<< @/../crates/undertone/examples/samples.rs
 
+<RustAudio example="samples" />
+
 `.bank(name)` is a lookup convention in both languages: it tries `{bank}_{name}` before the bare name.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).

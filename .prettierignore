@@ -12,3 +12,4 @@ spikes/**/out
 spikes/**/bun.lock
 conformance/test-classes.json
 docs/public/rust
+docs/public/rust-audio

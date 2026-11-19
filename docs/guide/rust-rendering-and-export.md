@@ -23,6 +23,8 @@ The whole of `crates/undertone/examples/rendering_and_export.rs` is below, inclu
 
 <<< @/../crates/undertone/examples/rendering_and_export.rs
 
+<RustAudio example="rendering_and_export" />
+
 WAV files are one to eight channels, all of one length.
 
 The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).
