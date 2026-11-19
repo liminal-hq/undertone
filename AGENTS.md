@@ -61,7 +61,11 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 ## Git Workflow
 
-- Do not push or force-push unless explicitly requested by the user.
+- Do not force-push unless explicitly requested by the user. Pushing a branch and opening its pull request as the work proceeds is expected when the user has asked for it (for example, for a milestone's stack); merging, tagging, and publishing always wait for the user's explicit go.
+- **Rebase, never merge `main` in.** When a branch conflicts with `main`, rebase it onto `main`; do not merge `main` into it.
+- **Stacked pull requests:** open a stack with `gh stack` (`gh stack init`, then `gh stack submit`). It creates generic draft pull requests, so rewrite each title and body to the patterns in this file, add labels, and take the pull requests out of draft once their checks pass. Merge a stack atomically from the top with `gh stack merge <top-PR> --yes --merge`, only when the user says go. Run `gh pr edit` and similar commands from inside the repository.
+- **Shared CI images:** run CI jobs in the shared `ghcr.io/liminal-hq/ci-*` images from `liminal-hq/.github` (public), pinned by digest from its `docs/reference/recommended-image-pins.md`, wherever one fits. If an image is too heavy or lacks something, record the request as an issue in `liminal-hq/.github` instead of working around it silently.
+- **Orchestrated work:** when an orchestrating agent assigns other agents, run about two at a time (never more than three), review every diff and gate result itself, and watch disk and memory (use one shared `CARGO_TARGET_DIR`, remove worktrees once their branch is pushed).
 - Use focused commits with clear messages describing the change just made, not the whole branch history.
 - **Branch naming:** `<type>/<short-description>`, where `<type>` matches the commit-message Conventional Commit type (`feat`, `fix`, `docs`, `test`, `ci`, `build`, `chore`) — for example `feat/composer-live-playground`. Include an issue number when the branch addresses a filed issue: `fix/issue-<number>-<short-description>` (for example, `fix/issue-19-wsl2-deb-runtime`). For release prep, use `chore/release-v<version>` (for example, `chore/release-v0.0.4`).
 - Decide the branch name before the first push / PR creation. Do not rename a branch that already has an open pull request — GitHub closes the PR rather than repointing it to the new ref, and the closed PR cannot be reopened without recreating a branch with the exact original name.
