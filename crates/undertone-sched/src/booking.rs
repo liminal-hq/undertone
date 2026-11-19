@@ -8,7 +8,7 @@
 //!
 //! It reads no clock and starts no timer. A caller gives the window (seconds since the pattern started), where
 //! the pattern started on the graph's clock, and the tempo; the [`Transport`](crate::Transport) is one caller,
-//! a test is another. It is the step the reference's `loop()` takes at each tick ([`schedule_span`] over the
+//! a test is another. It is the step the reference's `loop()` takes at each tick ([`schedule_span`](undertone_engine::render::schedule_span) over the
 //! window between what is booked and the look-ahead), with the window's edges placed the way the reference
 //! places them: on a grid of [`WINDOW_GRID`] steps a cycle, so the fractions stay small however long the
 //! pattern has been playing. Event times are exact rationals, so an onset falls in exactly one half-open window
@@ -52,7 +52,7 @@ use crate::tempo::Tempo;
 use undertone_engine::engine::{Engine, Playback};
 use undertone_engine::graph::{Graph, NodeId};
 use undertone_engine::render::collect_onsets;
-use undertone_engine::window::sort_booking_order;
+use undertone_engine::window::{PendingVoice, sort_booking_order};
 use undertone_pattern::js::number_to_string;
 use undertone_pattern::{ControlMap, Error, Fraction, Pattern, Result, Span};
 
@@ -139,28 +139,24 @@ pub fn window_edge(seconds: f64, cycle_seconds: f64) -> Result<Fraction> {
 	Ok(Fraction::new(steps as i128, WINDOW_GRID))
 }
 
-/// Books every voice that starts in the cycles `[begin, end)` on `engine`, in time order, with cycle zero at
-/// `start_time` on the graph's clock and `cycle_seconds` a cycle. The exact form of [`book_window`], for a
-/// caller that already holds the window as fractions.
+/// Finds every voice that starts in the cycles `[begin, end)` and puts them in booking order (time, nudge
+/// included), without booking anything. Cycle zero is at `start_time` on the graph's clock and a cycle lasts
+/// `cycle_seconds`. An empty window (`end <= begin`) has no voices.
 ///
-/// An empty window (`end <= begin`) books nothing. The voices are collected before any is booked, so a
-/// pattern that fails when queried books none.
+/// This is the half of [`book_cycles`] that can fail on the pattern; the [`Transport`](crate::Transport)
+/// calls it first so a failing pattern books nothing and its window is tried again at the next tick.
 ///
 /// # Errors
 ///
-/// A pattern that fails when queried fails with its message, before anything is booked. A voice the engine
-/// cannot book (a bad pitch) fails with the engine's message; the voices before it stay booked, and the ones
-/// after it are not tried.
-pub fn book_cycles<G: Graph>(
-	engine: &mut Engine<G>,
+/// A pattern that fails when queried (a chord whose voicing anchor is wrong) fails with its message.
+pub fn collect_window(
 	pattern: &Pattern<ControlMap>,
 	begin: Fraction,
 	end: Fraction,
 	start_time: f64,
 	cycle_seconds: f64,
 	gated: bool,
-	output: Option<NodeId>,
-) -> Result<Vec<Playback>> {
+) -> Result<Vec<PendingVoice>> {
 	if end <= begin {
 		return Ok(Vec::new());
 	}
@@ -172,11 +168,54 @@ pub fn book_cycles<G: Graph>(
 		gated,
 	)?;
 	sort_booking_order(&mut voices);
+	Ok(voices)
+}
+
+/// Books `voices`, in order, on `engine` (to `output`, or the engine's output), pushing each playback onto
+/// `playbacks` as it is booked, so a caller that gets an error still holds the playbacks that were made.
+///
+/// # Errors
+///
+/// A voice the engine cannot book (a bad pitch) fails with the engine's message; the voices before it stay
+/// booked, and the ones after it are not tried.
+pub fn book_voices<G: Graph>(
+	engine: &mut Engine<G>,
+	voices: &[PendingVoice],
+	output: Option<NodeId>,
+	playbacks: &mut Vec<Playback>,
+) -> Result<()> {
 	let output = output.unwrap_or_else(|| engine.output());
-	voices
-		.iter()
-		.map(|voice| engine.play_to(output, &voice.params, voice.start_time))
-		.collect()
+	for voice in voices {
+		playbacks.push(engine.play_to(output, &voice.params, voice.start_time)?);
+	}
+	Ok(())
+}
+
+/// Books every voice that starts in the cycles `[begin, end)` on `engine`, in time order, with cycle zero at
+/// `start_time` on the graph's clock and `cycle_seconds` a cycle. The exact form of [`book_window`], for a
+/// caller that already holds the window as fractions.
+///
+/// An empty window (`end <= begin`) books nothing. The voices are collected before any is booked, so a
+/// pattern that fails when queried books none.
+///
+/// # Errors
+///
+/// As [`collect_window`] and [`book_voices`].
+#[allow(clippy::too_many_arguments)] // the reference's `scheduleSpan` takes the same, flat
+pub fn book_cycles<G: Graph>(
+	engine: &mut Engine<G>,
+	pattern: &Pattern<ControlMap>,
+	begin: Fraction,
+	end: Fraction,
+	start_time: f64,
+	cycle_seconds: f64,
+	gated: bool,
+	output: Option<NodeId>,
+) -> Result<Vec<Playback>> {
+	let voices = collect_window(pattern, begin, end, start_time, cycle_seconds, gated)?;
+	let mut playbacks = Vec::with_capacity(voices.len());
+	book_voices(engine, &voices, output, &mut playbacks)?;
+	Ok(playbacks)
 }
 
 /// Books every voice of `pattern` that starts in `[t0, t1)` seconds after the pattern started, at the tempo in

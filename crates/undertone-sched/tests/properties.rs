@@ -51,8 +51,11 @@ fn options(bpm: f64, start_time: f64, gated: bool) -> BookOptions {
 	}
 }
 
+/// The recorded graph and every playback's (start, end).
+type Outcome = (GraphRecord, Vec<(f64, f64)>);
+
 /// What booking leaves behind: the recorded graph and every playback's window.
-fn outcome(engine: Engine<LogGraph>, booked: Vec<Playback>) -> (GraphRecord, Vec<(f64, f64)>) {
+fn outcome(engine: Engine<LogGraph>, booked: Vec<Playback>) -> Outcome {
 	let windows = booked.iter().map(|p| (p.start_time, p.end_time)).collect();
 	(engine.into_graph().finish(None), windows)
 }
@@ -64,10 +67,7 @@ fn book_whole_and_pieces(
 	t0: f64,
 	t1: f64,
 	cuts: &[f64],
-) -> (
-	(GraphRecord, Vec<(f64, f64)>),
-	(GraphRecord, Vec<(f64, f64)>),
-) {
+) -> (Outcome, Outcome) {
 	let mut whole = engine();
 	let booked = book_window(&mut whole, pattern, t0, t1, options).expect("books");
 	let whole = outcome(whole, booked);
