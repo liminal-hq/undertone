@@ -248,7 +248,7 @@ for (const [file, tests] of Object.entries(files)) {
     } else if (rel.endsWith('docSnippets.test.ts')) {
       cls = 'public';
       rule = 'F3';
-      rf27 = 'alias';
+      rf27 = support.length ? 'translate' : 'alias';
       note = 'namespace import of ./index; fake timers keep loops idle';
     } else if (timer.length) {
       cls = 'web-audio';
