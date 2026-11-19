@@ -111,6 +111,8 @@ fn construct(step: &Json) -> Built<Pat> {
 				"number" => Ok(mini::parse(source, |w| {
 					Ok(Value::Num(js::string_to_number(w)))
 				})?),
+				"pitch" => Ok(control::note(source)?),
+				"drum" => Ok(control::s(source)?),
 				other => err(format!("Unknown leaf rule \"{other}\"")),
 			}
 		}
