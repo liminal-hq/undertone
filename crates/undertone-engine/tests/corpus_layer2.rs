@@ -32,24 +32,16 @@ use undertone_engine::params::resolve_params;
 use undertone_pattern::{Fraction, Span, Value};
 
 /// Cases per group that the run cannot build yet, with the reason. Every other case of every group must be equal.
-const NOT_COVERED: &[(&str, usize, &str)] = &[
-	("chords", 71, "RF-15: chord() and voicing() need chord.ts"),
-	("drift", 81, "RF-17: drift() needs the seeded random source"),
-	(
-		"notes",
-		1,
-		"RF-15: notes-chord-01 needs chord() and voicing()",
-	),
-	(
-		"signals",
-		1,
-		"RF-15: signals-autopan-phase starts from chord() and voicing()",
-	),
-];
+const NOT_COVERED: &[(&str, usize, &str)] = &[];
 
-/// The groups this change is responsible for, with their case and resolved-object counts when everything runs, so a
-/// file that silently loses cases fails. `chords` and `drift` have no entry because they are not covered here.
-const KNOWN: &[(&str, usize)] = &[("controls", 58), ("notes", 43), ("signals", 20)];
+/// The groups with their case counts, so a file that silently loses cases fails.
+const KNOWN: &[(&str, usize)] = &[
+	("controls", 58),
+	("notes", 43),
+	("signals", 20),
+	("chords", 71),
+	("drift", 81),
+];
 
 const REL_TOLERANCE: f64 = 1e-14;
 const ABS_FLOOR: f64 = 1e-15;
@@ -129,10 +121,13 @@ fn collect_onsets(
 	cycle: i128,
 	cycle_seconds: f64,
 	gated: bool,
-) -> Vec<(f64, Value)> {
+) -> Result<Vec<(f64, Value)>, String> {
 	let span = Span::new(Fraction::from_int(cycle), Fraction::from_int(cycle + 1));
 	let mut voices = Vec::new();
-	for hap in pattern.query(span) {
+	let haps = pattern
+		.try_query(span)
+		.map_err(|e| e.message().to_string())?;
+	for hap in haps {
 		let Some(whole) = hap.whole else { continue };
 		if whole.begin != hap.part.begin {
 			continue; // a tail overlapping the window, not an onset
@@ -153,7 +148,7 @@ fn collect_onsets(
 		}
 		voices.push((start, value));
 	}
-	voices
+	Ok(voices)
 }
 
 #[derive(Default)]
@@ -183,9 +178,30 @@ fn check_case(case: &Json) -> Result<(usize, bool, usize), String> {
 			Err(Failure::Error(message)) => Err(format!(
 				"{id}: wrong error\n  expected: {expected}\n  actual:   {message}"
 			)),
-			Ok(_) => Err(format!(
-				"{id}: expected the error {expected:?} but the program built"
-			)),
+			Ok(pattern) => {
+				// The program builds and the error comes when it is queried (a bad voicing anchor).
+				let cycles = case.get("cycles").and_then(Json::as_arr).unwrap();
+				let (first, end) = (
+					cycles[0].as_f64().unwrap() as i128,
+					cycles[1].as_f64().unwrap() as i128,
+				);
+				let cycle_seconds = 1.0 / case.get("cps").and_then(Json::as_f64).unwrap();
+				let gated = matches!(case.get("gated"), Some(Json::Bool(true)));
+				for cycle in first..end {
+					match collect_onsets(&pattern, cycle, cycle_seconds, gated) {
+						Err(message) if message == expected => return Ok((0, false, 0)),
+						Err(message) => {
+							return Err(format!(
+								"{id}: wrong error\n  expected: {expected}\n  actual:   {message}"
+							));
+						}
+						Ok(_) => {}
+					}
+				}
+				Err(format!(
+					"{id}: expected the error {expected:?} but the program built and booked"
+				))
+			}
 		};
 	}
 	let pattern = match built {
@@ -203,7 +219,10 @@ fn check_case(case: &Json) -> Result<(usize, bool, usize), String> {
 	let cycle_seconds = 1.0 / cps;
 	let mut actual = Vec::new();
 	for cycle in first..end {
-		actual.extend(collect_onsets(&pattern, cycle, cycle_seconds, gated));
+		actual.extend(
+			collect_onsets(&pattern, cycle, cycle_seconds, gated)
+				.map_err(|e| format!("{id}: unexpected error {e:?}"))?,
+		);
 	}
 	let expected = case.get("events").and_then(Json::as_arr).unwrap();
 	if actual.len() != expected.len() {
@@ -338,12 +357,11 @@ fn layer_two_corpus_is_equal() {
 			"the {group} group changed size"
 		);
 	}
-	// The first subset's resolved objects: 410 controls, 289 notes, and 180 signals objects all round-trip; those of
-	// the cases that need chord() are not run here.
+	// The resolved objects of the first subset, all of them now that chord() runs.
 	let objects = |group: &str| groups.get(group).map_or(0, |t| t.objects);
 	assert_eq!(objects("controls"), 410);
-	assert_eq!(objects("notes"), 289 - 9);
-	assert_eq!(objects("signals"), 180 - 8);
+	assert_eq!(objects("notes"), 289);
+	assert_eq!(objects("signals"), 180);
 }
 
 // --- The comparison must not pass what is wrong ---
