@@ -35,10 +35,20 @@ use undertone_engine::graph::{
 
 /// Groups whose cases the booking cannot produce yet, with the reason. A group listed here must have every
 /// case pending; a group not listed must be equal.
-const PENDING: &[(&str, &str)] = &[(
-	"placement",
-	"voice booking lands in the next RF-18 pull request (this one adds the Graph trait and LogGraph)",
-)];
+const PENDING: &[(&str, &str)] = &[
+	(
+		"placement",
+		"voice booking lands in the next RF-18 pull request (this one adds the Graph trait and LogGraph)",
+	),
+	(
+		"voices",
+		"the baseline voice booking (waveforms, envelopes, filters, FM, orbits, master bus) is the next RF-18 pull request",
+	),
+	(
+		"options",
+		"the 0.4.0 options (pan law, ceiling, pan paths, autopan, booking window) and the render cases follow the baseline booking",
+	),
+];
 
 /// The absolute floor for a number that should be zero.
 const ABS_FLOOR: f64 = 1e-15;
@@ -62,7 +72,15 @@ struct Case {
 	output: Option<Value>,
 	/// `program` and `render` of a render case.
 	render: Option<(Value, Value)>,
-	expected: Value,
+	/// The recorded graph, or the message a case that must fail gives.
+	expected: Expected,
+}
+
+/// What a case records: a graph, or the error message of a booking that throws.
+#[derive(Debug)]
+enum Expected {
+	Graph(Value),
+	Error(String),
 }
 
 /// What booking a case gave.
@@ -70,6 +88,8 @@ enum Booked {
 	NotImplemented,
 	#[allow(dead_code)] // Used once the booking exists.
 	Graph(Box<GraphRecord>),
+	#[allow(dead_code)] // Used once the booking exists.
+	Error(String),
 }
 
 /// Books a case on a [`LogGraph`]. For now nothing is booked: the voice booking is the next pull request.
@@ -89,19 +109,31 @@ fn parse_score_line(line: &str) -> ScoreLine {
 
 fn parse_case(value: &Value) -> Case {
 	let text = |key: &str| value[key].as_str().expect(key).to_string();
+	// Shapes: `voices` cases carry `voices` (`{at, patch}`) or a `score`, `render` cases a `program` and
+	// `render` options, and an error case only an `error` message. The recorder always writes `score` lines
+	// for the first two, so they are what is parsed; the structured forms are not needed.
+	let score = value
+		.get("score")
+		.and_then(Value::as_array)
+		.map(|lines| {
+			lines
+				.iter()
+				.map(|line| parse_score_line(line.as_str().expect("a score line is text")))
+				.collect()
+		})
+		.unwrap_or_default();
+	let expected = match value.get("error") {
+		Some(message) => Expected::Error(message.as_str().expect("error text").to_string()),
+		None => Expected::Graph(value["graph"].clone()),
+	};
 	Case {
 		id: text("id"),
-		score: value["score"]
-			.as_array()
-			.expect("score")
-			.iter()
-			.map(|line| parse_score_line(line.as_str().expect("a score line is text")))
-			.collect(),
+		score,
 		output: value.get("output").cloned(),
 		render: value
 			.get("program")
 			.map(|program| (program.clone(), value["render"].clone())),
-		expected: value["graph"].clone(),
+		expected,
 	}
 }
 
@@ -223,10 +255,24 @@ fn layer_3_cases_are_equal_or_listed_as_pending() {
 			let case = parse_case(value);
 			match book(&case) {
 				Booked::NotImplemented => pending += 1,
+				Booked::Error(message) => match &case.expected {
+					Expected::Error(recorded) if *recorded == message => equal += 1,
+					other => failures.push(format!(
+						"{}: booking failed with {message:?}, recorded {other:?}",
+						case.id
+					)),
+				},
 				Booked::Graph(record) => {
+					let Expected::Graph(expected) = &case.expected else {
+						failures.push(format!(
+							"{}: booked a graph where an error is recorded",
+							case.id
+						));
+						continue;
+					};
 					let actual: Value = serde_json::from_str(&record.to_json(""))
 						.expect("the writer produces JSON");
-					match compare(&case.expected, &actual, &case.id) {
+					match compare(expected, &actual, &case.id) {
 						Ok(floor) => {
 							equal += 1;
 							if floor {
@@ -541,6 +587,9 @@ fn recorded_graphs_without_buffers_replay_to_the_same_bytes() {
 	for (group, cases) in groups() {
 		for case in &cases {
 			let id = case["id"].as_str().expect("id");
+			if case.get("graph").is_none() {
+				continue; // an error case records no graph
+			}
 			let Some(log) = replay(&case["graph"]) else {
 				skipped += 1;
 				continue;
