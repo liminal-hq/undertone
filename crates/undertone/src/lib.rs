@@ -6,6 +6,8 @@
 //! The Rust API of Undertone.
 
 pub mod error;
+pub mod prelude;
+pub mod signals;
 
 /// The pattern core: exact time, patterns, mini-notation, controls, signals, scales, and chords
 /// ([`undertone_pattern`]).
@@ -18,3 +20,4 @@ pub use undertone_engine as engine;
 pub use undertone_sched as sched;
 
 pub use error::{Error, ErrorKind, Result};
+pub use prelude::*;
