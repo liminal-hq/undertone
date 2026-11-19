@@ -15,6 +15,7 @@ other_checks = true
 "Lint" = "bun run lint"
 "Format" = "bun run format:check"
 "Docs (build + typecheck)" = "bun run typecheck:docs && bun run docs:build"
+"Docs audio (render)" = "bun run docs:audio target/ts-audio"
 "API report" = "bun run api:check"
 "Conformance corpus" = "bun run conformance:check"
 "Test classification" = "bun run test-classes:check"
