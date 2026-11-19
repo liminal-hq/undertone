@@ -6,8 +6,9 @@ The corpus is the only oracle. Cases are never edited by hand: they are written 
 
 ## Scripts
 
-- `bun run conformance:record` regenerates every file under `conformance/cases/`, removing files the recorder no longer writes. Running it twice writes identical bytes.
-- `bun run conformance:check` regenerates in memory and exits 1 on any difference (a changed, missing, or extra file), printing the first differing line. It writes nothing. CI runs this in the `ci-web` image.
+- `bun run conformance:record` regenerates every file under `conformance/cases/` except layer 4 (`cases/4/`, which a browser makes), removing files the recorder no longer writes. Running it twice writes identical bytes.
+- `bun run conformance:check` regenerates in memory and exits 1 on any difference (a changed, missing, or extra file), printing the first differing line. It writes nothing. For layer 4 it needs no browser: it checks that each case's program, options, and score still equal what the reference makes and that the browser's summaries have the format below. CI runs this in the `ci-web` image.
+- `bun run conformance:browser-render` records layer 4 by hand (below). It is never run in CI.
 - `bun run test` also runs `conformance/recorder/properties.test.ts`, the `fast-check` properties (below).
 - `bun run typecheck:conformance` type-checks the recorder (`conformance/tsconfig.json`).
 - `bun conformance/recorder/record.ts record --reference <worktree>` records from another checkout of the reference (a worktree of the reference SHA), the way regeneration works once `src/` is gone (RF-32).
@@ -32,9 +33,14 @@ conformance/
     controls.ts         layer 2: records score events and resolved voice parameters
     graph.ts            layer 3: records the node graph; graphData.ts holds the cases (and the groups' own files, such as scoreData.ts and samplesData.ts)
     wavData.ts          the wav group: encodeWav's bytes (not a layer)
+    rendersData.ts      layer 4: the render cases (programs and render options)
+    renders.ts          layer 4: a case's browser-free part, the file layout, and the format check
+    renderSummary.ts    layer 4: what a render is reduced to (RMS, peak, bands, windows)
+    browser-render.ts   layer 4: the Playwright script that makes the summaries (by hand); browser-page.ts is the page side
     format.ts           value encoding, number printing, the file layout
     properties.test.ts  fast-check properties 1 to 3 of CONFORMANCE.md, against the reference
   cases/<layer>/<group>.json
+  cases/4/renders.json  layer 4: a browser's summaries of the render cases (recorded by hand)
   cases/wav/wav.json    the wav group (not a layer)
 ```
 
@@ -116,6 +122,29 @@ Every number in a call string, `start`, `stop`, a buffer summary, and a wave is 
 
 `encodeWav` writes bytes, not a graph, so the `wav` group is not a layer: its one file is `conformance/cases/wav/wav.json`, with `"format": "wav"` in place of `layer`, written one case per line. A case is `id`, `from`, `sampleRate`, `channels` (the samples of each channel, as the 32-bit floats the reference gets: the doubles they convert to, with `NaN`, the infinities, and negative zero in the `{"$num": ...}` form above), `options` (`bitDepth`, `dither`, `seed`, `channelMask`, as `encodeWav` takes them; `{}` for the defaults), and either `bytes`, the whole file as lowercase hex, or `error`, the message. The inputs are a few dozen samples at most, so the expected output is the file itself rather than a digest: a runner compares byte for byte, and a difference can be read off the hex. The recorder is `wavData.ts`; `conformance:check` covers the file with the layers.
 
+### Layer 4: browser renders
+
+`conformance/cases/4/renders.json` holds renders of the reference made with a real `OfflineAudioContext` in headless Chromium and reduced to summaries (never samples). It is the one file the recorder does not write: a person runs the Playwright script on their own machine, and the result is committed.
+
+```sh
+PLAYWRIGHT_CORE=<dir of playwright-core> bun run conformance:browser-render
+# options: --out <dir> writes <dir>/4/renders.json instead (to compare two runs), --only <case id> (needs --out)
+```
+
+Playwright's core library and a Chromium are not dependencies of the package. `PLAYWRIGHT_CORE` names an installed `playwright-core` directory (when unset, `playwright-core` is resolved normally), and `CHROMIUM_PATH` a Chromium or Chrome executable (default: the newest `chromium-*` of `~/.cache/ms-playwright`, then `/usr/bin/chromium`). The script bundles `src/` with `bun build` into the page, interprets each case's program there, calls `renderToBuffer` with the case's options, and summarises the buffer in the page. It takes about two seconds in all.
+
+A case is `id`, `from`, `program`, `render` (the options, JSON), `score` (the onsets the reference books, `v<k> @<seconds> <json>` as in layer 3, made by the reference without a browser), and `browser`:
+
+- `chromium`: the browser's version, as Playwright reports it (`149.0.7827.55`), so a change of browser is visible in the diff.
+- `sampleRate` and `frames`: the render's, which the options fix (`round((cycles * cycleSeconds + tail) * sampleRate)`).
+- `channels`: one object per output channel with `rms` and `peak` (linear amplitude, full scale 1), `bands` (eight RMS values) and `windows` (RMS of each consecutive 100 ms window, `round(0.1 * sampleRate)` frames, the last one shorter when the render is not a whole number of windows).
+
+The bands come from one FFT of the whole channel, zero-padded to a power of two `M` with no window function: the power of bins `1` to `M/2 - 1` is summed by the bin's frequency `k * sampleRate / M` into eight bands (below 125 Hz; 125 to 250; 250 to 500; 500 Hz to 1 kHz; 1 to 2 kHz; 2 to 4 kHz; 4 to 8 kHz; 8 kHz and up, each lower edge included), and a band's RMS is `sqrt(2 * sum / (frames * M))`, so the bands' mean squares add up to the channel's (less DC and the Nyquist bin). The definition is in `conformance/recorder/renderSummary.ts`; a Rust comparison implements the same. Numbers are written to nine significant digits.
+
+`conformance:check` validates the committed file and nothing more: the header, that each case of `rendersData.ts` is present with the program, options, and score the reference makes now, and that each browser record has a version, the expected sample rate and frame count, the expected channels, and eight bands and the expected number of windows of finite non-negative numbers (a peak at least the RMS). A browser is not asked for anything, so the summaries cannot be checked against the reference; the Rust comparison does that (`crates/undertone-engine/tests/layer4.rs`).
+
+Rendering is deterministic to within float noise on one machine and browser (`docs/rust-migration/results/R-layer4.md` reports two runs), but not byte for byte across browser versions, so the file is regenerated only when a case changes or the browser is deliberately updated, and the summaries are compared with tolerances, not exactly. Nothing in the file was listened to.
+
 ## Determinism
 
 Everything is seeded. The recorder never reads the clock or `Math.random`: a voices case seeds its context (`seedContext(ctx, 0)`) the way a render does, which fixes the noise and reverb buffers; renders use their default seed. Reference warnings (a clamped control, say) are silenced while recording, because the corpus records values, not logs.
@@ -145,7 +174,7 @@ Everything is seeded. The recorder never reads the clock or `Math.random`: a voi
 
 The `mini` cases are recorded over six spans each (cycles 0 to 4, then 0 to 1, 1 to 2, 2 to 3, 3 to 4, and `1/3` to `7/4`); `scales`, `chords`, and `drift` over two or four cycles and a span that starts inside a cycle, to keep the files small. The `mini` group's ids carry the sub-area (`mini-seq-`, `mini-rest-`, `mini-weight-`, `mini-repeat-`, `mini-fast-`, `mini-slow-`, `mini-group-`, `mini-alt-`, `mini-stack-`, `mini-euclid-`, `mini-mix-`, `mini-leaf-number-`, `mini-leaf-pitch-`, `mini-leaf-drum-`, `mini-space-`, and `mini-err-empty-`, `-token-`, `-astral-`, `-parse-`, `-leaf-`), so a runner can report by the stem. Two reference behaviours a port has to match, found while recording: the "Unknown chord quality" message lists the qualities in JavaScript's property order (integer-like keys `6`, `7`, `9` first, then the rest in table order), and a non-BMP character in mini-notation is reported as its lone high surrogate at its UTF-16 position.
 
-Not in the corpus yet: layer 4 renders. The mini-notation leaf rules cover the three families the reference's constructors use (`word`, `pitch`, `drum`) plus `number`.
+The mini-notation leaf rules cover the three families the reference's constructors use (`word`, `pitch`, `drum`) plus `number`.
 
 ## Known differences by design
 

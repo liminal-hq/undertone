@@ -3,7 +3,15 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -14,12 +22,16 @@ import { layer3Cases } from './graphData';
 import { recordGraphCase, recordLayer3 } from './graph';
 import { layer1Programs } from './programData';
 import { recordLayer1 } from './programs';
+import { checkRenders } from './renders';
 import { recordWav } from './wavData';
 import { randomCases, recordRandom } from './randomCases';
 import { loadReference, repoRoot } from './reference';
 import type { Reference } from './reference';
 
 const casesDir = join(repoRoot, 'conformance', 'cases');
+
+/** The directory of the layer 4 files, which the recorder neither writes nor removes (a browser makes them). */
+const LAYER4_DIR = '4';
 
 /** Every corpus file the recorder writes: its path under `conformance/cases/` and its bytes. */
 export async function generate(ref: Reference): Promise<Map<string, string>> {
@@ -69,7 +81,10 @@ function firstDifference(expected: string, actual: string): string {
 /** Writes the corpus, removing files the recorder no longer makes. */
 async function record(ref: Reference): Promise<void> {
   const files = await generate(ref);
-  rmSync(casesDir, { recursive: true, force: true });
+  // Layer 4 (`cases/4/`) holds a browser's summaries, made by hand with `conformance:browser-render`; recording leaves it be.
+  for (const entry of existsSync(casesDir) ? readdirSync(casesDir) : []) {
+    if (entry !== LAYER4_DIR) rmSync(join(casesDir, entry), { recursive: true, force: true });
+  }
   for (const [path, text] of files) {
     const target = join(casesDir, path);
     mkdirSync(dirname(target), { recursive: true });
@@ -94,8 +109,12 @@ async function check(ref: Reference): Promise<void> {
   }
   for (const file of listFiles(casesDir)) {
     const path = relative(casesDir, file).split('\\').join('/');
-    if (!files.has(path)) problems.push(`${path}: on disk but not recorded`);
+    if (!files.has(path) && path.split('/')[0] !== LAYER4_DIR) {
+      problems.push(`${path}: on disk but not recorded`);
+    }
   }
+  // Layer 4 needs no browser to check: its program, options, and score against the reference, and the format of the summaries.
+  problems.push(...checkRenders(ref, casesDir));
   if (problems.length > 0) {
     console.error(`The corpus differs from the reference:\n  ${problems.join('\n  ')}`);
     process.exit(1);
