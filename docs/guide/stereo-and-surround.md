@@ -8,7 +8,7 @@ title: Stereo & Surround
 
 By default a destination stays stereo and multichannel placements fold down automatically. To address real surround speakers, opt the context in once:
 
-```ts standalone
+```ts standalone audio=surround-multichannel
 import { enableMultichannel, note } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -118,7 +118,7 @@ score({
 
 In plain voice data, such as `playParams()` takes, the points are in seconds from the voice's start:
 
-```ts standalone
+```ts standalone audio=surround-play-params
 import { playParams } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();

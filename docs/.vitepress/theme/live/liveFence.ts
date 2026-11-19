@@ -1,9 +1,10 @@
-// A markdown-it plugin that turns a ```ts live, ```ts play or ```mini fence into an editable, playable example
+// A markdown-it plugin that turns a ```ts live, ```ts play or ```mini fence into an editable, playable example, and puts the rendered-audio player under a ```ts standalone audio=NAME fence
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
 import type { MarkdownRenderer } from 'vitepress';
+import { audioName } from './audioFence';
 import type { ExampleKind } from './fragment';
 
 /** True when a fence's info string is `ts live` (the language, then the word `live`). */
@@ -34,6 +35,11 @@ export function liveFencePlugin(md: MarkdownRenderer): void {
   if (!original) throw new Error('liveFencePlugin needs the default fence rule');
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx];
+    // A `ts standalone audio=NAME` block stays the plain highlighted block, with the rendered audio's player under it.
+    const audio = audioName(token.info);
+    if (audio) {
+      return `${original(tokens, idx, options, env, self)}<TsAudio name="${audio}" />\n`;
+    }
     const kind = fenceKind(token.info);
     if (!kind) return original(tokens, idx, options, env, self);
     // `mini` is not a language the highlighter knows, so it is shown as plain text.

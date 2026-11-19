@@ -6,7 +6,7 @@ title: Rendering & Export
 
 `renderToBuffer(pattern, options?)` plays a pattern on an `OfflineAudioContext` with no real-time clock and resolves with the finished audio. `pattern.render(options?)` is the same call as a method, and `score(...).render()` renders one pass of a cue at its own tempo. Pass the result to `encodeWav` to get the bytes of a `.wav` file.
 
-```ts standalone
+```ts standalone audio=rendering-wav
 import { encodeWav, note } from '@liminal-hq/undertone';
 
 const loop = note('c3 [e3 g3] <b3 a3> ~').sound('triangle').release(0.4);
@@ -32,7 +32,7 @@ const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
 
 By default every voice is booked on the offline context before the render starts. That is the simplest thing and it is what a browser is built for, but some renderers process every node from the moment it is made, whether or not it has started yet, so their cost grows with the number of notes times the length of the piece. `bookingWindow` books the score in windows of that many seconds instead:
 
-```ts standalone
+```ts standalone audio=rendering-booking-window
 import { note } from '@liminal-hq/undertone';
 
 const song = note('c3 [e3 g3] <b3 a3> ~').sound('triangle').release(0.4);

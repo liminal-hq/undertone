@@ -41,7 +41,7 @@ Things to bend: swap the kick's rhythm for a euclidean `note('c1(3,8)')`, push t
 
 If you have recordings, register them and let `s()` drive the same rhythms. `.bank('TR808')` makes `bd` look up `TR808_bd` first, so swapping kits is a one-word change.
 
-```ts standalone
+```ts standalone audio=recipes-drum-kit
 import { loadSamples, registerSamples, s, stack } from '@liminal-hq/undertone';
 
 registerSamples({
@@ -350,7 +350,7 @@ groove.loop({ bpm: 120 });
 
 Undertone writes straight to the speakers, so a busy cue can peak at or above full scale. `createMasterBus()` puts a gain stage and a limiter in front of the destination; pass its `input` as the `output` of everything that should share it.
 
-```ts standalone
+```ts standalone audio=recipes-master-bus
 import { createMasterBus, note, stack } from '@liminal-hq/undertone';
 
 const ctx = new AudioContext();
@@ -508,7 +508,7 @@ chord('<Am7 Fmaj7>')
 
 A busy cue can peak above full scale, and a file you render should not clip when somebody plays it. Use the limiter to keep the mix down and the ceiling as the last guarantee. The same options work live, on a master bus, and offline, in `render()`:
 
-```ts standalone
+```ts standalone audio=recipes-ceiling
 import { createMasterBus, encodeWav, note, stack } from '@liminal-hq/undertone';
 
 const loud = stack(
@@ -536,7 +536,7 @@ The ceiling is a hard clip, so keep the limiter's threshold under it and let the
 
 By default `render()` books every voice on the offline context before it starts. For a short cue that is the simplest thing, but a long score with thousands of notes can be slow on a renderer that processes every node from the moment it is made. `bookingWindow` books the score a window of seconds at a time, pausing the render between windows:
 
-```ts standalone
+```ts standalone audio=recipes-arrange
 import { arrange, encodeWav, note, stack } from '@liminal-hq/undertone';
 
 // Any pattern will do; this is 16 cycles of a bass and a lead.
@@ -559,7 +559,7 @@ const wav = encodeWav(buffer, { bitDepth: 24 });
 
 Say the length with `cycles` (whole cycles) or `seconds`, never both; without either, a pattern renders a single cycle, which is two seconds at the default 120 bpm, whatever its `arrange()` sections add up to. A `score()` is different: its `render()` plays one pass of the whole score, which is its own length (`cue.seconds`) and can be minutes, so a long score is where `bookingWindow` matters most. It takes no `seconds` or tempo, because the score has its own (`cycles` would repeat the pass):
 
-```ts standalone
+```ts standalone audio=recipes-score
 import { encodeWav, fmPresets, score } from '@liminal-hq/undertone';
 
 const cue = score({
