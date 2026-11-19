@@ -88,6 +88,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 
 - When the public API changes, update `README.md`'s Usage/API sections in the same change.
 - Mark a documentation code block that runs as written (its own imports, everything defined, something played or rendered) with ` ```ts standalone `. `src/docSnippets.test.ts` executes every such block in `README.md` and `docs/` against the fake `AudioContext`; a block that is only a fragment stays a plain `ts` block. It also checks that a playground example returning a `score()` pattern sets the `bpm` that matches the score's `cps` (`bpm = 240 × cps`).
+- A fenced block tagged `ts live` renders on the site as an editable example with Play, Stop and Reset buttons (`docs/.vitepress/theme/live/`, `LiveExample.vue`); it is opt-in, and `src/docSnippets.test.ts` runs it exactly like a `ts standalone` block (imports what it uses, plays something), plus through the site's runner. Use it only for short, audible blocks that need no samples, hardware or offline render, and keep them free of TypeScript-only syntax because the browser runner has no compiler.
 - Do not manually hard-wrap markdown prose — write each paragraph as one line and let the renderer/editor soft-wrap.
 
 ## Project Structure
