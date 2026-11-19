@@ -30,15 +30,18 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use undertone_engine::engine::{Engine, OutputSetup};
 use undertone_engine::graph::{
-	Automation, ChannelInterpretation, FilterType, Graph, GraphRecord, LogGraph, NodeId, NodeKind,
-	OscillatorType, Oversample, ParamKind, Target,
+	Automation, ChannelCountMode, ChannelInterpretation, FilterType, Graph, GraphRecord, LogGraph,
+	NodeId, NodeKind, OscillatorType, Oversample, ParamKind, Target,
 };
+use undertone_engine::instruments::{FmVoiceDefinition, LayerOptions, fm_voice, layer};
 use undertone_engine::master::{Limiter, LimiterOptions, MasterBusOptions};
 use undertone_engine::params::resolve_params;
+use undertone_engine::surround::create_mono_fold;
 use undertone_engine::window::{
 	PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window, last_room_sizes,
 	sort_booking_order,
 };
+use undertone_pattern::control::note;
 use undertone_pattern::random::Seed;
 use undertone_pattern::{Value as PatternValue, js};
 
@@ -164,28 +167,39 @@ fn pending_voices(case: &Case) -> Vec<PendingVoice> {
 /// Books a `voices` case on a [`LogGraph`], as the recorder does: the destination is set up first, then the
 /// master bus, then every voice of the score in order.
 fn book_voices(case: &Case) -> Booked {
-	let channels = case
-		.output
-		.as_ref()
-		.and_then(|output| output.get("channels"))
+	let output_field = |key: &str| case.output.as_ref().and_then(|output| output.get(key));
+	let channels = output_field("channels")
 		.and_then(Value::as_u64)
 		.map_or(2, |count| count as u32);
-	let master = case
-		.output
-		.as_ref()
-		.and_then(|output| output.get("master"))
+	// The hardware maximum defaults to the destination's count, and `enableMultichannel` is called when the
+	// destination is wider than stereo unless the case says otherwise.
+	let max_channels = output_field("maxChannels")
+		.and_then(Value::as_u64)
+		.map_or(channels, |count| count as u32);
+	let multichannel = output_field("multichannel")
+		.and_then(Value::as_bool)
+		.unwrap_or(channels > 2);
+	let mono_fold = output_field("monoFold").and_then(Value::as_bool) == Some(true);
+	let master = output_field("master")
 		.filter(|master| !master.is_null() && **master != Value::Bool(false))
 		.map(master_options);
-	let graph = LogGraph::with_max_channels(44_100.0, channels, channels);
+	let graph = LogGraph::with_max_channels(44_100.0, channels, max_channels);
 	let setup = OutputSetup {
 		master,
-		multichannel: channels > 2,
+		multichannel,
 		seed: Seed::Num(0.0),
 	};
 	let booked = || -> undertone_pattern::Result<Engine<LogGraph>> {
 		let mut engine = Engine::new(graph, setup)?;
+		// `createMonoFold(ctx, output)`: the fold feeds the master bus when there is one, and the voices play into it.
+		let output = if mono_fold {
+			let into = engine.output();
+			create_mono_fold(engine.graph_mut(), into)
+		} else {
+			engine.output()
+		};
 		for voice in pending_voices(case) {
-			engine.play(&voice.params, voice.start_time)?;
+			engine.play_to(output, &voice.params, voice.start_time)?;
 		}
 		Ok(engine)
 	};
@@ -315,6 +329,30 @@ fn book_message_only(id: &str) -> Booked {
 		// `render(..., { cps: 1, bookingWindow })` at the default 48000 Hz sample rate.
 		"options-window-not-positive" => check_booking_window(0.0, 48_000.0).err(),
 		"options-window-too-short" => check_booking_window(0.05, 1_280.0).err(),
+		// `fmVoice(definition)` and `layer(note('a4'), voices, options)`, which throw before any voice is booked
+		// (`conformance/recorder/instrumentsData.ts`).
+		"instruments-fmvoice-error-harmonicity" => fm_voice(&FmVoiceDefinition {
+			harmonicity: Some(0.0),
+			..FmVoiceDefinition::default()
+		})
+		.err(),
+		"instruments-fmvoice-error-index" => fm_voice(&FmVoiceDefinition {
+			modulation_index: Some(-1.0),
+			..FmVoiceDefinition::default()
+		})
+		.err(),
+		"instruments-layer-error-empty" => {
+			layer(&note("a4").expect("a note"), &[], &LayerOptions::default()).err()
+		}
+		"instruments-layer-error-stagger" => layer(
+			&note("a4").expect("a note"),
+			&[PatternValue::Map(Default::default())],
+			&LayerOptions {
+				stagger: Some(-1.0),
+				..LayerOptions::default()
+			},
+		)
+		.err(),
 		other => panic!("no inputs are known for the message-only case {other}"),
 	};
 	error.map_or(Booked::NotImplemented, |error| {
@@ -786,6 +824,15 @@ fn replay(graph: &Value) -> Option<LogGraph> {
 					("channelCount", number) => {
 						log.set_channel_count(id, number.as_u64().expect("count") as u32);
 					}
+					("channelCountMode", Value::String(text)) => log.set_channel_count_mode(
+						id,
+						match text.as_str() {
+							"max" => ChannelCountMode::Max,
+							"clamped-max" => ChannelCountMode::ClampedMax,
+							"explicit" => ChannelCountMode::Explicit,
+							other => panic!("channel count mode {other}"),
+						},
+					),
 					("channelInterpretation", Value::String(text)) => log
 						.set_channel_interpretation(
 							id,

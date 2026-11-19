@@ -14,6 +14,29 @@ use crate::math::{Active, waves::ShapedWave, waves::WaveTable, waves::shaped_wav
 use crate::params::{FmWave, SoundType};
 use std::sync::OnceLock;
 
+/// The shaped waveforms the synth offers beyond the four Web Audio built-ins, as the names a patch uses for
+/// `soundType` and `fmWave` (`SHAPED_WAVE_TYPES`): `halfsine`, `abssine`, and `pulsesine`.
+///
+/// ```
+/// use undertone_engine::waves::SHAPED_WAVE_TYPES;
+/// assert_eq!(SHAPED_WAVE_TYPES, ["halfsine", "abssine", "pulsesine"]);
+/// ```
+pub const SHAPED_WAVE_TYPES: [&str; 3] = ["halfsine", "abssine", "pulsesine"];
+
+/// Whether a word names a shaped waveform (`isShapedWave`): one of [`SHAPED_WAVE_TYPES`], matched exactly. A
+/// shaped wave is played through a periodic wave made once per graph and shared by every voice that uses it;
+/// any other type is set on the oscillator directly.
+///
+/// ```
+/// use undertone_engine::waves::is_shaped_wave;
+/// assert!(is_shaped_wave("abssine"));
+/// assert!(!is_shaped_wave("sine"));
+/// assert!(!is_shaped_wave("Abssine"));
+/// ```
+pub fn is_shaped_wave(word: &str) -> bool {
+	SHAPED_WAVE_TYPES.contains(&word)
+}
+
 /// What an oscillator plays: a built-in wave or a shaped one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Waveform {
@@ -102,6 +125,18 @@ impl ShapedWaves {
 
 #[cfg(test)]
 mod tests {
+	#[test]
+	fn only_the_three_shaped_names_are_shaped_waves() {
+		for word in SHAPED_WAVE_TYPES {
+			assert!(super::is_shaped_wave(word));
+		}
+		for word in [
+			"sine", "triangle", "square", "sawtooth", "white", "", "HalfSine",
+		] {
+			assert!(!super::is_shaped_wave(word), "{word}");
+		}
+	}
+
 	use super::*;
 	use crate::graph::{LogGraph, NodeKind};
 

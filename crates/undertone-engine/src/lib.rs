@@ -17,7 +17,7 @@
 //! The [`engine`] module holds [`engine::Engine`], which books [`params::VoiceParams`] on a graph the way the
 //! TypeScript's `playVoice` does. [`voice`] is the voice itself, [`pan`] its placement, [`effects`] the shared
 //! orbit reverb and delay, [`master`] the master bus, and [`waves`], [`noise`], and [`pitch_curve`] its sound.
-//! [`surround`] folds channel gains down to the output, [`window`] plans an offline render booked in windows,
+//! [`surround`] holds the speaker ring, the fold-down of channel gains, `enable_multichannel`, and the mono fold, [`window`] plans an offline render booked in windows,
 //! and [`warn`] holds the warnings the engine gives once.
 //!
 //! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
@@ -28,6 +28,9 @@ extern crate alloc;
 pub mod effects;
 pub mod engine;
 pub mod graph;
+
+/// Instruments as data: [`fm_voice`](instruments::fm_voice), [`fm_presets`](instruments::fm_presets), `Pattern::voice`, and [`layer`](instruments::layer), re-exported from the pattern crate (they are pure data, and the engine depends on that crate).
+pub use undertone_pattern::instruments;
 pub mod master;
 pub mod math;
 pub mod noise;

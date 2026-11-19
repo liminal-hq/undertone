@@ -45,10 +45,10 @@
 //! ```
 
 use crate::effects::OrbitBus;
-use crate::graph::{ChannelInterpretation, Graph, NodeId, ParamId};
+use crate::graph::{Graph, NodeId, ParamId};
 use crate::master::{MasterBus, MasterBusOptions, create_master_bus};
 use crate::math::gains::PanEvent;
-use crate::surround::MAX_CHANNELS;
+use crate::surround::enable_multichannel;
 use crate::warn::{Warning, Warnings};
 use crate::waves::ShapedWaves;
 use core::sync::atomic::{AtomicU64, Ordering};
@@ -252,17 +252,11 @@ impl<G: Graph> Engine<G> {
 
 	/// Opts the destination into its full hardware channel count (up to eight) with discrete channel
 	/// interpretation, so channel gains address real speakers (`enableMultichannel`). Does nothing on a
-	/// destination of two channels or fewer. Returns the destination's channel count afterwards.
+	/// destination of two channels or fewer. Returns the destination's channel count afterwards. This is
+	/// [`enable_multichannel`] on the engine's graph; call it before booking, as [`OutputSetup::multichannel`]
+	/// does.
 	pub fn enable_multichannel(&mut self) -> u32 {
-		let destination = self.graph.destination();
-		let max = self.graph.destination_max_channels();
-		if max > 2 {
-			self.graph
-				.set_channel_count(destination, max.min(MAX_CHANNELS as u32));
-			self.graph
-				.set_channel_interpretation(destination, ChannelInterpretation::Discrete);
-		}
-		self.graph.destination_channels()
+		enable_multichannel(&mut self.graph)
 	}
 
 	/// How many booked voices the engine still keeps, to stop them early or to cut a group.
