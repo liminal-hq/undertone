@@ -487,7 +487,7 @@ mod looping {
 	}
 
 	#[test]
-	fn a_loop_without_a_tempo_takes_the_transports_tempo_once_when_it_starts() {
+	fn a_loop_without_a_tempo_follows_a_later_change_from_the_next_tick() {
 		let mut rig = Rig::new();
 		rig.transport.set_cpm(60.0).unwrap(); // a 1 s cycle
 		rig.transport
@@ -497,44 +497,29 @@ mod looping {
 				&LoopOptions::default(),
 			)
 			.unwrap();
-		// A later change does not reach it (the reference reads the tempo when `loop()` is called).
+		// The loop follows the change (D-33): what was booked ends at cycle 0.2 (0.3 s), and the second note
+		// (cycle 0.5) is then 0.3 of a 2 s cycle later, at 0.9 s, where the old tempo put it at 0.6 s.
 		rig.transport.set_cpm(30.0).unwrap();
 		rig.advance_to(1.0);
 		rig.tick();
 		let starts = rig.oscillator_starts();
 		approx(starts[0], 0.1);
-		approx(starts[1], 0.6);
-		approx(starts[2], 1.1);
+		assert!((starts[1] - 0.9).abs() < 1e-3, "{starts:?}");
 	}
 
 	#[test]
-	fn a_following_loop_changes_tempo_at_the_next_tick_without_a_jump() {
+	fn a_loop_with_an_explicit_tempo_keeps_it_when_the_transports_changes() {
 		let mut rig = Rig::new();
-		rig.transport.set_cpm(60.0).unwrap(); // a 1 s cycle
-		let options = LoopOptions {
-			follow_tempo: true,
-			..LoopOptions::default()
-		};
-		let handle = rig
-			.transport
-			.play_loop(&mut rig.engine, &plain(note("c3 e3")), &options)
+		rig.transport.set_cpm(60.0).unwrap();
+		rig.transport
+			.play_loop(&mut rig.engine, &plain(note("c3 e3")), &looping(60.0))
 			.unwrap();
-		// Booked up to 0.3 s past the clock at 0.1 start: cycles up to 0.2 s, so notes at 0.1 only.
-		assert_eq!(rig.oscillator_starts().len(), 1);
-		let booked_until = rig.transport.scheduled_until(handle).unwrap();
-
-		rig.transport.set_cpm(120.0).unwrap(); // a 0.5 s cycle from here on
-		rig.advance_to(0.3);
+		rig.transport.set_cpm(30.0).unwrap();
+		rig.advance_to(2.0);
 		rig.tick();
-		// Pattern time continues from where it was booked to: the 0.5-cycle note after `booked_until` is
-		// at 0.1 + booked_until * 1 s (where the old tempo put that position), then 0.25 s apart.
 		let starts = rig.oscillator_starts();
-		let anchor = 0.1 + booked_until.to_f64();
-		let second = starts[1];
-		assert!(second >= anchor - 1e-9, "{second} before {anchor}");
-		for pair in starts.windows(2).skip(1) {
-			approx(pair[1] - pair[0], 0.25);
-		}
+		approx(starts[0], 0.1);
+		approx(starts[1], 2.1); // a 4 s cycle, two notes: 2 s apart, whatever the transport's tempo does
 	}
 
 	#[test]

@@ -42,7 +42,7 @@
 //! The voices of a window are booked in onset order rather than the order the pattern lists them, so the order
 //! is the same however a span is split; a tick books at most [`SchedulerOptions::max_catch_up_seconds`] of what
 //! it missed, where the reference books all of it; `seek`, the
-//! statistics, and [`LoopOptions::follow_tempo`] are additions; an infinite tempo, and a window edge more than
+//! statistics, and [`Stats`] are additions, and a running loop follows the transport's tempo unless `bpm` or `cps` pins it (D-33); an infinite tempo, and a window edge more than
 //! [`MAX_WINDOW_CYCLES`] from the start, are errors. Each is noted where it lives.
 
 pub mod booking;

@@ -196,18 +196,21 @@ impl Default for PlayOptions {
 }
 
 /// Options for [`Transport::play_loop`] (the reference's `LoopOptions`).
+///
+/// A loop given neither `bpm` nor `cps` follows the tempo the transport holds ([`Transport::set_cpm`],
+/// [`Transport::reset_tempo`]; decision D-33): a change takes effect at the next tick. The loop keeps an
+/// anchor, a pattern position paired with its time on the clock; a change moves the anchor to the end of
+/// what is already booked and the new cycle length counts from there, so voices already booked keep their
+/// times and the next window continues from exactly where the last ended, with no gap and no overlap. An
+/// explicit `bpm` or `cps` pins the loop's tempo.
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct LoopOptions {
-	/// Tempo in beats per minute, four beats to a cycle. Pass this or `cps`, not both.
+	/// Tempo in beats per minute, four beats to a cycle. Pass this or `cps`, not both. An explicit `bpm`
+	/// pins the loop's tempo for its life.
 	pub bpm: Option<f64>,
-	/// Tempo in cycles per second. Pass this or `bpm`, not both.
+	/// Tempo in cycles per second. Pass this or `bpm`, not both. An explicit `cps` pins the loop's tempo for
+	/// its life.
 	pub cps: Option<f64>,
-	/// When neither `bpm` nor `cps` is given: follow the transport's tempo as it changes
-	/// ([`Transport::set_cpm`]), taking effect at the next tick, instead of taking the tempo once when the
-	/// loop starts as the reference does. Default `false` (the reference's behaviour). Voices already booked
-	/// keep their times; pattern time stays continuous across the change. Ignored when `bpm` or `cps` is
-	/// given, which fix the tempo for the loop's life.
-	pub follow_tempo: bool,
 	/// The node the voices go to; the engine's output when `None`.
 	pub output: Option<NodeId>,
 }
@@ -337,7 +340,7 @@ struct LoopState {
 	pattern: Pattern<ControlMap>,
 	/// The cycle length, in seconds, now.
 	cycle_seconds: f64,
-	/// Whether the cycle length follows the transport's tempo.
+	/// Whether the cycle length follows the transport's tempo (no explicit `bpm` or `cps` pinned it).
 	follow: bool,
 	output: Option<NodeId>,
 	/// Pattern time zero on the clock.
@@ -447,8 +450,9 @@ impl<C: Clock> Transport<C> {
 	}
 
 	/// Sets the default tempo in cycles per minute (`setcpm`): used by every later [`Transport::play`] and
-	/// [`Transport::play_loop`] that gives neither `bpm` nor `cps`, and, at the next tick, by loops started
-	/// with [`LoopOptions::follow_tempo`]. An explicit `bpm` or `cps` on a call always wins.
+	/// [`Transport::play_loop`] that gives neither `bpm` nor `cps`, and, at the next tick, by the loops already
+	/// running without one (they follow it; see [`LoopOptions`]). An explicit `bpm` or `cps` on a call always
+	/// wins.
 	///
 	/// # Errors
 	///
@@ -627,9 +631,9 @@ impl<C: Clock> Transport<C> {
 	/// the clock, is booked now, and each [`Transport::tick`] extends it.
 	///
 	/// Pattern time zero is `start_latency` (0.1 s) after the clock, so the first onset is not booked at
-	/// exactly "now". Voices are gated: each holds for its event's share of the cycle. Cycle time is taken
-	/// from `options` and the transport's tempo once, when the loop starts, unless
-	/// [`LoopOptions::follow_tempo`].
+	/// exactly "now". Voices are gated: each holds for its event's share of the cycle. The loop follows the
+	/// transport's tempo as it changes unless `options` give an explicit `bpm` or `cps` (see
+	/// [`LoopOptions`]); the reference's `loop()` of before D-33 read the tempo once.
 	///
 	/// # Errors
 	///
@@ -646,7 +650,7 @@ impl<C: Clock> Transport<C> {
 		let state = LoopState {
 			pattern: pattern.clone(),
 			cycle_seconds,
-			follow: options.follow_tempo && options.bpm.is_none() && options.cps.is_none(),
+			follow: options.bpm.is_none() && options.cps.is_none(),
 			output: options.output,
 			start_time: now + self.options.start_latency,
 			scheduled_until: Fraction::from_int(0),
@@ -755,7 +759,8 @@ impl<C: Clock> Transport<C> {
 		if state.follow {
 			let cycle_seconds = self.tempo.cycle_seconds(None, None)?;
 			if cycle_seconds != state.cycle_seconds {
-				// Keep pattern time continuous: where the booked-until position sits on the clock stays put.
+				// Move the anchor to the end of what is booked: that position keeps its time on the clock, and
+				// the new cycle length counts from it.
 				let booked_until =
 					state.start_time + state.scheduled_until.to_f64() * state.cycle_seconds;
 				state.start_time = booked_until - state.scheduled_until.to_f64() * cycle_seconds;
