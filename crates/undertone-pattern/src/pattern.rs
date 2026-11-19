@@ -537,6 +537,19 @@ impl<T: Datum> Pattern<T> {
 	}
 
 	/// `count` evenly spaced haps per cycle, each holding this pattern's value at its onset: the way to give a signal a rhythm.
+	///
+	/// `count` is a positive number (`2.5` is allowed, as for `fast`); anything else is an error. An onset where the pattern has no value (a rest) gives no hap. It works on any pattern, but it is how a signal becomes something you can hear on its own.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::{Fraction, Span};
+	/// let ramp = periodic::<f64>(Shape::Saw, false).range(0.0, 8.0).segment(8.0).unwrap();
+	/// let mut haps = ramp.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// haps.sort_by_key(|h| h.part.begin);
+	/// let values: Vec<f64> = haps.iter().map(|h| h.value).collect();
+	/// assert_eq!(values, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
+	/// assert_eq!(ramp.segment(0.0).unwrap_err().message(), "segment() count must be positive, got 0");
+	/// ```
 	pub fn segment(&self, count: f64) -> Result<Pattern<T>> {
 		if count.is_nan() || count <= 0.0 || !count.is_finite() {
 			return Err(Error::new(alloc::format!(
@@ -570,7 +583,19 @@ impl<T: Datum> Pattern<T> {
 		})
 	}
 
-	/// Combines each value with the values of `other` read at the value's onset (structure from the left; a hap is dropped where `other` has no value).
+	/// Combines each value with the values of `other` read at the value's onset (structure from the left; a hap is dropped where `other` has no value). `add`, `sub`, `mul`, and `div` of the reference; `+ - * /` on patterns call it.
+	///
+	/// A signal on either side stays a signal until something gives it a rhythm: `sine.arith(Add, &saw)` has no haps of its own, but `.segment(4)` of it has four, each `sine(t) + saw(t)` at its onset. Division by zero gives infinity.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::{ArithOp, Fraction, Span};
+	/// let sine = periodic::<f64>(Shape::Sine, false);
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// let sum = sine.arith(ArithOp::Add, &saw).segment(4.0).unwrap();
+	/// let haps = sum.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps.len(), 4);
+	/// ```
 	pub fn arith(&self, op: ArithOp, other: &Pattern<T>) -> Pattern<T> {
 		Pattern::from_node(Node::Arith {
 			left: self.clone(),
@@ -579,17 +604,46 @@ impl<T: Datum> Pattern<T> {
 		})
 	}
 
-	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping).
+	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping): `lo + v·(hi - lo)`. `lo` may be above `hi`, which turns the signal upside down.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// assert_eq!(saw.range(200.0, 2000.0).sample_at(Fraction::new(1, 2)), Some(1100.0));
+	/// assert_eq!(saw.range(1.0, 0.0).sample_at(Fraction::new(1, 4)), Some(0.75));
+	/// ```
 	pub fn range(&self, lo: f64, hi: f64) -> Pattern<T> {
 		self.fmap(MapFn::Range { lo, hi })
 	}
 
-	/// Maps values from -1..1 onto `lo..hi`, linearly.
+	/// Maps values from -1..1 onto `lo..hi`, linearly: `lo + (v + 1)/2·(hi - lo)`.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw2 = periodic::<f64>(Shape::Saw, true);
+	/// assert_eq!(saw2.range2(0.0, 10.0).sample_at(Fraction::new(1, 2)), Some(5.0));
+	/// ```
 	pub fn range2(&self, lo: f64, hi: f64) -> Pattern<T> {
 		self.fmap(MapFn::Range2 { lo, hi })
 	}
 
-	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies. Both bounds must be above 0.
+	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies: `rand.rangex(200, 2000)` spends as long between 200 and 632 Hz as between 632 and 2000. Both bounds must be above 0.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// let freq = saw.rangex(200.0, 2000.0).unwrap();
+	/// assert_eq!(freq.sample_at(Fraction::from_int(0)), Some(200.0));
+	/// let half = freq.sample_at(Fraction::new(1, 2)).unwrap();
+	/// assert!((half - 632.455532).abs() < 1e-5);
+	/// assert_eq!(
+	///     saw.rangex(0.0, 2000.0).unwrap_err().message(),
+	///     "rangex() bounds must be positive, got 0 and 2000"
+	/// );
+	/// ```
 	pub fn rangex(&self, lo: f64, hi: f64) -> Result<Pattern<T>> {
 		if !(lo > 0.0 && hi > 0.0 && lo.is_finite() && hi.is_finite()) {
 			return Err(Error::new(alloc::format!(
@@ -601,12 +655,27 @@ impl<T: Datum> Pattern<T> {
 		Ok(self.fmap(MapFn::Rangex { lo, ratio: hi / lo }))
 	}
 
-	/// Rounds each value to the nearest whole number (halves round up).
+	/// Rounds each value to the nearest whole number (halves round up, as JavaScript's `Math.round`).
+	///
+	/// ```
+	/// use undertone_pattern::pure;
+	/// use undertone_pattern::{Fraction, Span};
+	/// let p = pure(2.5).round();
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 3.0);
+	/// ```
 	pub fn round(&self) -> Pattern<T> {
 		self.fmap(MapFn::Round)
 	}
 
 	/// Rounds each value down (-4.2 becomes -5).
+	///
+	/// ```
+	/// use undertone_pattern::pure;
+	/// use undertone_pattern::{Fraction, Span};
+	/// let haps = pure(-4.2).floor().query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, -5.0);
+	/// ```
 	pub fn floor(&self) -> Pattern<T> {
 		self.fmap(MapFn::Floor)
 	}
