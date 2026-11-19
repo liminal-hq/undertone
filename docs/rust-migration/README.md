@@ -59,8 +59,8 @@ Rust builds eat disk and memory, and this machine has only about 48 GB free. Bef
 | [M0: Plan on main](milestones/M0-plan-on-main.md)                 | `docs/rust-migration-plan` (one pull request) | #45                                                | Merged (`40b2cbf`) |
 | [M1: Workspace and oracle](milestones/M1-workspace-and-oracle.md) | stack #49                                     | #46, #47, #48, #51, #52                            | Merged (`36943dc`) |
 | [M2: Spikes](milestones/M2-spikes.md)                             | stack #56                                     | #54, #55, #57, #58, #59, #60, #61                  | Merged (`8d06540`) |
-| [M3: Pattern core](milestones/M3-pattern-core.md)                 | stack #66                                     | #63, #64, #65, #67, #68, #70, and the design notes | In review          |
-| [M4: Engine](milestones/M4-engine.md)                             | planned in the milestone document             | none yet                                           | In progress        |
+| [M3: Pattern core](milestones/M3-pattern-core.md)                 | stack #66 (a6511b9)                           | #63, #64, #65, #67, #68, #70, and the design notes | Merged             |
+| [M4: Engine](milestones/M4-engine.md)                             | stack #83                                     | #72, #73, #75, #76, #77, #78, #80, #82, #79        | In review          |
 | [M5: Scheduler and facade](milestones/M5-scheduler-and-facade.md) | planned in the milestone document             | none yet                                           | Not started        |
 | [M6: JS bridge](milestones/M6-js-bridge.md)                       | planned in the milestone document             | none yet                                           | Not started        |
 | [M7: Outputs](milestones/M7-outputs.md)                           | planned in the milestone document             | none yet                                           | Not started        |
