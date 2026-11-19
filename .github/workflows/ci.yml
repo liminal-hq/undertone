@@ -109,6 +109,8 @@ jobs:
         with:
           name: rustdoc
           path: docs/public/rust
+      - name: Test the Rust guide check
+        run: bash scripts/check-rust-docs.test.sh
       - name: Check the Rust guide
         run: bash scripts/check-rust-docs.sh
       - name: Build docs site
