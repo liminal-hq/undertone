@@ -238,6 +238,56 @@ describe('fragment documentation snippets', () => {
   }
 });
 
+/** The `new AudioBuffer({ ... })` form some playground songs use to build a tiny drum kit; Node has no AudioBuffer. */
+class OptionsAudioBuffer {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+  private readonly channels: Float32Array[];
+
+  constructor(options: { numberOfChannels?: number; length: number; sampleRate: number }) {
+    this.numberOfChannels = options.numberOfChannels ?? 1;
+    this.length = options.length;
+    this.sampleRate = options.sampleRate;
+    this.channels = Array.from(
+      { length: this.numberOfChannels },
+      () => new Float32Array(options.length)
+    );
+  }
+
+  getChannelData(channel: number): Float32Array {
+    return this.channels[channel];
+  }
+}
+
+describe('playground examples', () => {
+  // Each example is a script the playground runs against the library and plays the pattern it
+  // returns. Query a long stretch of it, past the end of the longest song, so a broken section or a
+  // control the library rejects fails here rather than in a visitor's browser.
+  for (const group of EXAMPLE_GROUPS) {
+    for (const example of group.examples) {
+      it(`${group.label}: ${example.label} returns a pattern that queries without warnings`, () => {
+        const savedBuffer = globals.AudioBuffer;
+        globals.AudioBuffer = OptionsAudioBuffer;
+        try {
+          const scope = lib as Record<string, unknown>;
+          const run = new Function(...Object.keys(scope), `"use strict";\n${example.code}`);
+          const pattern = run(...Object.values(scope)) as unknown;
+          expect(pattern).toBeInstanceOf(lib.Pattern);
+          const haps = (pattern as lib.Pattern<lib.ControlPatch>).query({
+            begin: new lib.Fraction(0),
+            end: new lib.Fraction(96)
+          });
+          expect(haps.filter(lib.hasOnset).length).toBeGreaterThan(0);
+          expect(console.warn, 'it makes the library warn').not.toHaveBeenCalled();
+        } finally {
+          globals.AudioBuffer = savedBuffer;
+        }
+      });
+    }
+  }
+});
+
 describe('score() playground examples', () => {
   // The playground plays the pattern an example returns at the tempo slider, not at the score's own
   // `cps`, so an example that returns `.pattern` must set the bpm that gives the same cycle length.
