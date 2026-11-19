@@ -318,4 +318,19 @@ mod tests {
 		}
 		assert!(filter.settled());
 	}
+
+	#[test]
+	fn changing_the_type_between_quanta_replaces_the_cached_coefficients() {
+		// A low-pass at 0 Hz is silence; the same frequency and Q as a high-pass must pass the signal.
+		let mut filter = Biquad::new();
+		filter.resize(1);
+		let input = [1.0_f32; QUANTUM];
+		let mut out = [0.0_f32; QUANTUM];
+		let (frequency, q) = ([0.0; QUANTUM], [0.0; QUANTUM]);
+		filter.process(&input, &mut out, 1, &frequency, &q, true, 24_000.0);
+		assert!(out.iter().all(|v| *v == 0.0));
+		filter.kind = FilterType::Highpass;
+		filter.process(&input, &mut out, 1, &frequency, &q, true, 24_000.0);
+		assert_eq!(out[QUANTUM - 1], 1.0);
+	}
 }
