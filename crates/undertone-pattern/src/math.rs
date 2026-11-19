@@ -12,3 +12,9 @@
 pub(crate) fn floor(x: f64) -> f64 {
 	x.floor()
 }
+
+/// `x` raised to the power `y`.
+#[cfg(feature = "std")]
+pub(crate) fn powf(x: f64, y: f64) -> f64 {
+	x.powf(y)
+}
