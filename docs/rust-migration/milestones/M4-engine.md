@@ -66,6 +66,7 @@ The orchestrator assigns Sonnet agents. RF-18 first (and alone, because it is la
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                                                                                                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                                                                                                                                                                     |
+| 2026-11-19 | RF-18, first slice: the `Graph` trait and `LogGraph` (the layer 3 recorder in Rust) are in `undertone-engine::graph`, with a layer 3 runner whose `placement` group is pending until voice booking lands; 41 of the 50 recorded `placement` graphs replay through the trait to the corpus bytes |
