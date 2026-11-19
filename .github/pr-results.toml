@@ -1,7 +1,7 @@
 # pr-results settings: one comment, a check run per suite, and the other CI jobs in a table.
 #
 # (c) Copyright 2026 Liminal HQ, Scott Morris
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: MIT OR Apache-2.0
 
 schema = 1
 title = "Undertone checks"

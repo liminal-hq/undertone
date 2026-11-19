@@ -101,6 +101,7 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 - **Requirement:** New source files (and substantially rewritten source files) should include a short header as the first content in the file.
 - **Applies to:** `.ts` files in `src/`, `docs/.vitepress/theme/`, and (as they arrive) `packages/` and `conformance/`, and `.rs` files in `crates/`.
 - **Do not add headers to:** generated files (`dist/`), lockfiles, config files (`.json`, `.yml`), markdown docs, or the SVG asset.
+- **Licence by area:** the TypeScript package (`src/`, `docs/.vitepress/theme/`, `packages/`, `conformance/`) is `MIT`; the Rust crates are `MIT OR Apache-2.0` (D-03), and so are the few configuration files that carry a header (`.config/nextest.toml`, `.github/pr-results.toml`, `.github/workflows/publish-test-results.yml`, and `scripts/`).
 
 Preferred header format for TypeScript:
 

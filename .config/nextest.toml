@@ -1,7 +1,7 @@
 # nextest settings: the `ci` profile writes JUnit that pr-results reads.
 #
 # (c) Copyright 2026 Liminal HQ, Scott Morris
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: MIT OR Apache-2.0
 
 [profile.ci]
 retries = 1
