@@ -15,7 +15,8 @@ use common::encode::{encode_hap, encode_value, sort_haps};
 use common::interpret::{Failure, interpret};
 use common::json::{self, Json};
 use std::collections::BTreeMap;
-use undertone_pattern::{Fraction, Span};
+use undertone_pattern::random::SeededRandom;
+use undertone_pattern::{Fraction, Span, js};
 
 /// How many cases of each group the interpreter does not implement yet, with the reason. Every other case of every group must be equal.
 ///
@@ -23,11 +24,6 @@ use undertone_pattern::{Fraction, Span};
 const NOT_COVERED: &[(&str, usize, &str)] = &[
 	("chords", 123, "RF-15: chord() and voicing() need chord.ts"),
 	("drift", 97, "RF-17: drift() needs the seeded random source"),
-	(
-		"random",
-		103,
-		"RF-17: the cases are {seed, values}, not programs",
-	),
 	(
 		"notes",
 		1,
@@ -44,6 +40,9 @@ const KNOWN_SIZES: &[(&str, usize)] = &[
 	("signals", 104),
 	("mini", 359),
 	("scales", 130),
+	("random", 103),
+	("chords", 123),
+	("drift", 97),
 ];
 
 /// The relative tolerance of a float, as in the layer 3 rule.
@@ -129,13 +128,57 @@ struct Tally {
 	total: usize,
 }
 
+/// The seed of a `random` case: a number (or one of the `$num` special values), a string, or a string with a lone surrogate half.
+fn random_from_case(seed: &Json) -> Result<SeededRandom, String> {
+	match seed {
+		Json::Num(_, n) => Ok(SeededRandom::from_number(*n)),
+		Json::Str(text) => Ok(SeededRandom::from_text(text)),
+		Json::Wide(units, _) => Ok(SeededRandom::from_utf16(units)),
+		Json::Obj(_) => match seed.get("$num").and_then(Json::as_str) {
+			Some("NaN") => Ok(SeededRandom::from_number(f64::NAN)),
+			Some("Infinity") => Ok(SeededRandom::from_number(f64::INFINITY)),
+			Some("-Infinity") => Ok(SeededRandom::from_number(f64::NEG_INFINITY)),
+			Some("-0") => Ok(SeededRandom::from_number(-0.0)),
+			other => Err(format!("unknown special seed {other:?}")),
+		},
+		other => Err(format!("unknown seed {}", other.to_compact())),
+	}
+}
+
+/// Checks a `{seed, values}` case: the first values of `seeded_random(seed)` must print exactly as the reference printed them (they come from integer arithmetic, so no tolerance is applied).
+fn check_random(id: &str, case: &Json) -> Result<bool, String> {
+	let mut random =
+		random_from_case(case.get("seed").unwrap()).map_err(|e| format!("{id}: {e}"))?;
+	let values = case.get("values").and_then(Json::as_arr).unwrap();
+	if values.len() != 64 {
+		return Err(format!(
+			"{id}: {} values recorded, expected 64",
+			values.len()
+		));
+	}
+	for (i, expected) in values.iter().enumerate() {
+		let actual = js::number_to_string(random.next_value());
+		let Json::Num(text, _) = expected else {
+			return Err(format!("{id}: value {i} is not a number"));
+		};
+		if *text != actual {
+			return Err(format!("{id}: value {i}: recorded {text}, rust {actual}"));
+		}
+	}
+	Ok(false)
+}
+
 /// Checks one case. `Ok(true)` means it passed only through the float tolerance.
 fn check_case(case: &Json) -> Result<bool, String> {
 	let id = case.get("id").and_then(Json::as_str).unwrap();
 	let Some(program) = case.get("program") else {
-		return Err(format!(
-			"{id}: not covered: the case has no program (it is {{seed, values}})"
-		));
+		return if case.get("seed").is_some() && case.get("values").is_some() {
+			check_random(id, case)
+		} else {
+			Err(format!(
+				"{id}: not covered: the case has neither a program nor {{seed, values}}"
+			))
+		};
 	};
 	let built = interpret(program);
 	if let Some(expected) = case.get("error").and_then(Json::as_str) {

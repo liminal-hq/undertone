@@ -17,6 +17,8 @@ pub enum Json {
 	/// The number's text exactly as written, and its value.
 	Num(String, f64),
 	Str(String),
+	/// A string that holds a lone UTF-16 surrogate half, which a Rust string cannot: its code units, and the text with each lone half replaced by U+FFFD (what `as_str` gives).
+	Wide(Vec<u16>, String),
 	Arr(Vec<Json>),
 	/// Fields in file order.
 	Obj(Vec<(String, Json)>),
@@ -32,7 +34,7 @@ impl Json {
 
 	pub fn as_str(&self) -> Option<&str> {
 		match self {
-			Json::Str(s) => Some(s),
+			Json::Str(s) | Json::Wide(_, s) => Some(s),
 			_ => None,
 		}
 	}
@@ -64,6 +66,7 @@ impl Json {
 			Json::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
 			Json::Num(text, _) => out.push_str(text),
 			Json::Str(s) => write_string(s, out),
+			Json::Wide(_, lossy) => write_string(lossy, out),
 			Json::Arr(items) => {
 				out.push('[');
 				for (i, item) in items.iter().enumerate() {
@@ -193,7 +196,16 @@ impl Reader<'_> {
 					}
 				}
 			}
-			Some(b'"') => Ok(Json::Str(self.string()?)),
+			Some(b'"') => {
+				let units = self.string_units()?;
+				Ok(match String::from_utf16(&units) {
+					Ok(text) => Json::Str(text),
+					Err(_) => {
+						let lossy = String::from_utf16_lossy(&units);
+						Json::Wide(units, lossy)
+					}
+				})
+			}
 			Some(b't') => self.word("true", Json::Bool(true)),
 			Some(b'f') => self.word("false", Json::Bool(false)),
 			Some(b'n') => self.word("null", Json::Null),
@@ -224,6 +236,10 @@ impl Reader<'_> {
 	}
 
 	fn string(&mut self) -> Result<String, String> {
+		Ok(String::from_utf16_lossy(&self.string_units()?))
+	}
+
+	fn string_units(&mut self) -> Result<Vec<u16>, String> {
 		if self.bytes.get(self.pos) != Some(&b'"') {
 			return Err(format!("expected a string at byte {}", self.pos));
 		}
@@ -235,7 +251,7 @@ impl Reader<'_> {
 			};
 			self.pos += 1;
 			match byte {
-				b'"' => return Ok(String::from_utf16_lossy(&out)),
+				b'"' => return Ok(out),
 				b'\\' => {
 					let escape = self.bytes[self.pos];
 					self.pos += 1;
