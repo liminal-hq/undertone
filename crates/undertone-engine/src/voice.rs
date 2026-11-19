@@ -327,6 +327,7 @@ impl<G: Graph> Engine<G> {
 			self.graph.stop(modulator, voice_end);
 		}
 
+		self.drop_finished_voices();
 		let handle = self.keep_voice(BookedVoice {
 			end: voice_end,
 			gain: gain_param,
@@ -343,6 +344,33 @@ impl<G: Graph> Engine<G> {
 			self.claim_cut_group(output, group, playback);
 		}
 		Ok(playback)
+	}
+
+	/// Forgets the voices whose end (release tail included) is before the graph's clock, so a long session
+	/// does not keep a record for every voice it ever booked. Each freed slot has its generation raised, so
+	/// an old [`Playback`] for it is ignored by [`Engine::stop`].
+	///
+	/// The current voice of each cut group is always kept: a voice booked later with an earlier start still
+	/// chokes at the holder's onset, as it would without this, so the list stays bounded by the live voices
+	/// plus one per cut group.
+	fn drop_finished_voices(&mut self) {
+		let now = self.graph.current_time();
+		let holders: Vec<VoiceHandle> = self
+			.cut_groups
+			.values()
+			.filter_map(|playback| playback.voice)
+			.collect();
+		for (index, slot) in self.voices.iter_mut().enumerate() {
+			let finished = slot.voice.as_ref().is_some_and(|voice| voice.end < now);
+			let held = holders
+				.iter()
+				.any(|handle| handle.engine == self.id && handle.slot == index);
+			if finished && !held {
+				slot.voice = None;
+				slot.generation += 1;
+				self.free_slots.push(index);
+			}
+		}
 	}
 
 	/// Keeps a booked voice in the slab, in a freed slot when there is one, and returns its handle.

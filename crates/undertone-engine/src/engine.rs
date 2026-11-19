@@ -593,7 +593,7 @@ mod tests {
 			cut_group: Some(1.0),
 			..VoiceParams::empty()
 		};
-		let long = engine.play(&grouped, 0.0).unwrap();
+		engine.play(&grouped, 0.0).unwrap();
 		for i in 1..50_u32 {
 			let now = f64::from(i);
 			engine.graph_mut().set_current_time(now);
