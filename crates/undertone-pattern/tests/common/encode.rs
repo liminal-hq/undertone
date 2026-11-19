@@ -34,8 +34,10 @@ pub fn encode_value(value: &Value) -> String {
 		}
 		Value::Bool(b) => b.to_string(),
 		Value::Map(map) => {
+			// A field set to `undefined` is dropped, as `JSON.stringify` drops it.
 			let fields: Vec<String> = map
 				.iter()
+				.filter(|(_, v)| **v != Value::Undefined)
 				.map(|(k, v)| {
 					let mut key = String::new();
 					json::write_string(k, &mut key);
@@ -44,6 +46,12 @@ pub fn encode_value(value: &Value) -> String {
 				.collect();
 			format!("{{{}}}", fields.join(","))
 		}
+		Value::List(items) => {
+			let items: Vec<String> = items.iter().map(encode_value).collect();
+			format!("[{}]", items.join(","))
+		}
+		// `JSON.stringify` writes an undefined array item as null.
+		Value::Undefined => "null".into(),
 	}
 }
 

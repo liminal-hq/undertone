@@ -18,6 +18,7 @@ extern crate alloc;
 extern crate std;
 
 pub mod control;
+pub mod controls;
 pub mod error;
 pub mod fraction;
 pub mod hap;
@@ -30,6 +31,7 @@ pub mod random;
 pub mod signal;
 pub mod value;
 
+pub use controls::{CONTROLS, Control, ControlInput, ControlMap, ControlSpec};
 pub use error::{Error, Result};
 pub use fraction::Fraction;
 pub use hap::{Hap, Span};

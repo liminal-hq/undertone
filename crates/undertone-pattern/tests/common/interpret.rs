@@ -10,7 +10,8 @@
 #![allow(dead_code)]
 
 use super::json::Json;
-use undertone_pattern::control::{self, Control, ControlArg};
+use undertone_pattern::control;
+use undertone_pattern::controls::{ArgKind, Control, ControlInput, control_spec};
 use undertone_pattern::random::Seed;
 use undertone_pattern::signal;
 use undertone_pattern::{
@@ -205,11 +206,11 @@ fn transform(steps: &Json, pattern: &Pat) -> Built<Pat> {
 	Ok(out)
 }
 
-fn control_arg(json: &Json) -> Built<ControlArg> {
+fn control_arg(json: &Json) -> Built<ControlInput> {
 	match json {
-		Json::Num(_, n) => Ok(ControlArg::Number(*n)),
-		Json::Str(s) => Ok(ControlArg::Text(s.clone())),
-		program if is_program(program) => Ok(ControlArg::Pattern(interpret(program)?)),
+		Json::Num(_, n) => Ok(ControlInput::Number(*n)),
+		Json::Str(s) => Ok(ControlInput::Text(s.clone())),
+		program if is_program(program) => Ok(ControlInput::Pattern(interpret(program)?)),
 		_ => uncovered("a control argument of another type"),
 	}
 }
@@ -280,25 +281,39 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 		"div" => arithmetic(pattern, ArithOp::Div, &raw[0]),
 		"round" => Ok(pattern.round()),
 		"floor" => Ok(pattern.floor()),
-		"gain" | "lpf" | "pan" | "attack" => {
-			let control = Control::from_name(name).expect("a known control");
-			Ok(pattern.control(control, control_arg(&raw[0])?)?)
-		}
 		"scale" => Ok(pattern.scale(raw[0].as_str().expect("a scale spec"))?),
-		"sound" => Ok(pattern.with_sound(raw[0].as_str().expect("a sound type"))),
-		"s" => Ok(pattern.with_s(raw[0].as_str().expect("a sound name"))),
-		"bank" => Ok(pattern.with_bank(raw[0].as_str().expect("a bank name"))),
-		"orbit" | "cut" | "panlaw" => match &raw[0] {
-			Json::Num(_, n) => Ok(match name {
-				"orbit" => pattern.with_orbit(*n)?,
-				"cut" => pattern.with_cut(*n)?,
-				_ => pattern.with_panlaw(*n)?,
-			}),
-			program if is_program(program) => Err(Failure::Error(
-				control::plain_value_error(name).message().into(),
-			)),
-			_ => uncovered("a scalar control with another type"),
-		},
+		// Every other control is in the table: a list argument is data, anything else goes through the dynamic path.
+		name if control_spec(name).is_some() => {
+			let spec = control_spec(name).expect("a known control");
+			let control = Control::from_name(name).expect("a known control");
+			match spec.arg {
+				ArgKind::PatternableWithTime => {
+					let seconds = raw.get(1).map(num);
+					Ok(pattern.pan_slide(control_arg(&raw[0])?, seconds)?)
+				}
+				ArgKind::NumberList | ArgKind::Path => {
+					let Json::Arr(items) = &raw[0] else {
+						return Ok(pattern.control(control, control_arg(&raw[0])?)?);
+					};
+					if is_program(&raw[0]) {
+						return Ok(pattern.control(control, control_arg(&raw[0])?)?);
+					}
+					let numbers: Vec<f64> = items.iter().map(num).collect();
+					let rate = raw.get(1).map(num);
+					Ok(match name {
+						"channels" => pattern.channels(&numbers)?,
+						"pitchsteps" => pattern.pitch_steps(&numbers, rate)?,
+						_ => pattern.pan_path(&numbers, rate)?,
+					})
+				}
+				ArgKind::Text => Ok(match name {
+					"sound" => pattern.sound(raw[0].as_str().expect("a sound type")),
+					"s" => pattern.s(raw[0].as_str().expect("a sound name")),
+					_ => pattern.bank(raw[0].as_str().expect("a bank name")),
+				}),
+				_ => Ok(pattern.control(control, control_arg(&raw[0])?)?),
+			}
+		}
 		"jux" => {
 			let mut failure = None;
 			let result = pattern.jux(|p| match transform(&raw[0], p) {

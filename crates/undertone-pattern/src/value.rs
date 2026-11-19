@@ -25,6 +25,12 @@ pub enum Value {
 	Bool(bool),
 	/// Named fields, such as `{ pitch, gainLevel }`.
 	Map(BTreeMap<String, Value>),
+	/// A list, such as the semitone offsets of `pitchsteps` or the points of `panpath`.
+	List(Vec<Value>),
+	/// A field the reference set to `undefined` on purpose, which is not the same as a field it never set: `{ ...defaults, ...patch }` overwrites a default with it. `.s("bd")` leaves `soundType` this way so that a sample voice has no synth type.
+	///
+	/// A map holds it as a field; [`Value::get`] hides it (reading it is `undefined`, as in JavaScript), and [`Value::get_raw`] shows it. The corpus never records it, because `JSON.stringify` drops such fields.
+	Undefined,
 }
 
 impl Value {
@@ -49,8 +55,16 @@ impl Value {
 		}
 	}
 
-	/// The field `key` of a map value.
+	/// The field `key` of a map value; a field set to [`Value::Undefined`] reads as absent, as `undefined` does in JavaScript.
 	pub fn get(&self, key: &str) -> Option<&Value> {
+		match self.get_raw(key) {
+			Some(Value::Undefined) => None,
+			other => other,
+		}
+	}
+
+	/// The field `key` of a map value, including a field deliberately set to [`Value::Undefined`] (which tells "set to `undefined`" from "never set").
+	pub fn get_raw(&self, key: &str) -> Option<&Value> {
 		match self {
 			Value::Map(map) => map.get(key),
 			_ => None,
@@ -127,7 +141,7 @@ pub enum MapFn {
 	},
 	/// `scale(spec)` on a voice map: a `degree` field becomes a `pitch` in Hz.
 	Scale(ParsedScale),
-	/// A voice patch merged into a map: `Some` sets a field, `None` removes it (the reference's `undefined`).
+	/// A voice patch merged into a map: `Some` sets a field, `None` sets it to [`Value::Undefined`] (the reference's `undefined`, which overwrites a default when the voice is resolved).
 	Merge(Vec<(String, Option<Value>)>),
 }
 
@@ -233,10 +247,7 @@ impl Datum for Value {
 				Value::Map(map) => {
 					let mut merged = map.clone();
 					for (key, value) in patch {
-						match value {
-							Some(value) => merged.insert(key.clone(), value.clone()),
-							None => merged.remove(key),
-						};
+						merged.insert(key.clone(), value.clone().unwrap_or(Value::Undefined));
 					}
 					Value::Map(merged)
 				}

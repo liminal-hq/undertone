@@ -7,7 +7,7 @@
 //!
 //! A pattern is a function from a span of cycle time to the haps overlapping it. Here that function is not a closure but a tree of [`Node`]s that every consumer can walk: print, hash, send to another thread, or (later) serialise. The nodes are immutable and shared through `Arc`, so a transform builds a new root over the old tree.
 
-use crate::control::{Control, ControlInput, query_with_control};
+use crate::controls::{Control, ControlSource, query_with_control};
 use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::hap::{Hap, Span};
@@ -75,7 +75,7 @@ pub enum Node<T> {
 		/// Which control is set.
 		control: Control,
 		/// Where its value comes from.
-		input: ControlInput<T>,
+		input: ControlSource<T>,
 	},
 	/// A continuous pattern with no structure (`sine`, `rand`, ...), read at a point.
 	Signal(Signal<T>),
@@ -1186,8 +1186,8 @@ impl<T: Datum> Node<T> {
 				input,
 			} => {
 				let (kind, source) = match input {
-					ControlInput::Literal(p) => ("literal", p),
-					ControlInput::Pattern(p) => ("pattern", p),
+					ControlSource::Literal(p) => ("literal", p),
+					ControlSource::Pattern(p) => ("pattern", p),
 				};
 				write!(f, "(control {} {kind} ", control.name())?;
 				source.node.write_tree(f)?;
@@ -1294,8 +1294,8 @@ impl<T: Datum> Node<T> {
 				input,
 			} => {
 				let (kind, source) = match input {
-					ControlInput::Literal(p) => ("literal", p),
-					ControlInput::Pattern(p) => ("pattern", p),
+					ControlSource::Literal(p) => ("literal", p),
+					ControlSource::Pattern(p) => ("pattern", p),
 				};
 				line(
 					out,
