@@ -7,6 +7,10 @@
 //!
 //! A pattern's value type is generic, so the node tree can hold numbers, booleans, or the voice-parameter maps of `note(...)`. Operations that change a value (`fmap` with a named map, `range`, `scale`, a control merge) are data, [`MapFn`], and each value type says how to apply one through [`Datum::apply`]. That is what lets the tree stay free of closures.
 
+use crate::chord::VoicingOptions;
+use crate::drift::DriftOptions;
+use crate::error::Result;
+use crate::hap::Span;
 use crate::{js, math};
 use alloc::collections::BTreeMap;
 use alloc::string::String;
@@ -25,6 +29,12 @@ pub enum Value {
 	Bool(bool),
 	/// Named fields, such as `{ pitch, gainLevel }`.
 	Map(BTreeMap<String, Value>),
+	/// A list, such as the semitone offsets of `pitchsteps` or the points of `panpath`.
+	List(Vec<Value>),
+	/// A field the reference set to `undefined` on purpose, which is not the same as a field it never set: `{ ...defaults, ...patch }` overwrites a default with it. `.s("bd")` leaves `soundType` this way so that a sample voice has no synth type.
+	///
+	/// A map holds it as a field; [`Value::get`] hides it (reading it is `undefined`, as in JavaScript), and [`Value::get_raw`] shows it. The corpus never records it, because `JSON.stringify` drops such fields.
+	Undefined,
 }
 
 impl Value {
@@ -49,8 +59,16 @@ impl Value {
 		}
 	}
 
-	/// The field `key` of a map value.
+	/// The field `key` of a map value; a field set to [`Value::Undefined`] reads as absent, as `undefined` does in JavaScript.
 	pub fn get(&self, key: &str) -> Option<&Value> {
+		match self.get_raw(key) {
+			Some(Value::Undefined) => None,
+			other => other,
+		}
+	}
+
+	/// The field `key` of a map value, including a field deliberately set to [`Value::Undefined`] (which tells "set to `undefined`" from "never set").
+	pub fn get_raw(&self, key: &str) -> Option<&Value> {
 		match self {
 			Value::Map(map) => map.get(key),
 			_ => None,
@@ -127,8 +145,12 @@ pub enum MapFn {
 	},
 	/// `scale(spec)` on a voice map: a `degree` field becomes a `pitch` in Hz.
 	Scale(ParsedScale),
-	/// A voice patch merged into a map: `Some` sets a field, `None` removes it (the reference's `undefined`).
+	/// A voice patch merged into a map: `Some` sets a field, `None` sets it to [`Value::Undefined`] (the reference's `undefined`, which overwrites a default when the voice is resolved).
 	Merge(Vec<(String, Option<Value>)>),
+	/// `voicing(options)`: a hap with a `chord` becomes one hap per tone of the chord, sharing its whole and part. This is the one named map that changes the number of haps, so the query handles it (see [`Datum::voice`]); and it can fail when queried.
+	Voicing(VoicingOptions),
+	/// `drift(pattern, options)`: seeded variation of each hap that has a whole. It reads the hap's time, so the query handles it (see [`Datum::drifted`]); and it can fail when queried. Validated when the pattern is built.
+	Drift(DriftOptions),
 }
 
 impl MapFn {
@@ -146,8 +168,13 @@ impl MapFn {
 			MapFn::Range { lo, hi } => lo + v * (hi - lo),
 			MapFn::Range2 { lo, hi } => lo + ((v + 1.0) / 2.0) * (hi - lo),
 			MapFn::Rangex { lo, ratio } => lo * js::pow(*ratio, v),
-			MapFn::Scale(_) | MapFn::Merge(_) => return None,
+			MapFn::Scale(_) | MapFn::Merge(_) | MapFn::Voicing(_) | MapFn::Drift(_) => return None,
 		})
+	}
+
+	/// Whether querying a pattern with this map can fail: `voicing` reads its anchor and `drift` reads pitches only when queried.
+	pub fn can_fail(&self) -> bool {
+		matches!(self, MapFn::Voicing(_) | MapFn::Drift(_))
 	}
 }
 
@@ -165,6 +192,14 @@ pub trait Datum: Clone + core::fmt::Debug + PartialEq + Send + Sync + 'static {
 	fn from_degree(degree: f64) -> Self;
 	/// This value with the numeric control `key` set to `n`.
 	fn with_number(&self, key: &str, n: f64) -> Self;
+	/// The values this value voices into for [`MapFn::Voicing`]: a chord becomes one value per tone, anything else itself. The default is the value itself, which is right for types that never hold a chord.
+	fn voice(&self, _options: &VoicingOptions) -> Result<Vec<Self>> {
+		Ok(alloc::vec![self.clone()])
+	}
+	/// This value after [`MapFn::Drift`], given the whole of its hap. The default is the value itself.
+	fn drifted(&self, _options: &DriftOptions, _whole: Span) -> Result<Self> {
+		Ok(self.clone())
+	}
 }
 
 impl Datum for f64 {
@@ -221,7 +256,7 @@ impl Datum for Value {
 						let mut rest = map.clone();
 						rest.remove("degree");
 						let midi = scale.degree_to_midi(*degree);
-						let hz = crate::control::midi_to_frequency(midi);
+						let hz = crate::pitch::midi_to_frequency(midi);
 						rest.insert("pitch".into(), Value::Num(hz));
 						Value::Map(rest)
 					}
@@ -229,14 +264,13 @@ impl Datum for Value {
 				},
 				_ => self.clone(),
 			},
+			// These change a hap, not a bare value (the query does the work), so a point sample passes through.
+			MapFn::Voicing(_) | MapFn::Drift(_) => self.clone(),
 			MapFn::Merge(patch) => match self {
 				Value::Map(map) => {
 					let mut merged = map.clone();
 					for (key, value) in patch {
-						match value {
-							Some(value) => merged.insert(key.clone(), value.clone()),
-							None => merged.remove(key),
-						};
+						merged.insert(key.clone(), value.clone().unwrap_or(Value::Undefined));
 					}
 					Value::Map(merged)
 				}
@@ -247,6 +281,12 @@ impl Datum for Value {
 				_ => Value::Num(f64::NAN),
 			},
 		}
+	}
+	fn voice(&self, options: &VoicingOptions) -> Result<Vec<Self>> {
+		crate::chord::voice_value(self, options)
+	}
+	fn drifted(&self, options: &DriftOptions, whole: Span) -> Result<Self> {
+		crate::drift::drift_value(options, whole, self)
 	}
 	fn from_degree(degree: f64) -> Self {
 		Value::field("degree", Value::Num(degree))

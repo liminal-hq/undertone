@@ -15,13 +15,27 @@ use common::encode::{encode_hap, encode_value, sort_haps};
 use common::interpret::{Failure, interpret};
 use common::json::{self, Json};
 use std::collections::BTreeMap;
-use undertone_pattern::{Fraction, Span};
+use undertone_pattern::random::SeededRandom;
+use undertone_pattern::{Fraction, Span, js};
 
-/// Programs the spike does not implement, with the reason. Everything else must be equal.
-const NOT_COVERED: &[(&str, &str)] = &[(
-	"notes-chord-01",
-	"chord() and voicing() need chord.ts (the chords group, RF-15)",
-)];
+/// How many cases of each group the interpreter does not implement yet, with the reason. Every other case of every group must be equal.
+///
+/// The runner finds the groups by listing `conformance/cases/1/`, so a new group runs without a change here. If its cases cannot all run yet, add the group below with the exact count; the test fails whenever a count changes (a case became covered, or a new one is not), so nothing drops out silently.
+const NOT_COVERED: &[(&str, usize, &str)] = &[];
+
+/// The cases recorded in the groups that were already in the corpus when the runner was written, so a file that silently loses cases fails. Groups not listed here may have any size.
+const KNOWN_SIZES: &[(&str, usize)] = &[
+	("core", 44),
+	("combinators", 60),
+	("notes", 43),
+	("controls", 58),
+	("signals", 104),
+	("mini", 359),
+	("scales", 130),
+	("random", 103),
+	("chords", 123),
+	("drift", 97),
+];
 
 /// The relative tolerance of a float, as in the layer 3 rule.
 const REL_TOLERANCE: f64 = 1e-14;
@@ -101,14 +115,63 @@ struct Tally {
 	/// Of those, the ones that needed the tolerance, by id.
 	tolerant: Vec<String>,
 	not_covered: usize,
+	not_covered_ids: Vec<String>,
 	failed: Vec<String>,
 	total: usize,
+}
+
+/// The seed of a `random` case: a number (or one of the `$num` special values), a string, or a string with a lone surrogate half.
+fn random_from_case(seed: &Json) -> Result<SeededRandom, String> {
+	match seed {
+		Json::Num(_, n) => Ok(SeededRandom::from_number(*n)),
+		Json::Str(text) => Ok(SeededRandom::from_text(text)),
+		Json::Wide(units, _) => Ok(SeededRandom::from_utf16(units)),
+		Json::Obj(_) => match seed.get("$num").and_then(Json::as_str) {
+			Some("NaN") => Ok(SeededRandom::from_number(f64::NAN)),
+			Some("Infinity") => Ok(SeededRandom::from_number(f64::INFINITY)),
+			Some("-Infinity") => Ok(SeededRandom::from_number(f64::NEG_INFINITY)),
+			Some("-0") => Ok(SeededRandom::from_number(-0.0)),
+			other => Err(format!("unknown special seed {other:?}")),
+		},
+		other => Err(format!("unknown seed {}", other.to_compact())),
+	}
+}
+
+/// Checks a `{seed, values}` case: the first values of `seeded_random(seed)` must print exactly as the reference printed them (they come from integer arithmetic, so no tolerance is applied).
+fn check_random(id: &str, case: &Json) -> Result<bool, String> {
+	let mut random =
+		random_from_case(case.get("seed").unwrap()).map_err(|e| format!("{id}: {e}"))?;
+	let values = case.get("values").and_then(Json::as_arr).unwrap();
+	if values.len() != 64 {
+		return Err(format!(
+			"{id}: {} values recorded, expected 64",
+			values.len()
+		));
+	}
+	for (i, expected) in values.iter().enumerate() {
+		let actual = js::number_to_string(random.next_value());
+		let Json::Num(text, _) = expected else {
+			return Err(format!("{id}: value {i} is not a number"));
+		};
+		if *text != actual {
+			return Err(format!("{id}: value {i}: recorded {text}, rust {actual}"));
+		}
+	}
+	Ok(false)
 }
 
 /// Checks one case. `Ok(true)` means it passed only through the float tolerance.
 fn check_case(case: &Json) -> Result<bool, String> {
 	let id = case.get("id").and_then(Json::as_str).unwrap();
-	let program = case.get("program").unwrap();
+	let Some(program) = case.get("program") else {
+		return if case.get("seed").is_some() && case.get("values").is_some() {
+			check_random(id, case)
+		} else {
+			Err(format!(
+				"{id}: not covered: the case has neither a program nor {{seed, values}}"
+			))
+		};
+	};
 	let built = interpret(program);
 	if let Some(expected) = case.get("error").and_then(Json::as_str) {
 		return match built {
@@ -134,10 +197,32 @@ fn check_case(case: &Json) -> Result<bool, String> {
 		let q = query.as_arr().unwrap();
 		let (from, to) = (q[0].as_str().unwrap(), q[1].as_str().unwrap());
 		let span = Span::new(Fraction::parse(from).unwrap(), Fraction::parse(to).unwrap());
-		let actual: Vec<Json> = sort_haps(pattern.query(span))
-			.iter()
-			.map(|h| json::parse(&encode_hap(h)).expect("encoded haps are JSON"))
-			.collect();
+		if let Some(message) = expected.get("error").and_then(Json::as_str) {
+			// The reference throws when this span is queried (a lazy error, such as a bad voicing anchor).
+			match pattern.try_query(span) {
+				Err(e) if e.message() == message => continue,
+				Err(e) => {
+					return Err(format!(
+						"{id}: query {from} to {to}: wrong error\n  expected: {message}\n  actual:   {}",
+						e.message()
+					));
+				}
+				Ok(_) => {
+					return Err(format!(
+						"{id}: query {from} to {to}: expected the error {message:?} but the query worked"
+					));
+				}
+			}
+		}
+		let actual: Vec<Json> = sort_haps(pattern.try_query(span).map_err(|e| {
+			format!(
+				"{id}: query {from} to {to}: unexpected error {:?}",
+				e.message()
+			)
+		})?)
+		.iter()
+		.map(|h| json::parse(&encode_hap(h)).expect("encoded haps are JSON"))
+		.collect();
 		let wanted = expected.as_arr().unwrap();
 		if actual.len() != wanted.len() {
 			return Err(format!(
@@ -187,12 +272,19 @@ fn check_case(case: &Json) -> Result<bool, String> {
 #[test]
 fn layer_one_corpus_is_equal() {
 	let mut groups: BTreeMap<String, Tally> = BTreeMap::new();
-	let mut uncovered_seen = Vec::new();
-	for group in ["core", "combinators", "notes", "controls", "signals"] {
+	let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/cases/1");
+	let mut names: Vec<String> = std::fs::read_dir(&dir)
+		.expect("the corpus directory exists")
+		.map(|e| e.unwrap().path())
+		.filter(|p| p.extension().is_some_and(|x| x == "json"))
+		.map(|p| p.file_stem().unwrap().to_string_lossy().into_owned())
+		.collect();
+	names.sort();
+	for group in &names {
 		let text = std::fs::read_to_string(corpus_path(group)).expect("the corpus file exists");
 		let file = json::parse(&text).expect("the corpus file is JSON");
 		assert_eq!(file.get("corpus").and_then(Json::as_f64), Some(1.0));
-		let tally = groups.entry(group.into()).or_default();
+		let tally = groups.entry(group.clone()).or_default();
 		for case in file.get("cases").and_then(Json::as_arr).unwrap() {
 			tally.total += 1;
 			let id = case.get("id").and_then(Json::as_str).unwrap();
@@ -204,8 +296,8 @@ fn layer_one_corpus_is_equal() {
 					}
 				}
 				Err(message) if message.contains(": not covered: ") => {
-					uncovered_seen.push(id.to_string());
 					tally.not_covered += 1;
+					tally.not_covered_ids.push(id.to_string());
 				}
 				Err(message) => tally.failed.push(message),
 			}
@@ -241,6 +333,11 @@ fn layer_one_corpus_is_equal() {
 		tolerant_ids.join(", ")
 	));
 	println!("{report}");
+	for (group, t) in &groups {
+		if !t.not_covered_ids.is_empty() {
+			println!("not covered in {group}: {:?}", t.not_covered_ids);
+		}
+	}
 	let failures: Vec<&String> = groups.values().flat_map(|t| &t.failed).collect();
 	assert!(
 		failures.is_empty(),
@@ -251,16 +348,36 @@ fn layer_one_corpus_is_equal() {
 			.collect::<Vec<_>>()
 			.join("\n\n")
 	);
-	let expected_uncovered: Vec<&str> = NOT_COVERED.iter().map(|(id, _)| *id).collect();
-	assert_eq!(
-		uncovered_seen
+	let found: Vec<(&str, usize)> = groups
+		.iter()
+		.filter(|(_, t)| t.not_covered > 0)
+		.map(|(g, t)| (g.as_str(), t.not_covered))
+		.collect();
+	let expected: Vec<(&str, usize)> = {
+		let mut list: Vec<(&str, usize)> = NOT_COVERED
 			.iter()
-			.map(String::as_str)
-			.collect::<Vec<_>>(),
-		expected_uncovered,
-		"the not-covered list changed"
+			.filter(|(_, count, _)| *count > 0)
+			.map(|(g, c, _)| (*g, *c))
+			.collect();
+		list.sort();
+		list
+	};
+	assert_eq!(
+		found,
+		expected,
+		"the not-covered list changed; ids: {:?}",
+		groups
+			.values()
+			.flat_map(|t| t.not_covered_ids.iter().take(5))
+			.collect::<Vec<_>>()
 	);
-	assert_eq!(total, 309, "the corpus has 309 layer 1 programs");
+	for (group, size) in KNOWN_SIZES {
+		assert_eq!(
+			groups.get(*group).map(|t| t.total),
+			Some(*size),
+			"the {group} group changed size"
+		);
+	}
 }
 
 // --- The tolerance must not hide real errors ---

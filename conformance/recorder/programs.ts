@@ -41,7 +41,17 @@ export const DEFAULT_SAMPLES: readonly string[] = ['-3/2', '0', '1/8', '1/3', '3
 export const words = (source: string) => ['mini', source, 'word'] as const;
 
 /** The groups of layer 1 in the first subset, in file order. */
-export const LAYER1_GROUPS = ['core', 'combinators', 'notes', 'controls', 'signals'] as const;
+export const LAYER1_GROUPS = [
+  'core',
+  'combinators',
+  'notes',
+  'controls',
+  'signals',
+  'mini',
+  'scales',
+  'chords',
+  'drift'
+] as const;
 
 export function parseFraction(ref: Reference, text: string) {
   const [numerator, denominator] = text.split('/');

@@ -5,7 +5,7 @@
 
 //! The R1 measure "closure nodes in the tree outside `Foreign` and `Custom` (must be zero)".
 //!
-//! A tree node can hold a function only through a trait object (`dyn`) or a function pointer (`fn(`), a boxed closure, or an `impl Fn` type stored in a field. This test reads the library source and finds every such place. Behaviour that is allowed in the tree must come through the two traits `ForeignFn` and `CustomQuery`, so the count of other places must be zero.
+//! A tree node can hold a function only through a trait object (`dyn`) or a function pointer (`fn(`), a boxed closure, or an `impl Fn` type stored in a field. This test reads the library source and finds every such place. Behaviour that is allowed in the tree must come through the two traits `Query` (the `Custom` node) and `ForeignHost` (the `Foreign` node), so the count of other places must be zero.
 
 use std::path::Path;
 
@@ -26,7 +26,7 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 			if !holds {
 				continue;
 			}
-			if code.contains("dyn ForeignFn<T>") || code.contains("dyn CustomQuery<T>") {
+			if code.contains("dyn Query<T>") || code.contains("dyn ForeignHost<T>") {
 				allowed += 1;
 			} else {
 				offenders.push(format!("{}:{}: {}", path.display(), n + 1, line.trim()));
@@ -34,7 +34,7 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 		}
 	}
 	println!(
-		"closure-holding places: {allowed} (two variants, two constructors), {} elsewhere",
+		"closure-holding places: {allowed} (the two variants and their two constructors in pattern.rs, and the four of the std-only ForeignTable in query.rs), {} elsewhere",
 		offenders.len()
 	);
 	assert!(
@@ -43,7 +43,7 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 		offenders.join("\n")
 	);
 	assert_eq!(
-		allowed, 4,
-		"the two variants Node::Foreign and Node::Custom, and their two constructors"
+		allowed, 8,
+		"the variants Node::Custom and Node::Foreign, their two constructors, and the std-only ForeignTable's four places"
 	);
 }

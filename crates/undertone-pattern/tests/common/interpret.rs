@@ -10,7 +10,10 @@
 #![allow(dead_code)]
 
 use super::json::Json;
-use undertone_pattern::control::{self, Control, ControlArg};
+use undertone_pattern::chord::{self, VoicingOptions};
+use undertone_pattern::control;
+use undertone_pattern::controls::{ArgKind, Control, ControlInput, control_spec};
+use undertone_pattern::drift::{self, DriftOptions};
 use undertone_pattern::random::Seed;
 use undertone_pattern::signal;
 use undertone_pattern::{
@@ -111,6 +114,8 @@ fn construct(step: &Json) -> Built<Pat> {
 				"number" => Ok(mini::parse(source, |w| {
 					Ok(Value::Num(js::string_to_number(w)))
 				})?),
+				"pitch" => Ok(control::note(source)?),
+				"drum" => Ok(control::s(source)?),
 				other => err(format!("Unknown leaf rule \"{other}\"")),
 			}
 		}
@@ -137,7 +142,10 @@ fn construct(step: &Json) -> Built<Pat> {
 			program if is_program(program) => Ok(control::n_pattern(&interpret(program)?)?),
 			_ => uncovered("n() with another argument type"),
 		},
-		"chord" => uncovered("chord() and voicing() (chord.ts is the chords group, RF-15)"),
+		"chord" => match &raw[0] {
+			Json::Str(s) => Ok(chord::chord(s)?),
+			_ => uncovered("chord() with a non-string"),
+		},
 		"stack" | "seq" | "cat" => {
 			let patterns = raw.iter().map(pattern_arg).collect::<Built<Vec<_>>>()?;
 			Ok(match name {
@@ -203,18 +211,18 @@ fn transform(steps: &Json, pattern: &Pat) -> Built<Pat> {
 	Ok(out)
 }
 
-fn control_arg(json: &Json) -> Built<ControlArg> {
+fn control_arg(json: &Json) -> Built<ControlInput> {
 	match json {
-		Json::Num(_, n) => Ok(ControlArg::Number(*n)),
-		Json::Str(s) => Ok(ControlArg::Text(s.clone())),
-		program if is_program(program) => Ok(ControlArg::Pattern(interpret(program)?)),
+		Json::Num(_, n) => Ok(ControlInput::Number(*n)),
+		Json::Str(s) => Ok(ControlInput::Text(s.clone())),
+		program if is_program(program) => Ok(ControlInput::Pattern(interpret(program)?)),
 		_ => uncovered("a control argument of another type"),
 	}
 }
 
 fn arithmetic(pattern: &Pat, op: ArithOp, arg: &Json) -> Built<Pat> {
 	match arg {
-		Json::Num(_, n) => Ok(pattern.map(match op {
+		Json::Num(_, n) => Ok(pattern.fmap(match op {
 			ArithOp::Add => MapFn::Add(*n),
 			ArithOp::Sub => MapFn::Sub(*n),
 			ArithOp::Mul => MapFn::Mul(*n),
@@ -228,6 +236,74 @@ fn arithmetic(pattern: &Pat, op: ArithOp, arg: &Json) -> Built<Pat> {
 	}
 }
 
+/// A number as the corpus writes it: plain, or one of the `$num` specials.
+fn json_number(json: &Json) -> Option<f64> {
+	match json {
+		Json::Num(_, n) => Some(*n),
+		Json::Obj(_) => match json.get("$num").and_then(Json::as_str)? {
+			"NaN" => Some(f64::NAN),
+			"Infinity" => Some(f64::INFINITY),
+			"-Infinity" => Some(f64::NEG_INFINITY),
+			"-0" => Some(-0.0),
+			_ => None,
+		},
+		_ => None,
+	}
+}
+
+/// The options object of a `drift` step.
+///
+/// The reference takes any JavaScript value for an option, and the corpus holds a few that a typed Rust struct cannot: `null` (which acts as the default) and a string. A string is refused by the reference's own checks, with the string in the message, so this reads those checks in the reference's order (`cyclesPerPass`, `timing`, `level`, `cents`, `pan`) and reports the message itself. A bridge from JavaScript has to do the same coercion before it builds `DriftOptions`.
+fn drift_options(object: &Json) -> Built<DriftOptions> {
+	// A missing seed is `undefined`, which the key prints as the word.
+	let seed = match object.get("seed") {
+		Some(Json::Str(s) | Json::Wide(_, s)) => Seed::Str(s.clone()),
+		Some(other) => match json_number(other) {
+			Some(n) => Seed::Num(n),
+			None => return uncovered("drift() with another seed type"),
+		},
+		None => Seed::Str("undefined".into()),
+	};
+	let mut options = DriftOptions::new(seed);
+	if let Some(Json::Wide(units, _)) = object.get("seed") {
+		options.seed_utf16 = Some(units.clone());
+	}
+	for name in ["cyclesPerPass", "timing", "level", "cents", "pan", "push"] {
+		let Some(value) = object.get(name) else {
+			continue;
+		};
+		let number = match value {
+			Json::Null => continue,
+			Json::Str(text) => {
+				// What the reference's checks say about a string, after the checks of the options before it.
+				options.validate()?;
+				let n = undertone_pattern::js::string_to_number(text);
+				return match name {
+					"cyclesPerPass" => Err(drift::cycles_per_pass_error(text).into()),
+					"push" => uncovered("drift() push as a string"),
+					_ if n.is_nan() || n < 0.0 => {
+						Err(drift::negative_range_error(name, text).into())
+					}
+					_ => uncovered("drift() with a numeric string for a range"),
+				};
+			}
+			other => match json_number(other) {
+				Some(n) => n,
+				None => return uncovered("drift() with another option type"),
+			},
+		};
+		match name {
+			"cyclesPerPass" => options.cycles_per_pass = number,
+			"timing" => options.timing = number,
+			"level" => options.level = number,
+			"cents" => options.cents = number,
+			"pan" => options.pan = number,
+			_ => options.push = number,
+		}
+	}
+	Ok(options)
+}
+
 /// Methods that run side effects or leave the data model, so a program may not name them.
 const FORBIDDEN: [&str; 6] = ["query", "sampleAt", "play", "loop", "render", "constructor"];
 
@@ -236,7 +312,7 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 	if name == "fmap" {
 		let map = raw[0].as_str().expect("a map name");
 		let arg = raw.get(1).map_or(0.0, num);
-		return Ok(pattern.map(named_map(map, arg)?));
+		return Ok(pattern.fmap(named_map(map, arg)?));
 	}
 	if FORBIDDEN.contains(&name) {
 		return err(format!("Method \"{name}\" is not allowed in a program"));
@@ -278,30 +354,66 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 		"div" => arithmetic(pattern, ArithOp::Div, &raw[0]),
 		"round" => Ok(pattern.round()),
 		"floor" => Ok(pattern.floor()),
-		"gain" | "lpf" | "pan" | "attack" => {
-			let control = Control::from_name(name).expect("a known control");
-			Ok(pattern.control(control, control_arg(&raw[0])?)?)
-		}
 		"scale" => Ok(pattern.scale(raw[0].as_str().expect("a scale spec"))?),
-		"sound" => Ok(pattern.with_sound(raw[0].as_str().expect("a sound type"))),
-		"s" => Ok(pattern.with_s(raw[0].as_str().expect("a sound name"))),
-		"bank" => Ok(pattern.with_bank(raw[0].as_str().expect("a bank name"))),
-		"orbit" | "cut" | "panlaw" => match &raw[0] {
-			Json::Num(_, n) => Ok(match name {
-				"orbit" => pattern.with_orbit(*n)?,
-				"cut" => pattern.with_cut(*n)?,
-				_ => pattern.with_panlaw(*n)?,
-			}),
-			program if is_program(program) => Err(Failure::Error(
-				control::plain_value_error(name).message().into(),
-			)),
-			_ => uncovered("a scalar control with another type"),
-		},
-		"jux" => {
-			let transformed = transform(&raw[0], pattern)?;
-			Ok(pattern.jux(&transformed)?)
+		// Every other control is in the table: a list argument is data, anything else goes through the dynamic path.
+		name if control_spec(name).is_some() => {
+			let spec = control_spec(name).expect("a known control");
+			let control = Control::from_name(name).expect("a known control");
+			match spec.arg {
+				ArgKind::PatternableWithTime => {
+					let seconds = raw.get(1).map(num);
+					Ok(pattern.pan_slide(control_arg(&raw[0])?, seconds)?)
+				}
+				ArgKind::NumberList | ArgKind::Path => {
+					let Json::Arr(items) = &raw[0] else {
+						return Ok(pattern.control(control, control_arg(&raw[0])?)?);
+					};
+					if is_program(&raw[0]) {
+						return Ok(pattern.control(control, control_arg(&raw[0])?)?);
+					}
+					let numbers: Vec<f64> = items.iter().map(num).collect();
+					let rate = raw.get(1).map(num);
+					Ok(match name {
+						"channels" => pattern.channels(&numbers)?,
+						"pitchsteps" => pattern.pitch_steps(&numbers, rate)?,
+						_ => pattern.pan_path(&numbers, rate)?,
+					})
+				}
+				ArgKind::Text => Ok(match name {
+					"sound" => pattern.sound(raw[0].as_str().expect("a sound type")),
+					"s" => pattern.s(raw[0].as_str().expect("a sound name")),
+					_ => pattern.bank(raw[0].as_str().expect("a bank name")),
+				}),
+				_ => Ok(pattern.control(control, control_arg(&raw[0])?)?),
+			}
 		}
-		"voicing" => uncovered("chord() and voicing() (chord.ts is the chords group, RF-15)"),
+		"jux" => {
+			let mut failure = None;
+			let result = pattern.jux(|p| match transform(&raw[0], p) {
+				Ok(transformed) => transformed,
+				Err(e) => {
+					failure = Some(e);
+					p.clone()
+				}
+			});
+			match failure {
+				Some(e) => Err(e),
+				None => Ok(result?),
+			}
+		}
+		"voicing" => {
+			let options = match raw.first() {
+				None => VoicingOptions::default(),
+				Some(object) => match object.get("anchor") {
+					None => VoicingOptions::default(),
+					Some(Json::Num(_, midi)) => VoicingOptions::anchor_midi(*midi),
+					Some(Json::Str(name)) => VoicingOptions::anchor_name(name),
+					Some(_) => return uncovered("voicing() with another anchor type"),
+				},
+			};
+			Ok(pattern.voicing(options))
+		}
+		"drift" => Ok(drift::drift(pattern, drift_options(&raw[0])?)?),
 		other => uncovered(&format!("method {other}() (not in the spike's scope)")),
 	}
 }

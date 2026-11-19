@@ -17,7 +17,11 @@ extern crate alloc;
 #[macro_use]
 extern crate std;
 
+pub mod chord;
 pub mod control;
+pub mod controls;
+pub(crate) mod ddpow;
+pub mod drift;
 pub mod error;
 pub mod fraction;
 pub mod hap;
@@ -25,17 +29,25 @@ pub mod js;
 pub(crate) mod math;
 pub mod mini;
 pub mod pattern;
+pub mod pitch;
+pub mod query;
 pub mod random;
+pub mod serialize;
 pub mod signal;
 pub mod value;
 
+pub use controls::{CONTROLS, Control, ControlInput, ControlMap, ControlSpec};
 pub use error::{Error, Result};
 pub use fraction::Fraction;
 pub use hap::{Hap, Span};
 pub use pattern::{
-	ArithOp, CustomQuery, ForeignFn, Node, Pattern, arrange, cat, compress, fast, pure, seq,
-	silence, slow, stack, timecat,
+	ArithOp, Node, Pattern, arrange, cat, compress, fast, mini, pure, rev, seq, silence, slow,
+	stack, timecat,
 };
+#[cfg(feature = "std")]
+pub use query::ForeignTable;
+pub use query::{ForeignHost, ForeignId, Query};
+pub use serialize::Wire;
 pub use value::{Datum, MapFn, ParsedScale, Value};
 
 /// The name of this crate, as a placeholder item until the pattern core lands.

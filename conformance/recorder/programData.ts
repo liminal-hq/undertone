@@ -6,6 +6,8 @@
 import { DEFAULT_SAMPLES, words } from './programs';
 import type { ProgramCase, SpanText } from './programs';
 import type { Program, Step } from './interpret';
+import { miniCases } from './miniData';
+import { chordCases, driftCases, scaleCases } from './notesData';
 
 let counter = new Map<string, number>();
 
@@ -861,5 +863,15 @@ function signals(): ProgramCase[] {
 /** Every layer 1 program of the first subset, in file order. */
 export function layer1Programs(): ProgramCase[] {
   counter = new Map();
-  return [...core(), ...combinators(), ...notes(), ...controls(), ...signals()];
+  return [
+    ...core(),
+    ...combinators(),
+    ...notes(),
+    ...controls(),
+    ...signals(),
+    ...miniCases(),
+    ...scaleCases(),
+    ...chordCases(),
+    ...driftCases()
+  ];
 }

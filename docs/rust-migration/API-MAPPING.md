@@ -48,6 +48,27 @@ Every public name of the TypeScript reference (the merged #39, #42, and #44 on `
 
 **In sum:** the lab's prior art covers 7 groups, part of 10, and none of 9. The retired 0.1 surface (City Sim 1000's `Voice` builder and `stack(...voices).play(ctx)`, removed in 0.2.0) is not a group: it is not part of the reference, and the bridge does not bring it back.
 
+## Status of the pattern core (RF-13)
+
+Groups 1 to 6 are done in Rust, in `undertone-pattern`, and corpus-green: layer 1 groups `core` (44 of 44), `combinators` (60 of 60), and `mini` (359 of 359) are equal. What the Rust names are, where they differ from the targets in the table, and what was left out:
+
+- **Time (1):** `Fraction`, with a typed fast path below 2^31 and checked `i128` beyond it (D-13); `Span` is `TimeSpan`.
+- **Pattern core (2):** `Pattern`, `Hap` (`has_onset`, `onset`), `Span`, `Pattern::query` and `query_into`, `Pattern::sample_at` for the sampler, `Query` (the trait, in `query`), `Node::Custom` (a `Query` in Rust, built with `Pattern::custom` or `Pattern::from_fn`), and `Node::Foreign { id: ForeignId, host }` with the `ForeignHost` registry trait (`Pattern::foreign`, and the `std`-only `ForeignTable`). The node holds a handle to the host as well as the id, because the crate keeps no global state. **`Hap` has no `context`:** the reference's `Hap` is `{ whole?, part, value }` and the corpus records exactly that, so adding a field would diverge from it.
+- **Constructors (3):** `mini` (also `mini::parse`), `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, all taking `Vec`s.
+- **Arrangement (4):** `arrange(Vec<(f64, Pattern)>)`, with JavaScript-number cycle counts so the reference's error messages match; not `&[(Fraction, Pattern)]` as the table said.
+- **Time transforms (5):** `Pattern::{fast, slow, euclid}` take `f64`, for the same reason, and the free functions `fast` and `slow`.
+- **Structural transforms (6):** `Pattern::{rev, every, fmap, fmap_with}`, the free function `rev`, and `jux(f)` on `Pattern<Value>`; `every` and `jux` run `f` once and store both trees. `fmap(MapFn)` is the named map (`Node::Map`); `fmap_with(closure)` is `Node::Custom`.
+- **Also in the crate, for later groups:** `Pattern::{describe, structural_hash}` and `Hash` (every node prints), `segment`, `range`, `range2`, `rangex`, `round`, `floor`, `arith`, and the signals.
+- **Names missing before RF-13:** `Query`, `ForeignId`, `ForeignHost`, `Pattern::{foreign, from_fn, fmap, fmap_with, jux(f), describe, query_into}`, and the free functions `mini` and `rev`.
+
+## Status of signals (RF-16)
+
+Group 18 is done in Rust, in `undertone-pattern`: layer 1 `signals` (104 of 104) and layer 2 `signals` are equal, and `tests/signal_regressions.rs` pins the two behaviours the corpus does not (mixed compositions across query windows, `5a45f43`; a negative time from a signal, `6deecfb`).
+
+- **Names:** `signal::{periodic, rand, rand2, irand, choose, brand, brand_by, perlin, by_name, signal_from_fn}`; `Pattern::{seed, segment, range, range2, rangex, arith, round, floor}` and `+ - * /` on patterns and numbers. `signal(fn)` is `signal_from_fn(f)`, a `Custom` node; in the bridge it is a `Foreign` leaf.
+- **Off the main thread:** `Pattern::serialize` and `Pattern::deserialize` rebuild any tree without a `Custom` or `Foreign` node on another thread, with identical answers ([results/RF-16.md](results/RF-16.md)).
+- **Benchmark:** `cargo run --release -p undertone-engine --example signal_bench`; at most the TypeScript's figure in all four rows on one machine.
+
 ## The handle and closure story
 
 - **Patterns are handles.** A bridge `Pattern` holds a `u32` handle to a Rust tree. Every method returns a new wrapper, as every TypeScript method returns a new `Pattern`, so immutability and object identity behave as today. Building costs one node and never queries.
@@ -105,7 +126,9 @@ The JavaScript names are the reference's, all lower case. A Rust name is the sam
 | `channels`                                      | `channels`                                          | `channelGains`                                                  | scalar                                                 |
 | `surround`                                      | `surround`                                          | `channelGains`                                                  | scalar                                                 |
 
-The table is written from the reference's exports and field names; the exact field each control writes is to be read from `pattern.ts` at the reference SHA when `controls.rs` is written (RF-14), and this table corrected if it differs.
+**Status (RF-14):** the table above is now data: `undertone_pattern::CONTROLS` (`crates/undertone-pattern/src/controls.rs`) lists all 53 controls once (JavaScript name, Rust name, `VoiceParams` fields, argument kind, the check on a literal and its message, the bound on a pattern's value), and generates `Control` and the 39 patternable methods on `Pattern<ControlMap>` (`ControlMap` is `Value`, the pattern crate's voice-parameter map); the other 14 (`panslide`, `fmenv`, `fmwave`, `autopanshape`, `pitchsteps`, `cut`, `panpath`, `panlaw`, `orbit`, `channels`, `surround`, `sound`, `s`, `bank`) are written by hand under the same table. The fields were read from `pattern.ts` and the table above matches them, with these Rust details: `panslide` is `pan_slide(from, seconds: Option<f64>)`; `panpath` is `pan_path(pans, rate)` and `pan_path_points(&[(time, pan)])`; `fmi` shares `fm`'s messages; `sound`, `s`, and `bank` return a pattern, not a `Result`, because the reference checks nothing. `ControlInput` builds from a number, an `i32`, a string, or a `Pattern<f64>` or `Pattern<Value>`. The name-map test (`tests/control_names.rs`) checks the table's JavaScript names against the 53 control methods of `conformance/api/undertone.api.md`, and checks the guide's lists of controls against the table. The bridge's single dispatcher is `Pattern::control(Control, ControlInput)` plus the list controls' methods.
+
+**Status (RF-15 and RF-17):** groups 8, 9, 16, and 17 are done in `undertone-pattern`, corpus-green on layers 1 and 2. The Rust names: `chord::{chord, parse_chord, voicing_pitches, VoicingOptions, Anchor, CHORD_QUALITIES}` with `Pattern::voicing(VoicingOptions)`; `pitch::{note_to_midi, midi_to_frequency, note_to_frequency}` (`note_to_frequency` takes a note name or Hz through `Pitch`); `random::{seeded_random, SeededRandom, Seed, to_uint32, fnv1a, fnv1a_utf16}`, re-exported by `undertone_engine::random`; `drift::{drift, DriftOptions}`. A few things differ from the targets in the table. `MapFn` gained `Voicing` and `Drift`, but no `Chord` (`chord()` is a mini-notation leaf, like `note()`) and no `Transpose` (the reference has no such thing). A bad `anchor` name fails when the pattern is queried, as in the reference, so `Pattern::try_query` returns the error and `Pattern::query` leaves out the failing event. The context and keyed random sources of `random.ts` (`seedContext`, `contextRandom`, `keyedRandom`) belong to the engine's noise and reverb code (M4), not here. `js::pow` is now correctly rounded (a double-double `exp(y * ln x)`, which matches JavaScriptCore on every `midiToFrequency` input recorded), because `drift` writes the pitch into its random key and a one-bit difference changes the stream; the bridge must also pass `drift` options as JavaScript does (a string or `null` for an option is coerced by the reference's checks, which `DriftOptions` cannot hold).
 
 ## Other names
 
@@ -132,7 +155,7 @@ The table is written from the reference's exports and field names; the exact fie
 
 ## The frozen `VoiceParams` vocabulary
 
-The JSON field names are frozen: they are what saved settings hold (City Sim 1000 saves `VoiceParams` overrides; the studio's song format takes them directly under its D50). RF-14 writes every field below; the lab's `Params` has all of them except the eight marked 0.4.0.
+The JSON field names are frozen: they are what saved settings hold (City Sim 1000 saves `VoiceParams` overrides; the studio's song format takes them directly under its D50). RF-14 writes every field below; the lab's `Params` has all of them except the eight marked 0.4.0. **Status:** the `VoiceParams` struct is written (`undertone-engine::params`, 52 fields, behind the `serde` feature) and checked against `conformance/api/voice-params.json`; `soundType` is an `Option` because `.s(name)` leaves it out for a sample voice; `engine::params::resolve_params(&ControlMap)` is written and corpus layer 2 `controls`, `notes`, and `signals` are green (the cases that need `chord()` wait for RF-15).
 
 - **Required in the TypeScript type:** `soundType`, `gainLevel`, `attack`, `decay`, `sustain`, `release`, `filterEnvAmount`, `filterAttack`, `filterDecay`, `filterSustain`, `filterRelease`, `roomSize`, `delayTime`, `delayFeedback`, `slideTime`, `nudgeTime`.
 - **Optional:** `pitch`, `sampleName`, `sampleBank`, `filterCutoff`, `hpfCutoff`, `phaserRate`, `roomLevel`, `delayLevel`, `orbit`, `pitchEnvAmount`, `pitchAttack`, `pitchDecay`, `pitchSteps`, `pitchStepRate`, `fmIndex`, `fmHarmonicity`, `fmAttack`, `fmDecay`, `fmSustain`, `fmRelease`, `fmEnvCurve`, `fmWave`, `pan`, `channelGains`, `duration`, `legato`, `velocity`, `cutGroup`.

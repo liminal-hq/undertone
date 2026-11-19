@@ -14,6 +14,7 @@ import { layer3Cases } from './graphData';
 import { recordGraphCase, recordLayer3 } from './graph';
 import { layer1Programs } from './programData';
 import { recordLayer1 } from './programs';
+import { randomCases, recordRandom } from './randomCases';
 import { loadReference, repoRoot } from './reference';
 import type { Reference } from './reference';
 
@@ -27,6 +28,7 @@ export async function generate(ref: Reference): Promise<Map<string, string>> {
     const layer1 = layer1Programs();
     const files: CorpusFile[] = [
       ...recordLayer1(ref, layer1),
+      { layer: 1, group: 'random', cases: randomCases().map((spec) => recordRandom(ref, spec)) },
       ...recordLayer2(ref, layer2Cases(layer1)),
       ...(await recordLayer3(ref, layer3Cases()))
     ];

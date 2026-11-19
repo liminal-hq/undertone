@@ -25,6 +25,10 @@ conformance/
     reference.ts        loads the reference (src/, or a worktree's src/)
     interpret.ts        programs as data to patterns
     programs.ts         layer 1: records haps; programData.ts holds the programs
+    caseMaker.ts        numbered case ids for the data files below
+    miniData.ts         the `mini` group's programs
+    notesData.ts        the `scales`, `chords`, and `drift` groups' programs
+    randomCases.ts      the `random` group: seeds, and how a case is recorded
     controls.ts         layer 2: records score events and resolved voice parameters
     graph.ts            layer 3: records the node graph; graphData.ts holds the cases
     format.ts           value encoding, number printing, the file layout
@@ -48,7 +52,15 @@ Every case has `id` (unique in the corpus), `group`, and `from`, naming where th
 
 ### Programs
 
-A program is a list of steps, as in `CONFORMANCE.md`. The first step is a constructor (`note`, `sound`, `s`, `n`, `chord`, `mini`, `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, `arrange`, `irand`, `choose`, `brandBy`, or a signal name such as `sine`), and each later step is a method with its arguments. `["mini", "a b", "word"]` takes a leaf rule (`word` keeps the word; `number` is `Number(word)`). `fmap` takes a named map (`add`, `sub`, `mul`, `div`, `neg`, `abs`, `round`, `floor`) and its argument. A nested program (an array of steps) is a pattern argument, except for the transform of `every` (second argument) and `jux` (first), where it is a list of methods applied to the pattern. Any other array or object is passed through element by element, so `["timecat", [[1, [["note", "c3"]]], [2, [["note", "e3"]]]]]` works as written. Methods that leave the data model (`query`, `play`, `loop`, `render`) are refused. Closures, `signal(fn)`, and `new Pattern(query)` are not in the corpus.
+A program is a list of steps, as in `CONFORMANCE.md`. The first step is a constructor (`note`, `sound`, `s`, `n`, `chord`, `mini`, `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, `arrange`, `irand`, `choose`, `brandBy`, or a signal name such as `sine`), and each later step is a method with its arguments. `["mini", "a b", "word"]` takes a leaf rule (below). `fmap` takes a named map (`add`, `sub`, `mul`, `div`, `neg`, `abs`, `round`, `floor`) and its argument. A nested program (an array of steps) is a pattern argument, except for the transform of `every` (second argument) and `jux` (first), where it is a list of methods applied to the pattern. Any other array or object is passed through element by element, so `["timecat", [[1, [["note", "c3"]]], [2, [["note", "e3"]]]]]` works as written. Methods that leave the data model (`query`, `play`, `loop`, `render`) are refused. Closures, `signal(fn)`, and `new Pattern(query)` are not in the corpus.
+
+**Leaf rules** (the third element of a `mini` step) decide what each word becomes:
+
+- `word` keeps the word, and `number` is `Number(word)` (`"abc"` gives `NaN`, `"0x10"` gives 16).
+- `pitch` is the leaf `note()` uses: `{ "pitch": <Hz number> }` for a word of digits (with an optional fraction), otherwise `{ "pitch": "<note name>" }`, and a word that is neither a note name nor a positive frequency is an error.
+- `drum` is the leaf `s()` uses: `{ "soundType": word }` when the word is one of the ten synth sound types, otherwise `{ "sampleName": word }`. It never throws.
+
+**Steps the mini, scales, chords, and drift groups added.** `["voicing"]` and `["voicing", {"anchor": "c3"}]` (a method with an options object; `anchor` is a MIDI number or a note name), `["scale", "c4:major"]`, and `["chord", "<Dm9 G7>"]` were already in the language and are now used with every spec and symbol. New: `["drift", {"seed": 1, "timing": 0.01, "level": 0.1, "cents": 10, "pan": 0.2, "push": 0, "cyclesPerPass": 2}]`, a method step that calls the reference's free function `drift(pattern, options)` on the pattern so far (the options object is passed through as written, so a program can also pass values `drift` rejects, to record the error). New leaf rules `pitch` and `drum`. Programs in `mini` are always `[["mini", <source>, <leaf rule>]]`, so the source string is in `program[0][1]` and the Rust runner reports by the id's stem (`mini-<stem>-NN`).
 
 ### Layer 1: haps
 
@@ -73,6 +85,10 @@ A program is a list of steps, as in `CONFORMANCE.md`. The first step is a constr
 
 `queries` are the spans, `haps` has one list per query in the same order. Each hap is `whole` (`null` for a signal), `part`, and `value`, sorted by `part` begin, `part` end, `whole` begin, `whole` end (`null` first), then the value's compact JSON text. A query that throws gives `{"error": "<message>"}` in its place. Signals also carry `samples`, a list of `[time, value]` read with `sampleAt` (`null` where the pattern has no value at that instant), which includes negative time. The default queries are cycles 0 to 4, 0 to 1, 2 to 3, and `1/3` to `7/4`; a case may name its own.
 
+### Layer 1: `random`
+
+The `random` group is the one layer 1 group whose cases are not programs. A case is `id`, `group`, `from`, `seed`, and `values`: the first 64 numbers `seededRandom(seed)` returns, written as JavaScript prints them (shortest round-trip form). `seed` is a number or a string as the reference takes it. A numeric seed that JSON cannot hold is `{"$num": "NaN"}`, `{"$num": "Infinity"}`, `{"$num": "-Infinity"}`, or `{"$num": "-0"}`. A string seed may hold lone surrogates, which the file writes as `\ud83d` escapes, so a Rust runner has to build the seed from UTF-16 code units (a lone surrogate is not a Rust `char`). A numeric seed goes through JavaScript's `seed >>> 0` (a fraction truncates, a negative wraps, NaN and the infinities become 0) and a string seed through FNV-1a over its UTF-16 code units. The cases cover both families and the key shapes the reference builds for its own random sources (`song|rand|1/3`, `1|0|1/3|261.6255653005986`).
+
 ### Layer 2: score events and resolved voices
 
 A case adds `cycles` (the whole cycles booked, `[0, 2]`), `cps`, and `gated`, and records `events`: one line per onset, `{"at": <seconds>, "params": <resolved VoiceParams>}`, in booking order (cycle by cycle, as the scheduler's `collectOnsets` returns them, with a gated event's `duration` filled in). `params` is the complete `VoiceParams` after `resolveParams`.
@@ -94,18 +110,25 @@ Every number in a call string, `start`, `stop`, a buffer summary, and a wave is 
 
 Everything is seeded. The recorder never reads the clock or `Math.random`: a voices case seeds its context (`seedContext(ctx, 0)`) the way a render does, which fixes the noise and reverb buffers; renders use their default seed. Reference warnings (a clamped control, say) are silenced while recording, because the corpus records values, not logs.
 
-## What the first subset holds
+## What the corpus holds
 
-| Layer | Group         | Holds                                                                                                                                                                                       |
-| ----- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | `core`        | `pure`, `silence`, mini-notation forms, `stack`, `seq`, `cat`, `timecat`, `fast`, `slow`, `euclid`, and their errors                                                                        |
-| 1     | `combinators` | `rev`, `every`, `jux`, `arrange`, `fmap` with named maps                                                                                                                                    |
-| 1, 2  | `notes`       | `note`, `sound`, `s`, `bank`, `n`, `scale`, `chord`, `voicing`                                                                                                                              |
-| 1, 2  | `controls`    | `gain`, `lpf`, `pan`, `attack` with a number, a string, a rest, an alternation, a signal, a pattern, and edge values; `n` with strings and signals; scalar-only controls given a pattern    |
-| 1, 2  | `signals`     | every periodic and random signal with the shaping methods, negative time, mixed compositions (layer 1); signals sampled into controls (layer 2)                                             |
-| 3     | `placement`   | `panLaw`, `panPath`, the pan slide, `autopan` with its shape, depth, and phase, the master `ceiling`, `bookingWindow`, the playground's `movingPan` examples, and the options-off baselines |
+| Layer | Group         | Holds                                                                                                                                                                                                                          |
+| ----- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | `core`        | `pure`, `silence`, mini-notation forms, `stack`, `seq`, `cat`, `timecat`, `fast`, `slow`, `euclid`, and their errors                                                                                                           |
+| 1     | `combinators` | `rev`, `every`, `jux`, `arrange`, `fmap` with named maps                                                                                                                                                                       |
+| 1, 2  | `notes`       | `note`, `sound`, `s`, `bank`, `n`, `scale`, `chord`, `voicing`                                                                                                                                                                 |
+| 1, 2  | `controls`    | `gain`, `lpf`, `pan`, `attack` with a number, a string, a rest, an alternation, a signal, a pattern, and edge values; `n` with strings and signals; scalar-only controls given a pattern                                       |
+| 1, 2  | `signals`     | every periodic and random signal with the shaping methods, negative time, mixed compositions (layer 1); signals sampled into controls (layer 2)                                                                                |
+| 1     | `mini`        | every construct of the parser (sequences, rests, `@`, `!`, `*`, `/`, groups, `<>`, `,`, euclid) over six spans, the leaf rules `word`, `number`, `pitch`, and `drum`, odd whitespace, and every error with its UTF-16 position |
+| 1     | `scales`      | every named scale over degrees from -15 to 25, roots with sharps, flats, and octaves from -1 to 10, name spellings, extreme degrees, and the scale errors                                                                      |
+| 1, 2  | `chords`      | every chord quality over four roots, every root spelling, the `anchor` option as a number and a note name, chords in mini-notation, and the chord errors (layer 2 books the qualities and anchors)                             |
+| 1     | `random`      | the first 64 values of `seededRandom` for numeric seeds (including fractions, negatives, 2^32 wraps, NaN, and the infinities) and string seeds (including the empty string, unicode, and lone surrogates)                      |
+| 1, 2  | `drift`       | `drift(pattern, options)`: each option alone and together, many seeds, passes, positions, pitches, patches already on the events, queries at negative time, and the option errors (layer 2 books most of them)                 |
+| 3     | `placement`   | `panLaw`, `panPath`, the pan slide, `autopan` with its shape, depth, and phase, the master `ceiling`, `bookingWindow`, the playground's `movingPan` examples, and the options-off baselines                                    |
 
-Not in the subset yet: `mini` (the three leaf rules and six spans), `chords`, `random`, `drift`, `voices`, `instruments`, `channels`, `score`, `wav`, `samples`, and layer 4 renders. The mini-notation leaf rules `pitch` and `drum` are not implemented in the interpreter; add them with the `mini` group.
+The `mini` cases are recorded over six spans each (cycles 0 to 4, then 0 to 1, 1 to 2, 2 to 3, 3 to 4, and `1/3` to `7/4`); `scales`, `chords`, and `drift` over two or four cycles and a span that starts inside a cycle, to keep the files small. The `mini` group's ids carry the sub-area (`mini-seq-`, `mini-rest-`, `mini-weight-`, `mini-repeat-`, `mini-fast-`, `mini-slow-`, `mini-group-`, `mini-alt-`, `mini-stack-`, `mini-euclid-`, `mini-mix-`, `mini-leaf-number-`, `mini-leaf-pitch-`, `mini-leaf-drum-`, `mini-space-`, and `mini-err-empty-`, `-token-`, `-astral-`, `-parse-`, `-leaf-`), so a runner can report by the stem. Two reference behaviours a port has to match, found while recording: the "Unknown chord quality" message lists the qualities in JavaScript's property order (integer-like keys `6`, `7`, `9` first, then the rest in table order), and a non-BMP character in mini-notation is reported as its lone high surrogate at its UTF-16 position.
+
+Not in the corpus yet: `voices`, `instruments`, `channels`, `score`, `wav`, `samples`, and layer 4 renders. The mini-notation leaf rules cover the three families the reference's constructors use (`word`, `pitch`, `drum`) plus `number`.
 
 ## Properties
 

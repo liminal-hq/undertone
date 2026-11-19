@@ -1,0 +1,266 @@
+{
+  "interface": "VoiceParams",
+  "source": "src/types.ts",
+  "fields": [
+    {
+      "name": "soundType",
+      "optional": false,
+      "type": "SoundType"
+    },
+    {
+      "name": "pitch",
+      "optional": true,
+      "type": "string | number"
+    },
+    {
+      "name": "sampleName",
+      "optional": true,
+      "type": "string"
+    },
+    {
+      "name": "sampleBank",
+      "optional": true,
+      "type": "string"
+    },
+    {
+      "name": "gainLevel",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "attack",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "decay",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "sustain",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "release",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "filterCutoff",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "filterEnvAmount",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "filterAttack",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "filterDecay",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "filterSustain",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "filterRelease",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "hpfCutoff",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "phaserRate",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "roomLevel",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "roomSize",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "delayLevel",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "delayTime",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "delayFeedback",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "orbit",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "slideTime",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "pitchEnvAmount",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "pitchAttack",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "pitchDecay",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "pitchSteps",
+      "optional": true,
+      "type": "number[]"
+    },
+    {
+      "name": "pitchStepRate",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmIndex",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmHarmonicity",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmAttack",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmDecay",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmSustain",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmRelease",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "fmEnvCurve",
+      "optional": true,
+      "type": "'lin' | 'exp'"
+    },
+    {
+      "name": "fmWave",
+      "optional": true,
+      "type": "OscType | ShapedWaveType"
+    },
+    {
+      "name": "nudgeTime",
+      "optional": false,
+      "type": "number"
+    },
+    {
+      "name": "pan",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "panPath",
+      "optional": true,
+      "type": "PanPoint[]"
+    },
+    {
+      "name": "autopan",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "autopanDepth",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "autopanShape",
+      "optional": true,
+      "type": "'sine' | 'triangle' | 'square'"
+    },
+    {
+      "name": "autopanPhase",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "panSlideFrom",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "panSlideTime",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "panLaw",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "channelGains",
+      "optional": true,
+      "type": "number[]"
+    },
+    {
+      "name": "duration",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "legato",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "velocity",
+      "optional": true,
+      "type": "number"
+    },
+    {
+      "name": "cutGroup",
+      "optional": true,
+      "type": "number"
+    }
+  ]
+}

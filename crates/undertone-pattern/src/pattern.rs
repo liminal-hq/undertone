@@ -7,11 +7,14 @@
 //!
 //! A pattern is a function from a span of cycle time to the haps overlapping it. Here that function is not a closure but a tree of [`Node`]s that every consumer can walk: print, hash, send to another thread, or (later) serialise. The nodes are immutable and shared through `Arc`, so a transform builds a new root over the old tree.
 
-use crate::control::{Control, ControlInput, query_with_control};
+use crate::chord::VoicingOptions;
+use crate::controls::{Control, ControlSource, query_with_control};
+use crate::drift::DriftOptions;
 use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::hap::{Hap, Span};
 use crate::js;
+use crate::query::{ForeignHost, ForeignId, Query};
 use crate::signal::Signal;
 use crate::value::{Datum, MapFn};
 use alloc::string::String;
@@ -21,7 +24,7 @@ use core::fmt;
 
 /// One node of a pattern tree. Every variant holds data only: fractions, numbers, and child patterns.
 ///
-/// The two exceptions are [`Node::Foreign`] and [`Node::Custom`], the escape hatches for behaviour that only the host can supply (a JavaScript function, a hand-written query). No other variant holds a function.
+/// The two exceptions are [`Node::Custom`] (a [`Query`] written in Rust) and [`Node::Foreign`] (a callback registered by the host), the escape hatches for behaviour that is not data. No other variant holds a function.
 pub enum Node<T> {
 	/// No haps, ever.
 	Silence,
@@ -74,7 +77,7 @@ pub enum Node<T> {
 		/// Which control is set.
 		control: Control,
 		/// Where its value comes from.
-		input: ControlInput<T>,
+		input: ControlSource<T>,
 	},
 	/// A continuous pattern with no structure (`sine`, `rand`, ...), read at a point.
 	Signal(Signal<T>),
@@ -112,15 +115,20 @@ pub enum Node<T> {
 	},
 	/// `n(pattern)`: each number of the child floored into a scale degree; anything else is a rest.
 	Degrees(Pattern<T>),
-	/// Escape hatch: the child with each value changed by a function only the host has (a JavaScript `fmap` callback). The tree prints and hashes the function by its [`ForeignFn::id`].
-	Foreign {
-		/// The pattern whose values the host function changes.
-		child: Pattern<T>,
-		/// The host's function.
-		f: Arc<dyn ForeignFn<T>>,
+	/// Escape hatch for Rust: a pattern defined by a [`Query`] object, such as a closure given to [`Pattern::from_fn`] or [`Pattern::fmap_with`]. The tree prints and hashes it by `id`, a number unique to the process, so a tree holding one is not structural.
+	Custom {
+		/// A number unique to the process, for printing and hashing.
+		id: u32,
+		/// The query.
+		query: Arc<dyn Query<T>>,
 	},
-	/// Escape hatch: a pattern the host defines by its own query (the reference's `new Pattern(query)`).
-	Custom(Arc<dyn CustomQuery<T>>),
+	/// Escape hatch for the host: a query that lives outside Rust, such as a JavaScript function behind the bridge. The tree holds the callback's [`ForeignId`] (which is what prints and hashes) and the [`ForeignHost`] that resolves it. See [`crate::query`].
+	Foreign {
+		/// The callback's handle in the host.
+		id: ForeignId,
+		/// The host that answers for it.
+		host: Arc<dyn ForeignHost<T>>,
+	},
 }
 
 /// A binary operation on two numbers.
@@ -158,30 +166,11 @@ impl ArithOp {
 	}
 }
 
-/// A value-changing function supplied by the host, for [`Node::Foreign`].
-///
-/// This is one of the two places the tree holds behaviour it cannot inspect, so the pattern is queried on the host's thread of control and cannot be sent to a worklet.
-pub trait ForeignFn<T>: Send + Sync {
-	/// The new value for `value`.
-	fn call(&self, value: &T) -> T;
-	/// A stable name for printing and hashing: a handle number, say.
-	fn id(&self) -> u64;
-}
-
-/// A pattern defined by a host query, for [`Node::Custom`].
-pub trait CustomQuery<T>: Send + Sync {
-	/// The haps overlapping `span`.
-	fn query(&self, span: Span) -> Vec<Hap<T>>;
-	/// The value at the instant `t`, when [`CustomQuery::has_sampler`] is true.
-	fn sample(&self, _t: Fraction) -> Option<T> {
-		None
-	}
-	/// Whether the pattern is continuous and can be read at a point.
-	fn has_sampler(&self) -> bool {
-		false
-	}
-	/// A stable name for printing and hashing.
-	fn id(&self) -> u64;
+/// The next number for a [`Node::Custom`]: unique within the process. A `u32` counter, because 32-bit targets such as `thumbv7em` have no 64-bit atomics.
+fn next_custom_id() -> u32 {
+	use core::sync::atomic::{AtomicU32, Ordering};
+	static NEXT: AtomicU32 = AtomicU32::new(0);
+	NEXT.fetch_add(1, Ordering::Relaxed)
 }
 
 /// A pattern: an immutable, cheaply clonable tree of [`Node`]s.
@@ -190,6 +179,7 @@ pub trait CustomQuery<T>: Send + Sync {
 pub struct Pattern<T> {
 	node: Arc<Node<T>>,
 	sampler: bool,
+	fallible: bool,
 }
 
 impl<T> Clone for Pattern<T> {
@@ -197,6 +187,7 @@ impl<T> Clone for Pattern<T> {
 		Pattern {
 			node: Arc::clone(&self.node),
 			sampler: self.sampler,
+			fallible: self.fallible,
 		}
 	}
 }
@@ -223,29 +214,129 @@ fn section_at<T>(sections: &[(i128, Pattern<T>)], cycle: i128) -> (&Pattern<T>, 
 	unreachable!("local is below the total, so a section holds it")
 }
 
-/// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
-fn read_at<T: Datum>(source: &Pattern<T>, structure: &Pattern<bool>, span: Span) -> Vec<Hap<T>> {
-	structure
-		.query(span)
-		.into_iter()
-		.filter_map(|hap| {
-			let value = source.sample_at(hap.onset())?;
-			Some(Hap {
+/// Calls `f` with each piece of `span` that lies within one cycle, in order (the allocation-free form of [`Span::split_into_cycles`]).
+fn for_each_cycle(span: Span, mut f: impl FnMut(Span)) {
+	let mut begin = span.begin;
+	while begin < span.end {
+		let end = begin.next_sam().min(span.end);
+		f(Span::new(begin, end));
+		begin = end;
+	}
+}
+
+/// Applies `f` to every time of the haps in `haps`, in place.
+fn retime<T>(haps: &mut [Hap<T>], f: impl Fn(Fraction) -> Fraction) {
+	for hap in haps {
+		hap.whole = hap.whole.map(|w| w.map(&f));
+		hap.part = hap.part.map(&f);
+	}
+}
+
+/// Queries `pattern` over `span` as if it were `offset` cycles earlier, and appends the haps moved back to their place.
+fn query_shifted<T: Datum>(
+	pattern: &Pattern<T>,
+	span: Span,
+	offset: Fraction,
+	out: &mut Vec<Hap<T>>,
+	err: &mut Option<Error>,
+) {
+	if offset == Fraction::from_int(0) {
+		pattern.run(span, out, err);
+		return;
+	}
+	let start = out.len();
+	pattern.run(span.map(|t| t - offset), out, err);
+	retime(&mut out[start..], |t| t + offset);
+}
+
+/// Keeps the haps from `start` on for which `keep` returns true (it may also change them), preserving order.
+fn keep_tail<T>(out: &mut Vec<Hap<T>>, start: usize, mut keep: impl FnMut(&mut Hap<T>) -> bool) {
+	let mut write = start;
+	for read in start..out.len() {
+		if keep(&mut out[read]) {
+			out.swap(write, read);
+			write += 1;
+		}
+	}
+	out.truncate(write);
+}
+
+/// Replaces the haps from `start` on by their voiced haps: one per tone of a chord, sharing its whole and part. A hap whose voicing fails is dropped, and the first error goes to `err`.
+fn voice_tail<T: Datum>(
+	out: &mut Vec<Hap<T>>,
+	start: usize,
+	options: &VoicingOptions,
+	err: &mut Option<Error>,
+) {
+	let tail: Vec<Hap<T>> = out.drain(start..).collect();
+	for hap in tail {
+		match hap.value.voice(options) {
+			Ok(values) => out.extend(values.into_iter().map(|value| Hap {
 				whole: hap.whole,
 				part: hap.part,
 				value,
-			})
-		})
-		.collect()
+			})),
+			Err(e) => {
+				err.get_or_insert(e);
+			}
+		}
+	}
+}
+
+/// Applies drift to the haps from `start` on, in place: a hap without a whole passes through, and one that fails is dropped, with the first error going to `err`.
+fn drift_tail<T: Datum>(
+	out: &mut Vec<Hap<T>>,
+	start: usize,
+	options: &DriftOptions,
+	err: &mut Option<Error>,
+) {
+	keep_tail(out, start, |hap| {
+		let Some(whole) = hap.whole else {
+			return true;
+		};
+		match hap.value.drifted(options, whole) {
+			Ok(value) => {
+				hap.value = value;
+				true
+			}
+			Err(e) => {
+				err.get_or_insert(e);
+				false
+			}
+		}
+	});
+}
+
+/// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
+fn read_at<T: Datum>(
+	source: &Pattern<T>,
+	structure: &Pattern<bool>,
+	span: Span,
+	out: &mut Vec<Hap<T>>,
+	err: &mut Option<Error>,
+) {
+	let mut structure_haps = Vec::new();
+	structure.run(span, &mut structure_haps, err);
+	for hap in structure_haps {
+		if let Some(value) = source.sample_run(hap.onset(), err) {
+			out.push(Hap {
+				whole: hap.whole,
+				part: hap.part,
+				value,
+			});
+		}
+	}
 }
 
 impl<T: Datum> Pattern<T> {
 	/// A pattern from a node.
 	pub fn from_node(node: Node<T>) -> Pattern<T> {
 		let sampler = node.has_sampler();
+		let fallible = node.can_fail();
 		Pattern {
 			node: Arc::new(node),
 			sampler,
+			fallible,
 		}
 	}
 
@@ -269,16 +360,80 @@ impl<T: Datum> Pattern<T> {
 	/// assert_eq!(haps[1].whole.unwrap().end, Fraction::from_int(2));
 	/// ```
 	pub fn query(&self, span: Span) -> Vec<Hap<T>> {
-		self.node.query(span)
+		let mut out = Vec::new();
+		self.node.query_into(span, &mut out);
+		out
+	}
+
+	/// Appends every hap overlapping `span` to `out`, in the order [`Pattern::query`] returns them: the form for a caller that queries many times and reuses one vector (clear it between queries).
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span};
+	/// let mut haps = Vec::new();
+	/// let p = pure(1.0);
+	/// for cycle in 0..3 {
+	///     haps.clear();
+	///     p.query_into(Span::new(Fraction::from_int(cycle), Fraction::from_int(cycle + 1)), &mut haps);
+	///     assert_eq!(haps.len(), 1);
+	/// }
+	/// ```
+	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
+		self.node.query_into(span, out);
+	}
+
+	/// Like [`Pattern::query`], but a failure that only shows when the pattern is queried is an error instead of a silent gap.
+	///
+	/// A few patterns can fail at query time, as the reference's can: [`Pattern::voicing`] with an `anchor` note name that does not parse fails when the first chord is voiced, not when the pattern is built, and `drift` fails on a pitch it cannot read. [`Pattern::query`] leaves out the haps of the event that failed; this returns the first error, with the reference's message.
+	///
+	/// ```
+	/// use undertone_pattern::chord::{chord, VoicingOptions};
+	/// use undertone_pattern::{Fraction, Span};
+	/// let span = Span::new(Fraction::from_int(0), Fraction::from_int(1));
+	/// let p = chord("C").unwrap().voicing(VoicingOptions::anchor_name("zz"));
+	/// // Building worked; the query is where it fails.
+	/// assert_eq!(
+	///     p.try_query(span).unwrap_err().message(),
+	///     "Invalid note name: \"zz\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+	/// );
+	/// assert!(p.query(span).is_empty());
+	/// ```
+	pub fn try_query(&self, span: Span) -> Result<Vec<Hap<T>>> {
+		let mut out = Vec::new();
+		self.try_query_into(span, &mut out)?;
+		Ok(out)
+	}
+
+	/// The form of [`Pattern::try_query`] that appends to a vector the caller reuses. On an error the vector holds the haps found before and around the failing event.
+	pub fn try_query_into(&self, span: Span, out: &mut Vec<Hap<T>>) -> Result<()> {
+		let mut err = None;
+		self.node.run(span, out, &mut err);
+		err.map_or(Ok(()), Err)
+	}
+
+	/// Queries into `out` and records the first query-time error in `err`.
+	pub(crate) fn run(&self, span: Span, out: &mut Vec<Hap<T>>, err: &mut Option<Error>) {
+		self.node.run(span, out, err);
+	}
+
+	/// Whether querying this pattern can fail (it holds a `voicing` or `drift` node somewhere a query reaches).
+	pub fn can_fail(&self) -> bool {
+		self.fallible
 	}
 
 	/// The pattern's value at the instant `t`: the sampler's when there is one, otherwise the value of the first hap over `[t, next cycle)` whose part covers `t` (`None` in a rest).
 	pub fn sample_at(&self, t: Fraction) -> Option<T> {
+		let mut ignored = None;
+		self.sample_run(t, &mut ignored)
+	}
+
+	/// [`Pattern::sample_at`] with the error slot, for a node that reads this pattern inside its own query.
+	pub(crate) fn sample_run(&self, t: Fraction, err: &mut Option<Error>) -> Option<T> {
 		if self.sampler {
 			return self.node.sample(t);
 		}
-		self.query(Span::new(t, t.next_sam()))
-			.into_iter()
+		let mut haps = Vec::new();
+		self.run(Span::new(t, t.next_sam()), &mut haps, err);
+		haps.into_iter()
 			.find(|hap| hap.part.begin <= t && t < hap.part.end)
 			.map(|hap| hap.value)
 	}
@@ -308,6 +463,14 @@ impl<T: Datum> Pattern<T> {
 	}
 
 	/// Slows the pattern down: `slow(2)` stretches one cycle over two.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span};
+	/// let slow = pure(1.0).slow(2.0).unwrap();
+	/// let haps = slow.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].whole.unwrap().end, Fraction::from_int(2));
+	/// assert_eq!(pure(1.0).slow(-1.0).unwrap_err().message(), "slow() factor must be positive, got -1");
+	/// ```
 	pub fn slow(&self, factor: f64) -> Result<Pattern<T>> {
 		let f = Fraction::from_f64(factor)?;
 		if f.numerator() <= 0 {
@@ -374,6 +537,19 @@ impl<T: Datum> Pattern<T> {
 	}
 
 	/// `count` evenly spaced haps per cycle, each holding this pattern's value at its onset: the way to give a signal a rhythm.
+	///
+	/// `count` is a positive number (`2.5` is allowed, as for `fast`); anything else is an error. An onset where the pattern has no value (a rest) gives no hap. It works on any pattern, but it is how a signal becomes something you can hear on its own.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::{Fraction, Span};
+	/// let ramp = periodic::<f64>(Shape::Saw, false).range(0.0, 8.0).segment(8.0).unwrap();
+	/// let mut haps = ramp.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// haps.sort_by_key(|h| h.part.begin);
+	/// let values: Vec<f64> = haps.iter().map(|h| h.value).collect();
+	/// assert_eq!(values, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
+	/// assert_eq!(ramp.segment(0.0).unwrap_err().message(), "segment() count must be positive, got 0");
+	/// ```
 	pub fn segment(&self, count: f64) -> Result<Pattern<T>> {
 		if count.is_nan() || count <= 0.0 || !count.is_finite() {
 			return Err(Error::new(alloc::format!(
@@ -389,15 +565,37 @@ impl<T: Datum> Pattern<T> {
 		}))
 	}
 
-	/// The pattern with each value changed by a named map: `fmap` without a closure.
-	pub fn map(&self, f: MapFn) -> Pattern<T> {
+	/// The pattern with each value changed by a named map ([`MapFn`]): `fmap` for the cases that are data.
+	///
+	/// The map is stored in the tree, so the pattern stays printable, hashable, and sendable; the corpus's `["fmap", "add", 7]` is `fmap(MapFn::Add(7.0))`. For a closure use [`Pattern::fmap_with`].
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, MapFn, Span};
+	/// let p = pure(1.5).fmap(MapFn::Mul(2.0));
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 3.0);
+	/// assert_eq!(p.to_string(), "(map Mul(2.0) (pure 1.5))");
+	/// ```
+	pub fn fmap(&self, f: MapFn) -> Pattern<T> {
 		Pattern::from_node(Node::Map {
 			child: self.clone(),
 			f,
 		})
 	}
 
-	/// Combines each value with the values of `other` read at the value's onset (structure from the left; a hap is dropped where `other` has no value).
+	/// Combines each value with the values of `other` read at the value's onset (structure from the left; a hap is dropped where `other` has no value). `add`, `sub`, `mul`, and `div` of the reference; `+ - * /` on patterns call it.
+	///
+	/// A signal on either side stays a signal until something gives it a rhythm: `sine.arith(Add, &saw)` has no haps of its own, but `.segment(4)` of it has four, each `sine(t) + saw(t)` at its onset. Division by zero gives infinity.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::{ArithOp, Fraction, Span};
+	/// let sine = periodic::<f64>(Shape::Sine, false);
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// let sum = sine.arith(ArithOp::Add, &saw).segment(4.0).unwrap();
+	/// let haps = sum.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps.len(), 4);
+	/// ```
 	pub fn arith(&self, op: ArithOp, other: &Pattern<T>) -> Pattern<T> {
 		Pattern::from_node(Node::Arith {
 			left: self.clone(),
@@ -406,17 +604,46 @@ impl<T: Datum> Pattern<T> {
 		})
 	}
 
-	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping).
+	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping): `lo + v·(hi - lo)`. `lo` may be above `hi`, which turns the signal upside down.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// assert_eq!(saw.range(200.0, 2000.0).sample_at(Fraction::new(1, 2)), Some(1100.0));
+	/// assert_eq!(saw.range(1.0, 0.0).sample_at(Fraction::new(1, 4)), Some(0.75));
+	/// ```
 	pub fn range(&self, lo: f64, hi: f64) -> Pattern<T> {
-		self.map(MapFn::Range { lo, hi })
+		self.fmap(MapFn::Range { lo, hi })
 	}
 
-	/// Maps values from -1..1 onto `lo..hi`, linearly.
+	/// Maps values from -1..1 onto `lo..hi`, linearly: `lo + (v + 1)/2·(hi - lo)`.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw2 = periodic::<f64>(Shape::Saw, true);
+	/// assert_eq!(saw2.range2(0.0, 10.0).sample_at(Fraction::new(1, 2)), Some(5.0));
+	/// ```
 	pub fn range2(&self, lo: f64, hi: f64) -> Pattern<T> {
-		self.map(MapFn::Range2 { lo, hi })
+		self.fmap(MapFn::Range2 { lo, hi })
 	}
 
-	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies. Both bounds must be above 0.
+	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies: `rand.rangex(200, 2000)` spends as long between 200 and 632 Hz as between 632 and 2000. Both bounds must be above 0.
+	///
+	/// ```
+	/// use undertone_pattern::signal::{periodic, Shape};
+	/// use undertone_pattern::Fraction;
+	/// let saw = periodic::<f64>(Shape::Saw, false);
+	/// let freq = saw.rangex(200.0, 2000.0).unwrap();
+	/// assert_eq!(freq.sample_at(Fraction::from_int(0)), Some(200.0));
+	/// let half = freq.sample_at(Fraction::new(1, 2)).unwrap();
+	/// assert!((half - 632.455532).abs() < 1e-5);
+	/// assert_eq!(
+	///     saw.rangex(0.0, 2000.0).unwrap_err().message(),
+	///     "rangex() bounds must be positive, got 0 and 2000"
+	/// );
+	/// ```
 	pub fn rangex(&self, lo: f64, hi: f64) -> Result<Pattern<T>> {
 		if !(lo > 0.0 && hi > 0.0 && lo.is_finite() && hi.is_finite()) {
 			return Err(Error::new(alloc::format!(
@@ -425,30 +652,107 @@ impl<T: Datum> Pattern<T> {
 				js::number_to_string(hi)
 			)));
 		}
-		Ok(self.map(MapFn::Rangex { lo, ratio: hi / lo }))
+		Ok(self.fmap(MapFn::Rangex { lo, ratio: hi / lo }))
 	}
 
-	/// Rounds each value to the nearest whole number (halves round up).
+	/// Rounds each value to the nearest whole number (halves round up, as JavaScript's `Math.round`).
+	///
+	/// ```
+	/// use undertone_pattern::pure;
+	/// use undertone_pattern::{Fraction, Span};
+	/// let p = pure(2.5).round();
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 3.0);
+	/// ```
 	pub fn round(&self) -> Pattern<T> {
-		self.map(MapFn::Round)
+		self.fmap(MapFn::Round)
 	}
 
 	/// Rounds each value down (-4.2 becomes -5).
+	///
+	/// ```
+	/// use undertone_pattern::pure;
+	/// use undertone_pattern::{Fraction, Span};
+	/// let haps = pure(-4.2).floor().query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, -5.0);
+	/// ```
 	pub fn floor(&self) -> Pattern<T> {
-		self.map(MapFn::Floor)
+		self.fmap(MapFn::Floor)
 	}
 
-	/// The pattern with each value changed by a host function: the escape hatch for `fmap` with a closure.
-	pub fn foreign_map(&self, f: Arc<dyn ForeignFn<T>>) -> Pattern<T> {
-		Pattern::from_node(Node::Foreign {
-			child: self.clone(),
-			f,
+	/// A pattern defined by a [`Query`] object: the escape hatch for a hand-written pattern. See [`crate::query`].
+	pub fn custom(query: Arc<dyn Query<T>>) -> Pattern<T> {
+		Pattern::from_node(Node::Custom {
+			id: next_custom_id(),
+			query,
 		})
 	}
 
-	/// A pattern defined by a host query: the escape hatch for `new Pattern(query)`.
-	pub fn custom(query: Arc<dyn CustomQuery<T>>) -> Pattern<T> {
-		Pattern::from_node(Node::Custom(query))
+	/// A pattern defined by a closure that appends the haps overlapping a span: the Rust form of the reference's `new Pattern(query)`.
+	///
+	/// The closure is not data, so the tree prints it as `(custom #n)` and a pattern holding one is not structural (and cannot be rebuilt in another process).
+	///
+	/// ```
+	/// use undertone_pattern::{Fraction, Hap, Pattern, Span};
+	/// // A signal-like pattern: one hap with no whole, holding the span's start.
+	/// let ramp = Pattern::from_fn(|span: Span, out: &mut Vec<Hap<f64>>| {
+	///     out.push(Hap { whole: None, part: span, value: span.begin.to_f64() });
+	/// });
+	/// let haps = ramp.query(Span::new(Fraction::new(1, 2), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 0.5);
+	/// ```
+	pub fn from_fn(query: impl Fn(Span, &mut Vec<Hap<T>>) + Send + Sync + 'static) -> Pattern<T> {
+		struct FromFn<F>(F);
+		impl<T, F: Fn(Span, &mut Vec<Hap<T>>) + Send + Sync> Query<T> for FromFn<F> {
+			fn query(&self, span: Span, out: &mut Vec<Hap<T>>) {
+				(self.0)(span, out);
+			}
+		}
+		Pattern::custom(Arc::new(FromFn(query)))
+	}
+
+	/// A pattern that calls the callback `id` of `host`: the escape hatch for a query that lives outside Rust. See [`crate::query`].
+	pub fn foreign(host: Arc<dyn ForeignHost<T>>, id: ForeignId) -> Pattern<T> {
+		Pattern::from_node(Node::Foreign { id, host })
+	}
+
+	/// The pattern with each value changed by a closure: `fmap` for any function, where [`Pattern::fmap`] takes a named map.
+	///
+	/// Every value goes through the closure on every query, so the tree holds a [`Node::Custom`] (printed `(custom #n)`), is not structural, and the closure must be pure. Prefer [`Pattern::fmap`] with a [`MapFn`] when one fits. A continuous pattern stays continuous: the closure is applied to its point samples too.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span, Value};
+	/// let words = pure(2.0).fmap_with(|n: &f64| Value::Str(format!("x{n}")));
+	/// let haps = words.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, Value::Str("x2".into()));
+	/// ```
+	pub fn fmap_with<U: Datum>(&self, f: impl Fn(&T) -> U + Send + Sync + 'static) -> Pattern<U> {
+		struct Mapped<T, F> {
+			child: Pattern<T>,
+			f: F,
+		}
+		impl<T: Datum, U: Datum, F: Fn(&T) -> U + Send + Sync> Query<U> for Mapped<T, F> {
+			fn query(&self, span: Span, out: &mut Vec<Hap<U>>) {
+				for hap in self.child.query(span) {
+					let value = (self.f)(&hap.value);
+					out.push(Hap {
+						whole: hap.whole,
+						part: hap.part,
+						value,
+					});
+				}
+			}
+			fn sample(&self, t: Fraction) -> Option<U> {
+				self.child.sample_at(t).map(|value| (self.f)(&value))
+			}
+			fn has_sampler(&self) -> bool {
+				self.child.has_sampler()
+			}
+		}
+		Pattern::custom(Arc::new(Mapped {
+			child: self.clone(),
+			f,
+		}))
 	}
 
 	/// Distributes the pattern over a euclidean rhythm: `pulses` onsets spread as evenly as possible across `steps` slots per cycle (Bjorklund's algorithm), rotated left by `rotation` slots. The whole pattern is squeezed into each onset slot.
@@ -557,8 +861,7 @@ impl<T: Datum> Node<T> {
 			| Node::Fast { child, .. }
 			| Node::Slow { child, .. }
 			| Node::Rev(child)
-			| Node::Map { child, .. }
-			| Node::Foreign { child, .. } => child.has_sampler(),
+			| Node::Map { child, .. } => child.has_sampler(),
 			Node::Every {
 				base, transformed, ..
 			} => base.has_sampler() || transformed.has_sampler(),
@@ -569,174 +872,214 @@ impl<T: Datum> Node<T> {
 			| Node::Sample { .. }
 			| Node::Segment { .. }
 			| Node::Degrees(_) => false,
-			Node::Custom(custom) => custom.has_sampler(),
+			Node::Custom { query, .. } => query.has_sampler(),
+			Node::Foreign { id, host } => host.has_sampler(*id),
+		}
+	}
+
+	/// Whether a query of a pattern with this root can fail: the node itself can (`voicing`, `drift`), or a child the query goes through can.
+	fn can_fail(&self) -> bool {
+		match self {
+			Node::Silence
+			| Node::Pure(_)
+			| Node::Signal(_)
+			| Node::Custom { .. }
+			| Node::Foreign { .. } => false,
+			Node::Sample { source, structure }
+			| Node::Segment {
+				source, structure, ..
+			} => source.can_fail() || structure.can_fail(),
+			Node::Stack(children) | Node::Cat(children) => children.iter().any(Pattern::can_fail),
+			Node::Compress { child, .. }
+			| Node::Fast { child, .. }
+			| Node::Slow { child, .. }
+			| Node::Rev(child)
+			| Node::Degrees(child) => child.can_fail(),
+			Node::WithControl { child, input, .. } => child.can_fail() || input.can_fail(),
+			Node::Map { child, f } => f.can_fail() || child.can_fail(),
+			Node::Every {
+				base, transformed, ..
+			} => base.can_fail() || transformed.can_fail(),
+			Node::Arrange(sections) => sections.iter().any(|(_, p)| p.can_fail()),
+			Node::Arith { left, right, .. } => left.can_fail() || right.can_fail(),
 		}
 	}
 
 	/// The haps overlapping `span`.
 	pub fn query(&self, span: Span) -> Vec<Hap<T>> {
+		let mut out = Vec::new();
+		self.query_into(span, &mut out);
+		out
+	}
+
+	/// Appends the haps overlapping `span` to `out`, in the order [`Node::query`] returns them.
+	///
+	/// This is the query itself: a node asks its children to append straight into the same vector and then rewrites the new tail in place (shifting or mirroring time, changing values, dropping haps), so a query allocates only the output, not one list per node and cycle.
+	pub fn query_into(&self, span: Span, out: &mut Vec<Hap<T>>) {
+		let mut ignored = None;
+		self.run(span, out, &mut ignored);
+	}
+
+	/// [`Node::query_into`] with the error slot: a node that fails at query time (a bad `voicing` anchor, an invalid pitch under `drift`) stores the first message in `err` and adds no haps for the failing event; the query goes on, and [`Pattern::try_query`] turns the slot into an `Err`.
+	fn run(&self, span: Span, out: &mut Vec<Hap<T>>, err: &mut Option<Error>) {
 		match self {
-			Node::Silence => Vec::new(),
-			Node::Pure(value) => span
-				.split_into_cycles()
-				.into_iter()
-				.map(|part| Hap {
-					whole: Some(Span::new(part.begin.sam(), part.begin.next_sam())),
-					part,
-					value: value.clone(),
-				})
-				.collect(),
-			Node::Stack(children) => children
-				.iter()
-				.flat_map(|child| child.query(span))
-				.collect(),
-			Node::Cat(children) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let (index, offset) = cat_choice(cycle_span.begin.floor(), children.len());
-					let shifted = cycle_span.map(|t| t - offset);
-					children[index]
-						.query(shifted)
-						.into_iter()
-						.map(move |hap| hap.map_time(|t| t + offset))
-						.collect::<Vec<_>>()
-				})
-				.collect(),
-			Node::Compress { begin, end, child } => {
-				let width = *end - *begin;
-				span.split_into_cycles()
-					.into_iter()
-					.flat_map(|cycle_span| {
-						let cycle = cycle_span.begin.sam();
-						let window = Span::new(cycle + *begin, cycle + *end);
-						let Some(clipped) = cycle_span.intersect(&window) else {
-							return Vec::new();
-						};
-						let to_inner = |t: Fraction| cycle + (t - window.begin) / width;
-						let to_outer = |t: Fraction| window.begin + (t - cycle) * width;
-						child
-							.query(clipped.map(to_inner))
-							.into_iter()
-							.map(|hap| hap.map_time(to_outer))
-							.collect()
-					})
-					.collect()
+			Node::Silence => {}
+			Node::Pure(value) => {
+				for_each_cycle(span, |part| {
+					let sam = part.begin.sam();
+					out.push(Hap {
+						whole: Some(Span::new(sam, sam + Fraction::from_int(1))),
+						part,
+						value: value.clone(),
+					});
+				});
 			}
-			Node::Fast { factor, child } => child
-				.query(span.map(|t| t * *factor))
-				.into_iter()
-				.map(|hap| hap.map_time(|t| t / *factor))
-				.collect(),
-			Node::Slow { factor, child } => child
-				.query(span.map(|t| t / *factor))
-				.into_iter()
-				.map(|hap| hap.map_time(|t| t * *factor))
-				.collect(),
-			Node::Rev(child) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
+			Node::Stack(children) => {
+				for child in children {
+					child.run(span, out, err);
+				}
+			}
+			Node::Cat(children) => for_each_cycle(span, |cycle_span| {
+				let (index, offset) = cat_choice(cycle_span.begin.floor(), children.len());
+				query_shifted(&children[index], cycle_span, offset, out, err);
+			}),
+			Node::Compress { begin, end, child } => {
+				// Both are needed only for a clipped query or an event inside the child's cycle, so they are worked out on demand.
+				let width = || *end - *begin;
+				let one = Fraction::from_int(1);
+				let whole_cycle = *begin == Fraction::from_int(0) && *end == one;
+				for_each_cycle(span, |cycle_span| {
 					let cycle = cycle_span.begin.sam();
-					// Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t).
-					let mirror = |t: Fraction| cycle + (cycle + Fraction::from_int(1) - t);
-					let reflect = |s: Span| Span::new(mirror(s.end), mirror(s.begin));
-					child
-						.query(reflect(cycle_span))
-						.into_iter()
-						.map(|hap| Hap {
-							whole: hap.whole.map(reflect),
-							part: reflect(hap.part),
-							value: hap.value,
-						})
-						.collect::<Vec<_>>()
-				})
-				.collect(),
+					let window = Span::new(cycle + *begin, cycle + *end);
+					let Some(clipped) = cycle_span.intersect(&window) else {
+						return;
+					};
+					if whole_cycle {
+						child.run(clipped, out, err);
+						return;
+					}
+					// A query that covers the whole window asks for the child's whole cycle.
+					let inner = if clipped == window {
+						Span::new(cycle, cycle + one)
+					} else {
+						{
+							let inverse = one / width();
+							clipped.map(|t| cycle + (t - window.begin) * inverse)
+						}
+					};
+					let start = out.len();
+					child.run(inner, out, err);
+					// The ends of the child's cycle (what `pure` and most leaves return) map to the ends of the window without arithmetic.
+					let next_cycle = cycle + one;
+					retime(&mut out[start..], |t| {
+						if t == cycle {
+							window.begin
+						} else if t == next_cycle {
+							window.end
+						} else {
+							window.begin + (t - cycle) * width()
+						}
+					});
+				});
+			}
+			Node::Fast { factor, child } => {
+				let start = out.len();
+				child.run(span.map(|t| t * *factor), out, err);
+				let inverse = Fraction::from_int(1) / *factor;
+				retime(&mut out[start..], |t| t * inverse);
+			}
+			Node::Slow { factor, child } => {
+				let start = out.len();
+				child.run(span.map(|t| t / *factor), out, err);
+				retime(&mut out[start..], |t| t * *factor);
+			}
+			Node::Rev(child) => for_each_cycle(span, |cycle_span| {
+				// Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t).
+				let axis = cycle_span.begin.sam() * Fraction::from_int(2) + Fraction::from_int(1);
+				let reflect = |s: Span| Span::new(axis - s.end, axis - s.begin);
+				let start = out.len();
+				child.run(reflect(cycle_span), out, err);
+				for hap in &mut out[start..] {
+					hap.whole = hap.whole.map(reflect);
+					hap.part = reflect(hap.part);
+				}
+			}),
 			Node::Every {
 				n,
 				base,
 				transformed,
-			} => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let pick = if cycle_span.begin.floor().rem_euclid(*n) == 0 {
-						transformed
-					} else {
-						base
-					};
-					pick.query(cycle_span)
-				})
-				.collect(),
-			Node::Arrange(sections) => span
-				.split_into_cycles()
-				.into_iter()
-				.flat_map(|cycle_span| {
-					let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
-					pattern
-						.query(cycle_span.map(|t| t - offset))
-						.into_iter()
-						.map(move |hap| hap.map_time(|t| t + offset))
-						.collect::<Vec<_>>()
-				})
-				.collect(),
+			} => for_each_cycle(span, |cycle_span| {
+				let pick = if cycle_span.begin.floor().rem_euclid(*n) == 0 {
+					transformed
+				} else {
+					base
+				};
+				pick.run(cycle_span, out, err);
+			}),
+			Node::Arrange(sections) => for_each_cycle(span, |cycle_span| {
+				let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
+				query_shifted(pattern, cycle_span, offset, out, err);
+			}),
 			Node::WithControl {
 				child,
 				control,
 				input,
-			} => query_with_control(child, *control, input, span),
+			} => {
+				query_with_control(child, *control, input, span, out, err);
+			}
 			Node::Signal(signal) => {
 				if span.begin < span.end {
-					alloc::vec![Hap {
+					out.push(Hap {
 						whole: None,
 						part: span,
 						value: signal.at(span.begin),
-					}]
-				} else {
-					Vec::new()
+					});
 				}
 			}
 			Node::Sample { source, structure }
 			| Node::Segment {
 				source, structure, ..
-			} => read_at(source, structure, span),
-			Node::Map { child, f } => child
-				.query(span)
-				.into_iter()
-				.map(|hap| {
-					let value = hap.value.apply(f);
-					hap.with_value(value)
-				})
-				.collect(),
-			Node::Arith { left, op, right } => left
-				.query(span)
-				.into_iter()
-				.filter_map(|hap| {
-					let other = right.sample_at(hap.onset())?;
-					let value = match (hap.value.as_number(), other.as_number()) {
+			} => read_at(source, structure, span, out, err),
+			Node::Map { child, f } => {
+				let start = out.len();
+				child.run(span, out, err);
+				match f {
+					MapFn::Voicing(options) => voice_tail(out, start, options, err),
+					MapFn::Drift(drift) => drift_tail(out, start, drift, err),
+					_ => {
+						for hap in &mut out[start..] {
+							hap.value = hap.value.apply(f);
+						}
+					}
+				}
+			}
+			Node::Arith { left, op, right } => {
+				let start = out.len();
+				left.run(span, out, err);
+				keep_tail(out, start, |hap| {
+					let Some(other) = right.sample_run(hap.onset(), err) else {
+						return false;
+					};
+					hap.value = match (hap.value.as_number(), other.as_number()) {
 						(Some(a), Some(b)) => T::from_number(op.apply(a, b)),
 						_ => T::from_number(f64::NAN),
 					};
-					Some(hap.with_value(value))
-				})
-				.collect(),
-			Node::Degrees(child) => child
-				.query(span)
-				.into_iter()
-				.filter_map(|hap| {
-					let n = hap.value.as_number().filter(|n| n.is_finite())?;
-					Some(hap.with_value(T::from_degree(crate::math::floor(n))))
-				})
-				.collect(),
-			Node::Foreign { child, f } => child
-				.query(span)
-				.into_iter()
-				.map(|hap| {
-					let value = f.call(&hap.value);
-					hap.with_value(value)
-				})
-				.collect(),
-			Node::Custom(custom) => custom.query(span),
+					true
+				});
+			}
+			Node::Degrees(child) => {
+				let start = out.len();
+				child.run(span, out, err);
+				keep_tail(out, start, |hap| {
+					let Some(n) = hap.value.as_number().filter(|n| n.is_finite()) else {
+						return false;
+					};
+					hap.value = T::from_degree(crate::math::floor(n));
+					true
+				});
+			}
+			Node::Custom { query, .. } => query.query(span, out),
+			Node::Foreign { id, host } => host.query(*id, span, out),
 		}
 	}
 
@@ -794,8 +1137,8 @@ impl<T: Datum> Node<T> {
 			| Node::Sample { .. }
 			| Node::Segment { .. }
 			| Node::Degrees(_) => None,
-			Node::Foreign { child, f } => child.sample_at(t).map(|value| f.call(&value)),
-			Node::Custom(custom) => custom.sample(t),
+			Node::Custom { query, .. } => query.sample(t),
+			Node::Foreign { id, host } => host.sample(*id, t),
 		}
 	}
 }
@@ -812,11 +1155,25 @@ pub fn silence<T: Datum>() -> Pattern<T> {
 }
 
 /// A pattern that repeats `value` once per cycle.
+///
+/// ```
+/// use undertone_pattern::{pure, Fraction, Span};
+/// let haps = pure(1.0).query(Span::new(Fraction::from_int(0), Fraction::from_int(2)));
+/// assert_eq!(haps.len(), 2);
+/// assert!(haps.iter().all(|h| h.has_onset()));
+/// ```
 pub fn pure<T: Datum>(value: T) -> Pattern<T> {
 	Pattern::from_node(Node::Pure(value))
 }
 
 /// Plays all the patterns simultaneously (chords, layers, parallel lines).
+///
+/// ```
+/// use undertone_pattern::{pure, stack, Fraction, Span};
+/// let chord = stack(vec![pure(1.0), pure(2.0), pure(3.0)]);
+/// let haps = chord.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// assert_eq!(haps.len(), 3);
+/// ```
 pub fn stack<T: Datum>(patterns: Vec<Pattern<T>>) -> Pattern<T> {
 	Pattern::from_node(Node::Stack(patterns))
 }
@@ -838,6 +1195,13 @@ pub fn cat<T: Datum>(patterns: Vec<Pattern<T>>) -> Pattern<T> {
 }
 
 /// Squeezes each cycle of `pattern` into the window `[begin, end)` of each cycle. A window with no width is [`silence`].
+///
+/// ```
+/// use undertone_pattern::{compress, pure, Fraction, Span};
+/// let p = compress(Fraction::new(1, 2), Fraction::from_int(1), pure(1.0));
+/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// assert_eq!(haps[0].whole.unwrap().begin, Fraction::new(1, 2));
+/// ```
 pub fn compress<T: Datum>(begin: Fraction, end: Fraction, pattern: Pattern<T>) -> Pattern<T> {
 	if (end - begin).numerator() <= 0 {
 		return silence();
@@ -933,6 +1297,33 @@ pub fn arrange<T: Datum>(sections: Vec<(f64, Pattern<T>)>) -> Result<Pattern<T>>
 	)))
 }
 
+/// Parses a mini-notation string into a pattern, turning each word into a value with `leaf`: the same as [`crate::mini::parse`], under the name the reference's `mini` has.
+///
+/// ```
+/// use undertone_pattern::{mini, Fraction, Span, Value};
+/// let p = mini("a [b c]", |word| Ok(Value::Str(word.into()))).unwrap();
+/// assert_eq!(p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1))).len(), 3);
+/// ```
+pub fn mini<T: Datum>(
+	source: &str,
+	leaf: impl Fn(&str) -> core::result::Result<T, String>,
+) -> Result<Pattern<T>> {
+	crate::mini::parse(source, leaf)
+}
+
+/// The pattern reversed in each cycle: the free-function form of [`Pattern::rev`], for point-free use such as `pat.jux(rev)`.
+///
+/// ```
+/// use undertone_pattern::{pure, rev, seq, Fraction, Span};
+/// let p = rev(&seq(vec![pure(1.0), pure(2.0)]));
+/// let mut haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// haps.sort_by_key(|h| h.part.begin);
+/// assert_eq!(haps[0].value, 2.0);
+/// ```
+pub fn rev<T: Datum>(pattern: &Pattern<T>) -> Pattern<T> {
+	pattern.rev()
+}
+
 /// The pattern with its time sped up by `factor`: the free-function form of [`Pattern::fast`].
 pub fn fast<T: Datum>(pattern: &Pattern<T>, factor: f64) -> Result<Pattern<T>> {
 	pattern.fast(factor)
@@ -1010,8 +1401,8 @@ impl<T: Datum> Node<T> {
 				input,
 			} => {
 				let (kind, source) = match input {
-					ControlInput::Literal(p) => ("literal", p),
-					ControlInput::Pattern(p) => ("pattern", p),
+					ControlSource::Literal(p) => ("literal", p),
+					ControlSource::Pattern(p) => ("pattern", p),
 				};
 				write!(f, "(control {} {kind} ", control.name())?;
 				source.node.write_tree(f)?;
@@ -1049,13 +1440,132 @@ impl<T: Datum> Node<T> {
 				child.node.write_tree(f)?;
 				f.write_str(")")
 			}
-			Node::Foreign { child, f: foreign } => {
-				write!(f, "(foreign #{} ", foreign.id())?;
-				child.node.write_tree(f)?;
-				f.write_str(")")
-			}
-			Node::Custom(custom) => write!(f, "(custom #{})", custom.id()),
+			Node::Custom { id, .. } => write!(f, "(custom #{id})"),
+			Node::Foreign { id, .. } => write!(f, "(foreign #{})", id.0),
 		}
+	}
+}
+
+impl<T: Datum> Node<T> {
+	/// Writes this node and its children as an indented outline, one node a line. Every variant is matched without a wildcard, so a new node cannot be added without saying how it prints.
+	fn write_outline(&self, depth: usize, out: &mut String) {
+		fn line(out: &mut String, depth: usize, text: &str) {
+			for _ in 0..depth {
+				out.push_str("  ");
+			}
+			out.push_str(text);
+			out.push('\n');
+		}
+		match self {
+			Node::Silence => line(out, depth, "silence"),
+			Node::Pure(value) => line(out, depth, &alloc::format!("pure {value:?}")),
+			Node::Stack(children) => {
+				line(out, depth, "stack");
+				for child in children {
+					child.node.write_outline(depth + 1, out);
+				}
+			}
+			Node::Cat(children) => {
+				line(out, depth, "cat");
+				for child in children {
+					child.node.write_outline(depth + 1, out);
+				}
+			}
+			Node::Compress { begin, end, child } => {
+				line(out, depth, &alloc::format!("compress {begin} {end}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Fast { factor, child } => {
+				line(out, depth, &alloc::format!("fast {factor}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Slow { factor, child } => {
+				line(out, depth, &alloc::format!("slow {factor}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Rev(child) => {
+				line(out, depth, "rev");
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Every {
+				n,
+				base,
+				transformed,
+			} => {
+				line(out, depth, &alloc::format!("every {n}"));
+				base.node.write_outline(depth + 1, out);
+				transformed.node.write_outline(depth + 1, out);
+			}
+			Node::Arrange(sections) => {
+				line(out, depth, "arrange");
+				for (cycles, pattern) in sections {
+					line(out, depth + 1, &alloc::format!("for {cycles} cycles"));
+					pattern.node.write_outline(depth + 2, out);
+				}
+			}
+			Node::WithControl {
+				child,
+				control,
+				input,
+			} => {
+				let (kind, source) = match input {
+					ControlSource::Literal(p) => ("literal", p),
+					ControlSource::Pattern(p) => ("pattern", p),
+				};
+				line(
+					out,
+					depth,
+					&alloc::format!("control {} {kind}", control.name()),
+				);
+				source.node.write_outline(depth + 1, out);
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Signal(signal) => line(out, depth, &alloc::format!("signal {signal:?}")),
+			Node::Sample { source, structure } => {
+				line(out, depth, "sample");
+				source.node.write_outline(depth + 1, out);
+				structure.node.write_outline(depth + 1, out);
+			}
+			Node::Segment { source, count, .. } => {
+				line(out, depth, &alloc::format!("segment {count}"));
+				source.node.write_outline(depth + 1, out);
+			}
+			Node::Map { child, f } => {
+				line(out, depth, &alloc::format!("map {f:?}"));
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Arith { left, op, right } => {
+				line(out, depth, op.name());
+				left.node.write_outline(depth + 1, out);
+				right.node.write_outline(depth + 1, out);
+			}
+			Node::Degrees(child) => {
+				line(out, depth, "degrees");
+				child.node.write_outline(depth + 1, out);
+			}
+			Node::Custom { id, .. } => line(out, depth, &alloc::format!("custom #{id}")),
+			Node::Foreign { id, .. } => line(out, depth, &alloc::format!("foreign #{}", id.0)),
+		}
+	}
+}
+
+impl<T: Datum> Pattern<T> {
+	/// The tree as an indented outline, one node a line, for reading in a log or a test.
+	///
+	/// The one-line form is [`Display`](core::fmt::Display), and the hash covers that form. Both name every node, so a pattern of any shape can be printed.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, seq};
+	/// let p = seq(vec![pure(1.0), pure(2.0)]).fast(2.0).unwrap();
+	/// assert_eq!(
+	///     p.describe(),
+	///     "fast 2\n  stack\n    compress 0 1/2\n      pure 1.0\n    compress 1/2 1\n      pure 2.0\n"
+	/// );
+	/// ```
+	pub fn describe(&self) -> String {
+		let mut out = String::new();
+		self.node.write_outline(0, &mut out);
+		out
 	}
 }
 
@@ -1190,38 +1700,24 @@ mod tests {
 		assert_eq!(from_thread, onsets(&p, 0, 2));
 	}
 
-	struct AddOne;
-	impl ForeignFn<f64> for AddOne {
-		fn call(&self, value: &f64) -> f64 {
-			value + 1.0
-		}
-		fn id(&self) -> u64 {
-			7
-		}
-	}
-
 	struct Everything;
-	impl CustomQuery<f64> for Everything {
-		fn query(&self, span: Span) -> Vec<Hap<f64>> {
-			alloc::vec![Hap {
+	impl Query<f64> for Everything {
+		fn query(&self, span: Span, out: &mut Vec<Hap<f64>>) {
+			out.push(Hap {
 				whole: None,
 				part: span,
 				value: span.begin.to_f64(),
-			}]
-		}
-		fn id(&self) -> u64 {
-			9
+			});
 		}
 	}
 
 	#[test]
 	fn the_escape_hatches_work_and_print() {
-		let mapped = seq(vec![pure(1.0), pure(2.0)]).foreign_map(Arc::new(AddOne));
-		let values: Vec<f64> = onsets(&mapped, 0, 1).into_iter().map(|(_, v)| v).collect();
-		assert_eq!(values, [2.0, 3.0]);
 		let custom = Pattern::custom(Arc::new(Everything));
 		assert_eq!(onsets(&custom, 2, 3), [(Fraction::from_int(2), 2.0)]);
-		assert_eq!(custom.to_string(), "(custom #9)");
-		assert!(mapped.to_string().starts_with("(foreign #7 "));
+		assert!(custom.to_string().starts_with("(custom #"));
+		let mapped = seq(vec![pure(1.0), pure(2.0)]).fmap_with(|v: &f64| v + 1.0);
+		let values: Vec<f64> = onsets(&mapped, 0, 1).into_iter().map(|(_, v)| v).collect();
+		assert_eq!(values, [2.0, 3.0]);
 	}
 }

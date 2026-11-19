@@ -8,6 +8,8 @@
 //! Supported notation: whitespace sequences, `~` rests, `[a b]` subdivision, `<a b>` per-cycle alternation, `a*2` and `a/2` speed, `a!3` replication, `a@3` elongation, `[a,b]` parallel stacking, and `a(3,8,rot)` euclidean rhythms.
 //!
 //! The parser takes the **leaf rule**: what each word becomes. It is called once per word while parsing and is not stored, so the tree it builds holds plain values. Errors carry the reference's message, with the position counted in UTF-16 code units as JavaScript counts it.
+//!
+//! **Characters outside the Basic Multilingual Plane.** The reference's tokenizer walks UTF-16 code units, so for an emoji it reports the position of the high surrogate and quotes that lone half in the message. A Rust `String` cannot hold a lone surrogate, so [`Error::message`](crate::Error::message) shows it as U+FFFD (the replacement character); the position is exact. The corpus runner reads the recorded message the same way (a lone half becomes U+FFFD) before it compares.
 
 use crate::error::{Error, Result};
 use crate::js;
@@ -444,5 +446,202 @@ mod tests {
 			err.message(),
 			"Mini-notation error at position 2 in \"a bad\": nope"
 		);
+	}
+
+	/// Cycles 0 and 1 as `value@begin-end` texts, sorted, or the error message.
+	fn show(source: &str) -> core::result::Result<String, String> {
+		let p = words(source).map_err(|e| String::from(e.message()))?;
+		let mut out: Vec<String> = p
+			.query(Span::new(Fraction::from_int(0), Fraction::from_int(2)))
+			.into_iter()
+			.map(|h| match h.value {
+				Value::Str(s) => alloc::format!(
+					"{s}@{}-{}",
+					h.part.begin.to_ratio_string(),
+					h.part.end.to_ratio_string()
+				),
+				_ => String::new(),
+			})
+			.collect();
+		out.sort();
+		Ok(out.join(" "))
+	}
+
+	/// Constructs the corpus does not single out (`?`, a lone `.` or `_`, `!` with `@`, nested alternations, patterned euclid arguments, non-ASCII characters, odd whitespace), with the expected text produced by running `src/mini.ts` with Bun over cycles 0 and 1. A lone surrogate half in a reference message shows as U+FFFD here (see the module notes).
+	#[test]
+	fn constructs_match_the_reference_parser() {
+		let cases: &[(&str, core::result::Result<&str, &str>)] = &[
+			(
+				"a?",
+				Err("Mini-notation error at position 1 in \"a?\": unexpected \"?\""),
+			),
+			(
+				"a . b",
+				Ok(".@1/3-2/3 .@4/3-5/3 a@0/1-1/3 a@1/1-4/3 b@2/3-1/1 b@5/3-2/1"),
+			),
+			(
+				"a _ b",
+				Ok("_@1/3-2/3 _@4/3-5/3 a@0/1-1/3 a@1/1-4/3 b@2/3-1/1 b@5/3-2/1"),
+			),
+			("a_b", Ok("a_b@0/1-1/1 a_b@1/1-2/1")),
+			(
+				"a@2 b!3 ~",
+				Ok(
+					"a@0/1-1/3 a@1/1-4/3 b@1/2-2/3 b@1/3-1/2 b@2/3-5/6 b@3/2-5/3 b@4/3-3/2 b@5/3-11/6",
+				),
+			),
+			(
+				"a!2@3 b",
+				Ok("a@0/1-3/7 a@1/1-10/7 a@10/7-13/7 a@3/7-6/7 b@13/7-2/1 b@6/7-1/1"),
+			),
+			("a@3!2", Ok("a@0/1-1/2 a@1/1-3/2 a@1/2-1/1 a@3/2-2/1")),
+			("<a <b c>>", Ok("a@0/1-1/1 b@1/1-2/1")),
+			("<a!2 b>", Ok("a@0/1-1/1 a@1/1-2/1")),
+			(
+				"<a@2 b>",
+				Err(
+					"Mini-notation error at position 5 in \"<a@2 b>\": \"@\" weights are not supported inside <>",
+				),
+			),
+			(
+				"a(<3 5>,8)",
+				Err(
+					"Mini-notation error at position 2 in \"a(<3 5>,8)\": expected a number after \"euclid pulses\" but found \"<\"",
+				),
+			),
+			(
+				"a(3,8,2)",
+				Ok("a@1/2-5/8 a@1/8-1/4 a@3/2-13/8 a@3/4-7/8 a@7/4-15/8 a@9/8-5/4"),
+			),
+			(
+				"a(3,8,-1)",
+				Ok("a@1/2-5/8 a@1/8-1/4 a@15/8-2/1 a@3/2-13/8 a@7/8-1/1 a@9/8-5/4"),
+			),
+			(
+				"a(3.5,8)",
+				Err(
+					"Mini-notation error at position 2 in \"a(3.5,8)\": expected an integer for \"euclid pulses\" but found \"3.5\"",
+				),
+			),
+			(
+				"a(3,8,1.5)",
+				Err(
+					"Mini-notation error at position 6 in \"a(3,8,1.5)\": expected an integer for \"euclid rotation\" but found \"1.5\"",
+				),
+			),
+			(
+				"[a,b] c",
+				Ok("a@0/1-1/2 a@1/1-3/2 b@0/1-1/2 b@1/1-3/2 c@1/2-1/1 c@3/2-2/1"),
+			),
+			("a, b", Ok("a@0/1-1/1 a@1/1-2/1 b@0/1-1/1 b@1/1-2/1")),
+			(
+				"[a b",
+				Err("Mini-notation error at position 4 in \"[a b\": unexpected end of pattern"),
+			),
+			(
+				"a]",
+				Err("Mini-notation error at position 1 in \"a]\": unexpected \"]\""),
+			),
+			(
+				"<a b",
+				Err("Mini-notation error at position 4 in \"<a b\": unexpected end of pattern"),
+			),
+			(
+				"a**2",
+				Err(
+					"Mini-notation error at position 2 in \"a**2\": expected a number after \"*\" but found \"*\"",
+				),
+			),
+			(
+				"a*",
+				Err("Mini-notation error at position 2 in \"a*\": unexpected end of pattern"),
+			),
+			(
+				"a*-1",
+				Err(
+					"Mini-notation error at position 1 in \"a*-1\": fast() factor must be positive, got -1",
+				),
+			),
+			("a*1.5", Ok("a@0/1-2/3 a@2/3-4/3 a@4/3-2/1")),
+			(
+				"a/0",
+				Err(
+					"Mini-notation error at position 1 in \"a/0\": slow() factor must be positive, got 0",
+				),
+			),
+			(
+				"a!0",
+				Err("Mini-notation error at position 3 in \"a!0\": \"!\" count must be at least 1"),
+			),
+			(
+				"a@0",
+				Err("Mini-notation error at position 3 in \"a@0\": \"@\" weight must be positive"),
+			),
+			(
+				"a!1.5",
+				Err(
+					"Mini-notation error at position 2 in \"a!1.5\": expected an integer for \"!\" but found \"1.5\"",
+				),
+			),
+			(
+				"[]",
+				Err("Mini-notation error at position 1 in \"[]\": expected at least one element"),
+			),
+			(
+				"<>",
+				Err(
+					"Mini-notation error at position 1 in \"<>\": expected at least one element inside <>",
+				),
+			),
+			(
+				"a,",
+				Err("Mini-notation error at position 2 in \"a,\": expected at least one element"),
+			),
+			(
+				",a",
+				Err("Mini-notation error at position 0 in \",a\": expected at least one element"),
+			),
+			("a\u{a0}b", Ok("a@0/1-1/2 a@1/1-3/2 b@1/2-1/1 b@3/2-2/1")),
+			(
+				"a\u{200b}b",
+				Err("Mini-notation error at position 1 in \"a\u{200b}b\": unexpected \"\u{200b}\""),
+			),
+			(
+				"a 😀",
+				Err("Mini-notation error at position 2 in \"a 😀\": unexpected \"�\""),
+			),
+			(
+				"é a",
+				Err("Mini-notation error at position 0 in \"é a\": unexpected \"é\""),
+			),
+			("a ~@2 b", Ok("a@0/1-1/4 a@1/1-5/4 b@3/4-1/1 b@7/4-2/1")),
+			(
+				"a*2!2",
+				Ok(
+					"a@0/1-1/4 a@1/1-5/4 a@1/2-3/4 a@1/4-1/2 a@3/2-7/4 a@3/4-1/1 a@5/4-3/2 a@7/4-2/1",
+				),
+			),
+			(
+				"a!2*2",
+				Ok(
+					"a@0/1-1/4 a@1/1-5/4 a@1/2-3/4 a@1/4-1/2 a@3/2-7/4 a@3/4-1/1 a@5/4-3/2 a@7/4-2/1",
+				),
+			),
+			(
+				"a(3,8)*2",
+				Ok(
+					"a@0/1-1/16 a@1/1-17/16 a@1/2-9/16 a@11/16-3/4 a@11/8-23/16 a@15/8-31/16 a@19/16-5/4 a@27/16-7/4 a@3/16-1/4 a@3/2-25/16 a@3/8-7/16 a@7/8-15/16",
+				),
+			),
+			(
+				"-1 .5 5.",
+				Ok("-1@0/1-1/3 -1@1/1-4/3 .5@1/3-2/3 .5@4/3-5/3 5.@2/3-1/1 5.@5/3-2/1"),
+			),
+		];
+		for (source, expected) in cases {
+			let actual = show(source);
+			let wanted = expected.map(String::from).map_err(String::from);
+			assert_eq!(actual, wanted, "{source:?}");
+		}
 	}
 }

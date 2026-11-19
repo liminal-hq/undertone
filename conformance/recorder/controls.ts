@@ -25,7 +25,18 @@ export interface VoiceCase {
 }
 
 /** The groups of layer 2 in the first subset, in file order. */
-export const LAYER2_GROUPS = ['notes', 'controls', 'signals'] as const;
+export const LAYER2_GROUPS = ['notes', 'controls', 'signals', 'chords', 'drift'] as const;
+
+/** The layer 1 groups whose programs are also booked as layer 2 cases, in the order they are derived. */
+const DERIVED_GROUPS = new Set(['notes', 'controls', 'chords', 'drift']);
+
+/**
+ * Of the `chords` and `drift` programs, the stems also booked as layer 2 (the rest stay in layer 1,
+ * where the Rust pattern crate runs them): the qualities and anchors, and the drift options, seeds,
+ * passes, positions, pitches, and patches. Keeps layer 2 to the programs that exercise the engine.
+ */
+const DERIVED_STEMS =
+  /^(notes|controls)-|^chords-(quality|anchor)-|^drift-(all|seed|pass|position|pitch|patch|err)-/;
 
 /** The tempos and gating the derived cases cycle through, so each is exercised by every group. */
 const VARIANTS: readonly { cps: number; gated: boolean }[] = [
@@ -222,7 +233,7 @@ export function layer2Cases(layer1: readonly ProgramCase[]): VoiceCase[] {
   const out: VoiceCase[] = [];
   let index = 0;
   for (const spec of layer1) {
-    if (spec.group !== 'notes' && spec.group !== 'controls') continue;
+    if (!DERIVED_GROUPS.has(spec.group) || !DERIVED_STEMS.test(spec.id)) continue;
     const variant = VARIANTS[index % VARIANTS.length];
     index += 1;
     out.push({

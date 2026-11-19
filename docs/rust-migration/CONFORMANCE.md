@@ -70,27 +70,28 @@ The merged pull requests already hold most of the corpus, as tests, recipes, and
 
 ## Groups
 
-Files are `conformance/cases/<layer>/<group>.json`. The first subset (RF-05) is marked with an asterisk.
+Files are `conformance/cases/<layer>/<group>.json`. The groups recorded so far (the first subset from RF-05, then the `mini`, `scales`, `chords`, `random`, and `drift` groups added for M3) are marked with an asterisk; the counts are the cases on disk, the others are targets. The `random` group is not made of programs (see `conformance/README.md`).
 
-| Group          | Layer | Cases (target)                                       | Covers                                                                                                                                         | WP    |
-| -------------- | ----- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| `core`*        | 1     | 40                                                   | `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, `fast`, `slow`, `euclid`                                                                  | RF-13 |
-| `combinators`* | 1     | 60                                                   | `rev`, `every`, `jux`, `arrange`, `fmap` with named maps                                                                                       | RF-13 |
-| `mini`         | 1     | about 200                                            | mini-notation with the three leaf rules, six query spans each, and error cases with UTF-16 positions, all recorded from the reference          | RF-13 |
-| `notes`*       | 1, 2  | 40                                                   | `note`, `sound`, `s`, `bank`, `n`, `scale`                                                                                                     | RF-15 |
-| `chords`       | 1, 2  | 30                                                   | `chord`, `voicing`                                                                                                                             | RF-15 |
-| `controls`*    | 2     | 60 (five controls in the subset; all controls later) | every control with number, string, and pattern inputs                                                                                          | RF-14 |
-| `signals`*     | 1, 2  | 100                                                  | every signal and shaping method, sampled controls, mixed continuous and discrete compositions, negative time                                   | RF-16 |
-| `random`       | 1     | 20                                                   | `seededRandom` (64 values per seed), keyed seeds                                                                                               | RF-17 |
-| `drift`        | 2     | 20                                                   | `drift` options                                                                                                                                | RF-17 |
-| `placement`*   | 3     | 40                                                   | `panLaw`, `.panlaw`, `ceiling`, `panPath`, `.panpath`, `.panslide`, `.autopan` and its options, `bookingWindow`, and each off (equal to 0.3.0) | RF-18 |
-| `voices`       | 3     | 60                                                   | baseline voice booking for the 0.3.0 behaviours (waveforms, envelopes, filters, FM, orbits, master bus), recorded with the new options off     | RF-18 |
-| `instruments`  | 2, 3  | 20                                                   | `fmVoice`, presets, `layer`, `.voice`                                                                                                          | RF-19 |
-| `channels`     | 3     | 20                                                   | 1, 2, 4, 6, 8 channels, `.surround`, folds                                                                                                     | RF-19 |
-| `score`        | 2, 3  | 20                                                   | `score()` with seam, gates, `panLaw`                                                                                                           | RF-20 |
-| `wav`          | —     | 10                                                   | `encodeWav` bytes (16, 24, 32 bit, dither seeds) as hex digests and the first 64 bytes                                                         | RF-20 |
-| `samples`      | 3     | 10                                                   | sample voices with registered PCM                                                                                                              | RF-21 |
-| `renders`      | 4     | 15                                                   | the playground's long examples and scores recorded in the corpus's own format                                                                  | RF-20 |
+| Group          | Layer | Cases (target)                                       | Covers                                                                                                                                                                | WP    |
+| -------------- | ----- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `core`*        | 1     | 40                                                   | `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, `fast`, `slow`, `euclid`                                                                                         | RF-13 |
+| `combinators`* | 1     | 60                                                   | `rev`, `every`, `jux`, `arrange`, `fmap` with named maps                                                                                                              | RF-13 |
+| `mini`*        | 1     | 359 (about 200 planned; half are error cases)        | mini-notation with the leaf rules `word`, `number`, `pitch`, and `drum`, six query spans each, and error cases with UTF-16 positions, all recorded from the reference | RF-13 |
+| `notes`*       | 1, 2  | 40                                                   | `note`, `sound`, `s`, `bank`, `n`, `scale`                                                                                                                            | RF-15 |
+| `scales`*      | 1     | 130                                                  | `n(...).scale(...)` over every named scale, roots, spellings, extreme degrees, and errors                                                                             | RF-15 |
+| `chords`*      | 1, 2  | 123 (layer 2: 71)                                    | `chord`, `voicing` with every quality, root spelling, `anchor`, and the errors                                                                                        | RF-15 |
+| `controls`*    | 2     | 60 (five controls in the subset; all controls later) | every control with number, string, and pattern inputs                                                                                                                 | RF-14 |
+| `signals`*     | 1, 2  | 100                                                  | every signal and shaping method, sampled controls, mixed continuous and discrete compositions, negative time                                                          | RF-16 |
+| `random`*      | 1     | 103                                                  | `seededRandom` (64 values per seed), numeric and string seeds, keyed seeds                                                                                            | RF-17 |
+| `drift`*       | 1, 2  | 97 (layer 2: 81)                                     | `drift` options, seeds, passes, positions, pitches, errors                                                                                                            | RF-17 |
+| `placement`*   | 3     | 40                                                   | `panLaw`, `.panlaw`, `ceiling`, `panPath`, `.panpath`, `.panslide`, `.autopan` and its options, `bookingWindow`, and each off (equal to 0.3.0)                        | RF-18 |
+| `voices`       | 3     | 60                                                   | baseline voice booking for the 0.3.0 behaviours (waveforms, envelopes, filters, FM, orbits, master bus), recorded with the new options off                            | RF-18 |
+| `instruments`  | 2, 3  | 20                                                   | `fmVoice`, presets, `layer`, `.voice`                                                                                                                                 | RF-19 |
+| `channels`     | 3     | 20                                                   | 1, 2, 4, 6, 8 channels, `.surround`, folds                                                                                                                            | RF-19 |
+| `score`        | 2, 3  | 20                                                   | `score()` with seam, gates, `panLaw`                                                                                                                                  | RF-20 |
+| `wav`          | —     | 10                                                   | `encodeWav` bytes (16, 24, 32 bit, dither seeds) as hex digests and the first 64 bytes                                                                                | RF-20 |
+| `samples`      | 3     | 10                                                   | sample voices with registered PCM                                                                                                                                     | RF-21 |
+| `renders`      | 4     | 15                                                   | the playground's long examples and scores recorded in the corpus's own format                                                                                         | RF-20 |
 
 ## Query-window independence and property tests
 
@@ -100,7 +101,7 @@ Property tests run in Rust (`proptest`, in `crates/undertone-pattern/tests/prope
 2. **Inverses:** `p.fast(n).slow(n)` equals `p`; `p.rev().rev()` equals `p`; `p.every(1, f)` equals `f(p)`.
 3. **Signals:** a signal sampled at `t` gives the same value in any window that contains `t`; `seed(s)` is reproducible across runs and threads.
 4. **Booking:** booking a window gives the same voices as booking its two halves (RF-22).
-5. **Round trip:** a tree serialised and rebuilt (for the worklet and worker) queries the same (RF-16).
+5. **Round trip:** a tree serialised and rebuilt (for the worklet and worker) queries the same (RF-16; `crates/undertone-pattern/tests/serialize.rs`, done).
 
 The same properties 1 to 3 run once against the reference with `fast-check` (a dev dependency; RF-05), to catch a property that the reference itself breaks, which would be a finding for the person rather than a Rust bug.
 
