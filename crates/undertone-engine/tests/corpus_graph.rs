@@ -10,11 +10,11 @@
 //! **The runner is group-agnostic**: it lists `conformance/cases/3/`, so a new group is picked up without a
 //! change here. Each case is parsed into a [`Case`] and booked through [`book`].
 //!
-//! **What is pending.** The booking itself (RF-18, the pull request after the one that added this runner) does
-//! not exist yet, so [`book`] returns [`Booked::NotImplemented`]. Groups whose cases cannot be booked yet are
-//! named in [`PENDING`] with the reason. The test passes while a pending group is entirely pending and prints
-//! what is pending; it fails if a pending group starts to book (so the entry is removed and the group is
-//! compared), and it fails for any group that is not listed and does not equal the corpus.
+//! **What is pending.** A case is booked through [`book`]: the recorder's call sequence (the destination set
+//! up, the master bus, then each voice in order) on a [`LogGraph`]. Cases that are not equal are named in
+//! [`PENDING_CASES`] with the reason. The test fails
+//! if a pending case starts to equal the corpus (so its entry is removed), and for any other case that does
+//! not equal it.
 //!
 //! **How a booked graph is compared (CONFORMANCE.md).** Both sides are read as JSON; structure, strings, and
 //! counts are exact, and a number inside a call string or a value matches when its text is identical or the
@@ -28,43 +28,45 @@
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use undertone_engine::engine::{Engine, OutputSetup};
 use undertone_engine::graph::{
 	Automation, ChannelInterpretation, FilterType, Graph, GraphRecord, LogGraph, NodeId, NodeKind,
 	OscillatorType, Oversample, ParamKind, Target,
 };
+use undertone_engine::master::{Limiter, LimiterOptions, MasterBusOptions};
+use undertone_engine::params::resolve_params;
+use undertone_engine::window::{
+	PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window, last_room_sizes,
+	sort_booking_order,
+};
+use undertone_pattern::random::Seed;
+use undertone_pattern::{Value as PatternValue, js};
 
-/// Groups whose cases the booking cannot produce yet, with the reason. A group listed here must have every
-/// case pending; a group not listed must be equal.
-const PENDING: &[(&str, &str)] = &[
-	(
-		"placement",
-		"voice booking lands in the next RF-18 pull request (this one adds the Graph trait and LogGraph)",
-	),
-	(
-		"voices",
-		"the baseline voice booking (waveforms, envelopes, filters, FM, orbits, master bus) is the next RF-18 pull request",
-	),
-	(
-		"options",
-		"the 0.4.0 options (pan law, ceiling, pan paths, autopan, booking window) and the render cases follow the baseline booking",
-	),
-];
+/// Cases the booking does not equal yet, by id, each with the precise reason. A case listed here must differ
+/// from the corpus (the test fails when it starts to pass, so the entry is removed); a case not listed must be
+/// equal.
+const PENDING_CASES: &[(&str, &str)] = &[];
+
+/// The reason a case is pending, if it is.
+fn pending_reason(case: &Case) -> Option<&'static str> {
+	PENDING_CASES
+		.iter()
+		.find(|(id, _)| *id == case.id)
+		.map(|(_, reason)| *reason)
+}
 
 /// The absolute floor for a number that should be zero.
 const ABS_FLOOR: f64 = 1e-15;
 
 /// One voice of a score.
 #[derive(Debug)]
-#[allow(dead_code)] // The fields are read by the booking, which is not here yet.
 struct ScoreLine {
-	name: String,
 	at: f64,
 	patch: Value,
 }
 
 /// One layer 3 case, with the parts the booking needs.
 #[derive(Debug)]
-#[allow(dead_code)] // The fields are read by the booking, which is not here yet.
 struct Case {
 	id: String,
 	score: Vec<ScoreLine>,
@@ -86,22 +88,255 @@ enum Expected {
 /// What booking a case gave.
 enum Booked {
 	NotImplemented,
-	#[allow(dead_code)] // Used once the booking exists.
 	Graph(Box<GraphRecord>),
-	#[allow(dead_code)] // Used once the booking exists.
 	Error(String),
 }
 
-/// Books a case on a [`LogGraph`]. For now nothing is booked: the voice booking is the next pull request.
-fn book(_case: &Case) -> Booked {
-	Booked::NotImplemented
+/// Turns a recorded JSON value into a pattern [`Value`], reading the recorder's `{"$num": ...}` form for the
+/// numbers JSON cannot hold.
+fn to_value(json: &Value) -> PatternValue {
+	match json {
+		Value::Number(n) => PatternValue::Num(n.as_f64().expect("f64")),
+		Value::String(s) => PatternValue::Str(s.clone()),
+		Value::Bool(b) => PatternValue::Bool(*b),
+		Value::Array(items) => PatternValue::List(items.iter().map(to_value).collect()),
+		Value::Object(map) => match map.get("$num").and_then(Value::as_str) {
+			Some("NaN") => PatternValue::Num(f64::NAN),
+			Some("Infinity") => PatternValue::Num(f64::INFINITY),
+			Some("-Infinity") => PatternValue::Num(f64::NEG_INFINITY),
+			Some("-0") => PatternValue::Num(-0.0),
+			Some(other) => panic!("special number {other}"),
+			None => PatternValue::Map(
+				map.iter()
+					.map(|(key, value)| (key.clone(), to_value(value)))
+					.collect(),
+			),
+		},
+		Value::Null => PatternValue::Undefined,
+	}
+}
+
+/// `output.master` of a case as the master bus options (`true` or an object).
+fn master_options(master: &Value) -> MasterBusOptions {
+	let Some(object) = master.as_object() else {
+		return MasterBusOptions::default();
+	};
+	let number = |key: &str| {
+		object
+			.get(key)
+			.map(|v| to_value(v).as_number().expect("number"))
+	};
+	let limiter = match object.get("limiter") {
+		None | Some(Value::Bool(true)) => Limiter::Default,
+		Some(Value::Bool(false)) => Limiter::Off,
+		Some(Value::Object(tuned)) => {
+			let field = |key: &str| tuned.get(key).and_then(Value::as_f64);
+			Limiter::Tuned(LimiterOptions {
+				threshold: field("threshold"),
+				knee: field("knee"),
+				ratio: field("ratio"),
+				attack: field("attack"),
+				release: field("release"),
+				compensate: tuned.get("compensate").and_then(Value::as_bool),
+			})
+		}
+		Some(other) => panic!("limiter {other}"),
+	};
+	MasterBusOptions {
+		output: None,
+		gain: number("gain"),
+		limiter,
+		ceiling: number("ceiling"),
+	}
+}
+
+/// The voices of a score, as the pending voices a render books.
+fn pending_voices(case: &Case) -> Vec<PendingVoice> {
+	case.score
+		.iter()
+		.map(|line| PendingVoice {
+			start_time: line.at,
+			params: resolve_params(&to_value(&line.patch)),
+		})
+		.collect()
+}
+
+/// Books a `voices` case on a [`LogGraph`], as the recorder does: the destination is set up first, then the
+/// master bus, then every voice of the score in order.
+fn book_voices(case: &Case) -> Booked {
+	let channels = case
+		.output
+		.as_ref()
+		.and_then(|output| output.get("channels"))
+		.and_then(Value::as_u64)
+		.map_or(2, |count| count as u32);
+	let master = case
+		.output
+		.as_ref()
+		.and_then(|output| output.get("master"))
+		.filter(|master| !master.is_null() && **master != Value::Bool(false))
+		.map(master_options);
+	let graph = LogGraph::with_max_channels(44_100.0, channels, channels);
+	let setup = OutputSetup {
+		master,
+		multichannel: channels > 2,
+		seed: Seed::Num(0.0),
+	};
+	let booked = || -> undertone_pattern::Result<Engine<LogGraph>> {
+		let mut engine = Engine::new(graph, setup)?;
+		for voice in pending_voices(case) {
+			engine.play(&voice.params, voice.start_time)?;
+		}
+		Ok(engine)
+	};
+	match booked() {
+		Ok(engine) => Booked::Graph(Box::new(engine.into_graph().finish(None))),
+		Err(error) => Booked::Error(error.message().to_string()),
+	}
+}
+
+fn number_option(render: &Value, key: &str) -> Option<f64> {
+	render
+		.get(key)
+		.map(|v| to_value(v).as_number().expect("number"))
+}
+
+/// Books a `render` case the way `renderToBuffer` does on a recording offline context: the context made from
+/// the options, the destination widened for more than two channels, the master bus (on unless `master` is
+/// `false`), then the score's voices in time order, all up front or in the planned windows. A pause of the
+/// render sets the graph's clock to the quantized frame before its window is booked. The score is read from
+/// the corpus (what the recorder's collection of onsets gave), because collecting onsets from a program
+/// belongs to the scheduler.
+fn book_render(case: &Case, render: &Value) -> Booked {
+	let sample_rate = number_option(render, "sampleRate").unwrap_or(48_000.0);
+	let channels = number_option(render, "channels").map_or(2, |count| count as u32);
+	let tail = number_option(render, "tail").unwrap_or(0.0);
+	let window = number_option(render, "bookingWindow");
+	if let Some(window) = window
+		&& let Err(error) = check_booking_window(window, sample_rate)
+	{
+		return Booked::Error(error.message().to_string());
+	}
+	let cycle_seconds = match (number_option(render, "cps"), number_option(render, "bpm")) {
+		(Some(cps), None) => 1.0 / cps,
+		(None, Some(bpm)) => 240.0 / bpm,
+		(None, None) => 240.0 / 120.0,
+		(Some(_), Some(_)) => return Booked::Error("Pass either bpm or cps, not both".into()),
+	};
+	let cycles = number_option(render, "cycles").unwrap_or(1.0);
+	let pass_seconds = cycles * cycle_seconds;
+	let length = js::round((pass_seconds + tail) * sample_rate).max(1.0) as u64;
+
+	let master = match render.get("master") {
+		Some(Value::Bool(false)) => None,
+		Some(Value::Bool(true)) | None => Some(MasterBusOptions::default()),
+		Some(options) => Some(master_options(options)),
+	};
+	let seed = render
+		.get("seed")
+		.map_or(Seed::Num(0.0), |seed| match seed.as_str() {
+			Some(text) => Seed::Str(text.to_string()),
+			None => Seed::Num(seed.as_f64().expect("seed")),
+		});
+	let graph = LogGraph::with_max_channels(sample_rate, channels, channels);
+	let setup = OutputSetup {
+		master,
+		multichannel: channels > 2,
+		seed,
+	};
+	let mut engine = match Engine::new(graph, setup) {
+		Ok(engine) => engine,
+		Err(error) => return Booked::Error(error.message().to_string()),
+	};
+
+	let mut voices = pending_voices(case);
+	sort_booking_order(&mut voices);
+	let outcome = (|| -> undertone_pattern::Result<()> {
+		match window {
+			None => {
+				for voice in &voices {
+					engine.play(&voice.params, voice.start_time)?;
+				}
+			}
+			Some(window) => {
+				let last_pause = (length as f64 - 2.0 * RENDER_QUANTUM_FRAMES as f64) / sample_rate;
+				let sized = last_room_sizes(&voices, |params| engine.is_voice_skipped(params));
+				let windows = booking_windows(&sized, window, last_pause);
+				// Windows at time 0 are booked before the render; the rest at their pauses, in frame order.
+				let mut pauses = Vec::new();
+				for window in &windows {
+					if window.suspend_at == 0.0 {
+						for voice in &window.voices {
+							engine.play(&voice.params, voice.start_time)?;
+						}
+					} else {
+						let quantum = RENDER_QUANTUM_FRAMES as f64;
+						let frame = ((window.suspend_at * sample_rate) / quantum).floor() * quantum;
+						pauses.push((frame, window));
+					}
+				}
+				pauses.sort_by(|a, b| a.0.total_cmp(&b.0));
+				for (frame, window) in pauses {
+					engine.graph_mut().set_current_time(frame / sample_rate);
+					for voice in &window.voices {
+						engine.play(&voice.params, voice.start_time)?;
+					}
+				}
+			}
+		}
+		Ok(())
+	})();
+	match outcome {
+		Ok(()) => Booked::Graph(Box::new(engine.into_graph().finish(Some(length)))),
+		Err(error) => Booked::Error(error.message().to_string()),
+	}
+}
+
+/// The inputs of a case the corpus records only as a message (a case that throws records no score and no
+/// options), taken from `conformance/recorder/optionsData.ts`.
+fn book_message_only(id: &str) -> Booked {
+	let attempt = |master: MasterBusOptions| {
+		Engine::new(
+			LogGraph::new(44_100.0, 2),
+			OutputSetup {
+				master: Some(master),
+				..OutputSetup::default()
+			},
+		)
+		.map(|_| ())
+	};
+	let ceiling = |ceiling: f64| MasterBusOptions {
+		ceiling: Some(ceiling),
+		..MasterBusOptions::default()
+	};
+	let error = match id {
+		"options-ceiling-above-full-scale" => attempt(ceiling(3.0)).err(),
+		"options-ceiling-not-a-level" => attempt(ceiling(f64::NAN)).err(),
+		// `render(..., { cps: 1, bookingWindow })` at the default 48000 Hz sample rate.
+		"options-window-not-positive" => check_booking_window(0.0, 48_000.0).err(),
+		"options-window-too-short" => check_booking_window(0.05, 1_280.0).err(),
+		other => panic!("no inputs are known for the message-only case {other}"),
+	};
+	error.map_or(Booked::NotImplemented, |error| {
+		Booked::Error(error.message().to_string())
+	})
+}
+
+/// Books a case.
+fn book(case: &Case) -> Booked {
+	if let Expected::Error(_) = case.expected {
+		return book_message_only(&case.id);
+	}
+	match &case.render {
+		Some((_, render)) => book_render(case, render),
+		None => book_voices(case),
+	}
 }
 
 fn parse_score_line(line: &str) -> ScoreLine {
-	let (name, rest) = line.split_once(" @").expect("a score line has a time");
+	let (_name, rest) = line.split_once(" @").expect("a score line has a time");
 	let (at, patch) = rest.split_once(' ').expect("a score line has a patch");
 	ScoreLine {
-		name: name.to_string(),
 		at: at.parse().expect("the time is a number"),
 		patch: serde_json::from_str(patch).expect("the patch is JSON"),
 	}
@@ -238,49 +473,61 @@ fn compare(expected: &Value, actual: &Value, path: &str) -> Result<bool, String>
 fn layer_3_cases_are_equal_or_listed_as_pending() {
 	let groups = groups();
 	assert!(!groups.is_empty(), "no layer 3 group was found");
-	for (listed, _) in PENDING {
+	let known: Vec<String> = groups
+		.values()
+		.flatten()
+		.map(|case| case["id"].as_str().expect("id").to_string())
+		.collect();
+	for (listed, _) in PENDING_CASES {
 		assert!(
-			groups.contains_key(*listed),
-			"PENDING names a missing group {listed}"
+			known.iter().any(|id| id == listed),
+			"PENDING_CASES names a missing case {listed}"
 		);
 	}
 	let mut failures = Vec::new();
 	for (group, cases) in &groups {
-		let pending_reason = PENDING
-			.iter()
-			.find(|(name, _)| name == group)
-			.map(|(_, r)| *r);
 		let (mut equal, mut pending, mut floor_ids) = (0usize, 0usize, Vec::new());
+		let mut pending_ids = Vec::new();
 		for value in cases {
 			let case = parse_case(value);
-			match book(&case) {
-				Booked::NotImplemented => pending += 1,
+			let reason = pending_reason(&case);
+			// `Ok(floor)` when the booking equals the corpus, `Err(difference)` when it does not.
+			let outcome: Result<bool, String> = match book(&case) {
+				Booked::NotImplemented => Err("not booked".to_string()),
 				Booked::Error(message) => match &case.expected {
-					Expected::Error(recorded) if *recorded == message => equal += 1,
-					other => failures.push(format!(
+					Expected::Error(recorded) if *recorded == message => Ok(false),
+					other => Err(format!(
 						"{}: booking failed with {message:?}, recorded {other:?}",
 						case.id
 					)),
 				},
-				Booked::Graph(record) => {
-					let Expected::Graph(expected) = &case.expected else {
-						failures.push(format!(
-							"{}: booked a graph where an error is recorded",
-							case.id
-						));
-						continue;
-					};
-					let actual: Value = serde_json::from_str(&record.to_json(""))
-						.expect("the writer produces JSON");
-					match compare(expected, &actual, &case.id) {
-						Ok(floor) => {
-							equal += 1;
-							if floor {
-								floor_ids.push(case.id.clone());
-							}
-						}
-						Err(difference) => failures.push(difference),
+				Booked::Graph(record) => match &case.expected {
+					Expected::Graph(expected) => {
+						let actual: Value = serde_json::from_str(&record.to_json(""))
+							.expect("the writer produces JSON");
+						compare(expected, &actual, &case.id)
 					}
+					Expected::Error(recorded) => Err(format!(
+						"{}: booked a graph where the error {recorded:?} is recorded",
+						case.id
+					)),
+				},
+			};
+			match (outcome, reason) {
+				(Ok(floor), None) => {
+					equal += 1;
+					if floor {
+						floor_ids.push(case.id.clone());
+					}
+				}
+				(Err(difference), None) => failures.push(difference),
+				(Ok(_), Some(reason)) => failures.push(format!(
+					"{}: is listed as pending ({reason}) but equals the corpus; remove it from the pending list",
+					case.id
+				)),
+				(Err(_), Some(_)) => {
+					pending += 1;
+					pending_ids.push(case.id.clone());
 				}
 			}
 		}
@@ -289,22 +536,12 @@ fn layer_3_cases_are_equal_or_listed_as_pending() {
 		if !floor_ids.is_empty() {
 			println!("  equal only within the absolute floor: {floor_ids:?}");
 		}
-		match pending_reason {
-			Some(reason) => {
-				println!("  pending: {reason}");
-				if pending != total {
-					failures.push(format!(
-						"{group}: listed as pending but {} of {total} cases book; remove it from PENDING",
-						total - pending
-					));
-				}
-			}
-			None if pending > 0 => {
-				failures.push(format!(
-					"{group}: {pending} of {total} cases are not implemented and the group is not in PENDING"
-				));
-			}
-			None => {}
+		for id in &pending_ids {
+			let reason = PENDING_CASES
+				.iter()
+				.find(|(listed, _)| listed == id)
+				.map_or("", |(_, reason)| *reason);
+			println!("  pending {id}: {reason}");
 		}
 	}
 	assert!(
