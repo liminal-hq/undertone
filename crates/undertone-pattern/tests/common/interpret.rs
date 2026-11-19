@@ -448,6 +448,16 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 					if is_program(&raw[0]) {
 						return Ok(pattern.control(control, control_arg(&raw[0])?)?);
 					}
+					// `panpath` also takes `{ time, pan }` points.
+					if name == "panpath" && items.iter().all(|item| matches!(item, Json::Obj(_))) {
+						let field =
+							|item: &Json, key: &str| num(item.get(key).expect("a point field"));
+						let points: Vec<(f64, f64)> = items
+							.iter()
+							.map(|item| (field(item, "time"), field(item, "pan")))
+							.collect();
+						return Ok(pattern.pan_path_points(&points)?);
+					}
 					let numbers: Vec<f64> = items.iter().map(num).collect();
 					let rate = raw.get(1).map(num);
 					Ok(match name {

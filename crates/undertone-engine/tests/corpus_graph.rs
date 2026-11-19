@@ -25,6 +25,12 @@
 //! trait for `placement-pan-default` must write the corpus bytes, and every recorded graph without buffers is
 //! replayed through the trait and must write itself back byte for byte.
 
+#[allow(dead_code)]
+#[path = "../../undertone-pattern/tests/common/mod.rs"]
+mod common;
+
+use common::interpret::{Failure, interpret};
+use common::json;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -36,14 +42,15 @@ use undertone_engine::graph::{
 use undertone_engine::instruments::{FmVoiceDefinition, LayerOptions, fm_voice, layer};
 use undertone_engine::master::{Limiter, LimiterOptions, MasterBusOptions};
 use undertone_engine::params::resolve_params;
-use undertone_engine::surround::create_mono_fold;
-use undertone_engine::window::{
-	PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window, last_room_sizes,
-	sort_booking_order,
+use undertone_engine::render::{MasterSetting, RenderOptions, RenderPlan};
+use undertone_engine::score::{
+	Score, ScoreAutopan, ScoreDefinition, ScoreEvent, ScoreNote, ScorePanPoint, Seam,
 };
+use undertone_engine::surround::create_mono_fold;
+use undertone_engine::window::{PendingVoice, check_booking_window};
+use undertone_pattern::Value as PatternValue;
 use undertone_pattern::control::note;
 use undertone_pattern::random::Seed;
-use undertone_pattern::{Value as PatternValue, js};
 
 /// Cases the booking does not equal yet, by id, each with the precise reason. A case listed here must differ
 /// from the corpus (the test fails when it starts to pass, so the entry is removed); a case not listed must be
@@ -75,8 +82,14 @@ struct Case {
 	score: Vec<ScoreLine>,
 	/// `output` of a voices case: the master bus and the channel count.
 	output: Option<Value>,
-	/// `program` and `render` of a render case.
-	render: Option<(Value, Value)>,
+	/// `program` of a render case.
+	program: Option<Value>,
+	/// `definition` of a score case.
+	definition: Option<Value>,
+	/// The `render` options of a render or score case.
+	render: Option<Value>,
+	/// The score's own `cps` and `seconds`, which a score case records.
+	tempo: Option<(f64, f64)>,
 	/// The recorded graph, or the message a case that must fail gives.
 	expected: Expected,
 }
@@ -215,95 +228,182 @@ fn number_option(render: &Value, key: &str) -> Option<f64> {
 		.map(|v| to_value(v).as_number().expect("number"))
 }
 
-/// Books a `render` case the way `renderToBuffer` does on a recording offline context: the context made from
-/// the options, the destination widened for more than two channels, the master bus (on unless `master` is
-/// `false`), then the score's voices in time order, all up front or in the planned windows. A pause of the
-/// render sets the graph's clock to the quantized frame before its window is booked. The score is read from
-/// the corpus (what the recorder's collection of onsets gave), because collecting onsets from a program
-/// belongs to the scheduler.
-fn book_render(case: &Case, render: &Value) -> Booked {
-	let sample_rate = number_option(render, "sampleRate").unwrap_or(48_000.0);
-	let channels = number_option(render, "channels").map_or(2, |count| count as u32);
-	let tail = number_option(render, "tail").unwrap_or(0.0);
-	let window = number_option(render, "bookingWindow");
-	if let Some(window) = window
-		&& let Err(error) = check_booking_window(window, sample_rate)
-	{
-		return Booked::Error(error.message().to_string());
-	}
-	let cycle_seconds = match (number_option(render, "cps"), number_option(render, "bpm")) {
-		(Some(cps), None) => 1.0 / cps,
-		(None, Some(bpm)) => 240.0 / bpm,
-		(None, None) => 240.0 / 120.0,
-		(Some(_), Some(_)) => return Booked::Error("Pass either bpm or cps, not both".into()),
-	};
-	let cycles = number_option(render, "cycles").unwrap_or(1.0);
-	let pass_seconds = cycles * cycle_seconds;
-	let length = js::round((pass_seconds + tail) * sample_rate).max(1.0) as u64;
-
+/// The render options of a case, as the recorder wrote them (`context` is not recorded).
+fn render_options(render: &Value) -> RenderOptions {
+	let seed = render.get("seed").map(|seed| match seed.as_str() {
+		Some(text) => Seed::Str(text.to_string()),
+		None => Seed::Num(seed.as_f64().expect("seed")),
+	});
 	let master = match render.get("master") {
-		Some(Value::Bool(false)) => None,
-		Some(Value::Bool(true)) | None => Some(MasterBusOptions::default()),
-		Some(options) => Some(master_options(options)),
+		None => None,
+		Some(Value::Bool(false)) => Some(MasterSetting::Off),
+		Some(Value::Bool(true)) => Some(MasterSetting::On),
+		Some(options) => Some(MasterSetting::Tuned(master_options(options))),
 	};
-	let seed = render
-		.get("seed")
-		.map_or(Seed::Num(0.0), |seed| match seed.as_str() {
-			Some(text) => Seed::Str(text.to_string()),
-			None => Seed::Num(seed.as_f64().expect("seed")),
-		});
-	let graph = LogGraph::with_max_channels(sample_rate, channels, channels);
-	let setup = OutputSetup {
-		master,
-		multichannel: channels > 2,
+	let flag = |key: &str| render.get(key).and_then(Value::as_bool);
+	RenderOptions {
+		cycles: number_option(render, "cycles"),
+		seconds: number_option(render, "seconds"),
+		bpm: number_option(render, "bpm"),
+		cps: number_option(render, "cps"),
+		sample_rate: number_option(render, "sampleRate"),
+		channels: number_option(render, "channels"),
+		tail: number_option(render, "tail"),
+		wrap: flag("wrap"),
 		seed,
-	};
-	let mut engine = match Engine::new(graph, setup) {
-		Ok(engine) => engine,
-		Err(error) => return Booked::Error(error.message().to_string()),
-	};
+		gated: flag("gated"),
+		master,
+		booking_window: number_option(render, "bookingWindow"),
+		default_cpm: None,
+	}
+}
 
-	let mut voices = pending_voices(case);
-	sort_booking_order(&mut voices);
-	let outcome = (|| -> undertone_pattern::Result<()> {
-		match window {
-			None => {
-				for voice in &voices {
-					engine.play(&voice.params, voice.start_time)?;
-				}
-			}
-			Some(window) => {
-				let last_pause = (length as f64 - 2.0 * RENDER_QUANTUM_FRAMES as f64) / sample_rate;
-				let sized = last_room_sizes(&voices, |params| engine.is_voice_skipped(params));
-				let windows = booking_windows(&sized, window, last_pause);
-				// Windows at time 0 are booked before the render; the rest at their pauses, in frame order.
-				let mut pauses = Vec::new();
-				for window in &windows {
-					if window.suspend_at == 0.0 {
-						for voice in &window.voices {
-							engine.play(&voice.params, voice.start_time)?;
-						}
-					} else {
-						let quantum = RENDER_QUANTUM_FRAMES as f64;
-						let frame = ((window.suspend_at * sample_rate) / quantum).floor() * quantum;
-						pauses.push((frame, window));
-					}
-				}
-				pauses.sort_by(|a, b| a.0.total_cmp(&b.0));
-				for (frame, window) in pauses {
-					engine.graph_mut().set_current_time(frame / sample_rate);
-					for voice in &window.voices {
-						engine.play(&voice.params, voice.start_time)?;
-					}
-				}
-			}
+/// The voices a plan collected must be the ones the recorder's collection of onsets gave: the same count, and
+/// the same start times to the nine digits the corpus keeps.
+fn check_onsets(case: &Case, voices: &[PendingVoice]) -> undertone_pattern::Result<()> {
+	let fail = |message: String| Err(undertone_pattern::Error::new(message));
+	if voices.len() != case.score.len() {
+		return fail(format!(
+			"{}: {} voices planned, {} recorded",
+			case.id,
+			voices.len(),
+			case.score.len()
+		));
+	}
+	// The recorded score is in collection order; the plan's is in booking order (stable by start time).
+	let mut recorded: Vec<f64> = case.score.iter().map(|line| line.at).collect();
+	recorded.sort_by(f64::total_cmp);
+	let mut planned: Vec<f64> = voices.iter().map(|voice| voice.start_time).collect();
+	planned.sort_by(f64::total_cmp);
+	for (index, (planned, recorded)) in planned.iter().zip(&recorded).enumerate() {
+		if (planned - recorded).abs() > 1e-8 * recorded.abs().max(1e-3) {
+			return fail(format!(
+				"{}: voice {index} starts at {planned}, recorded {recorded}",
+				case.id
+			));
 		}
-		Ok(())
-	})();
-	match outcome {
-		Ok(()) => Booked::Graph(Box::new(engine.into_graph().finish(Some(length)))),
+	}
+	Ok(())
+}
+
+/// The recording graph a plan asks for: the plan's sample rate and channel count, all channels available.
+fn graph_for(plan: &RenderPlan) -> LogGraph {
+	LogGraph::with_max_channels(plan.sample_rate, plan.channels, plan.channels)
+}
+
+/// What a pause of the render does to a recording graph: sets its clock to the quantized frame.
+fn pause_at(graph: &mut LogGraph, time: f64) -> undertone_pattern::Result<()> {
+	graph.set_current_time(time);
+	Ok(())
+}
+
+/// Books a `render` case from its **program**, the way `renderToBuffer` does on a recording offline context: the
+/// program is built with the pattern crate (the interpreter layer 2 uses), planned and booked by the library
+/// ([`RenderPlan`]), and the plan's onsets are checked against the recorder's.
+fn book_render(case: &Case, program: &Value, render: &Value) -> Booked {
+	let outcome = || -> undertone_pattern::Result<(Engine<LogGraph>, usize)> {
+		let options = render_options(render);
+		let text = serde_json::to_string(program).expect("a program is JSON");
+		let program = json::parse(&text).expect("a program parses");
+		let pattern = match interpret(&program) {
+			Ok(pattern) => pattern,
+			Err(Failure::Error(message)) => return Err(undertone_pattern::Error::new(message)),
+			Err(Failure::Uncovered(what)) => panic!("{}: not covered: {what}", case.id),
+		};
+		let plan = RenderPlan::new(&options)?;
+		let engine = plan.book_pattern(graph_for(&plan), &pattern, pause_at)?;
+		check_onsets(case, &plan.collect_voices(&pattern)?)?;
+		Ok((engine, plan.length))
+	};
+	finished(outcome())
+}
+
+/// A booked render as a case result: the graph, with the render's length in frames.
+fn finished(booked: undertone_pattern::Result<(Engine<LogGraph>, usize)>) -> Booked {
+	match booked {
+		Ok((engine, length)) => {
+			Booked::Graph(Box::new(engine.into_graph().finish(Some(length as u64))))
+		}
 		Err(error) => Booked::Error(error.message().to_string()),
 	}
+}
+
+/// A score definition as the recorder wrote it.
+fn score_definition(definition: &Value) -> ScoreDefinition {
+	let number = |value: &Value| to_value(value).as_number().expect("a number");
+	let field = |object: &Value, key: &str| object.get(key).map(number);
+	let events = definition["events"]
+		.as_array()
+		.expect("events")
+		.iter()
+		.map(|event| ScoreEvent {
+			tick: field(event, "tick").expect("tick"),
+			note: event.get("note").map(|note| match note.as_str() {
+				Some(name) => ScoreNote::Name(name.to_string()),
+				None => ScoreNote::Hz(number(note)),
+			}),
+			midi: field(event, "midi"),
+			gate: field(event, "gate"),
+			level: field(event, "level"),
+			pan: field(event, "pan"),
+			pan_path: event.get("panPath").map(|points| {
+				points
+					.as_array()
+					.expect("points")
+					.iter()
+					.map(|point| ScorePanPoint {
+						tick: field(point, "tick").expect("tick"),
+						pan: field(point, "pan").expect("pan"),
+					})
+					.collect()
+			}),
+			autopan: event.get("autopan").map(|autopan| ScoreAutopan {
+				period_ticks: field(autopan, "periodTicks").expect("periodTicks"),
+				depth: field(autopan, "depth").expect("depth"),
+				shape: autopan
+					.get("shape")
+					.map(|shape| shape.as_str().expect("shape").to_string()),
+				phase: field(autopan, "phase"),
+			}),
+			voice: event.get("voice").map(to_value),
+		})
+		.collect();
+	ScoreDefinition {
+		ticks_per_second: field(definition, "ticksPerSecond").expect("ticksPerSecond"),
+		length_ticks: field(definition, "lengthTicks").expect("lengthTicks"),
+		events,
+		seam: definition.get("seam").map(|seam| match seam.as_str() {
+			Some("ring") => Seam::Ring,
+			Some("cut") => Seam::Cut,
+			other => panic!("seam {other:?}"),
+		}),
+		pan_law: field(definition, "panLaw"),
+	}
+}
+
+/// Books a `score` case: the score compiled from the definition, and rendered offline at its own tempo
+/// ([`Score::book_render`]). The score's `cps` and `seconds` and the plan's onsets are checked against the
+/// recorded ones.
+fn book_score(case: &Case, definition: &Value, render: &Value) -> Booked {
+	let outcome = || -> undertone_pattern::Result<(Engine<LogGraph>, usize)> {
+		let cue = Score::new(&score_definition(definition))?;
+		if let Some((cps, seconds)) = case.tempo
+			&& (cue.cps() != cps || cue.seconds() != seconds)
+		{
+			return Err(undertone_pattern::Error::new(format!(
+				"{}: the score has cps {} and seconds {}, recorded {cps} and {seconds}",
+				case.id,
+				cue.cps(),
+				cue.seconds()
+			)));
+		}
+		let options = render_options(render);
+		let plan = cue.render_plan(&options)?;
+		check_onsets(case, &plan.collect_voices(cue.pattern())?)?;
+		let engine = cue.book_render(graph_for, &options, pause_at)?;
+		Ok((engine, plan.length))
+	};
+	finished(outcome())
 }
 
 /// The inputs of a case the corpus records only as a message (a case that throws records no score and no
@@ -362,12 +462,15 @@ fn book_message_only(id: &str) -> Booked {
 
 /// Books a case.
 fn book(case: &Case) -> Booked {
+	if let (Some(definition), Some(render)) = (&case.definition, &case.render) {
+		return book_score(case, definition, render);
+	}
 	if let Expected::Error(_) = case.expected {
 		return book_message_only(&case.id);
 	}
-	match &case.render {
-		Some((_, render)) => book_render(case, render),
-		None => book_voices(case),
+	match (&case.program, &case.render) {
+		(Some(program), Some(render)) => book_render(case, program, render),
+		_ => book_voices(case),
 	}
 }
 
@@ -403,9 +506,18 @@ fn parse_case(value: &Value) -> Case {
 		id: text("id"),
 		score,
 		output: value.get("output").cloned(),
-		render: value
-			.get("program")
-			.map(|program| (program.clone(), value["render"].clone())),
+		program: value.get("program").cloned(),
+		definition: value.get("definition").cloned(),
+		render: value.get("render").cloned(),
+		tempo: value
+			.get("cps")
+			.zip(value.get("seconds"))
+			.map(|(cps, seconds)| {
+				(
+					cps.as_f64().expect("cps"),
+					seconds.as_f64().expect("seconds"),
+				)
+			}),
 		expected,
 	}
 }
