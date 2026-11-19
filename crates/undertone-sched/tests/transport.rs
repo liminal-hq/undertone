@@ -1315,3 +1315,201 @@ mod extremes {
 		assert_eq!(rig.engine.voice_count(), 0);
 	}
 }
+
+/// D-33: a running loop follows tempo changes unless an explicit `bpm` or `cps` pins it. Ported from the
+/// TypeScript's "a running loop and tempo changes" tests.
+mod following {
+	use super::*;
+
+	/// Ticks every 0.1 s from the clock's now up to `until`.
+	fn run(rig: &mut Rig, until: f64) {
+		let mut t = rig.clock.now();
+		while t <= until + 1e-9 {
+			rig.advance_to(t);
+			rig.tick();
+			t += 0.1;
+		}
+	}
+
+	/// Four onsets per cycle, so every cycle length gives distinct start times.
+	fn start_loop(rig: &mut Rig, options: LoopOptions) {
+		rig.transport
+			.play_loop(&mut rig.engine, &plain(note("c3 e3 g3 b3")), &options)
+			.unwrap();
+	}
+
+	fn assert_distinct_and_gaps_between(times: &[f64], low: f64, high: f64) {
+		for pair in times.windows(2) {
+			let gap = pair[1] - pair[0];
+			assert!(
+				gap > low - 1e-9 && gap < high + 1e-9,
+				"gap {gap} in {times:?}"
+			);
+		}
+		let mut keys: Vec<String> = times.iter().map(|t| format!("{t:.6}")).collect();
+		keys.dedup();
+		assert_eq!(keys.len(), times.len(), "doubled onsets in {times:?}");
+	}
+
+	#[test]
+	fn follows_a_faster_tempo_with_no_gap_or_overlap() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(30.0).unwrap(); // 2 s cycles, steps 0.5 s apart
+		start_loop(&mut rig, LoopOptions::default());
+		run(&mut rig, 1.0);
+		rig.transport.set_cpm(60.0).unwrap(); // 1 s cycles, steps 0.25 s apart
+		run(&mut rig, 3.0);
+		let times = rig.oscillator_starts();
+		assert!(times.windows(2).any(|p| p[1] - p[0] < 0.4), "{times:?}");
+		assert_distinct_and_gaps_between(&times, 0.25, 0.5);
+		approx(times[times.len() - 1] - times[times.len() - 2], 0.25);
+	}
+
+	#[test]
+	fn follows_a_slower_tempo_with_no_gap_or_overlap() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(60.0).unwrap();
+		start_loop(&mut rig, LoopOptions::default());
+		run(&mut rig, 1.0);
+		rig.transport.set_cpm(30.0).unwrap();
+		run(&mut rig, 4.0);
+		let times = rig.oscillator_starts();
+		assert_distinct_and_gaps_between(&times, 0.25, 0.5);
+		approx(times[times.len() - 1] - times[times.len() - 2], 0.5);
+	}
+
+	#[test]
+	fn keeps_booked_voices_and_continues_from_the_end_of_them() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(30.0).unwrap(); // 2 s cycles
+		rig.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3 e3")),
+				&LoopOptions::default(),
+			)
+			.unwrap();
+		rig.advance_to(0.85);
+		rig.tick(); // books the onset at 1.1, inside the look-ahead
+		let booked = rig.oscillator_starts();
+		assert_eq!(booked.len(), 2);
+		approx(booked[1], 1.1);
+
+		rig.transport.set_cpm(60.0).unwrap(); // 1 s cycles: onsets 0.5 s apart
+		// The window booked so far ends at the grid point just under cycle 0.525, the anchor.
+		let anchor = 5291.0 / 10080.0;
+		let anchor_time = 0.1 + anchor * 2.0;
+		rig.advance_to(1.9);
+		rig.tick();
+		rig.advance_to(2.9);
+		rig.tick();
+		let after = rig.oscillator_starts();
+		assert_eq!(after[..2], booked[..]);
+		approx(after[2], anchor_time + (1.0 - anchor));
+		approx(after[3], anchor_time + (1.5 - anchor));
+	}
+
+	#[test]
+	fn handles_a_change_between_ticks_and_several_in_a_row() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(60.0).unwrap();
+		start_loop(&mut rig, LoopOptions::default());
+		run(&mut rig, 0.5);
+		rig.transport.set_cpm(120.0).unwrap();
+		rig.transport.set_cpm(15.0).unwrap(); // only the last value before the next tick counts
+		let t = rig.clock.now() + 0.1;
+		rig.advance_to(t);
+		run(&mut rig, 4.0);
+		let times = rig.oscillator_starts();
+		assert_distinct_and_gaps_between(&times, 0.25, 1.0);
+		approx(times[times.len() - 1] - times[times.len() - 2], 1.0);
+	}
+
+	#[test]
+	fn follows_reset_tempo_back_to_the_default() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(60.0).unwrap();
+		rig.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3 e3")),
+				&LoopOptions::default(),
+			)
+			.unwrap();
+		run(&mut rig, 1.0);
+		rig.transport.reset_tempo(); // 2 s cycles, onsets 1 s apart
+		run(&mut rig, 5.0);
+		let times = rig.oscillator_starts();
+		approx(times[times.len() - 1] - times[times.len() - 2], 1.0);
+		assert_distinct_and_gaps_between(&times, 0.5, 1.0);
+	}
+
+	#[test]
+	fn an_explicit_bpm_or_cps_pins_the_loops_tempo() {
+		for explicit in [(Some(120.0), None), (None, Some(0.5))] {
+			let mut rig = Rig::new();
+			let options = LoopOptions {
+				bpm: explicit.0,
+				cps: explicit.1,
+				..LoopOptions::default()
+			};
+			rig.transport
+				.play_loop(&mut rig.engine, &plain(note("c3 e3")), &options)
+				.unwrap();
+			run(&mut rig, 1.0);
+			rig.transport.set_cpm(600.0).unwrap();
+			run(&mut rig, 5.0);
+			let times = rig.oscillator_starts();
+			assert!(times.len() >= 5, "{times:?}");
+			for (i, time) in times.iter().enumerate() {
+				approx(*time, 0.1 + i as f64);
+			}
+		}
+	}
+
+	#[test]
+	fn a_stopped_loop_books_no_more_after_a_tempo_change() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(60.0).unwrap();
+		let handle = rig
+			.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3 e3")),
+				&LoopOptions::default(),
+			)
+			.unwrap();
+		run(&mut rig, 1.0);
+		rig.transport
+			.stop_loop(&mut rig.engine, handle, &LoopStop::default())
+			.unwrap();
+		let count = rig.oscillator_starts().len();
+		assert!(count > 0);
+		rig.transport.set_cpm(120.0).unwrap();
+		run(&mut rig, 3.0);
+		assert_eq!(rig.oscillator_starts().len(), count);
+	}
+
+	#[test]
+	fn an_invalid_set_cpm_fails_at_the_call_and_leaves_the_loop_on_its_tempo() {
+		let mut rig = Rig::new();
+		rig.transport.set_cpm(60.0).unwrap();
+		rig.transport
+			.play_loop(
+				&mut rig.engine,
+				&plain(note("c3 e3")),
+				&LoopOptions::default(),
+			)
+			.unwrap();
+		assert!(
+			rig.transport
+				.set_cpm(0.0)
+				.unwrap_err()
+				.message()
+				.contains("must be positive")
+		);
+		run(&mut rig, 3.0);
+		let times = rig.oscillator_starts();
+		approx(times[times.len() - 1] - times[times.len() - 2], 0.5);
+	}
+}
