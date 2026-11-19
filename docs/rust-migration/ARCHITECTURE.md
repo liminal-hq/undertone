@@ -17,7 +17,7 @@ undertone/
     undertone-pattern/          # new, empty at RF-03, grown in RF-07 and RF-13 to RF-17
     undertone-engine/           # new, empty at RF-03, grown in RF-18 to RF-21
     undertone-sched/            # new (RF-22)
-    undertone/                  # new: the Rust API facade (RF-23)
+    undertone/                  # new: the Rust API facade (RF-23): prelude, Error, Player, render, examples, corpus runner
     undertone-wasm/             # new: the real WASM Undertone, the full Rust API through wasm-bindgen (RF-24)
     undertone-native/           # new: cpal output (RF-28)
     undertone-worklet/          # new: raw-ABI engine for an AudioWorklet (RF-29)
