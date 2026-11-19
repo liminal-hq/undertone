@@ -58,11 +58,11 @@
 //!   88.2 kHz); at other rates the layout is the same and the table size is not. The built-in types are normalised like a custom wave (unless it was
 //!   made with normalisation disabled), as Chromium's are: layer 4 measured its square and sawtooth at 0.848 of the
 //!   ideal wave (one over the Gibbs overshoot of the partial sum), which this crate now matches.
-//! - **The dynamics compressor** implements the algorithm the specification and browsers share (a saturating
-//!   soft-knee curve, a 6 ms pre-delay so the gain reduction is in place before the loud sample arrives, a
-//!   detector that releases over a few milliseconds, an attack that reaches the target in the attack time,
-//!   and automatic makeup gain), but its release is a single constant rate rather than the browsers'
-//!   adaptive curve. The look-ahead details therefore differ, and so do the peaks it lets through.
+//! - **The dynamics compressor** follows Chromium's algorithm (a saturating soft-knee curve, a 6 ms pre-delay so the
+//!   gain reduction is in place before the loud sample arrives, a detector that starts at zero and releases over a
+//!   few milliseconds, an envelope decided every 32 frames with the gain warped by `asin` and `sin`, an attack that
+//!   reaches the target in the attack time, the adaptive release curve, and automatic makeup gain). Layer 4
+//!   measured it against Chromium on loud renders to 0.002 dB in RMS and peak.
 //! - **Biquad filters** use the specification's coefficients for every type, the low-pass and high-pass
 //!   with their `Q` in decibels as a linear `10^(Q/20)`, which is what Chromium 149 does (layer 4 measured its
 //!   frequency response).

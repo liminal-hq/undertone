@@ -14,16 +14,22 @@
 //! - **The detector** follows the larger of the channels' absolute values (the channels are linked) and
 //!   turns the curve into a gain; it falls back over about 2.5 ms, so one cycle of a low note does not
 //!   modulate the gain.
-//! - **The envelope.** The gain moves towards a lower target by an exponential approach that gets within a
-//!   quarter of a decibel of it in `attack` seconds (never less than 1 ms), and recovers at a constant
-//!   `10 dB` per `release` seconds. (Browsers shape the release by how deep the gain reduction is; this does
-//!   not, which is the main difference in the compressor's behaviour.)
+//! - **The envelope** is worked out once per division of 32 frames from the detector's value at its start, as
+//!   Chromium's does. The detector's gain is pre-warped by `asin(g) / (pi / 2)`, the smoothed gain is warped back
+//!   by `sin(pi / 2 * g)` when it is applied (which rounds the corners of the exponential), and:
+//!   - going lower (attack), the gain approaches the target by an exponential that gets within a quarter of a
+//!     decibel of it in `attack` seconds (never less than 1 ms), the slower the shallower the deepest reduction
+//!     seen so far in this attack;
+//!   - going higher (release), the gain rises by 5 dB over a number of frames given by a quartic through four
+//!     points (0.09, 0.16, 0.42, and 0.98 of the `release` time, at 12, 8, 4, and 0 dB of reduction left to
+//!     undo), so a deeper reduction lets go faster.
+//!
 //! - **Makeup gain** is automatic: the reciprocal of the curve's output for a full-scale input, raised to
 //!   0.6, as browsers do. The master bus takes it back out with a gain stage after the compressor.
 //!
 //! `threshold`, `knee`, `ratio`, `attack`, and `release` are read once per quantum (they are k-rate).
 
-use crate::math::{exp, ln, pow};
+use crate::math::{acos, exp, ln, pow, sin};
 use crate::render_graph::mix::QUANTUM;
 
 /// The look-ahead, in seconds.
@@ -31,6 +37,45 @@ const PRE_DELAY: f64 = 0.006;
 /// How quickly the detector lets go, in seconds.
 const DETECTOR_RELEASE: f64 = 0.0025;
 const LN_10: f64 = core::f64::consts::LN_10;
+/// Frames in a division: how often the envelope's direction and rate are decided.
+const DIVISION: usize = 32;
+/// The release time's fractions at the four points of the adaptive release curve (12, 8, 4, and 0 dB of reduction to undo).
+const RELEASE_ZONES: [f64; 4] = [0.09, 0.16, 0.42, 0.98];
+/// The quartic through the four zones, one row per coefficient (`a` to `e`), one column per zone (Chromium's constants).
+const RELEASE_POLYNOMIAL: [[f64; 4]; 5] = [
+	[
+		0.999_999_999_999_999_8,
+		1.843_221_968_432_392_3e-16,
+		-1.937_339_435_167_642_3e-16,
+		8.824_516_011_816_245e-18,
+	],
+	[
+		-1.578_832_035_284_588_8,
+		2.330_583_703_207_428_6,
+		-0.914_119_420_484_042_9,
+		0.162_367_752_561_203_2,
+	],
+	[
+		0.533_414_286_910_642_4,
+		-1.272_736_789_213_631,
+		0.925_885_604_220_751_2,
+		-0.186_563_101_917_762_26,
+	],
+	[
+		0.087_834_631_382_072_34,
+		-0.169_416_296_792_562_2,
+		0.085_880_579_515_952_72,
+		-0.004_298_914_105_462_83,
+	],
+	[
+		-0.042_416_883_008_123_074,
+		0.111_569_382_798_760_2,
+		-0.097_646_763_252_658_72,
+		0.028_494_263_462_021_576,
+	],
+];
+/// Decibels the release rate is spread over.
+const SPACING_DB: f64 = 5.0;
 
 fn to_decibels(linear: f64) -> f64 {
 	if linear <= 0.0 {
@@ -143,7 +188,8 @@ impl Compressor {
 			write: 0,
 			sample_rate,
 			curve: None,
-			detector: 1.0,
+			// Chromium resets the detector to 0, so the first tens of milliseconds are held down while it climbs.
+			detector: 0.0,
 			gain: 1.0,
 			max_attack_db: -1.0,
 		}
@@ -161,7 +207,7 @@ impl Compressor {
 	/// The gain the compressor is applying now, in decibels (0 or below), without the makeup.
 	#[cfg(test)]
 	pub(crate) fn gain_db(&self) -> f64 {
-		to_decibels(self.gain)
+		to_decibels(sin(0.5 * core::f64::consts::PI * self.gain))
 	}
 
 	/// The makeup gain for a setting of the parameters.
@@ -190,55 +236,86 @@ impl Compressor {
 		};
 		let makeup = pow(1.0 / curve.saturate(1.0), 0.6);
 		let attack_frames = attack.max(0.001) * self.sample_rate;
-		let release_frames = (release * self.sample_rate).max(1.0);
+		let release_frames = release * self.sample_rate;
 		let detector_frames = DETECTOR_RELEASE * self.sample_rate;
-		let release_rate = to_linear(10.0 / release_frames);
+		// The adaptive release curve's coefficients for this release time.
+		let [a, b, c, d, e] = RELEASE_POLYNOMIAL.map(|row| {
+			row.iter()
+				.zip(RELEASE_ZONES)
+				.map(|(weight, zone)| weight * release_frames * zone)
+				.sum::<f64>()
+		});
 		let delay = self.delay_frames;
-		for i in 0..QUANTUM {
-			let mut level = 0.0_f64;
-			for channel in 0..channels {
-				level = level.max(f64::from(input[channel * QUANTUM + i]).abs());
-			}
-			// The detector: how much gain the curve would leave, with a quick fall back.
-			let wanted = if level <= 0.0001 {
-				1.0
-			} else {
-				curve.saturate(level) / level
-			};
-			let wanted_db = (-to_decibels(wanted)).max(2.0);
-			let release_step = to_linear(wanted_db / detector_frames) - 1.0;
-			let rate = if wanted > self.detector {
-				release_step
+		for division in 0..QUANTUM / DIVISION {
+			// The envelope's rate for this division, from the detector as it stands now.
+			let wanted = self.detector;
+			let target = if wanted.is_finite() {
+				// asin(g) / (pi / 2), as 1 - acos(g) / (pi / 2)
+				1.0 - acos(wanted.clamp(-1.0, 1.0)) / (0.5 * core::f64::consts::PI)
 			} else {
 				1.0
 			};
-			self.detector += (wanted - self.detector) * rate;
-			self.detector = self.detector.min(1.0);
-			let target = self.detector;
-			// The envelope: attack towards a lower target, release towards a higher one.
-			let difference = to_decibels(self.gain / target);
-			if difference > 0.0 {
-				self.max_attack_db = self.max_attack_db.max(difference);
-				let x = 0.25 / self.max_attack_db.max(0.5);
-				let step = 1.0 - pow(x, 1.0 / attack_frames);
-				self.gain += (target - self.gain) * step;
-			} else {
+			let mut difference = to_decibels(self.gain / target);
+			let releasing = target > self.gain;
+			let rate = if releasing {
 				self.max_attack_db = -1.0;
-				self.gain = (self.gain * release_rate).min(target).min(1.0);
-			}
-			let total = (self.gain * makeup) as f32;
-			for channel in 0..channels {
-				let sample = input[channel * QUANTUM + i];
-				let heard = if delay == 0 {
-					sample
+				if !difference.is_finite() {
+					difference = -1.0;
+				}
+				let x = 0.25 * (difference.clamp(-12.0, 0.0) + 12.0);
+				let frames = a + b * x + c * x * x + d * x * x * x + e * x * x * x * x;
+				to_linear(SPACING_DB / frames)
+			} else {
+				if !difference.is_finite() {
+					difference = 0.0;
+				}
+				if self.max_attack_db == -1.0 || self.max_attack_db < difference {
+					self.max_attack_db = difference;
+				}
+				let x = 0.25 / self.max_attack_db.max(0.5);
+				1.0 - pow(x, 1.0 / attack_frames)
+			};
+			for i in division * DIVISION..(division + 1) * DIVISION {
+				let mut level = 0.0_f64;
+				for channel in 0..channels {
+					level = level.max(f64::from(input[channel * QUANTUM + i]).abs());
+				}
+				// The detector: how much gain the curve would leave, with a quick fall back.
+				let leave = if level <= 0.0001 {
+					1.0
 				} else {
-					let slot = &mut self.delay[channel * delay + self.write];
-					std::mem::replace(slot, sample)
+					curve.saturate(level) / level
 				};
-				out[channel * QUANTUM + i] = heard * total;
-			}
-			if delay != 0 {
-				self.write = (self.write + 1) % delay;
+				let leave_db = (-to_decibels(leave)).max(2.0);
+				let release_step = to_linear(leave_db / detector_frames) - 1.0;
+				let detector_rate = if leave > self.detector {
+					release_step
+				} else {
+					1.0
+				};
+				self.detector += (leave - self.detector) * detector_rate;
+				self.detector = self.detector.min(1.0);
+				// The envelope: exponential approach down (attack), or a rise to full gain (release).
+				if rate < 1.0 {
+					self.gain += (target - self.gain) * rate;
+				} else {
+					self.gain = (self.gain * rate).min(1.0);
+				}
+				// Warp the smoothed gain back, then apply it and the makeup.
+				let total = (sin(0.5 * core::f64::consts::PI * self.gain) * makeup) as f32;
+				for channel in 0..channels {
+					let sample = input[channel * QUANTUM + i];
+					let heard = if delay == 0 {
+						sample
+					} else {
+						let slot = &mut self.delay[channel * delay + self.write];
+						std::mem::replace(slot, sample)
+					};
+					out[channel * QUANTUM + i] = heard * total;
+				}
+				if delay != 0 {
+					self.write = (self.write + 1) % delay;
+				}
 			}
 		}
 	}
@@ -247,8 +324,6 @@ impl Compressor {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::math::sin;
-
 	const RATE: f64 = 48_000.0;
 
 	/// Runs a sine of `amplitude` through the compressor for `seconds` and returns (the input, the output).
