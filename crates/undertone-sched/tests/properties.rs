@@ -17,7 +17,7 @@ use undertone_sched::{BookOptions, book_window};
 /// The patterns the properties run over: plain, subdivided, alternating, euclidean, stacked, slowed and
 /// sped up by non-integer factors (so events straddle window edges), a cut group, a nudge, and noise.
 fn pattern(index: usize) -> Pattern<ControlMap> {
-	let pattern = match index % 9 {
+	let pattern = match index % POOL {
 		0 => note("c3 e3 g3"),
 		1 => note("c3*3 e3").and_then(|p| p.slow(1.5)),
 		2 => note("<c3 e3> g3 ~ c4@2"),
@@ -30,13 +30,40 @@ fn pattern(index: usize) -> Pattern<ControlMap> {
 		5 => note("c3 e3").and_then(|p| p.fast(2.5)),
 		6 => note("c3").and_then(|p| p.slow(2.0)),
 		7 => sound("white pink ~ white"),
-		_ => note("c3 e3 g3 b3").and_then(|p| p.cut(2.0)),
+		8 => note("c3 e3 g3 b3").and_then(|p| p.cut(2.0)),
+		// A large nudge carries a voice across window edges and past later onsets of other layers.
+		9 => {
+			let early = note("c3").and_then(|p| p.nudge(LARGE_NUDGE));
+			let later = note("~ e3");
+			Ok(stack(vec![early.unwrap(), later.unwrap()]))
+		}
+		// The same in a cut group, where the order the voices are booked in decides which one is choked.
+		10 => {
+			let early = note("c3 g3")
+				.and_then(|p| p.nudge(LARGE_NUDGE))
+				.and_then(|p| p.cut(1.0));
+			let later = note("~ e3 ~ b3").and_then(|p| p.cut(1.0));
+			Ok(stack(vec![early.unwrap(), later.unwrap()]))
+		}
+		// Negative and positive nudges together, so a later onset can sound first.
+		_ => {
+			let behind = note("c3*2").and_then(|p| p.nudge(-LARGE_NUDGE));
+			let ahead = note("e3*3").and_then(|p| p.nudge(LARGE_NUDGE));
+			let plain = note("g3 ~ b3").and_then(|p| p.cut(1.0));
+			Ok(stack(vec![behind.unwrap(), ahead.unwrap(), plain.unwrap()]))
+		}
 	};
 	pattern.expect("a valid pattern")
 }
 
 /// The nudge, in seconds, that one of the patterns gives its voices.
 const MAX_NUDGE: f64 = 0.004;
+
+/// A nudge, in seconds, larger than a look-ahead and than the gap between onsets at the tempos tested.
+const LARGE_NUDGE: f64 = 0.8;
+
+/// How many patterns the pool has.
+const POOL: usize = 12;
 
 fn engine() -> Engine<LogGraph> {
 	Engine::new(LogGraph::new(48_000.0, 2), OutputSetup::default()).expect("an engine")
@@ -86,7 +113,7 @@ proptest! {
 	/// Booking [a, c) equals booking [a, b) then [b, c), for a split anywhere inside.
 	#[test]
 	fn a_window_equals_its_two_halves(
-		index in 0usize..9,
+		index in 0usize..POOL,
 		bpm in 60.0f64..480.0,
 		start in 0.0f64..50.0,
 		gated in any::<bool>(),
@@ -105,7 +132,7 @@ proptest! {
 	/// Windows cut at any number of random points book the same as one call: window independence.
 	#[test]
 	fn a_window_is_independent_of_how_it_is_split(
-		index in 0usize..9,
+		index in 0usize..POOL,
 		bpm in 60.0f64..480.0,
 		a in 0.0f64..20.0,
 		length in 0.0f64..12.0,
@@ -124,7 +151,7 @@ proptest! {
 	/// the number of onsets the pattern has over the joined window.
 	#[test]
 	fn no_voice_is_booked_twice_at_a_boundary(
-		index in 0usize..9,
+		index in 0usize..POOL,
 		bpm in 60.0f64..480.0,
 		a in 0.0f64..20.0,
 		length in 0.1f64..12.0,
@@ -143,18 +170,18 @@ proptest! {
 		let second = book_window(&mut two, &pattern, middle, t1, &options).unwrap();
 		prop_assert_eq!(first.len() + second.len(), joined.len());
 
-		// Every onset in the second window is at or after the boundary's grid edge (the nudge only moves a
-		// voice later), and every onset of the first is before it (less the nudge): no tail repeats.
+		// Every voice of the second window starts at or after the boundary's grid edge less the largest
+		// negative nudge, and every voice of the first before it plus the largest positive nudge: no tail repeats.
 		let edge = undertone_sched::window_edge(middle, options.cycle_seconds().unwrap())
 			.unwrap()
 			.to_f64()
 			* options.cycle_seconds().unwrap();
 		for playback in &second {
-			prop_assert!(playback.start_time >= edge - 1e-9, "{} < {}", playback.start_time, edge);
+			prop_assert!(playback.start_time >= edge - LARGE_NUDGE - 1e-9, "{} < {}", playback.start_time, edge);
 		}
 		for playback in &first {
 			prop_assert!(
-				playback.start_time < edge + MAX_NUDGE + 1e-9,
+				playback.start_time < edge + LARGE_NUDGE + 1e-9,
 				"{} >= {}",
 				playback.start_time,
 				edge
@@ -166,7 +193,7 @@ proptest! {
 	/// second booking is not a no-op, and is the same voices.
 	#[test]
 	fn the_same_window_books_the_same_voices_each_time(
-		index in 0usize..9,
+		index in 0usize..POOL,
 		a in 0.0f64..10.0,
 		length in 0.0f64..6.0,
 	) {
@@ -186,7 +213,7 @@ proptest! {
 /// stacked, cut, and noise ones make nodes beyond the destination.
 #[test]
 fn every_pattern_in_the_pool_books_something() {
-	for index in 0..9 {
+	for index in 0..POOL {
 		let mut engine = engine();
 		let booked = book_window(
 			&mut engine,
@@ -198,4 +225,15 @@ fn every_pattern_in_the_pool_books_something() {
 		.unwrap();
 		assert!(!booked.is_empty(), "pattern {index} booked nothing");
 	}
+}
+
+/// The case that found the problem: a voice nudged 0.8 s across a window edge, stacked with a later onset.
+/// Each window sorted its own voices by nudged start, so a nudged voice booked in the first window came
+/// before a later onset when the span was split, and after it when booked whole.
+#[test]
+fn a_nudged_voice_is_booked_in_the_same_order_whole_or_split() {
+	let pattern = pattern(9);
+	let options = options(240.0, 0.0, true); // one second a cycle: c3 at 0 (sounds at 0.8), e3 at 0.5
+	let (whole, split) = book_whole_and_pieces(&pattern, &options, 0.0, 1.0, &[0.5]);
+	assert_eq!(whole, split);
 }
