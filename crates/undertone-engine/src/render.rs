@@ -543,6 +543,83 @@ mod tests {
 	}
 
 	#[test]
+	fn a_tempo_that_makes_the_cycle_count_unbounded_is_an_error() {
+		let message = |options: RenderOptions| plan(options).unwrap_err().message().to_string();
+		let infinite_cps = RenderOptions {
+			cps: Some(f64::INFINITY),
+			seconds: Some(1.0),
+			..RenderOptions::default()
+		};
+		assert_eq!(message(infinite_cps), "cps must be finite, got Infinity");
+		assert_eq!(
+			message(RenderOptions {
+				bpm: Some(f64::INFINITY),
+				..RenderOptions::default()
+			}),
+			"bpm must be finite, got Infinity"
+		);
+		// A huge finite cps divides to an infinite cycle count.
+		assert!(
+			message(RenderOptions {
+				cps: Some(1e300),
+				seconds: Some(1e300),
+				..RenderOptions::default()
+			})
+			.contains("too many cycles")
+		);
+		for cpm in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+			assert!(
+				message(RenderOptions {
+					default_cpm: Some(cpm),
+					..RenderOptions::default()
+				})
+				.starts_with("default_cpm must be positive and finite")
+			);
+		}
+	}
+
+	#[test]
+	fn absurd_lengths_and_rates_are_errors_not_loops_or_allocations() {
+		let message = |options: RenderOptions| plan(options).unwrap_err().message().to_string();
+		assert!(
+			message(RenderOptions {
+				cycles: Some(1e15),
+				..RenderOptions::default()
+			})
+			.contains("too many cycles")
+		);
+		assert!(
+			message(RenderOptions {
+				cycles: Some(10_000.0),
+				bpm: Some(1.0),
+				..RenderOptions::default()
+			})
+			.contains("too long")
+		);
+		assert!(
+			message(RenderOptions {
+				tail: Some(1e12),
+				..RenderOptions::default()
+			})
+			.contains("too long")
+		);
+		assert!(
+			message(RenderOptions {
+				sample_rate: Some(1e12),
+				..RenderOptions::default()
+			})
+			.contains("sampleRate")
+		);
+		assert!(
+			message(RenderOptions {
+				seconds: Some(1e300),
+				..RenderOptions::default()
+			})
+			.contains("too many cycles")
+		);
+	}
+
+	#[test]
 	fn seconds_round_up_to_whole_cycles_and_end_the_pass() {
 		let plan = plan(RenderOptions {
 			seconds: Some(3.0),
