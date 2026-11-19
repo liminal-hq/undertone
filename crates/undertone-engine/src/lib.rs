@@ -10,8 +10,12 @@
 //! The [`math`] module holds the transcendental maths the recorded graphs depend on. It uses the
 //! pure-Rust `libm` crate by default, so the same numbers come out on every platform; build with
 //! `--no-default-features` for the platform C library.
+//!
+//! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
+//! support is behind the `serde` cargo feature.
 
 pub mod math;
+pub mod params;
 
 /// The name of this crate, as a placeholder item until the engine lands.
 ///

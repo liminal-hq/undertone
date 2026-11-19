@@ -12,10 +12,20 @@ default = ["libm"]
 # Use the pure-Rust `libm` crate for the engine's maths, the same code on every target (D-23). Build with
 # `--no-default-features` to use the platform C library instead.
 libm = ["dep:libm"]
+# Derive `Serialize` and `Deserialize` for `VoiceParams` and its parts, with the TypeScript's camelCase field
+# names. Not a default feature: the data path to JavaScript is `serde-wasm-bindgen` (D-11), and `serde_json`
+# never becomes a dependency of this crate (R4, D-07). The tests turn it on through the dev-dependency below.
+serde = ["dep:serde"]
 
 [dependencies]
 undertone-pattern = { path = "../undertone-pattern", version = "0.0.0" }
 libm = { version = "0.2.16", optional = true }
+serde = { version = "1", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+# Enables the crate's own `serde` feature for its tests, and reads the corpus and the name snapshot.
+undertone-engine = { path = ".", features = ["serde"] }
+serde_json = "1"
 
 [lints]
 workspace = true
