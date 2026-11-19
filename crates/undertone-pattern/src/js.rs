@@ -33,6 +33,24 @@ pub fn round(x: f64) -> f64 {
 	}
 }
 
+/// `x ** y` and `Math.pow(x, y)` as JavaScriptCore computes them (the engine the reference's corpus was recorded on).
+///
+/// For almost every input this is the C library's `pow`. JavaScriptCore special-cases an exponent of `-0.5` as `1 / sqrt(x)`, which is not always the correctly rounded result: `2 ** -0.5` is `0.7071067811865475` there, and `0.7071067811865476` from glibc. The reference's `midiToFrequency` reaches this case (`c4` dorian's third degree is 3 semitones below A4, so `(63 - 69) / 12 = -0.5`), so the Rust side must follow the engine, not the C library. This is a finding for R9 (maths determinism).
+///
+/// ```
+/// use undertone_pattern::js::pow;
+/// assert_eq!(pow(2.0, -0.5), 0.7071067811865475);
+/// assert_eq!(pow(2.0, 0.5), 2.0_f64.sqrt());
+/// assert_eq!(pow(2.0, 10.0), 1024.0);
+/// assert!(pow(-8.0, -0.5).is_nan());
+/// ```
+pub fn pow(x: f64, y: f64) -> f64 {
+	if y == -0.5 && x > 0.0 && x.is_finite() {
+		return 1.0 / math::sqrt(x);
+	}
+	math::powf(x, y)
+}
+
 /// `Number.isInteger`: true for a finite number with no fractional part.
 ///
 /// ```

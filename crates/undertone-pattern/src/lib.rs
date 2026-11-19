@@ -13,6 +13,7 @@
 
 extern crate alloc;
 
+pub mod control;
 pub mod error;
 pub mod fraction;
 pub mod hap;
@@ -20,12 +21,17 @@ pub mod js;
 pub(crate) mod math;
 pub mod mini;
 pub mod pattern;
+pub mod random;
+pub mod signal;
 pub mod value;
 
 pub use error::{Error, Result};
 pub use fraction::Fraction;
 pub use hap::{Hap, Span};
-pub use pattern::{Node, Pattern, cat, compress, fast, pure, seq, silence, slow, stack, timecat};
+pub use pattern::{
+	ArithOp, CustomQuery, ForeignFn, Node, Pattern, arrange, cat, compress, fast, pure, seq,
+	silence, slow, stack, timecat,
+};
 pub use value::{Datum, MapFn, ParsedScale, Value};
 
 /// The name of this crate, as a placeholder item until the pattern core lands.

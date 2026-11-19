@@ -41,6 +41,14 @@ impl Value {
 		Value::Map(map)
 	}
 
+	/// The number this value holds, if it is one.
+	pub fn as_number(&self) -> Option<f64> {
+		match self {
+			Value::Num(n) => Some(*n),
+			_ => None,
+		}
+	}
+
 	/// The field `key` of a map value.
 	pub fn get(&self, key: &str) -> Option<&Value> {
 		match self {
@@ -137,7 +145,7 @@ impl MapFn {
 			MapFn::Floor => math::floor(v),
 			MapFn::Range { lo, hi } => lo + v * (hi - lo),
 			MapFn::Range2 { lo, hi } => lo + ((v + 1.0) / 2.0) * (hi - lo),
-			MapFn::Rangex { lo, ratio } => lo * math::powf(*ratio, v),
+			MapFn::Rangex { lo, ratio } => lo * js::pow(*ratio, v),
 			MapFn::Scale(_) | MapFn::Merge(_) => return None,
 		})
 	}
@@ -213,7 +221,7 @@ impl Datum for Value {
 						let mut rest = map.clone();
 						rest.remove("degree");
 						let midi = scale.degree_to_midi(*degree);
-						let hz = 440.0 * math::powf(2.0, (midi - 69.0) / 12.0);
+						let hz = crate::control::midi_to_frequency(midi);
 						rest.insert("pitch".into(), Value::Num(hz));
 						Value::Map(rest)
 					}

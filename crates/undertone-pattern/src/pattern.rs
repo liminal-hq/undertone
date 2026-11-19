@@ -7,11 +7,13 @@
 //!
 //! A pattern is a function from a span of cycle time to the haps overlapping it. Here that function is not a closure but a tree of [`Node`]s that every consumer can walk: print, hash, send to another thread, or (later) serialise. The nodes are immutable and shared through `Arc`, so a transform builds a new root over the old tree.
 
+use crate::control::{Control, ControlInput, query_with_control};
 use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::hap::{Hap, Span};
 use crate::js;
-use crate::value::Datum;
+use crate::signal::Signal;
+use crate::value::{Datum, MapFn};
 use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -52,6 +54,64 @@ pub enum Node<T> {
 		/// The slowed pattern.
 		child: Pattern<T>,
 	},
+	/// Each cycle of the child reversed in time (a cycle-local mirror).
+	Rev(Pattern<T>),
+	/// `transformed` on every `n`th cycle (0, n, 2n, ...) and `base` on the others. The transform was applied to `base` when the pattern was built, so the tree holds the result, not the function.
+	Every {
+		/// The cycle count, above zero.
+		n: i128,
+		/// The pattern on the other cycles.
+		base: Pattern<T>,
+		/// The pattern on every `n`th cycle.
+		transformed: Pattern<T>,
+	},
+	/// Each section plays for its own whole cycles, in order, looping, and experiences its own cycles from 0.
+	Arrange(Vec<(i128, Pattern<T>)>),
+	/// A voice-parameter control merged into every hap of the child, read at the hap's onset.
+	WithControl {
+		/// The pattern that gives the structure.
+		child: Pattern<T>,
+		/// Which control is set.
+		control: Control,
+		/// Where its value comes from.
+		input: ControlInput<T>,
+	},
+	/// A continuous pattern with no structure (`sine`, `rand`, ...), read at a point.
+	Signal(Signal<T>),
+	/// The hap structure of `structure`, each holding the source's value at its onset (the reading side of a signal's `euclid`).
+	Sample {
+		/// The pattern read at each onset.
+		source: Pattern<T>,
+		/// The rhythm that gives the haps.
+		structure: Pattern<bool>,
+	},
+	/// `count` evenly spaced haps per cycle, each holding the source's value at its onset.
+	Segment {
+		/// The pattern read at each onset.
+		source: Pattern<T>,
+		/// The number of haps per cycle, above zero.
+		count: Fraction,
+		/// `pure(true)` sped up by `count`, kept so a query does not rebuild it.
+		structure: Pattern<bool>,
+	},
+	/// The child with each value changed by a named map (`fmap`, `range`, `scale`, a voice patch).
+	Map {
+		/// The pattern whose values change.
+		child: Pattern<T>,
+		/// The change.
+		f: MapFn,
+	},
+	/// Each value of `left` combined with `right` read at the value's onset; a hap is dropped where `right` has no value.
+	Arith {
+		/// The pattern that gives the structure.
+		left: Pattern<T>,
+		/// The operation.
+		op: ArithOp,
+		/// The pattern read at each onset.
+		right: Pattern<T>,
+	},
+	/// `n(pattern)`: each number of the child floored into a scale degree; anything else is a rest.
+	Degrees(Pattern<T>),
 	/// Escape hatch: the child with each value changed by a function only the host has (a JavaScript `fmap` callback). The tree prints and hashes the function by its [`ForeignFn::id`].
 	Foreign {
 		/// The pattern whose values the host function changes.
@@ -61,6 +121,41 @@ pub enum Node<T> {
 	},
 	/// Escape hatch: a pattern the host defines by its own query (the reference's `new Pattern(query)`).
 	Custom(Arc<dyn CustomQuery<T>>),
+}
+
+/// A binary operation on two numbers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ArithOp {
+	/// `a + b`.
+	Add,
+	/// `a - b`.
+	Sub,
+	/// `a * b`.
+	Mul,
+	/// `a / b` (by 0 gives Infinity).
+	Div,
+}
+
+impl ArithOp {
+	/// The operation applied to two numbers.
+	pub fn apply(self, a: f64, b: f64) -> f64 {
+		match self {
+			ArithOp::Add => a + b,
+			ArithOp::Sub => a - b,
+			ArithOp::Mul => a * b,
+			ArithOp::Div => a / b,
+		}
+	}
+
+	/// The method name the reference uses.
+	pub fn name(self) -> &'static str {
+		match self {
+			ArithOp::Add => "add",
+			ArithOp::Sub => "sub",
+			ArithOp::Mul => "mul",
+			ArithOp::Div => "div",
+		}
+	}
 }
 
 /// A value-changing function supplied by the host, for [`Node::Foreign`].
@@ -112,6 +207,36 @@ fn cat_choice(cycle: i128, len: usize) -> (usize, Fraction) {
 	let index = cycle.rem_euclid(len);
 	let offset = Fraction::from_int(cycle - cycle.div_euclid(len));
 	(index as usize, offset)
+}
+
+/// The section of an arrangement playing in `cycle`, and the shift that makes its pattern experience its own cycles from 0, restarting at the top of every pass.
+fn section_at<T>(sections: &[(i128, Pattern<T>)], cycle: i128) -> (&Pattern<T>, Fraction) {
+	let total: i128 = sections.iter().map(|(cycles, _)| cycles).sum();
+	let local = cycle.rem_euclid(total);
+	let mut start = 0;
+	for (cycles, pattern) in sections {
+		if local < start + cycles {
+			return (pattern, Fraction::from_int(cycle - (local - start)));
+		}
+		start += cycles;
+	}
+	unreachable!("local is below the total, so a section holds it")
+}
+
+/// The haps of `structure` over `span`, each holding `source`'s value at its onset (dropped where `source` has none).
+fn read_at<T: Datum>(source: &Pattern<T>, structure: &Pattern<bool>, span: Span) -> Vec<Hap<T>> {
+	structure
+		.query(span)
+		.into_iter()
+		.filter_map(|hap| {
+			let value = source.sample_at(hap.onset())?;
+			Some(Hap {
+				whole: hap.whole,
+				part: hap.part,
+				value,
+			})
+		})
+		.collect()
 }
 
 impl<T: Datum> Pattern<T> {
@@ -199,6 +324,115 @@ impl<T: Datum> Pattern<T> {
 }
 
 impl<T: Datum> Pattern<T> {
+	/// Reverses each cycle in time (a cycle-local mirror, the classic `rev`).
+	///
+	/// ```
+	/// use undertone_pattern::{pure, seq, Fraction, Span};
+	/// let p = seq(vec![pure(1.0), pure(2.0)]).rev();
+	/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].value, 2.0);
+	/// ```
+	pub fn rev(&self) -> Pattern<T> {
+		Pattern::from_node(Node::Rev(self.clone()))
+	}
+
+	/// Applies a transform on every `n`th cycle (cycles 0, n, 2n, ...). `n` is a JavaScript number and must be a positive integer.
+	///
+	/// The transform is a function of the pattern that runs once, here; the tree keeps the pattern it returned. That is the closure-at-construction rule: nothing in the tree calls back.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, seq, Fraction, Span};
+	/// let p = seq(vec![pure(1.0), pure(2.0)]);
+	/// let every = p.every(2.0, |p| p.rev()).unwrap();
+	/// let first: Vec<f64> = every.query(Span::new(Fraction::from_int(0), Fraction::from_int(1))).iter().map(|h| h.value).collect();
+	/// let second: Vec<f64> = every.query(Span::new(Fraction::from_int(1), Fraction::from_int(2))).iter().map(|h| h.value).collect();
+	/// assert_eq!(first, [2.0, 1.0]);
+	/// assert_eq!(second, [1.0, 2.0]);
+	/// ```
+	pub fn every(
+		&self,
+		n: f64,
+		transform: impl FnOnce(&Pattern<T>) -> Pattern<T>,
+	) -> Result<Pattern<T>> {
+		if !js::is_integer(n) || n <= 0.0 {
+			return Err(Error::new(alloc::format!(
+				"every() cycle count must be a positive integer, got {}",
+				js::number_to_string(n)
+			)));
+		}
+		let transformed = transform(self);
+		Ok(Pattern::from_node(Node::Every {
+			n: n as i128,
+			base: self.clone(),
+			transformed,
+		}))
+	}
+
+	/// `count` evenly spaced haps per cycle, each holding this pattern's value at its onset: the way to give a signal a rhythm.
+	pub fn segment(&self, count: f64) -> Result<Pattern<T>> {
+		if count.is_nan() || count <= 0.0 || !count.is_finite() {
+			return Err(Error::new(alloc::format!(
+				"segment() count must be positive, got {}",
+				js::number_to_string(count)
+			)));
+		}
+		let structure = pure(true).fast(count)?;
+		Ok(Pattern::from_node(Node::Segment {
+			source: self.clone(),
+			count: Fraction::from_f64(count)?,
+			structure,
+		}))
+	}
+
+	/// The pattern with each value changed by a named map: `fmap` without a closure.
+	pub fn map(&self, f: MapFn) -> Pattern<T> {
+		Pattern::from_node(Node::Map {
+			child: self.clone(),
+			f,
+		})
+	}
+
+	/// Combines each value with the values of `other` read at the value's onset (structure from the left; a hap is dropped where `other` has no value).
+	pub fn arith(&self, op: ArithOp, other: &Pattern<T>) -> Pattern<T> {
+		Pattern::from_node(Node::Arith {
+			left: self.clone(),
+			op,
+			right: other.clone(),
+		})
+	}
+
+	/// Maps values from 0..1 onto `lo..hi`, linearly (no clamping).
+	pub fn range(&self, lo: f64, hi: f64) -> Pattern<T> {
+		self.map(MapFn::Range { lo, hi })
+	}
+
+	/// Maps values from -1..1 onto `lo..hi`, linearly.
+	pub fn range2(&self, lo: f64, hi: f64) -> Pattern<T> {
+		self.map(MapFn::Range2 { lo, hi })
+	}
+
+	/// Maps values from 0..1 onto `lo..hi` exponentially (`lo * (hi / lo) ** v`), the curve for frequencies. Both bounds must be above 0.
+	pub fn rangex(&self, lo: f64, hi: f64) -> Result<Pattern<T>> {
+		if !(lo > 0.0 && hi > 0.0 && lo.is_finite() && hi.is_finite()) {
+			return Err(Error::new(alloc::format!(
+				"rangex() bounds must be positive, got {} and {}",
+				js::number_to_string(lo),
+				js::number_to_string(hi)
+			)));
+		}
+		Ok(self.map(MapFn::Rangex { lo, ratio: hi / lo }))
+	}
+
+	/// Rounds each value to the nearest whole number (halves round up).
+	pub fn round(&self) -> Pattern<T> {
+		self.map(MapFn::Round)
+	}
+
+	/// Rounds each value down (-4.2 becomes -5).
+	pub fn floor(&self) -> Pattern<T> {
+		self.map(MapFn::Floor)
+	}
+
 	/// The pattern with each value changed by a host function: the escape hatch for `fmap` with a closure.
 	pub fn foreign_map(&self, f: Arc<dyn ForeignFn<T>>) -> Pattern<T> {
 		Pattern::from_node(Node::Foreign {
@@ -225,6 +459,17 @@ impl<T: Datum> Pattern<T> {
 	/// ```
 	pub fn euclid(&self, pulses: f64, steps: f64, rotation: f64) -> Result<Pattern<T>> {
 		let slots = rotate(&bjorklund(pulses, steps)?, rotation)?;
+		if self.has_sampler() {
+			// On a signal it acts as a structure: the rhythm's haps, each holding the signal's value at its onset.
+			let structure = seq(slots
+				.into_iter()
+				.map(|on| if on { pure(true) } else { silence() })
+				.collect());
+			return Ok(Pattern::from_node(Node::Sample {
+				source: self.clone(),
+				structure,
+			}));
+		}
 		Ok(seq(slots
 			.into_iter()
 			.map(|on| if on { self.clone() } else { silence() })
@@ -306,7 +551,19 @@ impl<T: Datum> Node<T> {
 			Node::Compress { child, .. }
 			| Node::Fast { child, .. }
 			| Node::Slow { child, .. }
+			| Node::Rev(child)
+			| Node::Map { child, .. }
 			| Node::Foreign { child, .. } => child.has_sampler(),
+			Node::Every {
+				base, transformed, ..
+			} => base.has_sampler() || transformed.has_sampler(),
+			Node::Arrange(sections) => sections.iter().any(|(_, p)| p.has_sampler()),
+			Node::Arith { left, .. } => left.has_sampler(),
+			Node::Signal(_) => true,
+			Node::WithControl { .. }
+			| Node::Sample { .. }
+			| Node::Segment { .. }
+			| Node::Degrees(_) => false,
 			Node::Custom(custom) => custom.has_sampler(),
 		}
 	}
@@ -371,6 +628,101 @@ impl<T: Datum> Node<T> {
 				.into_iter()
 				.map(|hap| hap.map_time(|t| t * *factor))
 				.collect(),
+			Node::Rev(child) => span
+				.split_into_cycles()
+				.into_iter()
+				.flat_map(|cycle_span| {
+					let cycle = cycle_span.begin.sam();
+					// Mirror around the cycle's midpoint: t -> cycle + (cycle + 1 - t).
+					let mirror = |t: Fraction| cycle + (cycle + Fraction::from_int(1) - t);
+					let reflect = |s: Span| Span::new(mirror(s.end), mirror(s.begin));
+					child
+						.query(reflect(cycle_span))
+						.into_iter()
+						.map(|hap| Hap {
+							whole: hap.whole.map(reflect),
+							part: reflect(hap.part),
+							value: hap.value,
+						})
+						.collect::<Vec<_>>()
+				})
+				.collect(),
+			Node::Every {
+				n,
+				base,
+				transformed,
+			} => span
+				.split_into_cycles()
+				.into_iter()
+				.flat_map(|cycle_span| {
+					let pick = if cycle_span.begin.floor().rem_euclid(*n) == 0 {
+						transformed
+					} else {
+						base
+					};
+					pick.query(cycle_span)
+				})
+				.collect(),
+			Node::Arrange(sections) => span
+				.split_into_cycles()
+				.into_iter()
+				.flat_map(|cycle_span| {
+					let (pattern, offset) = section_at(sections, cycle_span.begin.floor());
+					pattern
+						.query(cycle_span.map(|t| t - offset))
+						.into_iter()
+						.map(move |hap| hap.map_time(|t| t + offset))
+						.collect::<Vec<_>>()
+				})
+				.collect(),
+			Node::WithControl {
+				child,
+				control,
+				input,
+			} => query_with_control(child, *control, input, span),
+			Node::Signal(signal) => {
+				if span.begin < span.end {
+					alloc::vec![Hap {
+						whole: None,
+						part: span,
+						value: signal.at(span.begin),
+					}]
+				} else {
+					Vec::new()
+				}
+			}
+			Node::Sample { source, structure }
+			| Node::Segment {
+				source, structure, ..
+			} => read_at(source, structure, span),
+			Node::Map { child, f } => child
+				.query(span)
+				.into_iter()
+				.map(|hap| {
+					let value = hap.value.apply(f);
+					hap.with_value(value)
+				})
+				.collect(),
+			Node::Arith { left, op, right } => left
+				.query(span)
+				.into_iter()
+				.filter_map(|hap| {
+					let other = right.sample_at(hap.onset())?;
+					let value = match (hap.value.as_number(), other.as_number()) {
+						(Some(a), Some(b)) => T::from_number(op.apply(a, b)),
+						_ => T::from_number(f64::NAN),
+					};
+					Some(hap.with_value(value))
+				})
+				.collect(),
+			Node::Degrees(child) => child
+				.query(span)
+				.into_iter()
+				.filter_map(|hap| {
+					let n = hap.value.as_number().filter(|n| n.is_finite())?;
+					Some(hap.with_value(T::from_degree(crate::math::floor(n))))
+				})
+				.collect(),
 			Node::Foreign { child, f } => child
 				.query(span)
 				.into_iter()
@@ -402,6 +754,41 @@ impl<T: Datum> Node<T> {
 			}
 			Node::Fast { factor, child } => child.sample_at(t * *factor),
 			Node::Slow { factor, child } => child.sample_at(t / *factor),
+			Node::Rev(child) => {
+				// A point mirrors to a point: c + x reads c + 1 - x.
+				let cycle = t.sam();
+				child.sample_at(cycle + (cycle + Fraction::from_int(1) - t))
+			}
+			Node::Every {
+				n,
+				base,
+				transformed,
+			} => {
+				let pick = if t.floor().rem_euclid(*n) == 0 {
+					transformed
+				} else {
+					base
+				};
+				pick.sample_at(t)
+			}
+			Node::Arrange(sections) => {
+				let (pattern, offset) = section_at(sections, t.floor());
+				pattern.sample_at(t - offset)
+			}
+			Node::Signal(signal) => Some(signal.at(t)),
+			Node::Map { child, f } => child.sample_at(t).map(|value| value.apply(f)),
+			Node::Arith { left, op, right } => {
+				let a = left.sample_at(t)?;
+				let b = right.sample_at(t)?;
+				Some(match (a.as_number(), b.as_number()) {
+					(Some(a), Some(b)) => T::from_number(op.apply(a, b)),
+					_ => T::from_number(f64::NAN),
+				})
+			}
+			Node::WithControl { .. }
+			| Node::Sample { .. }
+			| Node::Segment { .. }
+			| Node::Degrees(_) => None,
 			Node::Foreign { child, f } => child.sample_at(t).map(|value| f.call(&value)),
 			Node::Custom(custom) => custom.sample(t),
 		}
@@ -510,6 +897,37 @@ pub fn seq<T: Datum>(patterns: Vec<Pattern<T>>) -> Pattern<T> {
 		.expect("weights of 1 are always positive")
 }
 
+/// Plays each pattern for its own span of whole cycles, in order, looping once the total is reached: the backbone of a multi-section song.
+///
+/// Each section's pattern experiences its own cycles from 0 whenever its span begins, so `<a b c>` inside a section opens on `a` wherever the section falls. Cycle counts are JavaScript numbers and must be positive integers.
+///
+/// ```
+/// use undertone_pattern::{arrange, pure, Fraction, Span};
+/// let song = arrange(vec![(2.0, pure(1.0)), (1.0, pure(2.0))]).unwrap();
+/// let haps = song.query(Span::new(Fraction::from_int(0), Fraction::from_int(4)));
+/// let values: Vec<f64> = haps.iter().map(|h| h.value).collect();
+/// assert_eq!(values, [1.0, 1.0, 2.0, 1.0]);
+/// ```
+pub fn arrange<T: Datum>(sections: Vec<(f64, Pattern<T>)>) -> Result<Pattern<T>> {
+	for (cycles, _) in &sections {
+		if !js::is_integer(*cycles) || *cycles <= 0.0 {
+			return Err(Error::new(alloc::format!(
+				"arrange() cycle counts must be positive integers, got {}",
+				js::number_to_string(*cycles)
+			)));
+		}
+	}
+	if sections.is_empty() {
+		return Ok(silence());
+	}
+	Ok(Pattern::from_node(Node::Arrange(
+		sections
+			.into_iter()
+			.map(|(cycles, pattern)| (cycles as i128, pattern))
+			.collect(),
+	)))
+}
+
 /// The pattern with its time sped up by `factor`: the free-function form of [`Pattern::fast`].
 pub fn fast<T: Datum>(pattern: &Pattern<T>, factor: f64) -> Result<Pattern<T>> {
 	pattern.fast(factor)
@@ -553,6 +971,76 @@ impl<T: Datum> Node<T> {
 			}
 			Node::Slow { factor, child } => {
 				write!(f, "(slow {factor} ")?;
+				child.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Rev(child) => {
+				f.write_str("(rev ")?;
+				child.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Every {
+				n,
+				base,
+				transformed,
+			} => {
+				write!(f, "(every {n} ")?;
+				base.node.write_tree(f)?;
+				f.write_str(" ")?;
+				transformed.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Arrange(sections) => {
+				f.write_str("(arrange")?;
+				for (cycles, pattern) in sections {
+					write!(f, " ({cycles} ")?;
+					pattern.node.write_tree(f)?;
+					f.write_str(")")?;
+				}
+				f.write_str(")")
+			}
+			Node::WithControl {
+				child,
+				control,
+				input,
+			} => {
+				let (kind, source) = match input {
+					ControlInput::Literal(p) => ("literal", p),
+					ControlInput::Pattern(p) => ("pattern", p),
+				};
+				write!(f, "(control {} {kind} ", control.name())?;
+				source.node.write_tree(f)?;
+				f.write_str(" ")?;
+				child.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Signal(signal) => write!(f, "(signal {signal:?})"),
+			Node::Sample { source, structure } => {
+				f.write_str("(sample ")?;
+				source.node.write_tree(f)?;
+				f.write_str(" ")?;
+				structure.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Segment { source, count, .. } => {
+				write!(f, "(segment {count} ")?;
+				source.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Map { child, f: map } => {
+				write!(f, "(map {map:?} ")?;
+				child.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Arith { left, op, right } => {
+				write!(f, "({} ", op.name())?;
+				left.node.write_tree(f)?;
+				f.write_str(" ")?;
+				right.node.write_tree(f)?;
+				f.write_str(")")
+			}
+			Node::Degrees(child) => {
+				f.write_str("(degrees ")?;
 				child.node.write_tree(f)?;
 				f.write_str(")")
 			}

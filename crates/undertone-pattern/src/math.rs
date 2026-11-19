@@ -18,3 +18,21 @@ pub(crate) fn floor(x: f64) -> f64 {
 pub(crate) fn powf(x: f64, y: f64) -> f64 {
 	x.powf(y)
 }
+
+/// The sine of `x` in radians.
+#[cfg(feature = "std")]
+pub(crate) fn sin(x: f64) -> f64 {
+	x.sin()
+}
+
+/// The cosine of `x` in radians.
+#[cfg(feature = "std")]
+pub(crate) fn cos(x: f64) -> f64 {
+	x.cos()
+}
+
+/// The square root of `x`.
+#[cfg(feature = "std")]
+pub(crate) fn sqrt(x: f64) -> f64 {
+	x.sqrt()
+}
