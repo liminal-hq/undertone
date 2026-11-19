@@ -22,6 +22,8 @@
 //! [`surround`] holds the speaker ring, the fold-down of channel gains, `enable_multichannel`, and the mono fold, [`window`] plans an offline render booked in windows,
 //! [`samples`] holds the registry of decoded recordings that sample voices play (decoding is the host's), and [`warn`] holds the warnings the engine gives once.
 //!
+//! A [`graph::Graph`] may retire what a finished voice made ([`graph::Graph::begin_scope`] and [`graph::Graph::retire_scope`]): the engine opens a scope around each voice and retires it once the voice is over, so a scheduler that runs for hours keeps a flat graph. [`render_graph::RenderGraph`] does; [`graph::LogGraph`] keeps everything, as the corpus needs.
+//!
 //! The [`render_graph`] module holds [`render_graph::RenderGraph`], the in-house renderer: a [`graph::Graph`] that renders what the engine books to samples, in any block size.
 //!
 //! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
