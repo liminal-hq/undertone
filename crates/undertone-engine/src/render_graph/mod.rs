@@ -376,6 +376,26 @@ impl RenderGraph {
 	/// frames were written, which is fewer than the slices hold only at the end of the render (the rest of the
 	/// slices is left alone).
 	///
+	/// ```
+	/// use undertone_engine::graph::{Graph, NodeKind};
+	/// use undertone_engine::render_graph::RenderGraph;
+	///
+	/// let mut graph = RenderGraph::new(48_000.0, 1, 300);
+	/// let osc = graph.create_node(NodeKind::Oscillator);
+	/// graph.connect_node(osc, graph.destination());
+	/// graph.start(osc, 0.0);
+	///
+	/// // Blocks of any size: the same samples as one call for all 300 frames.
+	/// let mut block = vec![0.0_f32; 100];
+	/// let mut heard = Vec::new();
+	/// for _ in 0..3 {
+	///     assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 100);
+	///     heard.extend_from_slice(&block);
+	/// }
+	/// assert_eq!(graph.render_block(&mut [block.as_mut_slice()]), 0, "the render is over");
+	/// assert!(heard.iter().any(|s| s.abs() > 0.5));
+	/// ```
+	///
 	/// # Panics
 	///
 	/// Panics if `out` does not have one slice per channel, or the slices differ in length.

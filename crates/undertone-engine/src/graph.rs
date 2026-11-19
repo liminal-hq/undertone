@@ -11,7 +11,7 @@
 //!
 //! - [`LogGraph`] records every call in the layer 3 corpus format ([`GraphRecord`]), which is how the booking
 //!   is checked against the TypeScript reference, byte for byte.
-//! - The in-house renderer (a later work package) will implement it to make samples.
+//! - [`RenderGraph`](crate::render_graph::RenderGraph), the in-house renderer, implements it to make samples.
 //! - A Web Audio bridge can implement it to play through a browser.
 //!
 //! Nodes, parameters, buffers, and periodic waves are named by small `Copy` handles ([`NodeId`], [`ParamId`],

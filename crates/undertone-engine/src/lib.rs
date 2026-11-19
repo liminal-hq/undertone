@@ -22,6 +22,8 @@
 //! [`surround`] holds the speaker ring, the fold-down of channel gains, `enable_multichannel`, and the mono fold, [`window`] plans an offline render booked in windows,
 //! and [`warn`] holds the warnings the engine gives once.
 //!
+//! The [`render_graph`] module holds [`render_graph::RenderGraph`], the in-house renderer: a [`graph::Graph`] that renders what the engine books to samples, in any block size.
+//!
 //! The [`params`] module holds [`params::VoiceParams`], the complete parameters of one voice. Its serde
 //! support is behind the `serde` cargo feature.
 
