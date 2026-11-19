@@ -89,6 +89,8 @@ fn normalisation(channels: &[Vec<f32>], sample_rate: f64) -> f64 {
 	scale
 }
 
+pub(crate) const MAX_RESPONSE_FRAMES: usize = 0;
+
 fn resample(data: &[f32], from: f64, to: f64) -> Vec<f32> {
 	if from == to || data.is_empty() {
 		return data.to_vec();
@@ -436,5 +438,21 @@ mod tests {
 		convolver.set_response(Some(&[long]), 44_100.0, 44_100.0);
 		let got = run(&mut convolver, &vec![0.0; 2 * QUANTUM], 1);
 		assert!(got[0].iter().all(|s| *s == 0.0));
+	}
+
+	#[test]
+	fn a_response_at_an_unusable_rate_does_not_panic() {
+		for rate in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+			let mut convolver = Convolver::new();
+			convolver.set_response(Some(&[vec![0.5_f32; 100]]), rate, 48_000.0);
+			assert_eq!(convolver.response_channels(), 1, "{rate}");
+		}
+	}
+
+	#[test]
+	fn a_resampled_response_is_cut_to_the_limit() {
+		let data = vec![0.5_f32; 1_000];
+		let resampled = resample(&data, 1.0, 100_000.0);
+		assert_eq!(resampled.len(), MAX_RESPONSE_FRAMES);
 	}
 }

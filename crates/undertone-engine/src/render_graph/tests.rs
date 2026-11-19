@@ -817,3 +817,24 @@ fn absurd_sample_rates_are_errors_from_try_new() {
 fn new_panics_on_an_absurd_sample_rate() {
 	let _ = RenderGraph::new(1e300, 1, 128);
 }
+
+#[test]
+#[should_panic(expected = "buffer sample rate")]
+fn a_buffer_at_a_zero_sample_rate_is_rejected() {
+	let mut graph = RenderGraph::new(RATE, 1, 128);
+	let _ = graph.create_buffer(1, 100, 0.0);
+}
+
+#[test]
+#[should_panic(expected = "buffer sample rate")]
+fn a_buffer_at_an_infinite_sample_rate_is_rejected() {
+	let mut graph = RenderGraph::new(RATE, 1, 128);
+	let _ = graph.create_buffer(1, 100, f64::INFINITY);
+}
+
+#[test]
+#[should_panic(expected = "buffer is too long")]
+fn an_absurdly_long_buffer_is_rejected() {
+	let mut graph = RenderGraph::new(RATE, 1, 128);
+	let _ = graph.create_buffer(2, usize::MAX / 8, RATE);
+}
