@@ -8,7 +8,7 @@
 //!
 //! These are the Rust form of `renderToBuffer(pattern, options)` followed by `encodeWav` in the TypeScript. A
 //! render has no clock: every onset of the pattern is turned into a voice, booked on a
-//! [`RenderGraph`](undertone_engine::render_graph::RenderGraph), and the graph renders, so the same pattern,
+//! [`RenderGraph`], and the graph renders, so the same pattern,
 //! options, and seed give the same samples on every machine.
 //!
 //! The tempo is an explicit part of the options (`bpm`, `cps`, or `default_cpm`), never a global (decision

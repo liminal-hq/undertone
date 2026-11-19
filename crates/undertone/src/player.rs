@@ -51,7 +51,7 @@
 //! does nothing.
 
 use crate::error::{Error, Result};
-use crate::render::RenderedAudio;
+use crate::rendering::RenderedAudio;
 use undertone_engine::engine::{Engine, OutputSetup};
 use undertone_engine::graph::Graph;
 use undertone_engine::params::Pitch;

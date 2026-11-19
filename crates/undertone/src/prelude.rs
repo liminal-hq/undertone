@@ -19,7 +19,7 @@
 //!
 //! | Topic | Names |
 //! | --- | --- |
-//! | Time and patterns | [`Fraction`], [`Span`], [`Hap`], [`Pattern`], [`Value`], [`mini`], [`pure`], [`silence`], [`stack`], [`seq`], [`cat`], [`timecat`], [`arrange`], [`fast`], [`slow`], [`rev`] |
+//! | Time and patterns | [`Fraction`], [`Span`], [`Hap`], [`Pattern`], [`Value`], [`mini()`], [`pure`], [`silence`], [`stack`], [`seq`], [`cat`], [`timecat`], [`arrange`], [`fast`], [`slow`], [`rev`] |
 //! | Notes and sounds | [`note`], [`note_hz`], [`sound`], [`s`], [`n`], [`n_degree`], [`n_pattern`], [`note_to_midi`], [`note_to_frequency`], [`midi_to_frequency`] |
 //! | Controls | [`Control`], [`ControlInput`], [`CONTROLS`], and the methods on [`Pattern`] |
 //! | Harmony | [`chord`], [`VoicingOptions`], [`Anchor`] |
@@ -38,7 +38,7 @@
 pub use crate::error::{Error, ErrorKind};
 pub use crate::options::{RenderOptions, WavOptions};
 pub use crate::player::{Player, PlayerOptions};
-pub use crate::render::{RenderedAudio, render, render_score, render_to_wav};
+pub use crate::rendering::{RenderedAudio, render, render_score, render_to_wav};
 pub use crate::signals::{
 	brand, brand_by, choose, cosine, cosine2, irand, isaw, isaw2, perlin, rand, rand2, saw, saw2,
 	signal, sine, sine2, square, square2, tri, tri2,
