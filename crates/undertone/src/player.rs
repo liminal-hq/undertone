@@ -796,6 +796,112 @@ mod tests {
 	}
 
 	#[test]
+	fn an_audio_callback_after_shutdown_is_closed_not_a_panic() {
+		let mut player = offline();
+		player.shutdown();
+		let (mut left, mut right) = (vec![0.0_f32; 64], vec![0.0_f32; 64]);
+		// The shape the callback had before the shutdown: two slices, though the player now has no channels.
+		let error = player
+			.render_block(&mut [&mut left, &mut right])
+			.unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Closed);
+		// Whatever the shape, a closed player says so first.
+		assert_eq!(
+			player.render_block(&mut []).unwrap_err().kind(),
+			ErrorKind::Closed
+		);
+		assert_eq!(
+			player.render_block(&mut [&mut left]).unwrap_err().kind(),
+			ErrorKind::Closed
+		);
+		assert!(left.iter().chain(&right).all(|sample| *sample == 0.0));
+	}
+
+	#[test]
+	fn a_block_of_the_wrong_shape_is_an_error_not_a_panic() {
+		let mut player = offline();
+		let mut mono = vec![0.0_f32; 64];
+		let error = player.render_block(&mut [&mut mono]).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(error.message(), "render_block: one slice per channel");
+		let (mut long, mut short) = (vec![0.0_f32; 64], vec![0.0_f32; 32]);
+		let error = player
+			.render_block(&mut [&mut long, &mut short])
+			.unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert_eq!(
+			error.message(),
+			"render_block: every slice must have the same length"
+		);
+		// A refused block moves nothing: the player still renders.
+		assert_eq!(player.render_seconds(0.25).unwrap().frames(), 2_000);
+	}
+
+	#[test]
+	fn no_public_method_panics_after_shutdown() {
+		let mut player = offline();
+		let playback = player
+			.play(&note("c4").unwrap(), &PlayOptions::default())
+			.unwrap();
+		let handle = player
+			.play_loop(&note("c4").unwrap(), &LoopOptions::default())
+			.unwrap();
+		player.shutdown();
+		let closed = |kind: ErrorKind| kind == ErrorKind::Closed;
+		assert!(closed(
+			player
+				.stop_playback(&playback, None, None)
+				.unwrap_err()
+				.kind()
+		));
+		assert!(closed(
+			player
+				.stop_loop(handle, &LoopStop::default())
+				.unwrap_err()
+				.kind()
+		));
+		assert!(closed(player.samples().map(|_| ()).unwrap_err().kind()));
+		assert!(closed(player.samples_mut().map(|_| ()).unwrap_err().kind()));
+		assert!(closed(player.engine_mut().map(|_| ()).unwrap_err().kind()));
+		assert!(closed(player.transport().map(|_| ()).unwrap_err().kind()));
+		let cue = Score::new(&ScoreDefinition {
+			ticks_per_second: 100.0,
+			length_ticks: 100.0,
+			events: vec![ScoreEvent::note(0.0, ScoreNote::Name("a3".into()))],
+			..ScoreDefinition::default()
+		})
+		.unwrap();
+		assert!(closed(player.play_score(&cue).unwrap_err().kind()));
+		assert!(closed(player.loop_score(&cue).unwrap_err().kind()));
+		// The calls that need no engine keep working.
+		assert_eq!(player.sample_rate(), 0.0);
+		assert_eq!(player.channel_count(), 0);
+		assert!(player.set_cpm(30.0).is_ok());
+		player.reset_tempo();
+		let _ = (player.clock(), player.tempo(), player.stats());
+		assert!(format!("{player:?}").contains("closed: true"));
+	}
+
+	#[test]
+	fn a_stopped_player_keeps_rendering_and_stopping_again_is_harmless() {
+		let mut player = offline();
+		player
+			.play_loop(&note("c4").unwrap(), &LoopOptions::default())
+			.unwrap();
+		player.render_seconds(0.25).unwrap();
+		player.stop().unwrap();
+		player.stop().unwrap();
+		let mut left = vec![0.0_f32; 128];
+		let mut right = vec![0.0_f32; 128];
+		assert_eq!(
+			player.render_block(&mut [&mut left, &mut right]).unwrap(),
+			128
+		);
+		assert_eq!(player.render_seconds(0.25).unwrap().frames(), 2_000);
+		assert!(player.tick().is_ok());
+	}
+
+	#[test]
 	fn a_registered_sample_plays_and_a_bad_one_is_refused() {
 		let mut player = offline();
 		player
