@@ -217,4 +217,27 @@ mod tests {
 		}
 		assert!(line.is_clear());
 	}
+
+	#[test]
+	fn a_cycle_delay_at_a_very_low_sample_rate_does_not_panic() {
+		// Five seconds is 5 frames at 1 Hz, under the one quantum a cycle needs: the quantum wins.
+		let mut line = DelayLine::new(5.0, 1.0);
+		line.resize(1);
+		let mut out = vec![0.0; QUANTUM];
+		line.read(&[1.0; QUANTUM], 1.0, &mut out);
+		line.write(&impulse(), false);
+		line.read(&[1.0; QUANTUM], 1.0, &mut out);
+		// Outside a cycle the delay still tops out at the maximum time (5 frames).
+		line.process(&impulse(), false, &[1.0e9; QUANTUM], 1.0, &mut out);
+		assert!(out.iter().all(|s| s.is_finite()));
+	}
+
+	#[test]
+	fn a_nan_delay_time_reads_as_the_minimum() {
+		let mut line = DelayLine::new(1.0, 1_000.0);
+		line.resize(1);
+		let mut out = vec![0.0; QUANTUM];
+		line.process(&impulse(), false, &[f64::NAN; QUANTUM], 1_000.0, &mut out);
+		assert_eq!(out, impulse());
+	}
 }

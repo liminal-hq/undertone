@@ -783,3 +783,37 @@ fn the_multichannel_setup_of_the_engine_gives_a_discrete_eight_channel_destinati
 	assert_eq!(out.len(), 8);
 	assert!(out.iter().any(|c| peak(c) > 0.01));
 }
+
+#[test]
+fn a_delay_cycle_at_a_very_low_sample_rate_renders() {
+	// The delay's five seconds are 5 frames at 1 Hz, under the 128 frames a cycle needs.
+	let mut graph = RenderGraph::new(1.0, 1, 256);
+	let source = osc_to_destination(&mut graph, 0.25);
+	let delay = graph.create_node(NodeKind::Delay);
+	let feedback = graph.create_node(NodeKind::Gain);
+	graph.connect_node(source, delay);
+	graph.connect_node(delay, feedback);
+	graph.connect_node(feedback, delay);
+	graph.connect_node(delay, graph.destination());
+	let out = graph.render_all();
+	assert_eq!(out[0].len(), 256);
+	assert!(out[0].iter().all(|s| s.is_finite()));
+}
+
+#[test]
+fn absurd_sample_rates_are_errors_from_try_new() {
+	for rate in [0.0, -1.0, f64::NAN, f64::INFINITY, 1e300, 0.5] {
+		let error = RenderGraph::try_new(rate, 1, 128).unwrap_err();
+		assert!(error.message().contains("sample rate"), "{rate}: {error:?}");
+	}
+	assert!(RenderGraph::try_new(1.0, 1, 128).is_ok());
+	assert!(RenderGraph::try_new(1_000_000.0, 1, 128).is_ok());
+	assert!(RenderGraph::try_new(48_000.0, 0, 128).is_err());
+	assert!(RenderGraph::try_new(48_000.0, 33, 128).is_err());
+}
+
+#[test]
+#[should_panic(expected = "sample rate")]
+fn new_panics_on_an_absurd_sample_rate() {
+	let _ = RenderGraph::new(1e300, 1, 128);
+}

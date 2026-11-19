@@ -352,6 +352,15 @@ impl RenderGraph {
 		}
 	}
 
+	/// Placeholder until the sample rate is checked.
+	pub fn try_new(
+		sample_rate: f64,
+		channels: u32,
+		length_frames: u64,
+	) -> undertone_pattern::Result<Self> {
+		Ok(Self::new(sample_rate, channels, length_frames))
+	}
+
 	/// How many frames the render is to make in all.
 	pub fn length_frames(&self) -> u64 {
 		self.length_frames
