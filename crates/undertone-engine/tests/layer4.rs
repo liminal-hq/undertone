@@ -248,6 +248,7 @@ fn compare(id: &str, limiter_on: bool, rust: &[Channel], browser: &[Channel]) ->
 	for (c, (r, b)) in rust.iter().zip(browser).enumerate() {
 		m.rms.take(db(r.rms, b.rms), c);
 		m.peak.take(db(r.peak, b.peak), c);
+		assert_eq!(r.bands.len(), b.bands.len(), "{id}: band count");
 		for (i, (&x, &y)) in r.bands.iter().zip(&b.bands).enumerate() {
 			if x.max(y) >= FLOOR {
 				let d = db(x, y);
@@ -369,6 +370,17 @@ fn rust_renders_match_the_browser_summaries_within_a_loose_guard() {
 		let mut measured = compare(id, limiter_on, &rust, &browser);
 		measured.frames = frames as usize;
 		results.push(measured);
+	}
+	// A file with no cases, or a case that compares nothing, must fail rather than pass every guard.
+	assert!(!results.is_empty(), "the layer 4 file holds no cases");
+	for m in &results {
+		assert!(
+			m.compared_bands > 0 && m.compared_windows > 0,
+			"{}: nothing was compared (bands {}, windows {})",
+			m.id,
+			m.compared_bands,
+			m.compared_windows
+		);
 	}
 	let tables = render_tables(&results);
 	println!("Chromium {version}\n\n{tables}");
