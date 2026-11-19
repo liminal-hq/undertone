@@ -35,8 +35,8 @@ mod corpus {
 	pub mod layer4;
 	pub mod wav;
 
-	use std::collections::BTreeSet;
-	use std::path::PathBuf;
+	use std::collections::{BTreeMap, BTreeSet};
+	use std::path::{Path, PathBuf};
 
 	/// The groups of each corpus directory that this runner handles. A group of the corpus that is not here
 	/// fails [`super::every_group_of_the_corpus_is_handled`], and a group here that the corpus lost fails it too.
@@ -99,6 +99,82 @@ mod corpus {
 			.collect()
 	}
 
+	/// The number of cases in each group file of a corpus directory, counted from the files themselves.
+	///
+	/// Fails when a file has no `cases` array or an empty one: a group with no cases would let its runner pass
+	/// having compared nothing.
+	pub fn count_cases(dir: &Path) -> Result<BTreeMap<String, usize>, String> {
+		let mut counts = BTreeMap::new();
+		let entries = std::fs::read_dir(dir).map_err(|error| {
+			format!("the corpus directory {} is missing: {error}", dir.display())
+		})?;
+		for entry in entries {
+			let path = entry.map_err(|error| error.to_string())?.path();
+			if path.extension().is_none_or(|ext| ext != "json") {
+				continue;
+			}
+			let group = path.file_stem().unwrap().to_string_lossy().into_owned();
+			let text = std::fs::read_to_string(&path)
+				.map_err(|error| format!("{} does not read: {error}", path.display()))?;
+			let file: serde_json::Value = serde_json::from_str(&text)
+				.map_err(|error| format!("{} is not JSON: {error}", path.display()))?;
+			let count = file
+				.get("cases")
+				.and_then(serde_json::Value::as_array)
+				.map_or(0, Vec::len);
+			if count == 0 {
+				return Err(format!(
+					"group {group} ({}) has no cases: a runner would pass having compared nothing",
+					path.display()
+				));
+			}
+			counts.insert(group, count);
+		}
+		if counts.is_empty() {
+			return Err(format!("{} holds no group files", dir.display()));
+		}
+		Ok(counts)
+	}
+
+	/// Fails unless `executed` (the cases a runner ran, by group) is exactly `on_disk` (the cases in the files).
+	pub fn check_every_case_ran(
+		layer: &str,
+		on_disk: &BTreeMap<String, usize>,
+		executed: &BTreeMap<String, usize>,
+	) -> Result<(), String> {
+		if on_disk.keys().ne(executed.keys()) {
+			return Err(format!(
+				"layer {layer}: the runner ran groups {:?}, the files hold {:?}",
+				executed.keys().collect::<Vec<_>>(),
+				on_disk.keys().collect::<Vec<_>>()
+			));
+		}
+		for (group, count) in on_disk {
+			if executed[group] != *count {
+				return Err(format!(
+					"layer {layer} group {group}: the runner ran {} cases, the file holds {count} (a case was skipped)",
+					executed[group]
+				));
+			}
+		}
+		Ok(())
+	}
+
+	/// What each runner calls once it has run the cases of a layer: the cases it ran, by group, must be every
+	/// case in the layer's files, and every group must have some.
+	pub fn assert_every_case_ran(layer: &str, executed: &BTreeMap<String, usize>) {
+		let on_disk =
+			count_cases(&cases().join(layer)).unwrap_or_else(|message| panic!("{message}"));
+		if let Err(message) = check_every_case_ran(layer, &on_disk, executed) {
+			panic!("{message}");
+		}
+		let total: usize = executed.values().sum();
+		println!(
+			"layer {layer}: ran {total} cases in {} groups, every case in the files",
+			executed.len()
+		);
+	}
+
 	/// The groups this runner handles for a layer.
 	pub fn handled(layer: &str) -> BTreeSet<String> {
 		HANDLED
@@ -140,4 +216,61 @@ fn every_group_of_the_corpus_is_handled() {
 	}
 	// Ten, seven, seven, one, and one groups.
 	assert_eq!(total, 26);
+}
+
+/// A scratch corpus directory for a test, empty, under the target directory.
+fn scratch(name: &str) -> std::path::PathBuf {
+	let dir =
+		std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("corpus-guard-{name}"));
+	let _ = std::fs::remove_dir_all(&dir);
+	std::fs::create_dir_all(&dir).unwrap();
+	dir
+}
+
+#[test]
+fn a_group_with_no_cases_fails_the_count() {
+	let dir = scratch("empty-group");
+	std::fs::write(
+		dir.join("full.json"),
+		r#"{"cases":[{"id":"a"},{"id":"b"}]}"#,
+	)
+	.unwrap();
+	std::fs::write(dir.join("hollow.json"), r#"{"corpus":1,"cases":[]}"#).unwrap();
+	let error = corpus::count_cases(&dir).unwrap_err();
+	assert!(
+		error.contains("group hollow") && error.contains("no cases"),
+		"{error}"
+	);
+	// A file with no `cases` key at all, and a missing directory, fail too.
+	std::fs::write(dir.join("hollow.json"), r#"{"corpus":1}"#).unwrap();
+	assert!(corpus::count_cases(&dir).is_err());
+	std::fs::remove_file(dir.join("hollow.json")).unwrap();
+	assert_eq!(corpus::count_cases(&dir).unwrap()["full"], 2);
+	assert!(corpus::count_cases(&dir.join("missing")).is_err());
+	assert!(corpus::count_cases(&scratch("no-files")).is_err());
+}
+
+#[test]
+fn a_skipped_case_or_group_fails_the_comparison() {
+	let counts = |pairs: &[(&str, usize)]| {
+		pairs
+			.iter()
+			.map(|(group, count)| (group.to_string(), *count))
+			.collect::<std::collections::BTreeMap<_, _>>()
+	};
+	let on_disk = counts(&[("a", 3), ("b", 1)]);
+	assert!(corpus::check_every_case_ran("x", &on_disk, &counts(&[("a", 3), ("b", 1)])).is_ok());
+	let skipped = corpus::check_every_case_ran("x", &on_disk, &counts(&[("a", 2), ("b", 1)]));
+	assert!(
+		skipped
+			.unwrap_err()
+			.contains("group a: the runner ran 2 cases, the file holds 3")
+	);
+	assert!(corpus::check_every_case_ran("x", &on_disk, &counts(&[("a", 3)])).is_err());
+	assert!(
+		corpus::check_every_case_ran("x", &on_disk, &counts(&[("a", 3), ("b", 1), ("c", 1)]))
+			.is_err()
+	);
+	// Too many is as wrong as too few: the files and the runner disagree.
+	assert!(corpus::check_every_case_ran("x", &on_disk, &counts(&[("a", 4), ("b", 1)])).is_err());
 }
