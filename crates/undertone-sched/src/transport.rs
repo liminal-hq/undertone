@@ -334,6 +334,13 @@ pub struct TickReport {
 	pub booked: usize,
 }
 
+/// Cuts every playback at `now` with the cut-group fade: the rollback of a call that failed part-way.
+fn cut_all<G: Graph>(engine: &mut Engine<G>, playbacks: &[Playback], now: f64) {
+	for playback in playbacks {
+		engine.stop(*playback, Some(now), Some(CUT_FADE_SECONDS));
+	}
+}
+
 /// A loop the transport is running.
 #[derive(Debug)]
 struct LoopState {
@@ -566,7 +573,10 @@ impl<C: Clock> Transport<C> {
 	/// # Errors
 	///
 	/// An invalid tempo fails with the reference's message (`bpm must be positive, got 0`, `Pass either bpm or
-	/// cps, not both`). Then as [`book_cycles`](crate::book_cycles).
+	/// cps, not both`). Then as [`book_cycles`](crate::book_cycles). A call that fails **rolls back**: voices
+	/// booked before the failing one are cut at once (with the 5 ms cut-group fade), nothing is counted in
+	/// [`Stats`], and no handle is lost, because none is returned. The reference's `play()` throws part-way
+	/// and leaves the earlier voices sounding; this is deliberately better (D-38).
 	///
 	/// ```
 	/// use undertone_engine::engine::{Engine, OutputSetup};
@@ -621,9 +631,12 @@ impl<C: Clock> Transport<C> {
 			options.gated,
 		)?;
 		let mut playbacks = Vec::with_capacity(voices.len());
-		let booked = book_voices(engine, &voices, options.output, &mut playbacks);
+		if let Err(error) = book_voices(engine, &voices, options.output, &mut playbacks) {
+			// Roll back: the caller gets no handle, so nothing booked may be left sounding or counted.
+			cut_all(engine, &playbacks, now);
+			return Err(error);
+		}
 		self.count_late(&playbacks, now);
-		booked?;
 		Ok(PlaybackHandle::combine(playbacks, at))
 	}
 
@@ -637,8 +650,11 @@ impl<C: Clock> Transport<C> {
 	///
 	/// # Errors
 	///
-	/// An invalid tempo fails with the reference's message. A first window that fails to book fails the call
-	/// and starts no loop.
+	/// An invalid tempo fails with the reference's message. A first window that fails to book fails the call,
+	/// starts no loop, and **rolls back**: voices of that window booked before the failure are cut at once
+	/// (with the 5 ms cut-group fade) and are not counted in [`Stats`] (D-38; the reference leaves them
+	/// sounding). Once a loop is running, a window that fails keeps the voices it booked tracked, so a stop
+	/// reaches them; see [`Transport::tick`].
 	pub fn play_loop<G: Graph>(
 		&mut self,
 		engine: &mut Engine<G>,
@@ -647,6 +663,7 @@ impl<C: Clock> Transport<C> {
 	) -> Result<LoopHandle> {
 		let cycle_seconds = self.tempo.cycle_seconds(options.bpm, options.cps)?;
 		let now = self.read_now();
+		let counted = (self.stats.voices_booked, self.stats.late_voices);
 		let state = LoopState {
 			pattern: pattern.clone(),
 			cycle_seconds,
@@ -664,7 +681,11 @@ impl<C: Clock> Transport<C> {
 		match result {
 			Ok(_) => Ok(handle),
 			Err(error) => {
-				self.remove(handle);
+				// Roll back: cut what the window booked and take it back out of the statistics.
+				if let Some(state) = self.remove(handle) {
+					cut_all(engine, &state.live, now);
+				}
+				(self.stats.voices_booked, self.stats.late_voices) = counted;
 				Err(error)
 			}
 		}
@@ -704,7 +725,9 @@ impl<C: Clock> Transport<C> {
 	/// A loop whose window cannot be queried (a pattern that fails) is left where it was and tried again at
 	/// the next tick, as the reference does; the first such error is returned after every loop has had its
 	/// tick. A voice the engine cannot book is skipped (its window is not tried again, so nothing is booked
-	/// twice) and the error is returned the same way.
+	/// twice) and the error is returned the same way. The voices of that window booked before the failing one
+	/// stay tracked in the loop, so stopping the loop (or a seek) still reaches them: a running loop does not
+	/// roll back, unlike the first window of [`Transport::play_loop`].
 	///
 	/// # Errors
 	///
