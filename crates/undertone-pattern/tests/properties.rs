@@ -20,7 +20,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use undertone_pattern::random::Seed;
 use undertone_pattern::{Fraction, Hap, Span, Value};
 
-/// How many random programs each property runs. CI uses this; a nightly job raises it with `PROPTEST_CASES`.
+/// How many random programs each property runs by default (the bar the spike set). Pull request CI sets `PROPTEST_CASES` to 1,000 to stay fast; pushes to `main` run this many.
 const CASES: u32 = 10_000;
 
 fn config() -> ProptestConfig {

@@ -180,6 +180,9 @@ jobs:
   rust-test:
     name: Rust tests
     runs-on: ubuntu-24.04
+    env:
+      # The property tests run 1,000 cases per property on pull requests and the full 10,000 on pushes to main.
+      PROPTEST_CASES: ${{ github.event_name == 'pull_request' && '1000' || '10000' }}
     container:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
@@ -230,6 +233,9 @@ jobs:
   rust-arm64:
     name: Rust tests (ARM64)
     runs-on: ubuntu-24.04-arm
+    env:
+      # The property tests run 1,000 cases per property on pull requests and the full 10,000 on pushes to main.
+      PROPTEST_CASES: ${{ github.event_name == 'pull_request' && '1000' || '10000' }}
     container:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
