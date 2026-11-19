@@ -299,7 +299,7 @@ fn run_busy(ticks: usize) -> (Tally, [i64; 4]) {
 /// depend on the build profile):
 ///
 /// - a tick whose window holds no onset: 38 allocations, all of them the pattern query;
-/// - a tick that books one voice: up to 103, so about 65 for the voice;
+/// - a tick that books one voice: up to 105, so about 67 for the voice;
 /// - the render block after a tick that booked: 57 (the graph rebuilds its plan; a block after a tick that
 ///   booked nothing allocates none).
 ///
