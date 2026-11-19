@@ -7,6 +7,7 @@
 # Rules:
 #   - undertone-pattern depends on no other workspace crate.
 #   - undertone-engine depends on no workspace crate except undertone-pattern.
+#   - undertone-sched depends on no workspace crate except undertone-pattern and undertone-engine.
 #   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
 #
@@ -23,7 +24,8 @@ metadata="$(cargo metadata --format-version 1 --no-deps --locked)"
 # Add a row when a new crate has a layering rule.
 allowed_workspace_deps='{
   "undertone-pattern": [],
-  "undertone-engine": ["undertone-pattern"]
+  "undertone-engine": ["undertone-pattern"],
+  "undertone-sched": ["undertone-pattern", "undertone-engine"]
 }'
 
 violations="$(
