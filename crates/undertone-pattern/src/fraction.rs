@@ -12,12 +12,49 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Add, Div, Mul, Sub};
 
-fn gcd(mut a: i128, mut b: i128) -> i128 {
+/// The greatest common divisor of two `u64`s by Stein's binary method: shifts and subtractions only, with no division, so it is several times faster than Euclid's algorithm on the small numbers a pattern's time is made of.
+fn gcd_u64(mut a: u64, mut b: u64) -> u64 {
+	if a == 0 {
+		return b;
+	}
+	if b == 0 {
+		return a;
+	}
+	let shift = (a | b).trailing_zeros();
+	a >>= a.trailing_zeros();
+	loop {
+		b >>= b.trailing_zeros();
+		if a > b {
+			core::mem::swap(&mut a, &mut b);
+		}
+		b -= a;
+		if b == 0 {
+			return a << shift;
+		}
+	}
+}
+
+/// The greatest common divisor of two unsigned numbers, taking the `u64` path whenever both fit.
+fn gcd(a: u128, b: u128) -> u128 {
+	if (a | b) >> 64 == 0 {
+		return u128::from(gcd_u64(a as u64, b as u64));
+	}
+	let (mut a, mut b) = (a, b);
 	while b != 0 {
 		(a, b) = (b, a % b);
 	}
 	a
 }
+
+/// The magnitude (exclusive) below which a numerator and a denominator take the typed fast path: any product or sum of two such numbers fits in an `i64`, so there is no overflow check and no 128-bit division.
+const SMALL: u128 = 1 << 31;
+
+/// Whether a fraction's numerator and denominator are both below [`SMALL`] in magnitude.
+fn is_small(f: &Fraction) -> bool {
+	(f.n.unsigned_abs() | f.d.unsigned_abs()) < SMALL
+}
+
+const OVERFLOW: &str = "Fraction overflow";
 
 /// An exact rational number on `i128`, always in lowest terms with a positive denominator.
 ///
@@ -44,13 +81,18 @@ impl Fraction {
 	/// Panics when `denominator` is zero.
 	pub fn new(numerator: i128, denominator: i128) -> Fraction {
 		assert!(denominator != 0, "Fraction denominator cannot be 0");
+		if denominator == 1 {
+			return Fraction { n: numerator, d: 1 };
+		}
 		let (n, d) = if denominator < 0 {
-			(-numerator, -denominator)
+			(
+				numerator.checked_neg().expect(OVERFLOW),
+				denominator.checked_neg().expect(OVERFLOW),
+			)
 		} else {
 			(numerator, denominator)
 		};
-		let g = gcd(n.abs(), d);
-		let g = if g == 0 { 1 } else { g };
+		let g = gcd(n.unsigned_abs(), d.unsigned_abs()) as i128;
 		Fraction { n: n / g, d: d / g }
 	}
 
@@ -108,7 +150,13 @@ impl Fraction {
 
 	/// The largest integer not greater than this value.
 	pub fn floor(&self) -> i128 {
-		self.n.div_euclid(self.d)
+		if self.d == 1 {
+			self.n
+		} else if is_small(self) {
+			i128::from((self.n as i64).div_euclid(self.d as i64))
+		} else {
+			self.n.div_euclid(self.d)
+		}
 	}
 
 	/// The start of the cycle this time falls in.
@@ -173,30 +221,53 @@ impl Fraction {
 
 impl Add for Fraction {
 	type Output = Fraction;
+	/// Knuth's method: only the gcd of the two denominators, and of the sum's numerator with it, is needed, because both operands are already in lowest terms.
 	fn add(self, other: Fraction) -> Fraction {
-		let g = gcd(self.d, other.d);
-		let scale = other.d / g;
-		let other_scale = self.d / g;
-		let n = self
+		if self.d == 1 && other.d == 1 {
+			return Fraction {
+				n: self.n.checked_add(other.n).expect(OVERFLOW),
+				d: 1,
+			};
+		}
+		if is_small(&self) && is_small(&other) {
+			// Typed fast path: every product below fits in an i64.
+			let (a, b, c, d) = (self.n as i64, self.d as i64, other.n as i64, other.d as i64);
+			let g = gcd_u64(b as u64, d as u64) as i64;
+			if g == 1 {
+				return Fraction {
+					n: i128::from(a * d + c * b),
+					d: i128::from(b * d),
+				};
+			}
+			let (bg, dg) = (b / g, d / g);
+			let t = a * dg + c * bg;
+			let g2 = gcd_u64(t.unsigned_abs(), g as u64) as i64;
+			return Fraction {
+				n: i128::from(t / g2),
+				d: i128::from(bg * (d / g2)),
+			};
+		}
+		let g = gcd(self.d as u128, other.d as u128) as i128;
+		let (bg, dg) = (self.d / g, other.d / g);
+		let t = self
 			.n
-			.checked_mul(scale)
-			.and_then(|a| {
-				other
-					.n
-					.checked_mul(other_scale)
-					.and_then(|b| a.checked_add(b))
-			})
-			.expect("Fraction overflow");
-		let d = self.d.checked_mul(scale).expect("Fraction overflow");
-		Fraction::new(n, d)
+			.checked_mul(dg)
+			.and_then(|x| other.n.checked_mul(bg).and_then(|y| x.checked_add(y)))
+			.expect(OVERFLOW);
+		let g2 = gcd(t.unsigned_abs(), g as u128) as i128;
+		Fraction {
+			n: t / g2,
+			d: bg.checked_mul(other.d / g2).expect(OVERFLOW),
+		}
 	}
 }
 
 impl Sub for Fraction {
 	type Output = Fraction;
+	#[allow(clippy::suspicious_arithmetic_impl)] // subtraction is addition of the negation
 	fn sub(self, other: Fraction) -> Fraction {
 		self + Fraction {
-			n: -other.n,
+			n: other.n.checked_neg().expect(OVERFLOW),
 			d: other.d,
 		}
 	}
@@ -204,17 +275,32 @@ impl Sub for Fraction {
 
 impl Mul for Fraction {
 	type Output = Fraction;
+	/// Cross-reduces first, so the products stay as small as possible and, both operands being in lowest terms, the result already is.
 	fn mul(self, other: Fraction) -> Fraction {
-		// Cross-reduce first so the products stay as small as possible.
-		let g1 = gcd(self.n.abs(), other.d).max(1);
-		let g2 = gcd(other.n.abs(), self.d).max(1);
-		let n = (self.n / g1)
-			.checked_mul(other.n / g2)
-			.expect("Fraction overflow");
-		let d = (self.d / g2)
-			.checked_mul(other.d / g1)
-			.expect("Fraction overflow");
-		Fraction::new(n, d)
+		if self.n == 0 || other.n == 0 {
+			return Fraction { n: 0, d: 1 };
+		}
+		if self.d == 1 && other.d == 1 {
+			return Fraction {
+				n: self.n.checked_mul(other.n).expect(OVERFLOW),
+				d: 1,
+			};
+		}
+		if is_small(&self) && is_small(&other) {
+			let (a, b, c, d) = (self.n as i64, self.d as i64, other.n as i64, other.d as i64);
+			let g1 = gcd_u64(a.unsigned_abs(), d as u64) as i64;
+			let g2 = gcd_u64(c.unsigned_abs(), b as u64) as i64;
+			return Fraction {
+				n: i128::from((a / g1) * (c / g2)),
+				d: i128::from((b / g2) * (d / g1)),
+			};
+		}
+		let g1 = gcd(self.n.unsigned_abs(), other.d as u128) as i128;
+		let g2 = gcd(other.n.unsigned_abs(), self.d as u128) as i128;
+		Fraction {
+			n: (self.n / g1).checked_mul(other.n / g2).expect(OVERFLOW),
+			d: (self.d / g2).checked_mul(other.d / g1).expect(OVERFLOW),
+		}
 	}
 }
 
@@ -225,7 +311,19 @@ impl Div for Fraction {
 	/// Panics when dividing by zero, as the reference throws `Division by zero fraction`.
 	fn div(self, other: Fraction) -> Fraction {
 		assert!(other.n != 0, "Division by zero fraction");
-		self * Fraction::new(other.d, other.n)
+		// The reciprocal of a fraction in lowest terms is in lowest terms; only the sign moves to the numerator.
+		let recip = if other.n < 0 {
+			Fraction {
+				n: other.d.checked_neg().expect(OVERFLOW),
+				d: -other.n,
+			}
+		} else {
+			Fraction {
+				n: other.d,
+				d: other.n,
+			}
+		};
+		self * recip
 	}
 }
 
@@ -237,8 +335,14 @@ impl PartialOrd for Fraction {
 
 impl Ord for Fraction {
 	fn cmp(&self, other: &Fraction) -> Ordering {
-		let left = self.n.checked_mul(other.d).expect("Fraction overflow");
-		let right = other.n.checked_mul(self.d).expect("Fraction overflow");
+		if self.d == other.d {
+			return self.n.cmp(&other.n);
+		}
+		if is_small(self) && is_small(other) {
+			return (self.n as i64 * other.d as i64).cmp(&(other.n as i64 * self.d as i64));
+		}
+		let left = self.n.checked_mul(other.d).expect(OVERFLOW);
+		let right = other.n.checked_mul(self.d).expect(OVERFLOW);
 		left.cmp(&right)
 	}
 }
@@ -309,5 +413,64 @@ mod tests {
 		assert_eq!(Fraction::new(4, 1).to_string(), "4");
 		assert_eq!(Fraction::new(-3, 2).to_string(), "-3/2");
 		assert_eq!(Fraction::parse("1/0"), None);
+	}
+
+	/// A small deterministic generator, so the tests need no dependency.
+	fn next(state: &mut u64) -> u64 {
+		*state = state
+			.wrapping_mul(6364136223846793005)
+			.wrapping_add(1442695040888963407);
+		*state >> 33
+	}
+
+	/// The operations, written the plain way (cross-multiply, then reduce with `new`), against the fast paths, over small, mid-sized, and large values.
+	#[test]
+	fn fast_paths_agree_with_the_plain_definitions() {
+		let mut state = 7;
+		for round in 0..20_000 {
+			let bound: i128 = match round % 4 {
+				0 => 12,
+				1 => 3_000,
+				2 => 1 << 30,
+				_ => 1 << 40,
+			};
+			let mut pick = |positive: bool| {
+				let v = i128::from(next(&mut state)) % bound;
+				if positive { v + 1 } else { v - bound / 2 }
+			};
+			let (a, b, c, d) = (pick(false), pick(true), pick(false), pick(true));
+			let (x, y) = (Fraction::new(a, b), Fraction::new(c, d));
+			assert_eq!(x + y, Fraction::new(a * d + c * b, b * d), "{x} + {y}");
+			assert_eq!(x - y, Fraction::new(a * d - c * b, b * d), "{x} - {y}");
+			assert_eq!(x * y, Fraction::new(a * c, b * d), "{x} * {y}");
+			if c != 0 {
+				let want = Fraction::new(a * d, b * c);
+				assert_eq!(x / y, want, "{x} / {y}");
+			}
+			assert_eq!(x.cmp(&y), (a * d).cmp(&(c * b)), "{x} cmp {y}");
+			assert_eq!(x.floor(), a.div_euclid(b), "floor {x}");
+			// Results are always in lowest terms with a positive denominator.
+			for r in [x + y, x - y, x * y] {
+				assert!(
+					r.d > 0 && gcd(r.n.unsigned_abs(), r.d as u128) <= 1 || r.n == 0 && r.d == 1
+				);
+			}
+		}
+	}
+
+	#[test]
+	fn overflow_panics_and_never_wraps() {
+		let big = Fraction::from_int(i128::MAX / 2 + 1);
+		let result = std::panic::catch_unwind(|| big + big);
+		assert!(result.is_err());
+		let result = std::panic::catch_unwind(|| big * Fraction::from_int(2));
+		assert!(result.is_err());
+		let huge = Fraction::new(i128::MAX, 3);
+		let result = std::panic::catch_unwind(|| huge * huge);
+		assert!(result.is_err());
+		let result = std::panic::catch_unwind(|| {
+			Fraction::new(1, i128::MAX) + Fraction::new(1, i128::MAX - 1)
+		});
+		assert!(result.is_err());
 	}
 }
