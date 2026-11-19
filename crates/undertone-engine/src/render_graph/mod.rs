@@ -318,6 +318,10 @@ pub const MIN_SAMPLE_RATE: f64 = 1.0;
 /// The highest sample rate a [`RenderGraph`] accepts, in hertz (the same bound as a render's).
 pub const MAX_SAMPLE_RATE: f64 = crate::render::MAX_SAMPLE_RATE;
 
+/// The most samples (all channels) a buffer made by [`Graph::create_buffer`] may hold: 2^28, a gibibyte of
+/// `f32`.
+pub const MAX_BUFFER_SAMPLES: usize = 1 << 28;
+
 impl RenderGraph {
 	/// A graph that renders `length_frames` frames of `channels` channels at `sample_rate` hertz, with only the
 	/// destination in it. The destination's maximum channel count is `channels`.
@@ -1318,10 +1322,27 @@ impl Graph for RenderGraph {
 		}
 	}
 
+	/// # Panics
+	///
+	/// Panics if `sample_rate` is not a number from [`MIN_SAMPLE_RATE`] to [`MAX_SAMPLE_RATE`] ("buffer
+	/// sample rate"), or the buffer would hold more than 2^28 samples in all ("buffer is too long"): the
+	/// [`Graph`] method has no error to return, and either is a mistake of the host, as is a node that lacks
+	/// a parameter.
 	fn create_buffer(&mut self, channels: u32, length: usize, sample_rate: f64) -> BufferId {
+		assert!(
+			(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&sample_rate),
+			"buffer sample rate must be from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz, got {sample_rate}"
+		);
+		let channels = channels.max(1) as usize;
+		assert!(
+			length
+				.checked_mul(channels)
+				.is_some_and(|total| total <= MAX_BUFFER_SAMPLES),
+			"buffer is too long: {channels} channels of {length} frames, at most {MAX_BUFFER_SAMPLES} samples"
+		);
 		self.buffers.push(Stored::Audio {
 			sample_rate,
-			channels: vec![vec![0.0; length]; channels.max(1) as usize],
+			channels: vec![vec![0.0; length]; channels],
 		});
 		BufferId::new(self.buffers.len() as u32 - 1)
 	}

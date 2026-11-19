@@ -89,13 +89,25 @@ fn normalisation(channels: &[Vec<f32>], sample_rate: f64) -> f64 {
 	scale
 }
 
-pub(crate) const MAX_RESPONSE_FRAMES: usize = 0;
+/// The most frames an impulse response keeps after resampling to the context's rate (about 43 seconds at
+/// 48000 Hz). A longer one is cut: a response that long is a mistake, and its partitions would be an
+/// allocation and a per-quantum cost out of all proportion.
+pub(crate) const MAX_RESPONSE_FRAMES: usize = 1 << 21;
 
+/// `data` resampled from `from` hertz to `to` hertz by linear interpolation, at most [`MAX_RESPONSE_FRAMES`]
+/// long. A rate that is not positive and finite leaves the data as it is (the graph rejects such a buffer
+/// before it gets here; this keeps the convolver itself from an unbounded length).
 fn resample(data: &[f32], from: f64, to: f64) -> Vec<f32> {
-	if from == to || data.is_empty() {
-		return data.to_vec();
+	let usable = from.is_finite() && from > 0.0 && to.is_finite() && to > 0.0;
+	if !usable || from == to || data.is_empty() {
+		return data[..data.len().min(MAX_RESPONSE_FRAMES)].to_vec();
 	}
-	let length = ((data.len() as f64 * to / from).round() as usize).max(1);
+	let wanted = (data.len() as f64 * to / from).round();
+	let length = if wanted.is_nan() {
+		1
+	} else {
+		(wanted.min(MAX_RESPONSE_FRAMES as f64) as usize).max(1)
+	};
 	(0..length)
 		.map(|i| {
 			let at = i as f64 * from / to;
