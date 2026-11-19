@@ -56,6 +56,7 @@
 //! ```
 
 use crate::params::Pitch;
+use crate::render_graph::{MAX_BUFFER_SAMPLES, MAX_SAMPLE_RATE, MIN_SAMPLE_RATE};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use undertone_pattern::pitch::note_to_frequency;
@@ -96,9 +97,9 @@ impl SampleData {
 		if self.channels.is_empty() {
 			return Err(bad("no channels"));
 		}
-		if !(self.sample_rate.is_finite() && self.sample_rate > 0.0) {
+		if !(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&self.sample_rate) {
 			return Err(bad(&format!(
-				"an invalid sample rate: {}",
+				"an invalid sample rate: {} (from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz)",
 				self.sample_rate
 			)));
 		}
@@ -109,8 +110,21 @@ impl SampleData {
 		if self.channels.iter().any(|channel| channel.len() != frames) {
 			return Err(bad("channels of different lengths"));
 		}
+		if !fits_in_a_buffer(self.channels.len(), frames) {
+			return Err(bad(&format!(
+				"too many samples: {} channels of {frames} frames, at most {MAX_BUFFER_SAMPLES} in all",
+				self.channels.len()
+			)));
+		}
 		Ok(())
 	}
+}
+
+/// Whether `channels` of `frames` frames fit in one graph buffer ([`MAX_BUFFER_SAMPLES`] samples in all).
+fn fits_in_a_buffer(channels: usize, frames: usize) -> bool {
+	frames
+		.checked_mul(channels.max(1))
+		.is_some_and(|total| total <= MAX_BUFFER_SAMPLES)
 }
 
 /// One sample to register in bulk ([`Samples::register_samples`]): the PCM and, optionally, the pitch the
@@ -161,8 +175,9 @@ impl Samples {
 	/// # Errors
 	///
 	/// A `base_note` that is not a note name or a positive frequency fails with the reference's message, and a
-	/// recording with no channels, no frames, channels of different lengths, or a sample rate that is not a
-	/// positive number is refused. Nothing is registered on failure.
+	/// recording with no channels, no frames, channels of different lengths, a sample rate outside the
+	/// renderer's bounds (1 to 1,000,000 Hz), or more samples in all than one graph buffer holds (2^28) is
+	/// refused, so a registered sample never makes booking panic. Nothing is registered on failure.
 	pub fn register_sample(
 		&mut self,
 		name: impl Into<String>,
@@ -321,6 +336,21 @@ mod tests {
 
 	fn data(frames: usize) -> SampleData {
 		SampleData::new(48_000.0, vec![vec![0.25; frames]])
+	}
+
+	#[test]
+	fn a_rate_or_size_the_renderer_would_refuse_fails_at_registration() {
+		let mut samples = Samples::new();
+		for rate in [0.5, 1e100, 2_000_000.0, f64::INFINITY, f64::NAN] {
+			let result = samples.register_sample("x", SampleData::new(rate, vec![vec![0.0]]), None);
+			assert!(result.is_err(), "rate {rate} was accepted");
+		}
+		assert!(!samples.is_sample_registered("x", None));
+		// The size check works on the lengths, so it is tested without making the data.
+		assert!(fits_in_a_buffer(2, MAX_BUFFER_SAMPLES / 2));
+		assert!(!fits_in_a_buffer(2, MAX_BUFFER_SAMPLES / 2 + 1));
+		assert!(!fits_in_a_buffer(32, usize::MAX));
+		assert!(samples.register_sample("ok", data(4), None).is_ok());
 	}
 
 	#[test]
