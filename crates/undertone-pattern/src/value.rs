@@ -235,7 +235,7 @@ impl Datum for Value {
 						let mut rest = map.clone();
 						rest.remove("degree");
 						let midi = scale.degree_to_midi(*degree);
-						let hz = crate::control::midi_to_frequency(midi);
+						let hz = crate::pitch::midi_to_frequency(midi);
 						rest.insert("pitch".into(), Value::Num(hz));
 						Value::Map(rest)
 					}

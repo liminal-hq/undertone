@@ -26,6 +26,7 @@ pub mod js;
 pub(crate) mod math;
 pub mod mini;
 pub mod pattern;
+pub mod pitch;
 pub mod query;
 pub mod random;
 pub mod signal;

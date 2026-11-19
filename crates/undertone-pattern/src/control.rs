@@ -11,6 +11,8 @@ use crate::error::{Error, Result};
 use crate::js;
 use crate::mini;
 use crate::pattern::{Node, Pattern, pure};
+use crate::pitch::check_frequency;
+pub use crate::pitch::{midi_to_frequency, note_to_midi};
 use crate::value::{Datum, MapFn, ParsedScale, Value};
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -32,70 +34,6 @@ pub const SOUND_TYPES: [&str; 10] = [
 /// Whether `word` is one of the [`SOUND_TYPES`].
 pub fn is_sound_type(word: &str) -> bool {
 	SOUND_TYPES.contains(&word)
-}
-
-fn note_error(name: &str) -> Error {
-	Error::new(alloc::format!(
-		"Invalid note name: \"{name}\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
-	))
-}
-
-/// A note name (`c2`, `a4`, `f#3`, `bb3`) as a MIDI note number, with C4 as 60.
-///
-/// ```
-/// use undertone_pattern::control::note_to_midi;
-/// assert_eq!(note_to_midi("c4").unwrap(), 60.0);
-/// assert_eq!(note_to_midi("Bb2").unwrap(), 46.0);
-/// assert!(note_to_midi("zz").is_err());
-/// ```
-pub fn note_to_midi(name: &str) -> Result<f64> {
-	let trimmed = js::trim(name);
-	let mut chars = trimmed.chars().peekable();
-	let letter = chars.next().ok_or_else(|| note_error(name))?;
-	let base = match letter.to_ascii_lowercase() {
-		'c' if letter.is_ascii_alphabetic() => 0.0,
-		'd' if letter.is_ascii_alphabetic() => 2.0,
-		'e' if letter.is_ascii_alphabetic() => 4.0,
-		'f' if letter.is_ascii_alphabetic() => 5.0,
-		'g' if letter.is_ascii_alphabetic() => 7.0,
-		'a' if letter.is_ascii_alphabetic() => 9.0,
-		'b' if letter.is_ascii_alphabetic() => 11.0,
-		_ => return Err(note_error(name)),
-	};
-	let accidental = match chars.peek() {
-		Some('#') => {
-			chars.next();
-			1.0
-		}
-		Some('b') => {
-			chars.next();
-			-1.0
-		}
-		_ => 0.0,
-	};
-	let octave: String = chars.collect();
-	let digits = octave.strip_prefix('-').unwrap_or(&octave);
-	if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
-		return Err(note_error(name));
-	}
-	let octave = js::string_to_number(&octave);
-	Ok((octave + 1.0) * 12.0 + base + accidental)
-}
-
-/// A MIDI note number as Hz, with A4 (69) as 440.
-pub fn midi_to_frequency(midi: f64) -> f64 {
-	440.0 * js::pow(2.0, (midi - 69.0) / 12.0)
-}
-
-/// A frequency in Hz must be a finite number above zero.
-fn check_frequency(hz: f64) -> Result<f64> {
-	if !hz.is_finite() || hz <= 0.0 {
-		return Err(Error::new(alloc::format!(
-			"Invalid frequency: {}",
-			js::number_to_string(hz)
-		)));
-	}
-	Ok(hz)
 }
 
 const SCALES: [(&str, &[i32]); 14] = [
