@@ -1,0 +1,339 @@
+/*
+ * Makes the rustdoc pages look like part of the Undertone site: the site's colours and fonts (the VitePress defaults that
+ * docs/.vitepress/theme/custom.css builds on) on rustdoc's light and dark themes, and a slim site bar (site-bar.html) above every page.
+ * The ayu theme is left as rustdoc ships it.
+ */
+
+:root {
+  --site-bar-height: 44px;
+  --font-family:
+    Inter, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-family-code:
+    ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+}
+
+:root[data-theme='light'],
+:root:not([data-theme]) {
+  --usb-bg: #f6f6f7;
+  --usb-text: #3c3c43;
+  --usb-muted: #67676c;
+  --usb-border: #e2e2e3;
+  --usb-brand: #3451b2;
+  --usb-pill-bg: #dfe3fb;
+  --usb-pill-text: #3a5ccc;
+  --usb-hover-bg: #ebebef;
+  --main-background-color: #ffffff;
+  --main-color: #3c3c43;
+  --sidebar-background-color: #f6f6f7;
+  --sidebar-background-color-hover: #ebebef;
+  --sidebar-border-color: #e2e2e3;
+  --border-color: #e2e2e3;
+  --headings-border-bottom-color: #e2e2e3;
+  --code-block-background-color: #f6f6f7;
+  --link-color: #3451b2;
+  --sidebar-link-color: #3451b2;
+  --assoc-item-link-color: #3451b2;
+  --mod-link-color: #3451b2;
+  --keyword-link-color: #3451b2;
+  --attribute-link-color: #3451b2;
+  --type-link-color: #8c2981;
+  --trait-link-color: #6f42c1;
+  --function-link-color: #b45309;
+  --target-background-color: #eef0ff;
+  --target-border-color: #3451b2;
+  --search-input-focused-border-color: #3451b2;
+}
+
+:root[data-theme='dark'] {
+  --usb-bg: #161618;
+  --usb-text: #dfdfd6;
+  --usb-muted: #98989f;
+  --usb-border: #2e2e32;
+  --usb-brand: #a8b1ff;
+  --usb-pill-bg: #2f3455;
+  --usb-pill-text: #a8b1ff;
+  --usb-hover-bg: #202127;
+  --main-background-color: #1b1b1f;
+  --main-color: #dfdfd6;
+  --sidebar-background-color: #161618;
+  --sidebar-background-color-hover: #202127;
+  --sidebar-border-color: #2e2e32;
+  --border-color: #2e2e32;
+  --headings-border-bottom-color: #2e2e32;
+  --code-block-background-color: #202127;
+  --link-color: #a8b1ff;
+  --sidebar-link-color: #a8b1ff;
+  --assoc-item-link-color: #a8b1ff;
+  --mod-link-color: #a8b1ff;
+  --keyword-link-color: #a8b1ff;
+  --attribute-link-color: #a8b1ff;
+  --type-link-color: #f08fb0;
+  --trait-link-color: #c4a7f5;
+  --function-link-color: #fe9f6d;
+  --target-background-color: #2f3455;
+  --target-border-color: #a8b1ff;
+  --search-input-focused-border-color: #a8b1ff;
+}
+
+/* The ayu theme keeps rustdoc's colours; the bar takes its own. */
+:root[data-theme='ayu'] {
+  --usb-bg: #0b0e14;
+  --usb-text: #c5c5c5;
+  --usb-muted: #8a8a8a;
+  --usb-border: #2a2f38;
+  --usb-brand: #39afd7;
+  --usb-pill-bg: #1f2a33;
+  --usb-pill-text: #39afd7;
+  --usb-hover-bg: #1a1f26;
+}
+
+/* Rustdoc sets its text in Fira Sans through a list of selectors; the site's sans-serif replaces it on the same ones. */
+rustdoc-topbar,
+.search-input,
+.search-results .result-name,
+.item-table dt > a,
+.out-of-band,
+.sub-heading,
+span.since,
+a.src,
+rustdoc-toolbar,
+summary.hideme,
+.scraped-example-list,
+.rustdoc-breadcrumbs,
+.search-switcher,
+ul.all-items,
+.deprecated-count,
+.sidebar,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+}
+
+body.rustdoc {
+  font-family: var(--font-family);
+}
+
+h1,
+h2,
+h3,
+h4,
+.code-header,
+code,
+pre {
+  font-family: inherit;
+}
+
+code,
+pre,
+.code-header,
+.docblock code,
+.rustdoc.src .example-wrap pre {
+  font-family: var(--font-family-code);
+}
+
+/* The bar */
+.undertone-site-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  height: var(--site-bar-height);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 16px;
+  background: var(--usb-bg);
+  color: var(--usb-text);
+  border-bottom: 1px solid var(--usb-border);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.undertone-site-bar a {
+  color: var(--usb-text);
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.undertone-site-bar a:hover {
+  color: var(--usb-brand);
+  background: var(--usb-hover-bg);
+}
+
+.undertone-site-bar a:focus-visible {
+  outline: 2px solid var(--usb-brand);
+  outline-offset: 2px;
+}
+
+.usb-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 6px 8px;
+  margin-left: -8px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.usb-brand img {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.usb-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.usb-links::-webkit-scrollbar {
+  display: none;
+}
+
+.usb-links li {
+  flex: none;
+  margin: 0;
+  padding: 0;
+}
+
+.usb-links a {
+  display: block;
+  padding: 8px 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.usb-pill {
+  flex: none;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--usb-pill-bg);
+  color: var(--usb-pill-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Make room for the bar: it is fixed, so the page starts below it and rustdoc's own fixed and sticky parts move down by its height. */
+body.rustdoc {
+  padding-top: var(--site-bar-height);
+  box-sizing: border-box;
+}
+
+*[id] {
+  scroll-margin-top: calc(var(--site-bar-height) + 8px);
+}
+
+.sidebar {
+  top: var(--site-bar-height);
+  height: calc(100vh - var(--site-bar-height));
+}
+
+.sidebar-resizer {
+  top: var(--site-bar-height);
+  height: calc(100% - var(--site-bar-height));
+}
+
+.src-sidebar-title {
+  top: 0;
+}
+
+#sidebar-button {
+  margin-top: calc(var(--site-bar-height) + 25px);
+}
+
+.src #sidebar-button {
+  margin-top: 0;
+  top: calc(var(--site-bar-height) + 8px);
+}
+
+.skip-main-content {
+  z-index: 1001;
+}
+
+/* A search box that follows the theme (rustdoc's stays light in the dark theme). */
+.search-input {
+  background-color: var(--main-background-color);
+  color: var(--main-color);
+  border: 1px solid var(--border-color);
+}
+
+@media (max-width: 700px) {
+  :root {
+    --site-bar-height: 40px;
+  }
+
+  .undertone-site-bar {
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .usb-links {
+    gap: 0;
+  }
+
+  .usb-pill {
+    display: none;
+  }
+
+  .usb-links {
+    margin-left: auto;
+  }
+
+  .usb-links a {
+    padding: 8px 6px;
+  }
+
+  rustdoc-topbar {
+    top: var(--site-bar-height);
+  }
+
+  *[id] {
+    scroll-margin-top: calc(var(--site-bar-height) + var(--topbar-height) + 8px);
+  }
+
+  .sidebar {
+    top: calc(var(--site-bar-height) + var(--topbar-height));
+    height: calc(100vh - var(--site-bar-height) - var(--topbar-height));
+  }
+
+  .src main,
+  .rustdoc.src .sidebar {
+    top: var(--site-bar-height);
+    height: calc(100vh - var(--site-bar-height));
+  }
+
+  #settings.popover,
+  #help.popover {
+    top: calc(32px + var(--site-bar-height));
+    height: calc(
+      100vh - var(--site-bar-height) - var(--topbar-height) + var(--popover-top-margin) - 1px
+    );
+  }
+}
+
+@media (max-width: 420px) {
+  .usb-brand span {
+    display: none;
+  }
+}
