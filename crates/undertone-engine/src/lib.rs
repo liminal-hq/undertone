@@ -39,6 +39,7 @@ pub mod surround;
 pub mod voice;
 pub mod warn;
 pub mod waves;
+pub mod window;
 
 /// The name of this crate, as a placeholder item until the engine lands.
 ///
