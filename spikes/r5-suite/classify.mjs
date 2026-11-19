@@ -25,8 +25,12 @@ const RULES = {
   I1: 'The test imports and uses a symbol that src/index.ts does not export (a private function or structure): internal, to be replaced by a Rust unit test.',
   P1: 'Every runtime import the test uses is in src/index.ts (or a test utility): public API (patterns, haps, controls, recorded graphs, rendering); alias.',
   P2: 'Public API, but the test also uses playVoice/playVoices (not exported by index; playParams(ctx, [patch], { when }) is the exported way), or a test hook the bridge must offer (resetWarnings, seedContext): translate.',
+  M1: 'Mixed: the test asserts on a private symbol (isSoundType and the like) and also plays or queries through the public API and checks the result: public API, translate; RF-27 keeps the public playback assertion against the bridge and ports the private-symbol assertion to a Rust unit test (a split).',
   P3: 'Reviewed by hand: the subject is public API and the private function only computes an expected value, so the test is public API and RF-27 inlines the expected value (translate).'
 };
+// A test body that plays or queries through the public API and checks the outcome.
+const PUBLIC_PLAYBACK =
+  /\.(play|render|query)\(|renderToBuffer|playParams|ctx\.(oscillators|gains|bufferSources)/;
 const SUPPORT = new Set(['resetWarnings', 'seedContext']);
 const SHIM = new Set(['playVoice', 'playVoices']);
 const TIMER_IDS = [
@@ -260,6 +264,11 @@ for (const [file, tests] of Object.entries(files)) {
           ? `; also imports ${priv.join(', ')} (not in index: loopPattern becomes .loop())`
           : '') +
         (shims.length ? `; uses ${shims.join(', ')}` : '');
+    } else if (priv.length && PUBLIC_PLAYBACK.test(node.getText(sf))) {
+      cls = 'public';
+      rule = 'M1';
+      rf27 = 'translate';
+      note = `split: the ${[...new Set(priv)].join(', ')} assertion (not exported by index) goes to a Rust unit test; the public playback or query assertion stays and runs against the bridge`;
     } else if (priv.length) {
       cls = 'internal';
       rule = 'I1';
