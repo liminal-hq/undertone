@@ -177,6 +177,19 @@ impl<G: Graph + std::fmt::Debug, C: Clock + std::fmt::Debug> std::fmt::Debug for
 	}
 }
 
+/// How many frames the offline player's graph renders in all. A test-only small bound stands in for the
+/// engine's 268,435,456 so a test reaches it with a few thousand frames, not a hundred minutes of audio.
+const fn lifetime_frames() -> u64 {
+	if cfg!(test) {
+		TEST_LIFETIME_FRAMES
+	} else {
+		MAX_RENDER_LENGTH_FRAMES
+	}
+}
+
+/// The small bound [`lifetime_frames`] gives under test.
+const TEST_LIFETIME_FRAMES: u64 = 100_000;
+
 impl Player {
 	/// An offline player: a [`RenderGraph`] of the options' sample rate and channels, and a [`ManualClock`]
 	/// that [`render_seconds`](Player::render_seconds) and [`render_block`](Player::render_block) move.
@@ -192,11 +205,7 @@ impl Player {
 				options.channels
 			)));
 		}
-		let graph = RenderGraph::try_new(
-			options.sample_rate,
-			options.channels,
-			MAX_RENDER_LENGTH_FRAMES,
-		)?;
+		let graph = RenderGraph::try_new(options.sample_rate, options.channels, lifetime_frames())?;
 		let clock = ManualClock::new(options.sample_rate);
 		let setup = OutputSetup {
 			master: match options.master {
@@ -1030,5 +1039,58 @@ mod tests {
 		}
 		assert!(player.stats().voices_booked >= 3);
 		player.stop_loop(handle, &LoopStop::default()).unwrap();
+	}
+
+	/// Four loop cycles' worth of triangle notes, at 1 kHz so a long render stays small.
+	fn looping_player() -> Player {
+		let mut player = Player::new(&PlayerOptions::new().sample_rate(1_000)).unwrap();
+		player
+			.play_loop(
+				&note("c4 e4")
+					.unwrap()
+					.sound("triangle")
+					.release(0.05)
+					.unwrap(),
+				&LoopOptions {
+					bpm: Some(240.0),
+					..LoopOptions::default()
+				},
+			)
+			.unwrap();
+		player
+	}
+
+	#[test]
+	fn streaming_in_small_blocks_is_not_limited_by_the_players_lifetime() {
+		// 120,000 frames is past the test bound (100,000), as 93 minutes at 48 kHz is past the real one.
+		let frames = 120_000;
+		let mut player = looping_player();
+		let mut streamed = vec![Vec::new(); 2];
+		let (mut left, mut right) = (vec![0.0_f32; 1_000], vec![0.0_f32; 1_000]);
+		for block in 0..frames / 1_000 {
+			let written = player.render_block(&mut [&mut left, &mut right]).unwrap();
+			assert_eq!(written, 1_000, "block {block}");
+			streamed[0].extend_from_slice(&left);
+			streamed[1].extend_from_slice(&right);
+		}
+		// The loop is still heard in the last block.
+		assert!(left.iter().any(|s| s.abs() > 0.01));
+		// And the audio is what one collected render makes of the same piece.
+		let collected = looping_player().render_seconds(120.0).unwrap();
+		assert_eq!(collected.channels(), streamed.as_slice());
+	}
+
+	#[test]
+	fn render_seconds_never_returns_fewer_frames_than_asked_without_an_error() {
+		let mut player = looping_player();
+		for call in 0..6 {
+			match player.render_seconds(30.0) {
+				Ok(heard) => assert_eq!(heard.frames(), 30_000, "call {call}"),
+				Err(error) => assert_eq!(error.kind(), ErrorKind::Invalid, "call {call}"),
+			}
+		}
+		// Whatever the earlier calls did, a render that is short is an error, never quiet padding.
+		let heard = player.render_seconds(30.0).unwrap();
+		assert_eq!(heard.frames(), 30_000);
 	}
 }
