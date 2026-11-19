@@ -12,11 +12,12 @@
 //!
 //! - [`Native`] calls the Rust standard library's `f64` methods, which use the platform C library
 //!   (and, on `wasm32-unknown-unknown`, the port of `libm` that ships with the compiler).
-//! - `Libm` (behind the `libm` cargo feature) calls the pure-Rust `libm` crate, the same code on
-//!   every target.
+//! - `Libm` (behind the `libm` cargo feature, on by default) calls the pure-Rust `libm` crate, the
+//!   same code on every target and every CPU.
 //!
 //! [`Active`] is the back-end the free functions ([`sin`], [`cos`], and the rest) use: `Libm` when
-//! the `libm` feature is on, [`Native`] otherwise. The wave tables ([`waves`]) and the gain maths
+//! the `libm` feature is on (the default, so renders do not depend on the host's C library),
+//! [`Native`] when it is off (`--no-default-features`). The wave tables ([`waves`]) and the gain maths
 //! ([`gains`]) are generic over [`Maths`], so a test can build the same table with both.
 //!
 //! The functions follow C semantics for the edge cases the engine never reaches; in particular
@@ -94,11 +95,11 @@ impl Maths for Libm {
 	}
 }
 
-/// The back-end the engine uses: [`Native`], or `Libm` when the `libm` feature is on.
+/// The back-end the engine uses: `Libm` by default, [`Native`] with `--no-default-features`.
 #[cfg(not(feature = "libm"))]
 pub type Active = Native;
 
-/// The back-end the engine uses: [`Native`], or `Libm` when the `libm` feature is on.
+/// The back-end the engine uses: `Libm` by default, [`Native`] with `--no-default-features`.
 #[cfg(feature = "libm")]
 pub type Active = Libm;
 

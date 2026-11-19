@@ -8,7 +8,9 @@ repository.workspace = true
 authors.workspace = true
 
 [features]
-# Use the pure-Rust `libm` crate for the engine's maths instead of the platform C library.
+default = ["libm"]
+# Use the pure-Rust `libm` crate for the engine's maths, the same code on every target (D-23). Build with
+# `--no-default-features` to use the platform C library instead.
 libm = ["dep:libm"]
 
 [dependencies]

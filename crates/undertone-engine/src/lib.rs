@@ -7,8 +7,9 @@
 //!
 //! This crate will turn patterns from [`undertone_pattern`] into sound.
 //!
-//! The [`math`] module holds the transcendental maths the recorded graphs depend on, behind a
-//! choice of the platform C library or the `libm` crate.
+//! The [`math`] module holds the transcendental maths the recorded graphs depend on. It uses the
+//! pure-Rust `libm` crate by default, so the same numbers come out on every platform; build with
+//! `--no-default-features` for the platform C library.
 
 pub mod math;
 
