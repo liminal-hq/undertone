@@ -48,6 +48,19 @@ Every public name of the TypeScript reference (the merged #39, #42, and #44 on `
 
 **In sum:** the lab's prior art covers 7 groups, part of 10, and none of 9. The retired 0.1 surface (City Sim 1000's `Voice` builder and `stack(...voices).play(ctx)`, removed in 0.2.0) is not a group: it is not part of the reference, and the bridge does not bring it back.
 
+## Status of the pattern core (RF-13)
+
+Groups 1 to 6 are done in Rust, in `undertone-pattern`, and corpus-green: layer 1 groups `core` (44 of 44), `combinators` (60 of 60), and `mini` (359 of 359) are equal. What the Rust names are, where they differ from the targets in the table, and what was left out:
+
+- **Time (1):** `Fraction`, with a typed fast path below 2^31 and checked `i128` beyond it (D-13); `Span` is `TimeSpan`.
+- **Pattern core (2):** `Pattern`, `Hap` (`has_onset`, `onset`), `Span`, `Pattern::query` and `query_into`, `Pattern::sample_at` for the sampler, `Query` (the trait, in `query`), `Node::Custom` (a `Query` in Rust, built with `Pattern::custom` or `Pattern::from_fn`), and `Node::Foreign { id: ForeignId, host }` with the `ForeignHost` registry trait (`Pattern::foreign`, and the `std`-only `ForeignTable`). The node holds a handle to the host as well as the id, because the crate keeps no global state. **`Hap` has no `context`:** the reference's `Hap` is `{ whole?, part, value }` and the corpus records exactly that, so adding a field would diverge from it.
+- **Constructors (3):** `mini` (also `mini::parse`), `pure`, `silence`, `stack`, `seq`, `cat`, `timecat`, all taking `Vec`s.
+- **Arrangement (4):** `arrange(Vec<(f64, Pattern)>)`, with JavaScript-number cycle counts so the reference's error messages match; not `&[(Fraction, Pattern)]` as the table said.
+- **Time transforms (5):** `Pattern::{fast, slow, euclid}` take `f64`, for the same reason, and the free functions `fast` and `slow`.
+- **Structural transforms (6):** `Pattern::{rev, every, fmap, fmap_with}`, the free function `rev`, and `jux(f)` on `Pattern<Value>`; `every` and `jux` run `f` once and store both trees. `fmap(MapFn)` is the named map (`Node::Map`); `fmap_with(closure)` is `Node::Custom`.
+- **Also in the crate, for later groups:** `Pattern::{describe, structural_hash}` and `Hash` (every node prints), `segment`, `range`, `range2`, `rangex`, `round`, `floor`, `arith`, and the signals.
+- **Names missing before RF-13:** `Query`, `ForeignId`, `ForeignHost`, `Pattern::{foreign, from_fn, fmap, fmap_with, jux(f), describe, query_into}`, and the free functions `mini` and `rev`.
+
 ## The handle and closure story
 
 - **Patterns are handles.** A bridge `Pattern` holds a `u32` handle to a Rust tree. Every method returns a new wrapper, as every TypeScript method returns a new `Pattern`, so immutability and object identity behave as today. Building costs one node and never queries.

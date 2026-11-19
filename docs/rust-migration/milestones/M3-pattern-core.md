@@ -87,6 +87,7 @@ The orchestrator assigns Sonnet agents. RF-13 first; RF-14 after it; RF-15, RF-1
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-11-19 | RF-13 done on `feat/pattern-core` (not pushed): fraction fast path and in-place queries cut a hap from about 980 ns to about 125 ns natively (a 32-hap `seq` query from 31 us to 4 us); `Query`, `Foreign` with a host registry, `fmap`, `jux(f)`, `describe`; the corpus runner finds groups itself. Layer 1: `core` 44, `combinators` 60, `mini` 359, `scales` 130, `controls` 58, `signals` 104 equal, `notes` 42 of 43; `chords`, `drift`, `random` not covered (RF-15, RF-17) |

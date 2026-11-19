@@ -34,8 +34,8 @@ pub use error::{Error, Result};
 pub use fraction::Fraction;
 pub use hap::{Hap, Span};
 pub use pattern::{
-	ArithOp, Node, Pattern, arrange, cat, compress, fast, mini, pure, seq, silence, slow, stack,
-	timecat,
+	ArithOp, Node, Pattern, arrange, cat, compress, fast, mini, pure, rev, seq, silence, slow,
+	stack, timecat,
 };
 #[cfg(feature = "std")]
 pub use query::ForeignTable;

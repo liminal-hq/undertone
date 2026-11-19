@@ -7,6 +7,7 @@
 # Rules:
 #   - undertone-pattern depends on no other workspace crate.
 #   - undertone-engine depends on no workspace crate except undertone-pattern.
+#   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
 #
 # Needs `cargo` and `jq` (both are in the shared ci-rust image). Run from anywhere.
@@ -35,6 +36,7 @@ violations="$(
 		| . as $d
 		| (
 			if ($members | index($d.name)) != null
+				and ($d.name != $p.name)
 				and ($allowed[$p.name] != null)
 				and (($allowed[$p.name] | index($d.name)) == null)
 			then "\($p.name) must not depend on workspace crate \($d.name)" else empty end,

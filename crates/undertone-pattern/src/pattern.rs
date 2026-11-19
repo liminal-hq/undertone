@@ -359,6 +359,14 @@ impl<T: Datum> Pattern<T> {
 	}
 
 	/// Slows the pattern down: `slow(2)` stretches one cycle over two.
+	///
+	/// ```
+	/// use undertone_pattern::{pure, Fraction, Span};
+	/// let slow = pure(1.0).slow(2.0).unwrap();
+	/// let haps = slow.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+	/// assert_eq!(haps[0].whole.unwrap().end, Fraction::from_int(2));
+	/// assert_eq!(pure(1.0).slow(-1.0).unwrap_err().message(), "slow() factor must be positive, got -1");
+	/// ```
 	pub fn slow(&self, factor: f64) -> Result<Pattern<T>> {
 		let f = Fraction::from_f64(factor)?;
 		if f.numerator() <= 0 {
@@ -932,11 +940,25 @@ pub fn silence<T: Datum>() -> Pattern<T> {
 }
 
 /// A pattern that repeats `value` once per cycle.
+///
+/// ```
+/// use undertone_pattern::{pure, Fraction, Span};
+/// let haps = pure(1.0).query(Span::new(Fraction::from_int(0), Fraction::from_int(2)));
+/// assert_eq!(haps.len(), 2);
+/// assert!(haps.iter().all(|h| h.has_onset()));
+/// ```
 pub fn pure<T: Datum>(value: T) -> Pattern<T> {
 	Pattern::from_node(Node::Pure(value))
 }
 
 /// Plays all the patterns simultaneously (chords, layers, parallel lines).
+///
+/// ```
+/// use undertone_pattern::{pure, stack, Fraction, Span};
+/// let chord = stack(vec![pure(1.0), pure(2.0), pure(3.0)]);
+/// let haps = chord.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// assert_eq!(haps.len(), 3);
+/// ```
 pub fn stack<T: Datum>(patterns: Vec<Pattern<T>>) -> Pattern<T> {
 	Pattern::from_node(Node::Stack(patterns))
 }
@@ -958,6 +980,13 @@ pub fn cat<T: Datum>(patterns: Vec<Pattern<T>>) -> Pattern<T> {
 }
 
 /// Squeezes each cycle of `pattern` into the window `[begin, end)` of each cycle. A window with no width is [`silence`].
+///
+/// ```
+/// use undertone_pattern::{compress, pure, Fraction, Span};
+/// let p = compress(Fraction::new(1, 2), Fraction::from_int(1), pure(1.0));
+/// let haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// assert_eq!(haps[0].whole.unwrap().begin, Fraction::new(1, 2));
+/// ```
 pub fn compress<T: Datum>(begin: Fraction, end: Fraction, pattern: Pattern<T>) -> Pattern<T> {
 	if (end - begin).numerator() <= 0 {
 		return silence();
@@ -1065,6 +1094,19 @@ pub fn mini<T: Datum>(
 	leaf: impl Fn(&str) -> core::result::Result<T, String>,
 ) -> Result<Pattern<T>> {
 	crate::mini::parse(source, leaf)
+}
+
+/// The pattern reversed in each cycle: the free-function form of [`Pattern::rev`], for point-free use such as `pat.jux(rev)`.
+///
+/// ```
+/// use undertone_pattern::{pure, rev, seq, Fraction, Span};
+/// let p = rev(&seq(vec![pure(1.0), pure(2.0)]));
+/// let mut haps = p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// haps.sort_by_key(|h| h.part.begin);
+/// assert_eq!(haps[0].value, 2.0);
+/// ```
+pub fn rev<T: Datum>(pattern: &Pattern<T>) -> Pattern<T> {
+	pattern.rev()
 }
 
 /// The pattern with its time sped up by `factor`: the free-function form of [`Pattern::fast`].
