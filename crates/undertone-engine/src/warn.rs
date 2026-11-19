@@ -9,11 +9,14 @@
 //! `Engine::warnings` and shows as it likes. Each key is given at most once per engine (the reference's
 //! `warnOnce` is once per process).
 
+use std::borrow::Cow;
+
 /// A warning the engine gave: a stable key and the reference's message.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Warning {
-	/// The key that makes the warning once-only (`"pitch-curve-combined"`, `"autopan-pan-law"`, and so on).
-	pub key: &'static str,
+	/// The key that makes the warning once-only (`"pitch-curve-combined"`, `"autopan-pan-law"`, and so on; a
+	/// sample warning's key is `sample:` and the name).
+	pub key: Cow<'static, str>,
 	/// The message, as the TypeScript reference words it.
 	pub message: String,
 }
@@ -24,13 +27,23 @@ pub struct Warnings(Vec<Warning>);
 
 impl Warnings {
 	/// Records `message` under `key` unless that key was already given.
-	pub fn once(&mut self, key: &'static str, message: impl Into<String>) {
+	pub fn once(&mut self, key: impl Into<Cow<'static, str>>, message: impl Into<String>) {
+		let key = key.into();
 		if self.0.iter().all(|warning| warning.key != key) {
 			self.0.push(Warning {
 				key,
 				message: message.into(),
 			});
 		}
+	}
+
+	/// Records `message` under `key` whether or not the key was given before. For a warning whose
+	/// once-only state lives elsewhere: the sample registry forgets its warnings when it is cleared.
+	pub fn give(&mut self, key: impl Into<Cow<'static, str>>, message: impl Into<String>) {
+		self.0.push(Warning {
+			key: key.into(),
+			message: message.into(),
+		});
 	}
 
 	/// The warnings, in the order they were given.

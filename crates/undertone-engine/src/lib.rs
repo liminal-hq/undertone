@@ -20,7 +20,7 @@
 //! [`render`] plans an offline render of a pattern and books it on any graph, [`score`] compiles a tick-timed cue
 //! to a looping pattern, and [`wav`] encodes rendered samples as a WAV file.
 //! [`surround`] holds the speaker ring, the fold-down of channel gains, `enable_multichannel`, and the mono fold, [`window`] plans an offline render booked in windows,
-//! and [`warn`] holds the warnings the engine gives once.
+//! [`samples`] holds the registry of decoded recordings that sample voices play (decoding is the host's), and [`warn`] holds the warnings the engine gives once.
 //!
 //! The [`render_graph`] module holds [`render_graph::RenderGraph`], the in-house renderer: a [`graph::Graph`] that renders what the engine books to samples, in any block size.
 //!
@@ -44,6 +44,7 @@ pub mod pitch_curve;
 pub mod random;
 pub mod render;
 pub mod render_graph;
+pub mod samples;
 pub mod score;
 pub mod surround;
 pub mod voice;

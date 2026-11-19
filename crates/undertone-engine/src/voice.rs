@@ -15,7 +15,7 @@ use crate::engine::{
 	BookedVoice, Engine, EnvelopeShape, Playback, VoiceHandle, VoiceSlot, number_key,
 };
 use crate::graph::{
-	FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Target,
+	BufferId, FilterType, Graph, NodeId, NodeKind, OscillatorType, ParamId, ParamKind, Target,
 };
 use crate::master::output_channels;
 use crate::math::{js_max, js_min};
@@ -24,6 +24,7 @@ use crate::pan::connect_output;
 use crate::params::{FmEnvCurve, Pitch, SoundType, VoiceParams};
 use crate::pitch_curve::{CurveEvent, apply_pitch_curve, build_pitch_curve};
 use crate::waves::Waveform;
+use std::sync::Arc;
 use undertone_pattern::Result;
 use undertone_pattern::js::number_to_string;
 use undertone_pattern::pitch::note_to_frequency;
@@ -32,6 +33,7 @@ const DEFAULT_OSCILLATOR_FREQUENCY: f64 = 440.0;
 const MAX_NOISE_BUFFER_SECONDS: f64 = 2.0; // longer gates loop the buffer instead of growing it
 const STOP_TAIL_SECONDS: f64 = 0.02; // headroom past the last ramp so the ramp completes before stop()
 const DEFAULT_ORBIT: f64 = 0.0;
+const DEFAULT_SAMPLE_BASE_NOTE: &str = "c4"; // the pitch a sample registered without a base note is assumed to sound at
 const PHASER_STAGE_COUNT: usize = 4; // series allpass filters; more stages, deeper notches
 const PHASER_CENTER_HZ: f64 = 1000.0;
 const PHASER_DEPTH_HZ: f64 = 600.0; // how far the LFO swings each stage's frequency around the centre
@@ -136,13 +138,48 @@ fn frequency_of(pitch: &Pitch) -> Result<f64> {
 }
 
 impl<G: Graph> Engine<G> {
-	/// Whether booking `params` books nothing: a sample voice whose buffer is not available. It is the one
-	/// place that rule lives, so anything that must know which voices will really sound, such as an offline
-	/// render's room-size look-ahead, asks here. **Until the sample registry lands (RF-21) no sample is
-	/// available, so every voice with a `sample_name` is skipped**, as the reference skips a sample that was
-	/// never registered.
+	/// Whether booking `params` books nothing: a sample voice whose buffer is not available (the name is not
+	/// registered, or registered but its PCM has not been handed over yet). It is the one place that rule
+	/// lives, so anything that must know which voices will really sound, such as an offline render's room-size
+	/// look-ahead, asks here. Unlike booking, asking does not warn about an unregistered name (the reference's
+	/// look-ahead does, through the same lookup); the booking of the voice does.
 	pub fn is_voice_skipped(&self, params: &VoiceParams) -> bool {
-		params.sample_name.is_some()
+		params.sample_name.as_deref().is_some_and(|name| {
+			let key = self.samples.lookup_key(name, params.sample_bank.as_deref());
+			!(self.sample_buffers.contains_key(&key) || self.samples.entry_data(&key).is_some())
+		})
+	}
+
+	/// The graph buffer of a sample (`getSampleBuffer`): the one this engine already made from it, else one
+	/// made now from the registry. `None` skips the voice: an unregistered name warns once (until the registry
+	/// is cleared), and a registered name whose PCM has not arrived is skipped silently.
+	fn sample_buffer(&mut self, name: &str, bank: Option<&str>) -> Option<BufferId> {
+		let key = self.samples.lookup_key(name, bank);
+		if let Some(buffer) = self.sample_buffers.get(&key) {
+			return Some(*buffer);
+		}
+		if !self.samples.has_entry(&key) {
+			if self.samples.first_warning(&key) {
+				self.warnings.give(
+					format!("sample:{key}"),
+					format!(
+						"undertone: sample \"{key}\" is not registered \u{2014} voice skipped. Call registerSample() first."
+					),
+				);
+			}
+			return None;
+		}
+		let data = Arc::clone(self.samples.entry_data(&key)?);
+		let buffer =
+			self.graph
+				.create_buffer(data.channels.len() as u32, data.frames(), data.sample_rate);
+		for (channel, samples) in data.channels.iter().enumerate() {
+			self.graph
+				.buffer_channel_mut(buffer, channel as u32)
+				.copy_from_slice(samples);
+		}
+		self.sample_buffers.insert(key, buffer);
+		Some(buffer)
 	}
 
 	/// Books one voice at `start_time` (seconds on the graph's clock) to the engine's output.
@@ -183,14 +220,20 @@ impl<G: Graph> Engine<G> {
 		params: &VoiceParams,
 		start_time: f64,
 	) -> Result<Playback> {
-		if self.is_voice_skipped(params) {
-			let skipped_at = js_max(start_time + params.nudge_time, 0.0);
-			return Ok(Playback {
-				start_time: skipped_at,
-				end_time: skipped_at,
-				voice: None,
-			});
-		}
+		let sample = match params.sample_name.as_deref() {
+			Some(name) => match self.sample_buffer(name, params.sample_bank.as_deref()) {
+				Some(buffer) => Some(buffer),
+				None => {
+					let skipped_at = js_max(start_time + params.nudge_time, 0.0);
+					return Ok(Playback {
+						start_time: skipped_at,
+						end_time: skipped_at,
+						voice: None,
+					});
+				}
+			},
+			None => None,
+		};
 
 		// Clamp to the graph's origin: real parameters and sources throw on negative times.
 		let voice_start = js_max(start_time + params.nudge_time, 0.0);
@@ -222,13 +265,34 @@ impl<G: Graph> Engine<G> {
 		let mut fm_modulator: Option<NodeId> = None;
 
 		let colour = noise_colour(params.sound_type);
-		let source = if colour.is_some() {
+		let source = if sample.is_some() || colour.is_some() {
 			self.graph.create_node(NodeKind::BufferSource)
 		} else {
 			self.graph.create_node(NodeKind::Oscillator)
 		};
 
-		if let Some(colour) = colour {
+		if let Some(buffer) = sample {
+			// A recorded sample plays at the speed that moves its base note to the event's pitch, and does not
+			// loop (a long gate holds the voice, it does not repeat the recording).
+			self.graph.set_buffer(source, Some(buffer));
+			let rate = match &params.pitch {
+				Some(pitch) => {
+					let base = self
+						.samples
+						.get_sample_base_note(
+							params.sample_name.as_deref().unwrap_or_default(),
+							params.sample_bank.as_deref(),
+						)
+						.cloned()
+						.unwrap_or_else(|| Pitch::Name(DEFAULT_SAMPLE_BASE_NOTE.into()));
+					frequency_of(pitch)? / frequency_of(&base)?
+				}
+				None => 1.0,
+			};
+			let playback_rate = self.graph.param(source, ParamKind::PlaybackRate);
+			self.graph
+				.set_value_at_time(playback_rate, rate, voice_start);
+		} else if let Some(colour) = colour {
 			// Cap the synchronously generated buffer and loop it for longer gates, rather than allocating
 			// multi-second buffers for every cycle of a slow looped noise pattern.
 			let audible_seconds = js_max(gain_release_end - voice_start, 0.05);

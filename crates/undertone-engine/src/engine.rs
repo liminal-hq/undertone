@@ -45,9 +45,11 @@
 //! ```
 
 use crate::effects::OrbitBus;
+use crate::graph::BufferId;
 use crate::graph::{Graph, NodeId, ParamId};
 use crate::master::{MasterBus, MasterBusOptions, create_master_bus};
 use crate::math::gains::PanEvent;
+use crate::samples::Samples;
 use crate::surround::enable_multichannel;
 use crate::warn::{Warning, Warnings};
 use crate::waves::ShapedWaves;
@@ -214,6 +216,11 @@ pub struct Engine<G: Graph> {
 	pub(crate) voices: Vec<VoiceSlot>,
 	pub(crate) free_slots: Vec<usize>,
 	pub(crate) warnings: Warnings,
+	/// The registry sample voices play from (see [`Engine::samples_mut`]).
+	pub(crate) samples: Samples,
+	/// The graph buffers made from registered samples, by registered key: what the reference's context has
+	/// decoded. Kept when the registry is cleared, as the reference keeps it.
+	pub(crate) sample_buffers: HashMap<String, BufferId>,
 }
 
 impl<G: Graph> Engine<G> {
@@ -238,6 +245,8 @@ impl<G: Graph> Engine<G> {
 			voices: Vec::new(),
 			free_slots: Vec::new(),
 			warnings: Warnings::default(),
+			samples: Samples::default(),
+			sample_buffers: HashMap::new(),
 		};
 		if setup.multichannel {
 			engine.enable_multichannel();
@@ -287,6 +296,21 @@ impl<G: Graph> Engine<G> {
 	/// The master bus, when the setup asked for one.
 	pub fn master_bus(&self) -> Option<MasterBus> {
 		self.master
+	}
+
+	/// The sample registry this engine plays sample voices from.
+	pub fn samples(&self) -> &Samples {
+		&self.samples
+	}
+
+	/// The sample registry, mutably: register decoded recordings here ([`Samples::register_sample`]) before
+	/// booking a voice that names them. Replace it whole with `*engine.samples_mut() = samples`.
+	///
+	/// An engine keeps each buffer it has made from a recording (as the reference keeps what a context has
+	/// decoded), so a name this engine has already played keeps its first recording when it is registered
+	/// again or cleared; use a new engine for a new set of recordings.
+	pub fn samples_mut(&mut self) -> &mut Samples {
+		&mut self.samples
 	}
 
 	/// The warnings given so far, each key once, in order.
