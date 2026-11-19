@@ -105,6 +105,8 @@ export async function step3(
 ) {
   const settleMode = opts.settle ?? 'idle';
   let sink: unknown[] = [];
+  // The baseline is the live count before the first repeat, so garbage left by a repeat is not forgiven.
+  const baseline = stats().live;
   const repeats = opts.repeats ?? 3;
   const total = opts.patterns ?? 1_000_000;
   const out: unknown[] = [];
@@ -130,7 +132,7 @@ export async function step3(
     // Settle: poll for up to ten seconds for live handles to return to the start.
     let settledAtMs = -1;
     const s0 = now();
-    const limit = start.live + Math.max(1, Math.floor(total * 0.01));
+    const limit = baseline + Math.max(1, Math.floor(total * 0.01));
     while (now() - s0 < 10_000) {
       if (settleMode === 'gc' && opts.gc) opts.gc();
       if (settleMode === 'churn') {

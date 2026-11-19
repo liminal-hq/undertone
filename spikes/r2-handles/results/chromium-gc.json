@@ -1,0 +1,124 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/149.0.0.0 Safari/537.36",
+  "crossOriginIsolated": true,
+  "settle": "gc",
+  "gcInLoop": false,
+  "step1": {
+    "every.count": { "imports": 0, "callbacks": 0, "haps": 2000 },
+    "every.query": { "imports": 0, "callbacks": 0, "haps": 2000 },
+    "jux.count": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "jux.query": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "every+jux.count": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "every+jux.query": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "foreign.count": { "imports": 8000, "callbacks": 2000, "haps": 2000 },
+    "foreign.query": { "imports": 8000, "callbacks": 2000, "haps": 2000 },
+    "custom.count": { "imports": 11000, "callbacks": 1000, "haps": 1000 },
+    "custom.query": { "imports": 11000, "callbacks": 1000, "haps": 1000 },
+    "tree": "(stack (control pan literal (pure Num(-1.0)) (every 2 (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))) (rev (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")}))))))) (control pan literal (pure Num(1.0)) (rev (every 2 (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))) (rev (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))))))))"
+  },
+  "step2": {
+    "seq32Plain": {
+      "haps": 32,
+      "medianSingleUs": 65.00005722045898,
+      "medianBatchUs": 65.25000095367432
+    },
+    "seq32Foreign": {
+      "haps": 32,
+      "medianSingleUs": 69.99993324279785,
+      "medianBatchUs": 70.80000162124634
+    },
+    "fast32Plain": {
+      "haps": 32,
+      "medianSingleUs": 75.00004768371582,
+      "medianBatchUs": 76.09999895095825
+    },
+    "fast32Foreign": {
+      "haps": 32,
+      "medianSingleUs": 79.99992370605469,
+      "medianBatchUs": 78.60000133514404
+    },
+    "custom32": {
+      "haps": 32,
+      "medianSingleUs": 14.999866485595703,
+      "medianBatchUs": 13.69999885559082
+    }
+  },
+  "step3": [
+    {
+      "repeat": 1,
+      "createdThisRepeat": 1000000,
+      "loopMs": 1007,
+      "samples": [
+        { "patterns": 0, "live": 20, "created": 20, "memoryBytes": 1179648 },
+        { "patterns": 100000, "live": 30000, "created": 100020, "memoryBytes": 12058624 },
+        { "patterns": 200000, "live": 20000, "created": 200020, "memoryBytes": 16056320 },
+        { "patterns": 300000, "live": 0, "created": 300020, "memoryBytes": 18743296 },
+        { "patterns": 400000, "live": 90000, "created": 400020, "memoryBytes": 23789568 },
+        { "patterns": 500000, "live": 90000, "created": 500020, "memoryBytes": 26279936 },
+        { "patterns": 600000, "live": 50000, "created": 600020, "memoryBytes": 36306944 },
+        { "patterns": 700000, "live": 60000, "created": 700020, "memoryBytes": 36306944 },
+        { "patterns": 800000, "live": 40000, "created": 800020, "memoryBytes": 36306944 },
+        { "patterns": 900000, "live": 140000, "created": 900020, "memoryBytes": 36306944 },
+        { "patterns": 1000000, "live": 50000, "created": 1000020, "memoryBytes": 48889856 }
+      ],
+      "liveAtLoopEnd": 50000,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 105,
+      "memoryAfterSettle": 48889856,
+      "checksum": 1000,
+      "sinkLength": 0
+    },
+    {
+      "repeat": 2,
+      "createdThisRepeat": 1000000,
+      "loopMs": 1111,
+      "samples": [
+        { "patterns": 0, "live": 0, "created": 1000020, "memoryBytes": 48889856 },
+        { "patterns": 100000, "live": 100000, "created": 1100020, "memoryBytes": 48889856 },
+        { "patterns": 200000, "live": 200000, "created": 1200020, "memoryBytes": 51380224 },
+        { "patterns": 300000, "live": 56000, "created": 1300020, "memoryBytes": 63963136 },
+        { "patterns": 400000, "live": 156000, "created": 1400020, "memoryBytes": 63963136 },
+        { "patterns": 500000, "live": 256000, "created": 1500020, "memoryBytes": 66912256 },
+        { "patterns": 600000, "live": 76000, "created": 1600020, "memoryBytes": 74055680 },
+        { "patterns": 700000, "live": 176000, "created": 1700020, "memoryBytes": 74055680 },
+        { "patterns": 800000, "live": 96000, "created": 1800020, "memoryBytes": 74055680 },
+        { "patterns": 900000, "live": 196000, "created": 1900020, "memoryBytes": 74055680 },
+        { "patterns": 1000000, "live": 86000, "created": 2000020, "memoryBytes": 74055680 }
+      ],
+      "liveAtLoopEnd": 86000,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 108,
+      "memoryAfterSettle": 74055680,
+      "checksum": 1000,
+      "sinkLength": 0
+    },
+    {
+      "repeat": 3,
+      "createdThisRepeat": 1000000,
+      "loopMs": 1051,
+      "samples": [
+        { "patterns": 0, "live": 0, "created": 2000020, "memoryBytes": 74055680 },
+        { "patterns": 100000, "live": 100000, "created": 2100020, "memoryBytes": 74055680 },
+        { "patterns": 200000, "live": 200000, "created": 2200020, "memoryBytes": 74055680 },
+        { "patterns": 300000, "live": 20001, "created": 2300020, "memoryBytes": 74055680 },
+        { "patterns": 400000, "live": 120001, "created": 2400020, "memoryBytes": 74055680 },
+        { "patterns": 500000, "live": 40001, "created": 2500020, "memoryBytes": 74055680 },
+        { "patterns": 600000, "live": 140001, "created": 2600020, "memoryBytes": 74055680 },
+        { "patterns": 700000, "live": 30000, "created": 2700020, "memoryBytes": 74055680 },
+        { "patterns": 800000, "live": 130000, "created": 2800020, "memoryBytes": 74055680 },
+        { "patterns": 900000, "live": 30000, "created": 2900020, "memoryBytes": 74055680 },
+        { "patterns": 1000000, "live": 130000, "created": 3000020, "memoryBytes": 74055680 }
+      ],
+      "liveAtLoopEnd": 130000,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 113,
+      "memoryAfterSettle": 74055680,
+      "checksum": 1000,
+      "sinkLength": 0
+    }
+  ],
+  "browserVersion": "149.0.7827.55"
+}
