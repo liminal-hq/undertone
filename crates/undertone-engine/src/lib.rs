@@ -26,6 +26,7 @@
 extern crate alloc;
 
 pub mod effects;
+pub mod engine;
 pub mod graph;
 pub mod master;
 pub mod math;
@@ -35,6 +36,7 @@ pub mod params;
 pub mod pitch_curve;
 pub mod random;
 pub mod surround;
+pub mod voice;
 pub mod warn;
 pub mod waves;
 
