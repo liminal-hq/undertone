@@ -365,6 +365,16 @@ mod tests {
 	}
 
 	#[test]
+	fn uneven_channels_never_panic() {
+		// Review finding: `interleaved` indexed every channel by the first one's length.
+		let outcome = std::panic::catch_unwind(|| {
+			let audio = RenderedAudio::new(8_000.0, vec![vec![0.0, 0.0], vec![0.0]]);
+			audio.interleaved()
+		});
+		assert!(outcome.is_ok(), "building or interleaving uneven channels panicked");
+	}
+
+	#[test]
 	fn mismatched_channels_are_refused_by_the_encoder() {
 		let audio = RenderedAudio::new(8_000.0, vec![vec![0.0; 3], vec![0.0; 4]]);
 		assert_eq!(
