@@ -84,10 +84,10 @@ fn a_periodic_wave_plays_its_partials() {
 #[test]
 fn an_oscillator_does_not_alias_near_nyquist() {
 	let mut graph = RenderGraph::new(RATE, 1, 48_000);
-	let osc = osc_to_destination(&mut graph, 11_000.0);
+	let osc = osc_to_destination(&mut graph, 13_000.0);
 	graph.set_oscillator_type(osc, OscillatorType::Sawtooth);
 	let out = graph.render_all();
-	// At 11 kHz only the fundamental fits below 24 kHz: the output is a plain sine of amplitude 2/pi, normalised.
+	// At 13 kHz only the fundamental fits below 24 kHz (a second partial at 26 kHz would fold back): the output is a plain sine of amplitude 2/pi, normalised.
 	let expected = 2.0 / core::f64::consts::PI * GIBBS_SCALE;
 	assert!((f64::from(peak(&out[0])) - expected).abs() < 5e-3);
 }

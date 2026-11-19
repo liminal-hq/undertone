@@ -52,9 +52,10 @@
 //! silent cases, without checking them); the unit tests assert each node's behaviour against the specification's
 //! formulas. Nothing here has been listened to.
 //!
-//! - **Oscillators** are band-limited by wave tables (one per third of an octave of pitch, linearly
-//!   interpolated), as browsers do, but the table sizes, the band edges, and so the exact partials near
-//!   Nyquist are this crate's own. The built-in types are normalised like a custom wave (unless it was
+//! - **Oscillators** are band-limited by wave tables laid out as Chromium's are (36 tables of 4096 samples, one per
+//!   third of an octave of pitch, two neighbouring tables blended, each linearly interpolated: layer 4 measured a
+//!   note at 440 Hz to 1.5e-7 of full scale), at the sample rates where Chromium also uses 4096 samples (above 24 kHz up to
+//!   88.2 kHz); at other rates the layout is the same and the table size is not. The built-in types are normalised like a custom wave (unless it was
 //!   made with normalisation disabled), as Chromium's are: layer 4 measured its square and sawtooth at 0.848 of the
 //!   ideal wave (one over the Gibbs overshoot of the partial sum), which this crate now matches.
 //! - **The dynamics compressor** implements the algorithm the specification and browsers share (a saturating
@@ -1025,7 +1026,7 @@ impl RenderGraph {
 		};
 		let frequency = &node.params[0];
 		let sample_rate = self.sample_rate;
-		let mut band = tables.band(frequency.values[0]);
+		let mut band = tables.lookup(frequency.values[0]);
 		let mut sounded = false;
 		for i in 0..QUANTUM {
 			let at = frame + i as u64;
@@ -1039,7 +1040,7 @@ impl RenderGraph {
 			}
 			let hertz = frequency.values[i];
 			if !frequency.constant {
-				band = tables.band(hertz);
+				band = tables.lookup(hertz);
 			}
 			node.out[i] = tables.read(band, state.phase);
 			sounded = true;
