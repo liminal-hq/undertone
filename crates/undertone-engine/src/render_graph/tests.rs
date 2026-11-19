@@ -838,3 +838,24 @@ fn an_absurdly_long_buffer_is_rejected() {
 	let mut graph = RenderGraph::new(RATE, 1, 128);
 	let _ = graph.create_buffer(2, usize::MAX / 8, RATE);
 }
+
+#[test]
+fn an_absurd_render_length_is_an_error() {
+	let error = RenderGraph::try_new(48_000.0, 2, u64::MAX).unwrap_err();
+	assert!(error.message().contains("render length"), "{error:?}");
+	assert!(RenderGraph::try_new(48_000.0, 2, 268_435_456).is_ok());
+}
+
+#[test]
+#[should_panic(expected = "render length")]
+fn set_length_frames_rejects_an_absurd_length() {
+	let mut graph = RenderGraph::new(RATE, 1, 128);
+	graph.set_length_frames(u64::MAX);
+}
+
+#[test]
+#[should_panic(expected = "render_all")]
+fn render_all_refuses_a_render_that_could_not_be_held() {
+	let mut graph = RenderGraph::new(RATE, 32, 268_435_456);
+	let _ = graph.render_all();
+}

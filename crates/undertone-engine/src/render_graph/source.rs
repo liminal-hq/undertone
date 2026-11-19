@@ -79,6 +79,10 @@ impl SourceState {
 			if self.looping {
 				if self.position >= end || self.position < 0.0 {
 					self.position -= (self.position / end).floor() * end;
+					// A hair below zero rounds up to the length itself, one past the last frame.
+					if self.position >= end || self.position.is_nan() {
+						self.position = 0.0;
+					}
 				}
 			} else if self.position >= end || self.position < 0.0 {
 				self.finished = true;
@@ -165,5 +169,18 @@ mod tests {
 			&out[..10],
 			&[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 		);
+	}
+
+	#[test]
+	fn a_looping_position_a_hair_below_zero_wraps_inside_the_buffer() {
+		// -1e-20 plus the length rounds to the length itself, which is one past the last frame.
+		let data = vec![vec![1.0, 2.0, 3.0]];
+		let mut state = SourceState::new();
+		state.looping = true;
+		state.start = Some(0);
+		state.position = -1e-20;
+		let (out, silent) = run(&mut state, &data, 1.0, 0);
+		assert!(!silent);
+		assert!(out.iter().all(|s| s.is_finite()));
 	}
 }

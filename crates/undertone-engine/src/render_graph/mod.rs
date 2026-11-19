@@ -318,6 +318,9 @@ pub const MIN_SAMPLE_RATE: f64 = 1.0;
 /// The highest sample rate a [`RenderGraph`] accepts, in hertz (the same bound as a render's).
 pub const MAX_SAMPLE_RATE: f64 = crate::render::MAX_SAMPLE_RATE;
 
+/// The longest render a [`RenderGraph`] accepts, in frames: the same bound as a render plan's.
+pub const MAX_RENDER_LENGTH_FRAMES: u64 = crate::render::MAX_RENDER_FRAMES as u64;
+
 /// The most samples (all channels) a buffer made by [`Graph::create_buffer`] may hold: 2^28, a gibibyte of
 /// `f32`.
 pub const MAX_BUFFER_SAMPLES: usize = 1 << 28;
@@ -361,6 +364,11 @@ impl RenderGraph {
 				"channels must be 1 to {MAX_NODE_CHANNELS}, got {channels}"
 			)));
 		}
+		if length_frames > MAX_RENDER_LENGTH_FRAMES {
+			return Err(undertone_pattern::Error::new(format!(
+				"render length must be at most {MAX_RENDER_LENGTH_FRAMES} frames, got {length_frames}"
+			)));
+		}
 		let channels = channels as usize;
 		let mut destination = Node::placeholder();
 		destination.count = channels;
@@ -391,7 +399,15 @@ impl RenderGraph {
 	}
 
 	/// Changes the length of the render (a booking learns how long the piece is as it goes).
+	///
+	/// # Panics
+	///
+	/// Panics if `length_frames` is over [`MAX_RENDER_LENGTH_FRAMES`] ("render length").
 	pub fn set_length_frames(&mut self, length_frames: u64) {
+		assert!(
+			length_frames <= MAX_RENDER_LENGTH_FRAMES,
+			"render length must be at most {MAX_RENDER_LENGTH_FRAMES} frames, got {length_frames}"
+		);
 		self.length_frames = length_frames;
 	}
 
@@ -459,8 +475,18 @@ impl RenderGraph {
 	}
 
 	/// Renders everything that is left of the render and returns it, one `Vec` per channel.
+	///
+	/// # Panics
+	///
+	/// Panics if the whole render would hold over 2^31 samples (8 GiB); stream such a render with
+	/// [`RenderGraph::render_block`] instead.
 	pub fn render_all(&mut self) -> Vec<Vec<f32>> {
 		let remaining = (self.length_frames - self.produced.min(self.length_frames)) as usize;
+		assert!(
+			remaining.saturating_mul(self.channels) <= 1 << 31,
+			"render_all would hold {remaining} frames of {} channels; use render_block",
+			self.channels
+		);
 		let mut channels = vec![vec![0.0_f32; remaining]; self.channels];
 		let mut slices: Vec<&mut [f32]> = channels.iter_mut().map(Vec::as_mut_slice).collect();
 		let written = self.render_block(&mut slices);
