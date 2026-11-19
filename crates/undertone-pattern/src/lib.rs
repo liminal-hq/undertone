@@ -19,6 +19,7 @@ extern crate std;
 
 pub mod control;
 pub mod controls;
+pub(crate) mod ddpow;
 pub mod error;
 pub mod fraction;
 pub mod hap;

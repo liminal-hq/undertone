@@ -51,3 +51,11 @@ pub(crate) fn sqrt(x: f64) -> f64 {
 	#[cfg(all(feature = "std", not(feature = "libm")))]
 	return x.sqrt();
 }
+
+/// The natural logarithm of `x`.
+pub(crate) fn ln(x: f64) -> f64 {
+	#[cfg(feature = "libm")]
+	return libm::log(x);
+	#[cfg(all(feature = "std", not(feature = "libm")))]
+	return x.ln();
+}
