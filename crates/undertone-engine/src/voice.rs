@@ -148,7 +148,11 @@ impl<G: Graph> Engine<G> {
 	/// # Errors
 	///
 	/// A pitch that is not a note name or not a finite frequency above zero fails with the reference's
-	/// message. Nodes made before the failure stay on the graph, as they do in the reference.
+	/// message. A room size whose reverb would be longer than 60 seconds ([`MAX_BUFFER_SECONDS`](crate::noise::MAX_BUFFER_SECONDS),
+	/// a deliberate bound the TypeScript does not have; its `createBuffer` throws a `RangeError` for what
+	/// it cannot allocate), or that is infinite or not a number, fails with a message naming the room, and
+	/// so does a noise buffer of such a length. Nodes made before the failure stay on the graph, as they do
+	/// in the reference.
 	pub fn play(&mut self, params: &VoiceParams, start_time: f64) -> Result<Playback> {
 		self.play_to(self.output, params, start_time)
 	}
@@ -232,7 +236,7 @@ impl<G: Graph> Engine<G> {
 				colour.name(),
 				number_to_string(start_time)
 			));
-			let buffer = build_noise_buffer(&mut self.graph, colour, buffer_duration, &mut random);
+			let buffer = build_noise_buffer(&mut self.graph, colour, buffer_duration, &mut random)?;
 			self.graph.set_buffer(source, Some(buffer));
 			self.graph
 				.set_loop(source, audible_seconds > buffer_duration);
@@ -312,7 +316,7 @@ impl<G: Graph> Engine<G> {
 			voice_end,
 			&mut stoppables,
 		);
-		self.connect_effect_sends(output, placed.node, params, voice_start);
+		self.connect_effect_sends(output, placed.node, params, voice_start)?;
 
 		self.graph.start(source, voice_start);
 		self.graph.stop(source, voice_end);
@@ -497,11 +501,11 @@ impl<G: Graph> Engine<G> {
 		final_node: NodeId,
 		params: &VoiceParams,
 		voice_start: f64,
-	) {
+	) -> Result<()> {
 		let room = params.room_level.filter(|level| *level > 0.0);
 		let delay = params.delay_level.filter(|level| *level > 0.0);
 		if room.is_none() && delay.is_none() {
-			return;
+			return Ok(());
 		}
 
 		let orbit = params.orbit.unwrap_or(DEFAULT_ORBIT);
@@ -520,7 +524,12 @@ impl<G: Graph> Engine<G> {
 					number_to_string(orbit),
 					number_to_string(params.room_size)
 				));
-				bus.set_room_size(&mut self.graph, params.room_size, &mut random);
+				if let Err(error) =
+					bus.set_room_size(&mut self.graph, params.room_size, &mut random)
+				{
+					self.buses.insert(key, bus);
+					return Err(error);
+				}
 			}
 			self.connect_send(final_node, bus.reverb_input, level, voice_start);
 		}
@@ -536,5 +545,6 @@ impl<G: Graph> Engine<G> {
 			self.connect_send(final_node, bus.delay_input, level, voice_start);
 		}
 		self.buses.insert(key, bus);
+		Ok(())
 	}
 }

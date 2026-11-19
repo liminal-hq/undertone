@@ -11,8 +11,9 @@
 //! buffer on every device.
 
 use crate::graph::{BufferId, Graph};
-use undertone_pattern::js;
+use undertone_pattern::js::{self, number_to_string};
 use undertone_pattern::random::SeededRandom;
+use undertone_pattern::{Error, Result};
 
 /// The colour of a noise voice.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -36,13 +37,36 @@ impl NoiseColour {
 	}
 }
 
+/// The longest buffer the engine will make, in seconds: a deliberate bound, not one the TypeScript has.
+///
+/// The TypeScript hands `createBuffer` whatever length the arithmetic gives and lets the browser throw a
+/// `RangeError` for a length it cannot allocate. This crate has no such backstop (an infinite length would
+/// ask Rust for `usize::MAX` frames and abort), so it refuses a buffer of more than 60 seconds, which is
+/// fifteen times the longest reverb tail a room size of 10 makes and thirty times the noise buffer cap.
+pub const MAX_BUFFER_SECONDS: f64 = 60.0;
+
 /// How many frames a buffer of `seconds` has at `sample_rate`: `Math.max(1, Math.round(rate * seconds))`.
-pub(crate) fn frame_count(sample_rate: f64, seconds: f64) -> usize {
+///
+/// # Errors
+///
+/// A length that is not a number, or more than [`MAX_BUFFER_SECONDS`] of frames, fails the way the
+/// browser's `createBuffer` throws a `RangeError`, so no caller can be made to allocate without bound.
+pub(crate) fn frame_count(sample_rate: f64, seconds: f64) -> Result<usize> {
+	if seconds.is_nan() || seconds > MAX_BUFFER_SECONDS {
+		return Err(Error::new(format!(
+			"Cannot create an audio buffer of {} seconds: the longest is {MAX_BUFFER_SECONDS} seconds",
+			number_to_string(seconds)
+		)));
+	}
 	let frames = js::round(sample_rate * seconds);
-	if frames >= 1.0 { frames as usize } else { 1 }
+	Ok(if frames >= 1.0 { frames as usize } else { 1 })
 }
 
 /// Makes a one-channel noise buffer of `duration_seconds` on `graph`, drawing from `random`.
+///
+/// # Errors
+///
+/// A duration that is not a number or is longer than [`MAX_BUFFER_SECONDS`] fails; nothing is allocated.
 ///
 /// ```
 /// use undertone_engine::graph::LogGraph;
@@ -51,17 +75,18 @@ pub(crate) fn frame_count(sample_rate: f64, seconds: f64) -> usize {
 ///
 /// let mut graph = LogGraph::new(44_100.0, 2);
 /// let mut random = seeded_random("noise");
-/// let buffer = build_noise_buffer(&mut graph, NoiseColour::White, 0.1, &mut random);
+/// let buffer = build_noise_buffer(&mut graph, NoiseColour::White, 0.1, &mut random)?;
 /// # let _ = buffer;
+/// # Ok::<(), undertone_pattern::Error>(())
 /// ```
 pub fn build_noise_buffer<G: Graph>(
 	graph: &mut G,
 	colour: NoiseColour,
 	duration_seconds: f64,
 	random: &mut SeededRandom,
-) -> BufferId {
+) -> Result<BufferId> {
 	let sample_rate = graph.sample_rate();
-	let length = frame_count(sample_rate, duration_seconds);
+	let length = frame_count(sample_rate, duration_seconds)?;
 	let buffer = graph.create_buffer(1, length, sample_rate);
 	let data = graph.buffer_channel_mut(buffer, 0);
 	match colour {
@@ -98,7 +123,7 @@ pub fn build_noise_buffer<G: Graph>(
 			}
 		}
 	}
-	buffer
+	Ok(buffer)
 }
 
 #[cfg(test)]
@@ -109,19 +134,35 @@ mod tests {
 
 	#[test]
 	fn a_buffer_has_the_rounded_frame_count() {
-		assert_eq!(frame_count(44_100.0, 0.05), 2205);
-		assert_eq!(frame_count(44_100.0, 0.0), 1);
-		assert_eq!(frame_count(44_100.0, -1.0), 1);
+		assert_eq!(frame_count(44_100.0, 0.05), Ok(2205));
+		assert_eq!(frame_count(44_100.0, 0.0), Ok(1));
+		assert_eq!(frame_count(44_100.0, -1.0), Ok(1));
+		assert_eq!(frame_count(44_100.0, f64::NEG_INFINITY), Ok(1));
+	}
+
+	#[test]
+	fn a_length_over_the_limit_or_not_a_number_is_refused() {
+		assert!(frame_count(44_100.0, MAX_BUFFER_SECONDS).is_ok());
+		for seconds in [f64::INFINITY, f64::NAN, MAX_BUFFER_SECONDS + 1.0, 1.0e300] {
+			assert!(frame_count(44_100.0, seconds).is_err(), "{seconds}");
+		}
+		let mut graph = LogGraph::new(1000.0, 2);
+		let mut random = seeded_random("x");
+		for colour in [NoiseColour::White, NoiseColour::Pink, NoiseColour::Brown] {
+			assert!(build_noise_buffer(&mut graph, colour, f64::INFINITY, &mut random).is_err());
+		}
 	}
 
 	#[test]
 	fn white_noise_stays_in_range_and_repeats_for_a_seed() {
 		let mut graph = LogGraph::new(1000.0, 2);
-		let a = build_noise_buffer(&mut graph, NoiseColour::White, 1.0, &mut seeded_random("x"));
+		let a = build_noise_buffer(&mut graph, NoiseColour::White, 1.0, &mut seeded_random("x"))
+			.unwrap();
 		let first: Vec<f32> = graph.buffer_channel_mut(a, 0).to_vec();
 		assert_eq!(first.len(), 1000);
 		assert!(first.iter().all(|s| (-1.0..1.0).contains(s)));
-		let b = build_noise_buffer(&mut graph, NoiseColour::White, 1.0, &mut seeded_random("x"));
+		let b = build_noise_buffer(&mut graph, NoiseColour::White, 1.0, &mut seeded_random("x"))
+			.unwrap();
 		assert_eq!(graph.buffer_channel_mut(b, 0).to_vec(), first);
 	}
 }

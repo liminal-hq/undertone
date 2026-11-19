@@ -17,8 +17,10 @@
 
 use crate::graph::{BufferId, Graph, NodeId, NodeKind, ParamId, ParamKind};
 use crate::math::{exp, js_max, ln};
-use crate::noise::frame_count;
+use crate::noise::{MAX_BUFFER_SECONDS, frame_count};
+use undertone_pattern::js::number_to_string;
 use undertone_pattern::random::SeededRandom;
+use undertone_pattern::{Error, Result};
 
 const ROOM_SIZE_MIN_SECONDS: f64 = 0.3;
 const ROOM_SIZE_MAX_SECONDS: f64 = 4.0;
@@ -46,13 +48,24 @@ pub fn room_size_to_seconds(size: f64) -> f64 {
 }
 
 /// Makes a synthetic reverb impulse response of `seconds`: exponentially decaying noise in two channels.
+///
+/// # Errors
+///
+/// A length that is not a number, or longer than [`MAX_BUFFER_SECONDS`] (60 seconds, a deliberate bound: the
+/// longest room size the documentation names, 10, is 4 seconds), fails with a message naming the room, and
+/// allocates nothing. The TypeScript would throw a `RangeError` from `createBuffer`.
 pub fn build_impulse_response<G: Graph>(
 	graph: &mut G,
 	seconds: f64,
 	random: &mut SeededRandom,
-) -> BufferId {
+) -> Result<BufferId> {
 	let sample_rate = graph.sample_rate();
-	let length = frame_count(sample_rate, seconds);
+	let length = frame_count(sample_rate, seconds).map_err(|_| {
+		Error::new(format!(
+			"Cannot make a reverb for a room of {} seconds: the longest is {MAX_BUFFER_SECONDS} seconds (check `room_size`)",
+			number_to_string(seconds)
+		))
+	})?;
 	let buffer = graph.create_buffer(IR_CHANNELS, length, sample_rate);
 	let decay_rate = -ln(IR_DECAY_FLOOR);
 	for channel in 0..IR_CHANNELS {
@@ -62,7 +75,7 @@ pub fn build_impulse_response<G: Graph>(
 			*sample = ((random.next_value() * 2.0 - 1.0) * envelope) as f32;
 		}
 	}
-	buffer
+	Ok(buffer)
 }
 
 /// One orbit's reverb and delay on a graph.
@@ -115,19 +128,21 @@ impl OrbitBus {
 	}
 
 	/// Regenerates the shared impulse response when `size` differs from what is loaded. Regenerating is real
-	/// work, so a voice that asks for the room the bus already has costs nothing.
+	/// work, so a voice that asks for the room the bus already has costs nothing. A room that cannot be made
+	/// (see [`build_impulse_response`]) is an error and leaves the bus as it was.
 	pub(crate) fn set_room_size<G: Graph>(
 		&mut self,
 		graph: &mut G,
 		size: f64,
 		random: &mut SeededRandom,
-	) {
+	) -> Result<()> {
 		if self.last_room_size == Some(size) {
-			return;
+			return Ok(());
 		}
+		let buffer = build_impulse_response(graph, room_size_to_seconds(size), random)?;
 		self.last_room_size = Some(size);
-		let buffer = build_impulse_response(graph, room_size_to_seconds(size), random);
 		graph.set_buffer(self.convolver, Some(buffer));
+		Ok(())
 	}
 
 	/// Updates the shared delay time and feedback when they differ from what is set. The change lands at
@@ -164,7 +179,8 @@ mod tests {
 			&mut graph,
 			room_size_to_seconds(3.0),
 			&mut seeded_random("ir"),
-		);
+		)
+		.unwrap();
 		assert_eq!(graph.buffer_channel_mut(buffer, 0).len(), 49_490);
 		assert_eq!(graph.buffer_channel_mut(buffer, 1).len(), 49_490);
 	}
@@ -172,9 +188,20 @@ mod tests {
 	#[test]
 	fn the_response_decays() {
 		let mut graph = LogGraph::new(1000.0, 2);
-		let buffer = build_impulse_response(&mut graph, 1.0, &mut seeded_random("ir"));
+		let buffer = build_impulse_response(&mut graph, 1.0, &mut seeded_random("ir")).unwrap();
 		let data = graph.buffer_channel_mut(buffer, 0);
 		let peak = |part: &[f32]| part.iter().fold(0.0_f32, |m, s| m.max(s.abs()));
 		assert!(peak(&data[..100]) > peak(&data[900..]) * 10.0);
+	}
+
+	#[test]
+	fn a_room_over_the_limit_or_not_finite_is_refused_without_allocating() {
+		let mut graph = LogGraph::new(44_100.0, 2);
+		for seconds in [f64::INFINITY, f64::NAN, 60.5, 1.0e12] {
+			let error =
+				build_impulse_response(&mut graph, seconds, &mut seeded_random("ir")).unwrap_err();
+			assert!(error.message().contains("room"), "{}", error.message());
+		}
+		assert!(build_impulse_response(&mut graph, 60.0, &mut seeded_random("ir")).is_ok());
 	}
 }
