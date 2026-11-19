@@ -14,7 +14,7 @@
 //! - [`Node::Custom`], a [`Query`](crate::Query) written in Rust, which includes every closure given to [`Pattern::from_fn`] and [`Pattern::fmap_with`], and so also a `Pattern<f64>` handed to a control (it is mapped with a closure on the way in).
 //! - [`Node::Foreign`], a callback that lives in the host, such as a JavaScript function behind the bridge (`signal(fn)` there). Its [`ForeignId`](crate::ForeignId) means something only to the host that registered it.
 //!
-//! A tree holding either one stays on the thread that built it. Everything else crosses: every signal, `seed`, `segment`, `range`, `range2`, `rangex`, `add`, `sub`, `mul`, `div`, `round`, `floor`, `fast`, `slow`, `rev`, `every` (the tree holds the transformed pattern it built, never the function), `cat`, `seq`, `timecat`, `stack`, `arrange`, `euclid`, `pure`, `n`, `scale`, `chord`, `voicing` (every option), `drift` (every option, a seed kept as UTF-16 units included), and every control with a number, a string, or a pattern of data nodes.
+//! A tree holding either one stays on the thread that built it. Everything else crosses: every signal, `seed`, `segment`, `range`, `range2`, `rangex`, `add`, `sub`, `mul`, `div`, `round`, `floor`, `fast`, `slow`, `rev`, `every` (the tree holds the transformed pattern it built, never the function), `cat`, `seq`, `timecat`, `stack`, `arrange`, `euclid`, `pure`, `n`, `scale`, `chord`, `voicing` (every option), `drift` (every option, a seed kept as UTF-16 units included), `voice` and `layer` (the patch and the stagger, level, and pan of each layer), and every control with a number, a string, or a pattern of data nodes.
 //!
 //! # The format
 //!
@@ -57,7 +57,7 @@ use crate::fraction::Fraction;
 use crate::pattern::{ArithOp, Node, Pattern, pure};
 use crate::random::Seed;
 use crate::signal::{Shape, Signal, SignalKind};
-use crate::value::{Datum, MapFn, ParsedScale, Value};
+use crate::value::{Datum, LayerMap, MapFn, ParsedScale, Value};
 use alloc::collections::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -533,18 +533,61 @@ fn write_map(f: &MapFn, w: &mut Writer) {
 		}
 		MapFn::Merge(fields) => {
 			w.word("merge");
-			w.int(fields.len() as i128);
-			for (key, value) in fields {
-				w.text(key);
-				match value {
-					Some(value) => {
+			write_fields(fields, w);
+		}
+		MapFn::Layer(layer) => {
+			w.word("layer");
+			write_fields(&layer.fields, w);
+			w.number(layer.nudge_offset);
+			for optional in [layer.level, layer.pan] {
+				match optional {
+					Some(n) => {
 						w.word("v");
-						value.write(w);
+						w.number(n);
 					}
 					None => w.word("x"),
 				}
 			}
 		}
+	}
+}
+
+fn write_fields(fields: &[(String, Option<Value>)], w: &mut Writer) {
+	w.int(fields.len() as i128);
+	for (key, value) in fields {
+		w.text(key);
+		match value {
+			Some(value) => {
+				w.word("v");
+				value.write(w);
+			}
+			None => w.word("x"),
+		}
+	}
+}
+
+fn read_fields(r: &mut Reader<'_>) -> Result<Vec<(String, Option<Value>)>> {
+	let count = r.count()?;
+	let mut fields = Vec::with_capacity(count);
+	for _ in 0..count {
+		let key: String = r.text()?.into();
+		let value = match r.word()? {
+			"v" => Some(Value::read(r)?),
+			"x" => None,
+			other => {
+				return Err(r.error(alloc::format!("`{other}` is not v or x")));
+			}
+		};
+		fields.push((key, value));
+	}
+	Ok(fields)
+}
+
+fn read_optional_number(r: &mut Reader<'_>) -> Result<Option<f64>> {
+	match r.word()? {
+		"v" => Ok(Some(r.number()?)),
+		"x" => Ok(None),
+		other => Err(r.error(alloc::format!("`{other}` is not v or x"))),
 	}
 }
 
@@ -622,22 +665,13 @@ fn read_map(r: &mut Reader<'_>) -> Result<MapFn> {
 				cycles_per_pass: r.number()?,
 			})
 		}
-		"merge" => {
-			let count = r.count()?;
-			let mut fields = Vec::with_capacity(count);
-			for _ in 0..count {
-				let key: String = r.text()?.into();
-				let value = match r.word()? {
-					"v" => Some(Value::read(r)?),
-					"x" => None,
-					other => {
-						return Err(r.error(alloc::format!("`{other}` is not v or x")));
-					}
-				};
-				fields.push((key, value));
-			}
-			MapFn::Merge(fields)
-		}
+		"merge" => MapFn::Merge(read_fields(r)?),
+		"layer" => MapFn::Layer(LayerMap {
+			fields: read_fields(r)?,
+			nudge_offset: r.number()?,
+			level: read_optional_number(r)?,
+			pan: read_optional_number(r)?,
+		}),
 		other => return Err(r.error(alloc::format!("`{other}` is not a map"))),
 	})
 }

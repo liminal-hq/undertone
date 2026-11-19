@@ -96,8 +96,10 @@ pub fn build_pan_path(points: &[PanPoint], voice_start: f64) -> Vec<PanEvent> {
 
 /// The scale `√2 · 10^(law/20)` that puts a pan law's centre at `law` dB (`scale` in the
 /// reference's `panLawGains` and `scaleForPanLaw`).
+///
+/// The power is the correctly rounded one ([`super::js_pow`], D-25), whatever the back-end `M` is.
 pub fn pan_law_scale<M: Maths>(law: f64) -> f64 {
-	SQRT_2 * M::pow(10.0, law / 20.0)
+	SQRT_2 * super::js_pow(10.0, law / 20.0)
 }
 
 /// Each side's gain for a pan under a pan law of `law` dB (`panLawGains`): the equal-power gains

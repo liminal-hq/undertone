@@ -1,4 +1,4 @@
-// The first subset's layer 3 graph cases: placement and the 0.4.0 options, each with its options-off twin
+// Layer 3 graph cases: placement, plus the `voices` and `options` groups from their own files
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -6,6 +6,12 @@
 import type { ControlPatch } from '../../src/types';
 import type { GraphCase, OutputSetup, RenderGraphCase, VoicesGraphCase } from './graph';
 import type { Program, Step } from './interpret';
+import { channelsCases } from './channelsData';
+import { instrumentsCases } from './instrumentsData';
+import { optionsCases } from './optionsData';
+import { samplesCases } from './samplesData';
+import { scoreCases } from './scoreData';
+import { voicesCases } from './voicesData';
 
 /** A short held tone: the patch every placement voice starts from. */
 const TONE: ControlPatch = {
@@ -460,5 +466,18 @@ function renders(): GraphCase[] {
 
 /** Every layer 3 case of the first subset, in file order. */
 export function layer3Cases(): GraphCase[] {
-  return [...panLaw(), ...panPath(), ...autopan(), ...panSlide(), ...baselines(), ...renders()];
+  return [
+    ...panLaw(),
+    ...panPath(),
+    ...autopan(),
+    ...panSlide(),
+    ...baselines(),
+    ...renders(),
+    ...voicesCases(),
+    ...optionsCases(),
+    ...instrumentsCases(),
+    ...channelsCases(),
+    ...scoreCases(),
+    ...samplesCases()
+  ];
 }

@@ -13,6 +13,7 @@ import {
 import type { AutomationCall } from '../../src/test-utils/fakeAudioContext';
 import type { ControlPatch } from '../../src/types';
 import type { RenderOptions } from '../../src/render';
+import type { ScoreDefinition } from '../../src/score';
 import { encodeValue, messageOf, nineDigits, nineDigitsText, programJson } from './format';
 import type { CaseRecord, CorpusFile, Json } from './format';
 import { build } from './programs';
@@ -25,6 +26,30 @@ export interface OutputSetup {
   master?: boolean | Record<string, unknown>;
   /** Output channels of the destination (default 2); more than two enables multichannel output. */
   channels?: number;
+  /** The most channels the hardware offers (`maxChannelCount`); defaults to `channels`. */
+  maxChannels?: number;
+  /** Whether `enableMultichannel` is called on the context; defaults to `channels` being more than two. */
+  multichannel?: boolean;
+  /** Voices play through `createMonoFold`, which feeds the master bus when there is one. */
+  monoFold?: boolean;
+}
+
+/** An instrument merged over a voice's patch, as `.voice(patch)` does: a preset by name, or an `fmVoice()` definition. */
+export type Instrument =
+  | { preset: 'glassBell' | 'roundBass' | 'softPad' | 'pluck' | 'lead' }
+  | { fmVoice: Record<string, unknown> };
+
+/**
+ * A decoded sample registered before booking (`registerSample(name, { buffer, baseNote })`): the PCM a host
+ * hands over, one array per channel. `before` is the index of the voice it is registered before (default 0, so
+ * up front); a render case registers everything up front.
+ */
+export interface SampleSpec {
+  name: string;
+  sampleRate: number;
+  channels: readonly (readonly number[])[];
+  baseNote?: string | number;
+  before?: number;
 }
 
 interface CaseBase {
@@ -38,8 +63,19 @@ interface CaseBase {
 /** Voices booked directly on a realtime fake context: `patch` is a partial `VoiceParams`, `at` the start in seconds. */
 export interface VoicesGraphCase extends CaseBase {
   kind: 'voices';
-  voices: readonly { at: number; patch: ControlPatch }[];
+  voices: readonly {
+    at: number;
+    patch: ControlPatch;
+    /** `.voice(patch)`: an instrument merged over the patch. */
+    instrument?: Instrument;
+    /** `.surround(angle)`: sets `channelGains` to `surroundGains(angle)`. */
+    surround?: number;
+  }[];
   output?: OutputSetup;
+  /** The sample registry: what is registered, and when (see `SampleSpec`). */
+  registry?: readonly SampleSpec[];
+  /** Voice indices that `clearSamples()` is called before (ahead of that voice's registrations). */
+  clearBefore?: readonly number[];
 }
 
 /** A program rendered offline on a recording context (the render options as JSON, without `context`). */
@@ -47,12 +83,32 @@ export interface RenderGraphCase extends CaseBase {
   kind: 'render';
   program: Program;
   render: Omit<RenderOptions, 'context'>;
+  /** The sample registry, all registered before the render starts. */
+  registry?: readonly SampleSpec[];
 }
 
-export type GraphCase = VoicesGraphCase | RenderGraphCase;
+/**
+ * A `score()` rendered offline on a recording context: the definition and the render options as JSON. The score
+ * sets its own tempo, so the options leave out `bpm`, `cps`, and `seconds`.
+ */
+export interface ScoreGraphCase extends CaseBase {
+  kind: 'score';
+  definition: ScoreDefinition;
+  render: Omit<RenderOptions, 'context' | 'bpm' | 'cps' | 'seconds'>;
+}
 
-/** The groups of layer 3 in the first subset, in file order. */
-export const LAYER3_GROUPS = ['placement'] as const;
+export type GraphCase = VoicesGraphCase | RenderGraphCase | ScoreGraphCase;
+
+/** The groups of layer 3, in file order. */
+export const LAYER3_GROUPS = [
+  'placement',
+  'voices',
+  'options',
+  'instruments',
+  'channels',
+  'score',
+  'samples'
+] as const;
 
 const CREATORS = [
   ['createOscillator', 'oscillator'],
@@ -288,19 +344,70 @@ function fresh(kind: string, node: NodeRecord): object | undefined {
   }
 }
 
+/**
+ * The onsets a render books, in booking order: each cycle's `collectOnsets`, as `renderToBuffer` collects them
+ * (a case with `seconds` drops onsets at or after it). Needs no audio, so the layer 4 files use it too.
+ */
+export function renderOnsets(
+  ref: Reference,
+  pattern: unknown,
+  render: Omit<RenderOptions, 'context'>
+): { at: number; patch: unknown }[] {
+  const cycleSeconds = ref.scheduler.cycleSecondsFor(render.bpm, render.cps);
+  const cycles = render.cycles ?? Math.ceil((render.seconds ?? cycleSeconds) / cycleSeconds);
+  const voices: { at: number; patch: unknown }[] = [];
+  for (let k = 0; k < cycles; k++) {
+    const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
+    for (const voice of ref.scheduler.collectOnsets(
+      pattern as never,
+      span,
+      0,
+      cycleSeconds,
+      render.gated ?? true
+    )) {
+      if (render.seconds === undefined || voice.startTime < render.seconds) {
+        voices.push({ at: voice.startTime, patch: voice.params });
+      }
+    }
+  }
+  return voices;
+}
+
 /** The score text: one line per voice, `v<k> @<seconds> <json of the patch>`. */
-function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[] {
+export function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[] {
   return voices.map(
     (voice, index) =>
       `v${index} @${nineDigitsText(voice.at)} ${JSON.stringify(encodeValue(voice.patch))}`
   );
 }
 
-function configure(ref: Reference, ctx: FakeAudioContext, channels: number | undefined): void {
-  if (channels === undefined || channels === 2) return;
-  ctx.destination.channelCount = channels;
-  ctx.destination.maxChannelCount = channels;
-  if (channels > 2) ref.lib.enableMultichannel(ctx as never);
+function configure(ref: Reference, ctx: FakeAudioContext, setup: OutputSetup | undefined): void {
+  const { channels, maxChannels, multichannel } = setup ?? {};
+  if (channels !== undefined && channels !== 2) ctx.destination.channelCount = channels;
+  const max = maxChannels ?? channels;
+  if (max !== undefined && max !== 2) ctx.destination.maxChannelCount = max;
+  if (multichannel ?? (channels !== undefined && channels > 2)) {
+    ref.lib.enableMultichannel(ctx as never);
+  }
+}
+
+/** The patch an instrument gives: a preset's, or the conversion of an `fmVoice()` definition. */
+function instrumentPatch(ref: Reference, instrument: Instrument): ControlPatch {
+  if ('preset' in instrument) return { ...ref.lib.fmPresets[instrument.preset] };
+  return ref.lib.fmVoice(instrument.fmVoice);
+}
+
+/** Registers a decoded sample in the reference's registry, as a host that has decoded it would. */
+function registerDecoded(ref: Reference, make: FakeAudioContext, sample: SampleSpec): void {
+  const length = sample.channels[0]?.length ?? 0;
+  const buffer = make.createBuffer(sample.channels.length, length, sample.sampleRate);
+  sample.channels.forEach((values, channel) => {
+    buffer.getChannelData(channel).set(Float32Array.from(values));
+  });
+  ref.lib.registerSample(sample.name, {
+    buffer,
+    ...(sample.baseNote === undefined ? {} : { baseNote: sample.baseNote })
+  });
 }
 
 /** Books a voices case on a fresh recording context and describes its graph. */
@@ -309,7 +416,7 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
   const created = track(ctx);
   // Noise and reverb draw from the context's seeded source, as a render does (seed 0).
   ref.random.seedContext(ctx as never, 0);
-  configure(ref, ctx, spec.output?.channels);
+  configure(ref, ctx, spec.output);
   let output: unknown;
   const master = spec.output?.master;
   if (master !== undefined && master !== false) {
@@ -319,15 +426,36 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
     );
     output = bus.input;
   }
-  for (const voice of spec.voices) {
+  if (spec.output?.monoFold) {
+    output = ref.lib.createMonoFold(ctx as never, (output ?? ctx.destination) as never);
+  }
+  // `.voice(patch)`: the instrument's fields overwrite the note's, and the score keeps what was booked.
+  const voices = spec.voices.map((voice) => ({
+    at: voice.at,
+    patch: {
+      ...voice.patch,
+      ...(voice.instrument === undefined ? {} : instrumentPatch(ref, voice.instrument)),
+      ...(voice.surround === undefined
+        ? {}
+        : { channelGains: ref.lib.surroundGains(voice.surround) })
+    }
+  }));
+  const registry = spec.registry ?? [];
+  voices.forEach((voice, index) => {
+    if (spec.clearBefore?.includes(index)) ref.lib.clearSamples();
+    for (const sample of registry) {
+      if ((sample.before ?? 0) === index) registerDecoded(ref, ctx, sample);
+    }
     ref.engine.playVoice(ctx as never, ref.engine.resolveParams(voice.patch), voice.at, {
       output: output as never
     });
-  }
+  });
   return {
     ...head(spec),
     ...(spec.output === undefined ? {} : { output: spec.output as Json }),
-    score: scoreLines(spec.voices),
+    ...(spec.registry === undefined ? {} : { registry: encodeValue(spec.registry) }),
+    ...(spec.clearBefore === undefined ? {} : { clearBefore: [...spec.clearBefore] }),
+    score: scoreLines(voices),
     graph: describeGraph(ctx, created, null)
   };
 }
@@ -356,42 +484,79 @@ async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<
       return context as never;
     }
   };
+  const scratch = new FakeAudioContext();
+  for (const sample of spec.registry ?? []) registerDecoded(ref, scratch, sample);
   await ref.lib.renderToBuffer(built.pattern as never, options);
   if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
-  // The score a render books: the onsets of each cycle, as the renderer collects them.
-  const cycleSeconds = ref.scheduler.cycleSecondsFor(spec.render.bpm, spec.render.cps);
-  const cycles =
-    spec.render.cycles ?? Math.ceil((spec.render.seconds ?? cycleSeconds) / cycleSeconds);
-  const voices: { at: number; patch: unknown }[] = [];
-  for (let k = 0; k < cycles; k++) {
-    const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
-    for (const voice of ref.scheduler.collectOnsets(
-      built.pattern as never,
-      span,
-      0,
-      cycleSeconds,
-      spec.render.gated ?? true
-    )) {
-      if (spec.render.seconds === undefined || voice.startTime < spec.render.seconds) {
-        voices.push({ at: voice.startTime, patch: voice.params });
-      }
-    }
-  }
+  const voices = renderOnsets(ref, built.pattern, spec.render);
   return {
     ...head(spec),
     program: programJson(spec.program),
     render: encodeValue(spec.render),
+    ...(spec.registry === undefined ? {} : { registry: encodeValue(spec.registry) }),
     score: scoreLines(voices),
     graph: describeGraph(context, created, context.length)
   };
 }
 
+/**
+ * Renders a score offline on a recording context and describes its graph. The case keeps the definition and
+ * the options even when the score throws, so a runner can reproduce the message; a case that books keeps the
+ * score's `cps` and `seconds` and the onsets the render booked.
+ */
+async function recordScoreCase(ref: Reference, spec: ScoreGraphCase): Promise<CaseRecord> {
+  const inputs = { definition: encodeValue(spec.definition), render: encodeValue(spec.render) };
+  try {
+    const cue = ref.lib.score(spec.definition);
+    let context: FakeOfflineAudioContext | undefined;
+    let created: { kind: string; node: NodeRecord }[] = [];
+    await cue.render({
+      ...spec.render,
+      context: (init) => {
+        context = new FakeOfflineAudioContext(init);
+        created = track(context);
+        return context as never;
+      }
+    });
+    if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
+    const cycleSeconds = ref.scheduler.cycleSecondsFor(undefined, cue.cps);
+    const voices: { at: number; patch: unknown }[] = [];
+    for (let k = 0; k < (spec.render.cycles ?? 1); k++) {
+      const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
+      for (const voice of ref.scheduler.collectOnsets(
+        cue.pattern as never,
+        span,
+        0,
+        cycleSeconds,
+        spec.render.gated ?? true
+      )) {
+        voices.push({ at: voice.startTime, patch: voice.params });
+      }
+    }
+    return {
+      ...head(spec),
+      ...inputs,
+      cps: cue.cps,
+      seconds: cue.seconds,
+      score: scoreLines(voices),
+      graph: describeGraph(context, created, context.length)
+    };
+  } catch (error) {
+    return { ...head(spec), ...inputs, error: messageOf(error) };
+  }
+}
+
 /** Records one layer 3 case; a case whose booking throws records the message. */
 export async function recordGraphCase(ref: Reference, spec: GraphCase): Promise<CaseRecord> {
+  // The reference's registry is process-wide: every case starts and ends with it empty.
+  ref.lib.clearSamples();
   try {
+    if (spec.kind === 'score') return await recordScoreCase(ref, spec);
     return spec.kind === 'voices' ? recordVoicesCase(ref, spec) : await recordRenderCase(ref, spec);
   } catch (error) {
     return { ...head(spec), error: messageOf(error) };
+  } finally {
+    ref.lib.clearSamples();
   }
 }
 

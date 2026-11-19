@@ -82,6 +82,16 @@ function argument(ref: Reference, value: unknown): unknown {
   if (isProgram(value)) return interpret(ref, value);
   if (Array.isArray(value)) return value.map((item) => argument(ref, item));
   if (value !== null && typeof value === 'object') {
+    // An instrument: `{ "$fmVoice": definition }` is `fmVoice(definition)`, `{ "$preset": name }` is `fmPresets[name]`.
+    const object = value as Record<string, unknown>;
+    if ('$fmVoice' in object) {
+      return ref.lib.fmVoice(
+        argument(ref, object.$fmVoice) as Parameters<typeof ref.lib.fmVoice>[0]
+      );
+    }
+    if ('$preset' in object) {
+      return (ref.lib.fmPresets as Record<string, unknown>)[String(object.$preset)];
+    }
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [key, argument(ref, item)])
     );
@@ -137,6 +147,15 @@ function apply(ref: Reference, pattern: AnyPattern, step: Step): AnyPattern {
     // drift(pattern, options) is a free function in the reference, not a method; as a step it takes the options object.
     const options = argument(ref, raw[0]) as Parameters<typeof ref.lib.drift>[1];
     return ref.lib.drift(pattern as never, options) as unknown as AnyPattern;
+  }
+  if (name === 'layer') {
+    // layer(notes, voices, options) is a free function in the reference, not a method; as a step it takes the voices and the options.
+    const [voices, options] = raw.map((value) => argument(ref, value));
+    return ref.lib.layer(
+      pattern as never,
+      voices as never,
+      options as never
+    ) as unknown as AnyPattern;
   }
   if (FORBIDDEN_METHODS.has(name)) throw new Error(`Method "${name}" is not allowed in a program`);
   const method = (pattern as unknown as Record<string, unknown>)[name];

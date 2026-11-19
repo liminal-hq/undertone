@@ -37,6 +37,7 @@
     "voice-params:check": "bun conformance/api/voice-params.ts check",
     "conformance:record": "bun conformance/recorder/record.ts record",
     "conformance:check": "bun conformance/recorder/record.ts check",
+    "conformance:browser-render": "bun conformance/recorder/browser-render.ts",
     "typecheck:conformance": "tsc -p conformance/tsconfig.json",
     "test-classes:check": "bun conformance/recorder/test-classes.ts check",
     "test-classes:update": "bun conformance/recorder/test-classes.ts update"

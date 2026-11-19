@@ -140,6 +140,22 @@ pub fn pow(x: f64, y: f64) -> f64 {
 	Active::pow(x, y)
 }
 
+/// `x ** y` as JavaScriptCore computes it, rounded correctly (D-25), on every back-end.
+///
+/// The engine uses `**` with a fractional exponent for a semitone ratio (`2 ** (n / 12)`), a pan law
+/// (`10 ** (law / 20)`), and the master bus's makeup gain. [`pow`] follows the platform or `libm` and can be one
+/// unit in the last place away from JavaScriptCore; this is the pattern crate's `js::pow` (a double-double
+/// `exp(y * ln x)` with the `x ** -0.5` rule), so a booked number is the one the reference wrote.
+///
+/// ```
+/// use undertone_engine::math::js_pow;
+/// assert_eq!(js_pow(2.0, 12.0 / 12.0), 2.0);
+/// assert_eq!(js_pow(2.0, -0.5), 0.7071067811865475);
+/// ```
+pub fn js_pow(x: f64, y: f64) -> f64 {
+	undertone_pattern::js::pow(x, y)
+}
+
 /// JavaScript's `Math.min` for two numbers: `NaN` if either is `NaN`.
 pub(crate) fn js_min(a: f64, b: f64) -> f64 {
 	if a.is_nan() || b.is_nan() {
@@ -165,6 +181,29 @@ mod tests {
 	#[test]
 	fn the_active_back_end_matches_its_name() {
 		assert_eq!(ACTIVE_NAME == "libm", cfg!(feature = "libm"));
+	}
+
+	#[test]
+	fn the_active_type_is_the_back_end_the_name_says() {
+		let type_name = core::any::type_name::<Active>();
+		assert!(type_name.ends_with(if ACTIVE_NAME == "libm" {
+			"Libm"
+		} else {
+			"Native"
+		}));
+	}
+
+	/// CI sets `UNDERTONE_EXPECT_MATHS=native` for its `--no-default-features` run, so a dependency
+	/// that switches `libm` back on through feature unification fails the run instead of passing
+	/// silently on the wrong back-end. Unset, the test does nothing.
+	#[test]
+	fn the_expected_back_end_is_the_one_in_use() {
+		if let Ok(expected) = std::env::var("UNDERTONE_EXPECT_MATHS") {
+			assert_eq!(
+				ACTIVE_NAME, expected,
+				"the engine is not using the maths back-end CI asked for"
+			);
+		}
 	}
 
 	#[test]

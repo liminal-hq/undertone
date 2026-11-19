@@ -22,5 +22,5 @@ workspace = true
 
 [dev-dependencies]
 proptest = { version = "1.12.0", default-features = false, features = ["std"] }
-# The crate lists itself to turn on its own `std` feature for tests and doc tests (the `ForeignTable` registry), while the default build stays `no_std`.
-undertone-pattern = { path = ".", features = ["std"] }
+# The crate lists itself (without its default `libm`, so `--no-default-features` stays honest) to turn on its own `std` feature for tests and doc tests (the `ForeignTable` registry), while the default build stays `no_std`.
+undertone-pattern = { path = ".", default-features = false, features = ["std"] }

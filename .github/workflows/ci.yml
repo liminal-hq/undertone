@@ -203,6 +203,11 @@ jobs:
       - uses: actions/checkout@v7
       - name: Run tests
         run: cargo nextest run --workspace --locked --profile ci
+      - name: Run tests with the C library maths
+        # The real C library back-end on x86-64 with glibc, where R9 measured it. UNDERTONE_EXPECT_MATHS makes a test fail if feature unification switches `libm` back on.
+        run: |
+          UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone-engine --no-default-features --locked
+          UNDERTONE_EXPECT_MATHS=std cargo nextest run -p undertone-pattern --no-default-features --locked
       - name: Upload Rust test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -257,7 +262,10 @@ jobs:
       - name: Run tests
         run: cargo nextest run --workspace --locked
       - name: Run tests with the C library maths
-        run: cargo nextest run -p undertone-engine --no-default-features --locked
+        # UNDERTONE_EXPECT_MATHS makes a test fail if feature unification switches `libm` back on.
+        run: |
+          UNDERTONE_EXPECT_MATHS=native cargo nextest run -p undertone-engine --no-default-features --locked
+          UNDERTONE_EXPECT_MATHS=std cargo nextest run -p undertone-pattern --no-default-features --locked
       - name: Write summary
         if: always()
         run: echo "## Rust tests (ARM64)" >> "${GITHUB_STEP_SUMMARY}"

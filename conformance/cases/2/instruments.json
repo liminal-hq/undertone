@@ -1,0 +1,456 @@
+{
+  "corpus": 1,
+  "layer": 2,
+  "group": "instruments",
+  "cases": [
+    {
+      "id": "instruments-preset-glassBell",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (glassBell)",
+      "program": [["note","e5 g5"],["voice",{"$preset":"glassBell"}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-preset-roundBass",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (roundBass)",
+      "program": [["note","e5 g5"],["voice",{"$preset":"roundBass"}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"e5","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}},
+        {"at":0.5,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"g5","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}},
+        {"at":1,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"e5","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}},
+        {"at":1.5,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"g5","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}}
+      ]
+    },
+    {
+      "id": "instruments-preset-softPad",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (softPad)",
+      "program": [["note","e5 g5"],["voice",{"$preset":"softPad"}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":0.625,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":1.25,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":1.875,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}}
+      ]
+    },
+    {
+      "id": "instruments-preset-pluck",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (pluck)",
+      "program": [["note","e5 g5"],["voice",{"$preset":"pluck"}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}},
+        {"at":0.25,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"g5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}},
+        {"at":0.5,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}},
+        {"at":0.75,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"g5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}}
+      ]
+    },
+    {
+      "id": "instruments-preset-lead",
+      "group": "instruments",
+      "from": "src/tools.test.ts: are frozen plain data that turn a note pattern into an FM voice (lead)",
+      "program": [["note","e5 g5"],["voice",{"$preset":"lead"}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.008,"decay":0.12,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.004,"fmDecay":0.16,"fmHarmonicity":2,"fmIndex":1.7,"fmRelease":0.1,"fmSustain":0.14,"gainLevel":0.32,"nudgeTime":0,"pitch":"e5","release":0.16,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.52}},
+        {"at":1,"params":{"attack":0.008,"decay":0.12,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.004,"fmDecay":0.16,"fmHarmonicity":2,"fmIndex":1.7,"fmRelease":0.1,"fmSustain":0.14,"gainLevel":0.32,"nudgeTime":0,"pitch":"g5","release":0.16,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.52}},
+        {"at":2,"params":{"attack":0.008,"decay":0.12,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.004,"fmDecay":0.16,"fmHarmonicity":2,"fmIndex":1.7,"fmRelease":0.1,"fmSustain":0.14,"gainLevel":0.32,"nudgeTime":0,"pitch":"e5","release":0.16,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.52}},
+        {"at":3,"params":{"attack":0.008,"decay":0.12,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.004,"fmDecay":0.16,"fmHarmonicity":2,"fmIndex":1.7,"fmRelease":0.1,"fmSustain":0.14,"gainLevel":0.32,"nudgeTime":0,"pitch":"g5","release":0.16,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.52}}
+      ]
+    },
+    {
+      "id": "instruments-voice-then-gain",
+      "group": "instruments",
+      "from": "src/tools.test.ts: lets controls chained after voice() win",
+      "program": [["note","e5"],["voice",{"$preset":"pluck"}],["gain",0.9]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.9,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}},
+        {"at":1,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.9,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}}
+      ]
+    },
+    {
+      "id": "instruments-gain-then-voice",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: fields the patch sets overwrite the events' own, so call voice() first",
+      "program": [["note","e5"],["gain",0.9],["voice",{"$preset":"pluck"}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}},
+        {"at":1.25,"params":{"attack":0.003,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.12,"fmHarmonicity":2,"fmIndex":3,"fmRelease":0.1,"fmSustain":0.1,"gainLevel":0.35,"nudgeTime":0,"pitch":"e5","release":0.15,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.25}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-full",
+      "group": "instruments",
+      "from": "src/tools.test.ts: converts a Tone.js-shaped definition into plain Undertone controls",
+      "program": [["note","c4 e4"],["voice",{"$fmVoice":{"harmonicity":2,"modulationIndex":7,"oscillator":{"type":"triangle"},"modulation":{"type":"square"},"envelope":{"attack":0.01,"decay":0.2,"sustain":0.5,"release":0.3},"modulationEnvelope":{"attack":0.02,"decay":0.1,"sustain":0.25,"release":0.05},"level":0.4,"pan":-0.3}}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.02,"fmDecay":0.1,"fmHarmonicity":2,"fmIndex":3.5,"fmRelease":0.05,"fmSustain":0.25,"fmWave":"square","gainLevel":0.4,"nudgeTime":0,"pan":-0.3,"pitch":"c4","release":0.3,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0.5}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.02,"fmDecay":0.1,"fmHarmonicity":2,"fmIndex":3.5,"fmRelease":0.05,"fmSustain":0.25,"fmWave":"square","gainLevel":0.4,"nudgeTime":0,"pan":-0.3,"pitch":"e4","release":0.3,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0.5}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.02,"fmDecay":0.1,"fmHarmonicity":2,"fmIndex":3.5,"fmRelease":0.05,"fmSustain":0.25,"fmWave":"square","gainLevel":0.4,"nudgeTime":0,"pan":-0.3,"pitch":"c4","release":0.3,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0.5}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.02,"fmDecay":0.1,"fmHarmonicity":2,"fmIndex":3.5,"fmRelease":0.05,"fmSustain":0.25,"fmWave":"square","gainLevel":0.4,"nudgeTime":0,"pan":-0.3,"pitch":"e4","release":0.3,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0.5}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-no-index",
+      "group": "instruments",
+      "from": "src/tools.test.ts: leaves FM out without a modulation index",
+      "program": [["note","c4"],["voice",{"$fmVoice":{"harmonicity":3,"envelope":{"attack":0.1}}}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-empty",
+      "group": "instruments",
+      "from": "src/tools.test.ts: leaves FM out without a modulation index (empty definition)",
+      "program": [["note","c4"],["voice",{"$fmVoice":{}}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-index-only",
+      "group": "instruments",
+      "from": "generated: an index without a harmonicity divides by 1",
+      "program": [["note","c4 g4"],["voice",{"$fmVoice":{"modulationIndex":4}}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":4,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":4,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":4,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":4,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-index-zero",
+      "group": "instruments",
+      "from": "generated: a modulation index of 0 leaves FM out, with the modulator's envelope unused",
+      "program": [["note","c4"],["voice",{"$fmVoice":{"modulationIndex":0,"harmonicity":2,"modulationEnvelope":{"attack":0.1}}}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-shaped",
+      "group": "instruments",
+      "from": "src/waves.test.ts: set a periodic wave on the carrier (shaped carrier and modulator)",
+      "program": [["note","c3 e3"],["voice",{"$fmVoice":{"harmonicity":2,"modulationIndex":3,"oscillator":{"type":"halfsine"},"modulation":{"type":"abssine"}}}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmHarmonicity":2,"fmIndex":1.5,"fmWave":"abssine","gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"halfsine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmHarmonicity":2,"fmIndex":1.5,"fmWave":"abssine","gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"halfsine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmHarmonicity":2,"fmIndex":1.5,"fmWave":"abssine","gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"halfsine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmHarmonicity":2,"fmIndex":1.5,"fmWave":"abssine","gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"halfsine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-level-pan",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: level is the peak gain and pan the stereo position",
+      "program": [["note","c4"],["voice",{"$fmVoice":{"level":0.6,"pan":0.5,"modulationIndex":1}}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":1,"gainLevel":0.6,"nudgeTime":0,"pan":0.5,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmIndex":1,"gainLevel":0.6,"nudgeTime":0,"pan":0.5,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-fmvoice-error-harmonicity",
+      "group": "instruments",
+      "from": "src/tools.test.ts: is JSON-safe and rejects bad values (harmonicity)",
+      "program": [["note","c4"],["voice",{"$fmVoice":{"harmonicity":0}}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "error": "fmVoice() harmonicity must be positive, got 0"
+    },
+    {
+      "id": "instruments-fmvoice-error-index",
+      "group": "instruments",
+      "from": "src/tools.test.ts: is JSON-safe and rejects bad values (modulation index)",
+      "program": [["note","c4"],["voice",{"$fmVoice":{"modulationIndex":-1}}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "error": "fmVoice() modulationIndex must not be negative, got -1"
+    },
+    {
+      "id": "instruments-voice-plain-patch",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: a patch is plain data, saved and reloaded",
+      "program": [["note","c4 e4 g4"],["voice",{"soundType":"square","attack":0.1,"filterCutoff":900}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.6666666666666666,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1.3333333333333333,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":2,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":2.6666666666666665,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":3.3333333333333335,"params":{"attack":0.1,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterCutoff":900,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-voice-empty-patch",
+      "group": "instruments",
+      "from": "generated: an empty patch changes nothing",
+      "program": [["note","c4 e4"],["voice",{}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-voice-twice",
+      "group": "instruments",
+      "from": "generated: the later patch overwrites the fields of the earlier one",
+      "program": [["note","c4"],["voice",{"$preset":"glassBell"}],["voice",{"$preset":"roundBass"}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"c4","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}},
+        {"at":1.25,"params":{"attack":0.005,"decay":0.2,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.18,"fmHarmonicity":1,"fmIndex":3.5,"fmRelease":0.1,"fmSustain":0.3,"fmWave":"triangle","gainLevel":0.5,"nudgeTime":0,"pitch":"c4","release":0.12,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.6}}
+      ]
+    },
+    {
+      "id": "instruments-layer-stagger-levels-pans",
+      "group": "instruments",
+      "from": "src/tools.test.ts: stacks the voices with a start stagger, level balance and opposite pans",
+      "program": [["note","a4"],["layer",[{"soundType":"square"},{"soundType":"triangle"}],{"stagger":0.002,"levels":[1,0.5],"pans":[-0.4,0.4]}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-0.4,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0,"velocity":1}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.002,"pan":0.4,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0,"velocity":0.5}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-0.4,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0,"velocity":1}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.002,"pan":0.4,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0,"velocity":0.5}}
+      ]
+    },
+    {
+      "id": "instruments-layer-own-pan",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given",
+      "program": [["note","a4"],["layer",[{"pan":0.7}]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.7,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.7,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-short-arrays",
+      "group": "instruments",
+      "from": "generated: levels and pans shorter than the voices: missing entries use the defaults",
+      "program": [["note","a4 c5"],["layer",[{},{"soundType":"square"},{"soundType":"sawtooth"}],{"levels":[0.5],"pans":[-1,1]}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-stagger-nudge",
+      "group": "instruments",
+      "from": "src/tools.test.ts: adds the stagger to nudges the notes already carry",
+      "program": [["note","a4"],["nudge",0.01],["layer",[{},{}],{"stagger":0.002}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.01,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.012,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.01,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.012,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-stagger-zero-nudge",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps them when stagger is 0",
+      "program": [["note","a4"],["nudge",0.01],["layer",[{}]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.01,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.01,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-drift",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps timing from drift() when wrapped around it",
+      "program": [["note","a4*2"],["drift",{"seed":"x","timing":0.02}],["layer",[{"soundType":"square"},{}],{"stagger":0.001}]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":-0.018644311139360072,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.016849504932761192,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":-0.01764431113936007,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.017849504932761193,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":-0.008052309704944492,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.004552831957116723,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":-0.007052309704944492,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0.005552831957116723,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-velocity",
+      "group": "instruments",
+      "from": "src/tools.test.ts: multiplies the notes' own velocity by the layer level",
+      "program": [["note","a4 a4"],["velocity","1 0.25"],["gain",1],["layer",[{},{}],{"levels":[1,0.5]}]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":1}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.25}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.125}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":1}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.25}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.5}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":1,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":0.125}}
+      ]
+    },
+    {
+      "id": "instruments-layer-inherit",
+      "group": "instruments",
+      "from": "src/tools.test.ts: lets a layer voice override the notes, but inherits what it does not set",
+      "program": [["note","a4"],["sound","sawtooth"],["layer",[{"soundType":"square"},{}]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}}
+      ]
+    },
+    {
+      "id": "instruments-layer-presets",
+      "group": "instruments",
+      "from": "docs/guide/instruments-and-scores.md: layering a bell and a pad on one pattern of notes",
+      "program": [["note","e5 g5"],["layer",[{"$preset":"glassBell"},{"$preset":"softPad"}],{"stagger":0.003}]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0.003,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":0.25,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0.003,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":0.5,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.002,"decay":0.7,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0,"fmDecay":0.35,"fmHarmonicity":3.5,"fmIndex":1.4285714285714286,"fmRelease":0.2,"gainLevel":0.3,"nudgeTime":0,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0.003,"pitch":"e5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}},
+        {"at":0.75,"params":{"attack":0.4,"decay":0.3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"fmAttack":0.5,"fmDecay":0.6,"fmHarmonicity":2,"fmIndex":0.6,"fmRelease":0.8,"fmSustain":0.5,"gainLevel":0.22,"nudgeTime":0.003,"pitch":"g5","release":0.9,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0.8}}
+      ]
+    },
+    {
+      "id": "instruments-layer-then-gain",
+      "group": "instruments",
+      "from": "generated: a control after layer() applies to every layer",
+      "program": [["note","a4"],["layer",[{},{"soundType":"square"}],{"levels":[1,0.5]}],["gain",0.3]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.3,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":1}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.3,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0,"velocity":0.5}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.3,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0,"velocity":1}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.3,"nudgeTime":0,"pitch":"a4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0,"velocity":0.5}}
+      ]
+    },
+    {
+      "id": "instruments-layer-error-empty",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given, and rejects bad input (no voices)",
+      "program": [["note","a4"],["layer",[]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "error": "layer() needs at least one voice"
+    },
+    {
+      "id": "instruments-layer-error-stagger",
+      "group": "instruments",
+      "from": "src/tools.test.ts: keeps a layer's own pan when no pan is given, and rejects bad input (stagger)",
+      "program": [["note","a4"],["layer",[{}],{"stagger":-1}]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "error": "layer() stagger must not be negative, got -1"
+    }
+  ]
+}

@@ -149,8 +149,59 @@ pub enum MapFn {
 	Merge(Vec<(String, Option<Value>)>),
 	/// `voicing(options)`: a hap with a `chord` becomes one hap per tone of the chord, sharing its whole and part. This is the one named map that changes the number of haps, so the query handles it (see [`Datum::voice`]); and it can fail when queried.
 	Voicing(VoicingOptions),
+	/// One layer of [`layer`](crate::instruments::layer): a voice patch merged into a map, then the stagger added to its `nudgeTime`, its `velocity` scaled by the layer level, and its `pan` replaced. See [`LayerMap`].
+	Layer(LayerMap),
 	/// `drift(pattern, options)`: seeded variation of each hap that has a whole. It reads the hap's time, so the query handles it (see [`Datum::drifted`]); and it can fail when queried. Validated when the pattern is built.
 	Drift(DriftOptions),
+}
+
+/// One layer of `layer(notes, voices, options)` as data: what `notes.fmap(value => ({ ...value, ...voice, ... }))` does for one voice.
+///
+/// The result of applying it to a map is the map with the voice's `fields` written over it, then `nudgeTime` set to the map's own `nudgeTime` (0 when it has none) plus `nudge_offset`, then, when there is a `level`, `velocity` set to the map's own `velocity` (1 when it has none) times the level, and, when there is a `pan`, `pan` set to it. The map's own `nudgeTime` and `velocity` are read before the voice is written, as the reference reads `value`, not the merged object. A field that holds anything but a number reads as `NaN`, as in [`drift`](crate::drift::drift).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LayerMap {
+	/// The voice patch: `Some` sets a field, `None` sets it to [`Value::Undefined`], as in [`MapFn::Merge`].
+	pub fields: Vec<(String, Option<Value>)>,
+	/// What this layer adds to the notes' `nudgeTime`: the layer's index times the stagger.
+	pub nudge_offset: f64,
+	/// The layer's strength, multiplying the notes' own `velocity`, when the options give one.
+	pub level: Option<f64>,
+	/// The layer's stereo position, replacing the notes' `pan`, when the options give one.
+	pub pan: Option<f64>,
+}
+
+impl LayerMap {
+	/// This layer applied to one value. A value that is not a map is treated as an empty one, as spreading it in JavaScript does.
+	pub fn apply_to(&self, value: &Value) -> Value {
+		let empty = BTreeMap::new();
+		let map = match value {
+			Value::Map(map) => map,
+			_ => &empty,
+		};
+		let number = |value: Option<&Value>, default: f64| match value {
+			None | Some(Value::Undefined) => default,
+			Some(Value::Num(n)) => *n,
+			Some(_) => f64::NAN,
+		};
+		let mut out = map.clone();
+		for (key, field) in &self.fields {
+			out.insert(key.clone(), field.clone().unwrap_or(Value::Undefined));
+		}
+		out.insert(
+			"nudgeTime".into(),
+			Value::Num(number(map.get("nudgeTime"), 0.0) + self.nudge_offset),
+		);
+		if let Some(level) = self.level {
+			out.insert(
+				"velocity".into(),
+				Value::Num(number(map.get("velocity"), 1.0) * level),
+			);
+		}
+		if let Some(pan) = self.pan {
+			out.insert("pan".into(), Value::Num(pan));
+		}
+		Value::Map(out)
+	}
 }
 
 impl MapFn {
@@ -168,7 +219,11 @@ impl MapFn {
 			MapFn::Range { lo, hi } => lo + v * (hi - lo),
 			MapFn::Range2 { lo, hi } => lo + ((v + 1.0) / 2.0) * (hi - lo),
 			MapFn::Rangex { lo, ratio } => lo * js::pow(*ratio, v),
-			MapFn::Scale(_) | MapFn::Merge(_) | MapFn::Voicing(_) | MapFn::Drift(_) => return None,
+			MapFn::Scale(_)
+			| MapFn::Merge(_)
+			| MapFn::Layer(_)
+			| MapFn::Voicing(_)
+			| MapFn::Drift(_) => return None,
 		})
 	}
 
@@ -266,6 +321,7 @@ impl Datum for Value {
 			},
 			// These change a hap, not a bare value (the query does the work), so a point sample passes through.
 			MapFn::Voicing(_) | MapFn::Drift(_) => self.clone(),
+			MapFn::Layer(layer) => layer.apply_to(self),
 			MapFn::Merge(patch) => match self {
 				Value::Map(map) => {
 					let mut merged = map.clone();

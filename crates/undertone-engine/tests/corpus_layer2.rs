@@ -41,6 +41,8 @@ const KNOWN: &[(&str, usize)] = &[
 	("signals", 20),
 	("chords", 71),
 	("drift", 81),
+	("instruments", 31),
+	("channels", 31),
 ];
 
 const REL_TOLERANCE: f64 = 1e-14;

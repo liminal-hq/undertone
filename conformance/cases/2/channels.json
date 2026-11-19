@@ -1,0 +1,409 @@
+{
+  "corpus": 1,
+  "layer": 2,
+  "group": "channels",
+  "cases": [
+    {
+      "id": "channels-surround-0",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",0]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,1,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0,0,1,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-30",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",30]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-30",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",-30]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[1,0,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[1,0,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-90",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",90]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,1,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,1,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-90",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",-90]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,1,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0,0,0,0,1,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-150",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",150]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0,1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0,1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-150",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",-150]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,1,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,1,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-180",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",180]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-180",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",-180]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-15",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",15]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.7071067811865475,0.7071067811865476,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,0.7071067811865475,0.7071067811865476,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-45",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",45]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-60",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",60]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.7071067811865476,0,0,0,0.7071067811865475,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0.7071067811865476,0,0,0,0.7071067811865475,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-75",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",-75]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0.3826834323650898,0,0,0,0.9238795325112867,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0.3826834323650898,0,0,0,0.9238795325112867,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-7p5",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",7.5]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.3826834323650898,0.9238795325112867,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,0.3826834323650898,0.9238795325112867,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-359p5",
+      "group": "channels",
+      "from": "src/surround.test.ts: splits equal-power between the two nearest speakers",
+      "program": [["note","c4"],["surround",359.5]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0.02617694830787336,0,0.9996573249755573,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0.02617694830787336,0,0.9996573249755573,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-390",
+      "group": "channels",
+      "from": "src/surround.test.ts: normalizes any angle onto the ring",
+      "program": [["note","c4"],["surround",390]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-minus-330",
+      "group": "channels",
+      "from": "src/surround.test.ts: normalizes any angle onto the ring",
+      "program": [["note","c4"],["surround",-330]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0,1,0,0,0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-540",
+      "group": "channels",
+      "from": "src/surround.test.ts: normalizes any angle onto the ring",
+      "program": [["note","c4"],["surround",540]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,0,0.7071067811865475,0.7071067811865476],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-1000000000",
+      "group": "channels",
+      "from": "src/surround.test.ts: normalizes any angle onto the ring",
+      "program": [["note","c4"],["surround",1000000000]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0.25881904510252074,0,0,0,0.9659258262890683,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0.25881904510252074,0,0,0,0.9659258262890683,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-one",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4"],["channels",[1]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-two",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4 e4"],["channels",[0.3,0.7]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0.3,0.7],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0.3,0.7],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[0.3,0.7],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"channelGains":[0.3,0.7],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-eight",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4"],["channels",[1,0.9,0.8,0.7,0.6,0.5,0.4,0.3]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[1,0.9,0.8,0.7,0.6,0.5,0.4,0.3],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[1,0.9,0.8,0.7,0.6,0.5,0.4,0.3],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-zeros",
+      "group": "channels",
+      "from": "generated: all gains zero are silent but valid",
+      "program": [["note","c4"],["channels",[0,0,0,0]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0,0,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-above-one",
+      "group": "channels",
+      "from": "generated: gains above one are allowed",
+      "program": [["note","c4"],["channels",[2,0.5]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[2,0.5],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[2,0.5],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-with-pan",
+      "group": "channels",
+      "from": "src/engine.test.ts: gives channelGains precedence over pan (both stay in the voice)",
+      "program": [["note","c4"],["pan",-1],["channels",[1,0]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[1,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"channelGains":[1,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-channels-then-surround",
+      "group": "channels",
+      "from": "docs/guide/stereo-and-surround.md: surround(angle) is sugar for channels(surroundGains(angle)), so the later one wins",
+      "program": [["note","c4"],["channels",[1,0]],["surround",90]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,1,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"channelGains":[0,0,0,0,0,1,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-then-channels",
+      "group": "channels",
+      "from": "docs/guide/stereo-and-surround.md: surround(angle) is sugar for channels(surroundGains(angle)), so the later one wins",
+      "program": [["note","c4"],["surround",90],["channels",[0,1]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"channelGains":[0,1],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-surround-chord",
+      "group": "channels",
+      "from": "docs/guide/stereo-and-surround.md: a chord placed at one angle",
+      "program": [["chord","Cmaj7"],["voicing"],["surround",45]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"channelGains":[0,0.9238795325112867,0,0,0,0.3826834323650898,0,0],"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "channels-error-channels-empty",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4"],["channels",[]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "error": "channels() takes 1-8 gains, got 0"
+    },
+    {
+      "id": "channels-error-channels-nine",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4"],["channels",[1,1,1,1,1,1,1,1,1]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "error": "channels() takes 1-8 gains, got 9"
+    },
+    {
+      "id": "channels-error-channels-negative",
+      "group": "channels",
+      "from": "src/control.test.ts: places voices on the 7.1 ring via channels() and surround()",
+      "program": [["note","c4"],["channels",[1,-0.5]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "error": "channels() gains must be finite and >= 0, got -0.5"
+    }
+  ]
+}
