@@ -13,6 +13,7 @@ import {
 import type { AutomationCall } from '../../src/test-utils/fakeAudioContext';
 import type { ControlPatch } from '../../src/types';
 import type { RenderOptions } from '../../src/render';
+import type { ScoreDefinition } from '../../src/score';
 import { encodeValue, messageOf, nineDigits, nineDigitsText, programJson } from './format';
 import type { CaseRecord, CorpusFile, Json } from './format';
 import { build } from './programs';
@@ -67,10 +68,27 @@ export interface RenderGraphCase extends CaseBase {
   render: Omit<RenderOptions, 'context'>;
 }
 
-export type GraphCase = VoicesGraphCase | RenderGraphCase;
+/**
+ * A `score()` rendered offline on a recording context: the definition and the render options as JSON. The score
+ * sets its own tempo, so the options leave out `bpm`, `cps`, and `seconds`.
+ */
+export interface ScoreGraphCase extends CaseBase {
+  kind: 'score';
+  definition: ScoreDefinition;
+  render: Omit<RenderOptions, 'context' | 'bpm' | 'cps' | 'seconds'>;
+}
+
+export type GraphCase = VoicesGraphCase | RenderGraphCase | ScoreGraphCase;
 
 /** The groups of layer 3, in file order. */
-export const LAYER3_GROUPS = ['placement', 'voices', 'options', 'instruments', 'channels'] as const;
+export const LAYER3_GROUPS = [
+  'placement',
+  'voices',
+  'options',
+  'instruments',
+  'channels',
+  'score'
+] as const;
 
 const CREATORS = [
   ['createOscillator', 'oscillator'],
@@ -427,9 +445,57 @@ async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<
   };
 }
 
+/**
+ * Renders a score offline on a recording context and describes its graph. The case keeps the definition and
+ * the options even when the score throws, so a runner can reproduce the message; a case that books keeps the
+ * score's `cps` and `seconds` and the onsets the render booked.
+ */
+async function recordScoreCase(ref: Reference, spec: ScoreGraphCase): Promise<CaseRecord> {
+  const inputs = { definition: encodeValue(spec.definition), render: encodeValue(spec.render) };
+  try {
+    const cue = ref.lib.score(spec.definition);
+    let context: FakeOfflineAudioContext | undefined;
+    let created: { kind: string; node: NodeRecord }[] = [];
+    await cue.render({
+      ...spec.render,
+      context: (init) => {
+        context = new FakeOfflineAudioContext(init);
+        created = track(context);
+        return context as never;
+      }
+    });
+    if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
+    const cycleSeconds = ref.scheduler.cycleSecondsFor(undefined, cue.cps);
+    const voices: { at: number; patch: unknown }[] = [];
+    for (let k = 0; k < (spec.render.cycles ?? 1); k++) {
+      const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
+      for (const voice of ref.scheduler.collectOnsets(
+        cue.pattern as never,
+        span,
+        0,
+        cycleSeconds,
+        spec.render.gated ?? true
+      )) {
+        voices.push({ at: voice.startTime, patch: voice.params });
+      }
+    }
+    return {
+      ...head(spec),
+      ...inputs,
+      cps: cue.cps,
+      seconds: cue.seconds,
+      score: scoreLines(voices),
+      graph: describeGraph(context, created, context.length)
+    };
+  } catch (error) {
+    return { ...head(spec), ...inputs, error: messageOf(error) };
+  }
+}
+
 /** Records one layer 3 case; a case whose booking throws records the message. */
 export async function recordGraphCase(ref: Reference, spec: GraphCase): Promise<CaseRecord> {
   try {
+    if (spec.kind === 'score') return await recordScoreCase(ref, spec);
     return spec.kind === 'voices' ? recordVoicesCase(ref, spec) : await recordRenderCase(ref, spec);
   } catch (error) {
     return { ...head(spec), error: messageOf(error) };

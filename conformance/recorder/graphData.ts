@@ -9,6 +9,7 @@ import type { Program, Step } from './interpret';
 import { channelsCases } from './channelsData';
 import { instrumentsCases } from './instrumentsData';
 import { optionsCases } from './optionsData';
+import { scoreCases } from './scoreData';
 import { voicesCases } from './voicesData';
 
 /** A short held tone: the patch every placement voice starts from. */
@@ -474,6 +475,7 @@ export function layer3Cases(): GraphCase[] {
     ...voicesCases(),
     ...optionsCases(),
     ...instrumentsCases(),
-    ...channelsCases()
+    ...channelsCases(),
+    ...scoreCases()
   ];
 }

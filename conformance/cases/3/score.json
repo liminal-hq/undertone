@@ -1,0 +1,993 @@
+{
+  "corpus": 1,
+  "layer": 3,
+  "group": "score",
+  "cases": [
+    {
+      "id": "score-notes-midi-and-hz",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: events at whole ticks with a note name, a MIDI number, or Hz",
+      "baseline": true,
+      "definition": {"events":[{"note":"e4","tick":0},{"gate":140,"midi":69,"tick":280},{"note":330,"tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.0017857142857142857,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.25,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":440,\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.0017857142857142857,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":330,\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":5,"compressor":1,"oscillator":3,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 329.627557 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 440 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 330 @1"]},"start":[1],"stop":[1.18],"to":["n8"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-gate-lengths",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: a gate is in ticks, default one tick",
+      "baseline": true,
+      "definition": {"events":[{"gate":56,"note":"c4","tick":0},{"gate":280,"note":"d4","tick":112},{"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"d4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.0017857142857142857,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":5,"compressor":1,"oscillator":3,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.2","lin 0.8 @0.21","lin 0 @0.31","lin 0 @0.36"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 293.664768 @0.2"]},"start":[0.2],"stop":[0.38],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n8"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-events-out-of-order",
+      "group": "score",
+      "from": "generated: events are sorted by onset, and events on one tick keep their order",
+      "baseline": true,
+      "definition": {"events":[{"gate":70,"note":"g4","tick":700},{"gate":70,"note":"c4","tick":70},{"gate":70,"note":"e4","tick":70},{"gate":70,"note":"a3","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.125,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"a3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.125 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.125,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0.125 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.125,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @1.25 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.125,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"compressor":1,"oscillator":4,"total":12},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.125","lin 0.8 @0.135","lin 0 @0.235","lin 0 @0.285"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 261.625565 @0.125"]},"start":[0.125],"stop":[0.305],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @0.125","lin 0.8 @0.135","lin 0 @0.235","lin 0 @0.285"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 329.627557 @0.125"]},"start":[0.125],"stop":[0.305],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @1.25","lin 0.8 @1.26","lin 0 @1.36","lin 0 @1.41"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 391.995436 @1.25"]},"start":[1.25],"stop":[1.43],"to":["n10"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-uneven-ticks",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: events are not snapped to a grid, so hand-played timing survives",
+      "baseline": true,
+      "definition": {"events":[{"gate":60,"note":"c4","tick":0},{"gate":60,"note":"c4","tick":73},{"gate":60,"note":"c4","tick":148},{"gate":60,"note":"c4","tick":223},{"gate":60,"note":"c4","tick":444}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.10714285714285714,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.130357143 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.10714285714285714,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @0.264285714 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.10714285714285714,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @0.398214286 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.10714285714285714,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v4 @0.792857143 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.10714285714285714,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":7,"compressor":1,"oscillator":5,"total":14},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.130357143","lin 0.8 @0.140357143","lin 0 @0.240357143","lin 0 @0.290357143"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 261.625565 @0.130357143"]},"start":[0.130357143],"stop":[0.310357143],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @0.264285714","lin 0.8 @0.274285714","lin 0 @0.374285714","lin 0 @0.424285714"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 261.625565 @0.264285714"]},"start":[0.264285714],"stop":[0.444285714],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @0.398214286","lin 0.8 @0.408214286","lin 0 @0.508214286","lin 0 @0.558214286"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 261.625565 @0.398214286"]},"start":[0.398214286],"stop":[0.578214286],"to":["n10"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0 @0.792857143","lin 0.8 @0.802857143","lin 0 @0.902857143","lin 0 @0.952857143"]},"to":["n1"]},
+          {"id":"n13","kind":"oscillator","params":{"frequency":["set 261.625565 @0.792857143"]},"start":[0.792857143],"stop":[0.972857143],"to":["n12"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-level-and-pan",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: level is the velocity control, and pan places the note",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"level":0.4,"note":"a3","pan":-1,"tick":0},{"gate":100,"level":1,"note":"a4","pan":0.5,"tick":280}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":-1,\"pitch\":\"a3\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":0.4}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.5,\"pitch\":\"a4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0,\"velocity\":1}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"panner":2,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.32 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set -1 @0"]},"to":["n1"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n9"]},
+          {"id":"n8","kind":"oscillator","params":{"frequency":["set 440 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n7"]},
+          {"id":"n9","kind":"panner","params":{"pan":["set 0.5 @0.5"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-voice-controls",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: an event's voice carries any further voice controls, and the score's pitch and gate win",
+      "baseline": true,
+      "definition": {"events":[{"gate":200,"note":"a3","tick":0,"voice":{"attack":0.02,"duration":9,"filterCutoff":900,"pitch":"c9","release":0.3,"soundType":"square"}},{"gate":200,"midi":60,"tick":560,"voice":{"fmDecay":0.2,"fmHarmonicity":2,"fmIndex":3,"roomLevel":0.2,"soundType":"sine"}}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.02,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.35714285714285715,\"filterAttack\":0,\"filterCutoff\":900,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"a3\",\"release\":0.3,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"square\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.35714285714285715,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"fmDecay\":0.2,\"fmHarmonicity\":2,\"fmIndex\":3,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":261.6255653005986,\"release\":0.05,\"roomLevel\":0.2,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":11,"compressor":1,"oscillator":3,"filter":1,"convolver":1,"delay":1,"total":19},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.02","lin 0 @0.12","lin 0 @0.42"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"square"},"params":{"frequency":["set 220 @0"]},"start":[0],"stop":[0.44],"to":["n6"]},
+          {"id":"n6","kind":"filter","params":{"frequency":["set 900 @0","set 900 @0","set 900 @0"]},"to":["n4"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1","n18"]},
+          {"id":"n8","kind":"oscillator","params":{"frequency":["set 261.625565 @1"]},"start":[1],"stop":[1.18],"to":["n7"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 523.251131 @1"]},"start":[1],"stop":[1.18],"to":["n10"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 1569.75339 @1"]},"to":["n11"]},
+          {"id":"n11","kind":"gain","params":{"gain":["set 0.0001 @1","set 1 @1","exp 0.0001 @1.2"]},"to":["n8.frequency"]},
+          {"id":"n12","kind":"gain","to":["n13"]},
+          {"id":"n13","kind":"convolver","heard":[["first","b0"]],"to":["n1"]},
+          {"id":"n14","kind":"gain","to":["n15"]},
+          {"id":"n15","kind":"delay","to":["n16","n17"]},
+          {"id":"n16","kind":"gain","to":["n1"]},
+          {"id":"n17","kind":"gain","to":["n15"]},
+          {"id":"n18","kind":"gain","params":{"gain":["set 0.2 @1"]},"to":["n12"]}
+        ],
+        "buffers": [
+          {"id":"b0","kind":"audio","length":1436,"sampleRate":1280,"channels":[{"rms":0.146612275,"peak":0.908645391,"head":[-0.519331098,-0.169334114,-0.424262583,0.284107685]},{"rms":0.155608859,"peak":0.921420991,"head":[-0.848861098,0.203850716,-0.253082454,-0.0261894949]}]}
+        ],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-empty-cue",
+      "group": "score",
+      "from": "generated: a score with no events books only the output",
+      "baseline": true,
+      "definition": {"events":[],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"compressor":1,"total":4},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-seam-cut-default",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: a note held at the seam is cut there by default",
+      "baseline": true,
+      "definition": {"events":[{"gate":400,"note":"c4","tick":1000}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @1.78571429 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.21428571428571427,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1.78571429","lin 0.8 @1.79571429","lin 0 @1.89571429","lin 0 @1.94571429"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @1.78571429"]},"start":[1.78571429],"stop":[1.96571429],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-seam-cut",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: 'cut' closes the gate at the seam",
+      "baseline": true,
+      "definition": {"events":[{"gate":400,"note":"c4","tick":1000}],"lengthTicks":1120,"seam":"cut","ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @1.78571429 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.21428571428571427,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1.78571429","lin 0.8 @1.79571429","lin 0 @1.89571429","lin 0 @1.94571429"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @1.78571429"]},"start":[1.78571429],"stop":[1.96571429],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-seam-ring",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: 'ring' lets the gate run on past the seam",
+      "baseline": true,
+      "definition": {"events":[{"gate":400,"note":"c4","tick":1000}],"lengthTicks":1120,"seam":"ring","ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @1.78571429 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.7142857142857143,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1.78571429","lin 0.8 @1.79571429","lin 0 @1.89571429","lin 0 @1.94571429"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @1.78571429"]},"start":[1.78571429],"stop":[1.96571429],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-seam-one-tick-left",
+      "group": "score",
+      "from": "generated: the last tick of the cue gets a one tick gate",
+      "baseline": true,
+      "definition": {"events":[{"gate":5,"note":"c4","tick":1119}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @1.99821429 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.0017857142857142857,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1.99821429","lin 0.8 @2.00821429","lin 0 @2.10821429","lin 0 @2.15821429"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @1.99821429"]},"start":[1.99821429],"stop":[2.17821429],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-pan-law-for-every-event",
+      "group": "score",
+      "from": "src/panLaw.test.ts: is given to every score event by the definition, unless the event sets its own",
+      "definition": {"events":[{"gate":100,"note":"c4","pan":-0.5,"tick":0},{"gate":100,"note":"e4","pan":0.5,"tick":280,"voice":{"panLaw":-1.5}},{"gate":100,"note":"g4","tick":560}],"lengthTicks":1120,"panLaw":-6,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":-0.5,\"panLaw\":-6,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.5,\"panLaw\":-1.5,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"panLaw\":-6,\"pitch\":\"g4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":9,"compressor":1,"oscillator":3,"merger":2,"total":16},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n7","n8"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"merger","to":["n1"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0.654832678 @0"]},"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.271240576 @0"]},"to":["n6 out 0 in 1"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n12","n13"]},
+          {"id":"n10","kind":"oscillator","params":{"frequency":["set 329.627557 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n9"]},
+          {"id":"n11","kind":"merger","to":["n1"]},
+          {"id":"n12","kind":"gain","params":{"gain":["set 0.455359769 @0.5"]},"to":["n11"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 1 @0.5"]},"to":["n11 out 0 in 1"]},
+          {"id":"n14","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n15","kind":"oscillator","params":{"frequency":["set 391.995436 @1"]},"start":[1],"stop":[1.18],"to":["n14"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-pan-law-zero",
+      "group": "score",
+      "from": "src/panLaw.test.ts: a score pan law of 0 dB keeps the louder side full, as a balance control does",
+      "definition": {"events":[{"gate":100,"note":"c4","pan":0.25,"tick":0}],"lengthTicks":1120,"panLaw":0,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.25,\"panLaw\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":5,"compressor":1,"oscillator":1,"merger":1,"total":9},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n7","n8"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"merger","to":["n1"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0.785694958 @0"]},"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n6 out 0 in 1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-pan-path",
+      "group": "score",
+      "from": "src/panPath.test.ts: carries a pan path in ticks as seconds from the onset, clamped",
+      "definition": {"events":[{"gate":280,"note":"c4","panPath":[{"pan":-1,"tick":0},{"pan":3,"tick":140},{"pan":0,"tick":140},{"pan":0.5,"tick":280}],"tick":0},{"gate":100,"note":"e4","pan":0.3,"panPath":[],"tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"panPath\":[{\"pan\":-1,\"time\":0},{\"pan\":1,\"time\":0.25},{\"pan\":0,\"time\":0.25},{\"pan\":0.5,\"time\":0.5}],\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.3,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"panner":2,"total":10},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set -1 @0","lin 1 @0.25","set 0 @0.25","lin 0.5 @0.5"]},"to":["n1"]},
+          {"id":"n7","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n9"]},
+          {"id":"n8","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n7"]},
+          {"id":"n9","kind":"panner","params":{"pan":["set 0.3 @1"]},"to":["n1"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-autopan",
+      "group": "score",
+      "from": "src/autopan.test.ts: carries an autopan in ticks per cycle into controls in Hz, with its shape and phase",
+      "definition": {"events":[{"autopan":{"depth":0.5,"periodTicks":280},"gate":560,"note":"c4","pan":0.2,"tick":0},{"autopan":{"depth":1,"periodTicks":140,"phase":0.25,"shape":"square"},"gate":560,"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":2,\"autopanDepth\":0.5,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pan\":0.2,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"autopan\":4,\"autopanDepth\":1,\"autopanPhase\":0.25,\"autopanShape\":\"square\",\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"compressor":1,"oscillator":4,"panner":2,"total":14},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set 0.2 @0"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 2 @0"]},"start":[0],"stop":[0.18],"to":["n8"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.5 @0"]},"to":["n6.pan"]},
+          {"id":"n9","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n11"]},
+          {"id":"n10","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n9"]},
+          {"id":"n11","kind":"panner","params":{"pan":["set 0 @1"]},"to":["n1"]},
+          {"id":"n12","kind":"oscillator","fields":{"type":"custom","wave":"w0"},"params":{"frequency":["set 4 @1"]},"start":[1],"stop":[1.18],"to":["n13"]},
+          {"id":"n13","kind":"gain","params":{"gain":["set 1 @1"]},"to":["n11.pan"]}
+        ],
+        "buffers": [],
+        "waves": [
+          {"id":"w0","real":[0,1.27323949,0,-0.424413174,{"$num":"-0"},0.254647911,0,-0.181891367,{"$num":"-0"},0.141471058,0,-0.115749046,{"$num":"-0"},0.0979415029,0,-0.0848826393,{"$num":"-0"},0.0748964474,0,-0.0670126081,{"$num":"-0"},0.0606304556,0,-0.0553582422,{"$num":"-0"},0.0509295836,{"$num":"-0"},-0.0471570194,{"$num":"-0"},0.0439048111,0,-0.041072242,{"$num":"-0"},0.0385830179,{"$num":"-0"},-0.0363782719,{"$num":"-0"},0.0344118811,0,-0.0326471664,{"$num":"-0"},0.0310546234,{"$num":"-0"},-0.0296102222,{"$num":"-0"},0.0282942113,0,-0.027090203,{"$num":"-0"},0.025984481,{"$num":"-0"},-0.0249654818,0,0.0240233876,0,-0.0231498107,{"$num":"-0"},0.0223375354,{"$num":"-0"},-0.021580331,{"$num":"-0"},0.0208727792,0,-0.0202101506,{"$num":"-0"}],"imag":[0,7.79634337e-17,{"$num":"-0"},-7.79634337e-17,0,7.79634337e-17,{"$num":"-0"},-7.79634337e-17,0,7.79634337e-17,{"$num":"-0"},-2.83575063e-16,0,-9.60156249e-17,{"$num":"-0"},-2.28745297e-16,0,-5.50793729e-17,{"$num":"-0"},-1.97001745e-16,0,-2.97378875e-17,{"$num":"-0"},-1.76299426e-16,0,-1.25056747e-17,{"$num":"-0"},-1.61731134e-16,0,-2.71762274e-20,{"$num":"-0"},-1.50922398e-16,0,9.4262318e-18,{"$num":"-0"},-1.42584232e-16,0,1.68356583e-17,{"$num":"-0"},-1.35956451e-16,0,2.43455718e-16,{"$num":"-0"},-1.30561751e-16,0,2.77028197e-17,{"$num":"-0"},6.64021685e-17,0,2.16436572e-16,{"$num":"-0"},-1.22311041e-16,0,3.52893282e-17,{"$num":"-0"},4.54035335e-17,0,1.97001745e-16,{"$num":"-0"},-1.16297809e-16,0,4.08859329e-17,{"$num":"-0"},2.97378875e-17,0],"disableNormalization":false}
+        ]
+      }
+    },
+    {
+      "id": "score-pan-path-and-autopan",
+      "group": "score",
+      "from": "src/autopan.test.ts: an autopan swings around the pan a pan path leaves at its end",
+      "definition": {"events":[{"autopan":{"depth":0.25,"periodTicks":100,"phase":1,"shape":"triangle"},"gate":560,"note":"c4","panPath":[{"pan":-0.5,"tick":0},{"pan":0.5,"tick":560}],"tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"autopan\":5.6,\"autopanDepth\":0.25,\"autopanPhase\":1,\"autopanShape\":\"triangle\",\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":1,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"panPath\":[{\"pan\":-0.5,\"time\":0},{\"pan\":0.5,\"time\":1}],\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"panner":1,"total":9},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n6"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"panner","params":{"pan":["set -0.5 @0","lin 0.5 @1"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","fields":{"type":"triangle"},"params":{"frequency":["set 5.6 @0"]},"start":[0],"stop":[0.18],"to":["n8"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0.25 @0"]},"to":["n6.pan"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-two-cycles",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: cue.render() renders one pass at the score's own tempo",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"note":"c4","tick":0},{"gate":100,"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"cycles":2,"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @3 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 5120,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"compressor":1,"oscillator":4,"total":12},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @2.16"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 261.625565 @2"]},"start":[2],"stop":[2.18],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @3","lin 0.8 @3.01","lin 0 @3.11","lin 0 @3.16"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 329.627557 @3"]},"start":[3],"stop":[3.18],"to":["n10"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-tail-and-wrap",
+      "group": "score",
+      "from": "src/render.test.ts: wrap folds the tail onto the start",
+      "baseline": true,
+      "definition": {"events":[{"gate":300,"note":"c4","tick":1000,"voice":{"release":0.5}}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280,"tail":0.5,"wrap":true},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @1.78571429 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.21428571428571427,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.5,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 3200,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1.78571429","lin 0.8 @1.79571429","lin 0 @1.89571429","lin 0 @2.39571429"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @1.78571429"]},"start":[1.78571429],"stop":[2.41571429],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-ungated",
+      "group": "score",
+      "from": "src/render.test.ts: gated false keeps envelopes percussive",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"note":"c4","tick":0},{"gate":100,"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"gated":false,"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"total":8},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n6"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-no-master",
+      "group": "score",
+      "from": "src/render.test.ts: master false sends voices to the destination",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"note":"c4","tick":0},{"gate":100,"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"master":false,"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":2,"oscillator":2,"total":5},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n0"]},
+          {"id":"n2","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n1"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n0"]},
+          {"id":"n4","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n3"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-four-channels",
+      "group": "score",
+      "from": "src/render.test.ts: more than two channels are discrete",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"note":"c4","tick":0},{"gate":100,"note":"e4","tick":560}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"channels":4,"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 4,
+        "counts": {"destination":1,"gain":3,"oscillator":2,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination","fields":{"channelCount":4,"channelInterpretation":"discrete"}},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n0"]},
+          {"id":"n2","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n3","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n2"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-booking-window",
+      "group": "score",
+      "from": "src/render.test.ts: bookingWindow books the cue in windows",
+      "definition": {"events":[{"gate":100,"note":"c4","tick":0},{"gate":100,"note":"d4","tick":280},{"gate":100,"note":"e4","tick":560},{"gate":100,"note":"g4","tick":840}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"bookingWindow":0.5,"sampleRate":1280},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @0.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"d4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v2 @1 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"e4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v3 @1.5 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"g4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":6,"compressor":1,"oscillator":4,"total":12},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @0.5","lin 0.8 @0.51","lin 0 @0.61","lin 0 @0.66"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 293.664768 @0.5"]},"start":[0.5],"stop":[0.68],"to":["n6"]},
+          {"id":"n8","kind":"gain","params":{"gain":["set 0 @1","lin 0.8 @1.01","lin 0 @1.11","lin 0 @1.16"]},"to":["n1"]},
+          {"id":"n9","kind":"oscillator","params":{"frequency":["set 329.627557 @1"]},"start":[1],"stop":[1.18],"to":["n8"]},
+          {"id":"n10","kind":"gain","params":{"gain":["set 0 @1.5","lin 0.8 @1.51","lin 0 @1.61","lin 0 @1.66"]},"to":["n1"]},
+          {"id":"n11","kind":"oscillator","params":{"frequency":["set 391.995436 @1.5"]},"start":[1.5],"stop":[1.68],"to":["n10"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-slow-cue",
+      "group": "score",
+      "from": "docs/guide/instruments-and-scores.md: a score's tempo is its own, here 4 seconds a cycle",
+      "baseline": true,
+      "definition": {"events":[{"gate":50,"note":"c4","tick":0},{"gate":50,"note":"c5","tick":200}],"lengthTicks":400,"ticksPerSecond":100},
+      "render": {"sampleRate":1280},
+      "cps": 0.25,
+      "seconds": 4,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c4\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}",
+        "v1 @2 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.5,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":\"c5\",\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"sine\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 5120,
+        "channels": 2,
+        "counts": {"destination":1,"gain":4,"compressor":1,"oscillator":2,"total":8},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]},
+          {"id":"n6","kind":"gain","params":{"gain":["set 0 @2","lin 0.8 @2.01","lin 0 @2.11","lin 0 @2.16"]},"to":["n1"]},
+          {"id":"n7","kind":"oscillator","params":{"frequency":["set 523.251131 @2"]},"start":[2],"stop":[2.18],"to":["n6"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-render-seeded-noise",
+      "group": "score",
+      "from": "generated: the render seed reaches a noise voice",
+      "baseline": true,
+      "definition": {"events":[{"gate":100,"midi":60,"tick":0,"voice":{"soundType":"noise"}}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280,"seed":"cue"},
+      "cps": 0.5,
+      "seconds": 2,
+      "score": [
+        "v0 @0 {\"attack\":0.01,\"decay\":0.1,\"delayFeedback\":0.35,\"delayTime\":0.3,\"duration\":0.17857142857142858,\"filterAttack\":0,\"filterDecay\":0,\"filterEnvAmount\":0,\"filterRelease\":0,\"filterSustain\":1,\"gainLevel\":0.8,\"nudgeTime\":0,\"pitch\":261.6255653005986,\"release\":0.05,\"roomSize\":3,\"slideTime\":0,\"soundType\":\"noise\",\"sustain\":0}"
+      ],
+      "graph": {
+        "sampleRate": 1280,
+        "length": 2560,
+        "channels": 2,
+        "counts": {"destination":1,"gain":3,"compressor":1,"oscillator":1,"total":6},
+        "nodes": [
+          {"id":"n0","kind":"destination"},
+          {"id":"n1","kind":"gain","params":{"gain":["set 1 @0"]},"to":["n2"]},
+          {"id":"n2","kind":"compressor","params":{"threshold":["set -2 @0"],"knee":["set 0 @0"],"ratio":["set 20 @0"],"attack":["set 0.003 @0"],"release":["set 0.1 @0"]},"to":["n3"]},
+          {"id":"n3","kind":"gain","params":{"gain":["set 0.877000821 @0"]},"to":["n0"]},
+          {"id":"n4","kind":"gain","params":{"gain":["set 0 @0","lin 0.8 @0.01","lin 0 @0.11","lin 0 @0.16"]},"to":["n1"]},
+          {"id":"n5","kind":"oscillator","fields":{"type":"noise"},"params":{"frequency":["set 261.625565 @0"]},"start":[0],"stop":[0.18],"to":["n4"]}
+        ],
+        "buffers": [],
+        "waves": []
+      }
+    },
+    {
+      "id": "score-error-ticks-per-second-zero",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":0},
+      "render": {"sampleRate":1280},
+      "error": "score() ticksPerSecond must be positive, got 0"
+    },
+    {
+      "id": "score-error-ticks-per-second-nan",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":{"$num":"NaN"}},
+      "render": {"sampleRate":1280},
+      "error": "score() ticksPerSecond must be positive, got NaN"
+    },
+    {
+      "id": "score-error-length-zero",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":0,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() lengthTicks must be an integer of at least 1, got 0"
+    },
+    {
+      "id": "score-error-length-fractional",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":10.5,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() lengthTicks must be an integer of at least 1, got 10.5"
+    },
+    {
+      "id": "score-error-pan-law-too-low",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"panLaw":-7,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() panLaw must be between -6 and 0 dB, got -7"
+    },
+    {
+      "id": "score-error-pan-law-positive",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"panLaw":1,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() panLaw must be between -6 and 0 dB, got 1"
+    },
+    {
+      "id": "score-error-event-after-cue",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":1120}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event tick 1120 is outside the cue (length 1120)"
+    },
+    {
+      "id": "score-error-event-tick-negative",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":-1}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event tick must be an integer of at least 0, got -1"
+    },
+    {
+      "id": "score-error-event-tick-fractional",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":1.5}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event tick must be an integer of at least 0, got 1.5"
+    },
+    {
+      "id": "score-error-event-without-pitch",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"tick":4}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event at tick 4 needs a note or midi"
+    },
+    {
+      "id": "score-error-gate-zero",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"gate":0,"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event gate must be an integer of at least 1, got 0"
+    },
+    {
+      "id": "score-error-gate-fractional",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "baseline": true,
+      "definition": {"events":[{"gate":2.5,"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() event gate must be an integer of at least 1, got 2.5"
+    },
+    {
+      "id": "score-error-pan-path-backwards",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"note":"c4","panPath":[{"pan":0,"tick":10},{"pan":1,"tick":4}],"tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() panPath ticks must not go backwards, got 4 after 10 (event at tick 0)"
+    },
+    {
+      "id": "score-error-pan-path-tick-negative",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"note":"c4","panPath":[{"pan":0,"tick":-1}],"tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() panPath tick must be an integer of at least 0, got -1"
+    },
+    {
+      "id": "score-error-pan-path-pan-nan",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"note":"c4","panPath":[{"pan":{"$num":"NaN"},"tick":0}],"tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() panPath pan must be a number, got NaN (event at tick 0)"
+    },
+    {
+      "id": "score-error-autopan-period-zero",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"autopan":{"depth":0.5,"periodTicks":0},"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() autopan periodTicks must be an integer of at least 1, got 0"
+    },
+    {
+      "id": "score-error-autopan-depth-above-one",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"autopan":{"depth":2,"periodTicks":4},"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() autopan depth must be between 0 and 1, got 2 (event at tick 0)"
+    },
+    {
+      "id": "score-error-autopan-depth-nan",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"autopan":{"depth":{"$num":"NaN"},"periodTicks":4},"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() autopan depth must be between 0 and 1, got NaN (event at tick 0)"
+    },
+    {
+      "id": "score-error-autopan-shape",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"autopan":{"depth":0.5,"periodTicks":4,"shape":"saw"},"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() autopan shape must be sine, triangle or square, got saw (event at tick 0)"
+    },
+    {
+      "id": "score-error-autopan-phase",
+      "group": "score",
+      "from": "generated: score() throws before anything is booked",
+      "definition": {"events":[{"autopan":{"depth":0.5,"periodTicks":4,"phase":-0.1},"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"sampleRate":1280},
+      "error": "score() autopan phase must be between 0 and 1, got -0.1 (event at tick 0)"
+    },
+    {
+      "id": "score-error-render-cycles",
+      "group": "score",
+      "from": "src/render.test.ts: a render needs whole cycles",
+      "baseline": true,
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"cycles":0,"sampleRate":1280},
+      "error": "cycles must be a positive whole number, got 0"
+    },
+    {
+      "id": "score-error-render-booking-window",
+      "group": "score",
+      "from": "src/render.test.ts: a window of under two quanta",
+      "definition": {"events":[{"note":"c4","tick":0}],"lengthTicks":1120,"ticksPerSecond":560},
+      "render": {"bookingWindow":0.01,"sampleRate":1280},
+      "error": "bookingWindow must cover at least 256 frames (0.2 s at 1280 Hz), got 0.01"
+    }
+  ]
+}
