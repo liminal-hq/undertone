@@ -52,11 +52,19 @@ pub use number::{nine_digits_json, nine_digits_text};
 
 /// A node of a [`Graph`]. Node `0` is always the destination, and nodes are numbered in creation order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct NodeId(pub(crate) u32);
+pub struct NodeId(u32);
+
+impl NodeId {
+	/// The handle for the node at `index` in creation order. A [`Graph`] implementation makes these in
+	/// [`Graph::create_node`]; the destination is index `0`, so a graph numbers the nodes it creates from `1`.
+	pub const fn new(index: u32) -> Self {
+		Self(index)
+	}
+}
 
 impl NodeId {
 	/// The node's position in creation order: `0` is the destination.
-	pub fn index(self) -> usize {
+	pub const fn index(self) -> usize {
 		self.0 as usize
 	}
 }
@@ -69,6 +77,11 @@ pub struct ParamId {
 }
 
 impl ParamId {
+	/// The parameter `kind` of `node`. A [`Graph`] implementation makes these in [`Graph::param`].
+	pub const fn new(node: NodeId, kind: ParamKind) -> Self {
+		Self { node, kind }
+	}
+
 	/// The node the parameter belongs to.
 	pub fn node(self) -> NodeId {
 		self.node
@@ -83,11 +96,35 @@ impl ParamId {
 /// A buffer of samples: an impulse response, a noise buffer, a sample, or a wave-shaper curve. Handed out by
 /// [`Graph::create_buffer`] and [`Graph::create_curve`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BufferId(pub(crate) u32);
+pub struct BufferId(u32);
+
+impl BufferId {
+	/// The handle for the buffer at `index`, in the order the graph made them.
+	pub const fn new(index: u32) -> Self {
+		Self(index)
+	}
+
+	/// The buffer's position in the order the graph made them.
+	pub const fn index(self) -> usize {
+		self.0 as usize
+	}
+}
 
 /// A periodic wave, handed out by [`Graph::create_periodic_wave`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct WaveId(pub(crate) u32);
+pub struct WaveId(u32);
+
+impl WaveId {
+	/// The handle for the periodic wave at `index`, in the order the graph made them.
+	pub const fn new(index: u32) -> Self {
+		Self(index)
+	}
+
+	/// The wave's position in the order the graph made them.
+	pub const fn index(self) -> usize {
+		self.0 as usize
+	}
+}
 
 /// What a connection goes to: a node's input, or another node's parameter (a low-frequency oscillator driving
 /// a filter's frequency).
