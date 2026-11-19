@@ -245,9 +245,7 @@ jobs:
       - name: Doc tests
         run: cargo test --doc --workspace --locked
       - name: Build API docs
-        run: cargo doc --workspace --no-deps --locked
-        env:
-          RUSTDOCFLAGS: -D warnings
+        run: bash scripts/build-rust-docs.sh
       # The docs job builds the site with this output beside it, so a broken link to the rustdoc fails the pull request.
       - name: Upload Rust API docs
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -26,9 +26,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Build the Rust API docs
-        run: cargo doc --no-deps --workspace --locked
-        env:
-          RUSTDOCFLAGS: -D warnings
+        run: bash scripts/build-rust-docs.sh
 
       - name: Upload the Rust API docs
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

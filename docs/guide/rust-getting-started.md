@@ -29,4 +29,4 @@ The player above plays the files that example wrote, rendered by the Rust crate 
 
 The TypeScript `.play()` is one cycle, once, so the example renders it with `gated(false)`. `.loop({ bpm })` is `Player::play_loop`.
 
-The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).
+The generated API reference is the [Rust API docs](/rust/undertone/) (rustdoc), which carries a bar linking back to this guide. To build it from a checkout, run `scripts/build-rust-docs.sh`, which adds the bar and the version label, and open `target/doc/undertone/index.html` (the bar's links point at the published site, so they only resolve there). The name mapping for every call is in [API-MAPPING.md](https://github.com/liminal-hq/undertone/blob/main/docs/rust-migration/API-MAPPING.md).
