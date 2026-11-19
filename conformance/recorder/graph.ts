@@ -1,0 +1,412 @@
+// Layer 3: voices or a score booked on a recording context, written as the recorded node graph
+//
+// (c) Copyright 2026 Liminal HQ, Scott Morris
+// SPDX-License-Identifier: MIT
+
+import {
+  FakeAudioContext,
+  FakeAudioParam,
+  FakeAudioDestinationNode,
+  FakeOfflineAudioContext,
+  FakePeriodicWave
+} from '../../src/test-utils/fakeAudioContext';
+import type { AutomationCall } from '../../src/test-utils/fakeAudioContext';
+import type { ControlPatch } from '../../src/types';
+import type { RenderOptions } from '../../src/render';
+import { encodeValue, messageOf, nineDigits, nineDigitsText, programJson } from './format';
+import type { CaseRecord, CorpusFile, Json } from './format';
+import { build } from './programs';
+import type { Program } from './interpret';
+import type { Reference } from './reference';
+
+/** What a layer 3 case does with its context before booking: the master bus and the channel count. */
+export interface OutputSetup {
+  /** `undefined`: voices go straight to the destination. `true` or an object: through `createMasterBus`. */
+  master?: boolean | Record<string, unknown>;
+  /** Output channels of the destination (default 2); more than two enables multichannel output. */
+  channels?: number;
+}
+
+interface CaseBase {
+  id: string;
+  group: string;
+  from: string;
+  /** True for a case that records a 0.3.0 behaviour with every 0.4.0 option off (its graph equals 0.3.0's). */
+  baseline?: boolean;
+}
+
+/** Voices booked directly on a realtime fake context: `patch` is a partial `VoiceParams`, `at` the start in seconds. */
+export interface VoicesGraphCase extends CaseBase {
+  kind: 'voices';
+  voices: readonly { at: number; patch: ControlPatch }[];
+  output?: OutputSetup;
+}
+
+/** A program rendered offline on a recording context (the render options as JSON, without `context`). */
+export interface RenderGraphCase extends CaseBase {
+  kind: 'render';
+  program: Program;
+  render: Omit<RenderOptions, 'context'>;
+}
+
+export type GraphCase = VoicesGraphCase | RenderGraphCase;
+
+/** The groups of layer 3 in the first subset, in file order. */
+export const LAYER3_GROUPS = ['placement'] as const;
+
+const CREATORS = [
+  ['createOscillator', 'oscillator'],
+  ['createGain', 'gain'],
+  ['createBiquadFilter', 'filter'],
+  ['createStereoPanner', 'panner'],
+  ['createChannelMerger', 'merger'],
+  ['createBufferSource', 'bufferSource'],
+  ['createConvolver', 'convolver'],
+  ['createDelay', 'delay'],
+  ['createDynamicsCompressor', 'compressor'],
+  ['createWaveShaper', 'waveShaper']
+] as const;
+
+type NodeRecord = object & {
+  connections?: { node: unknown; output: number; input: number }[];
+  disconnectCount?: number;
+  started?: number[];
+  stopped?: number[];
+  bufferHistory?: { time: number; buffer: unknown }[];
+};
+
+/** Wraps a context so every node it makes is kept in creation order (the destination is `n0`). */
+function track(ctx: FakeAudioContext): { kind: string; node: NodeRecord }[] {
+  const created: { kind: string; node: NodeRecord }[] = [
+    { kind: 'destination', node: ctx.destination }
+  ];
+  const target = ctx as unknown as Record<string, (...args: unknown[]) => object>;
+  for (const [method, kind] of CREATORS) {
+    const original = target[method];
+    if (typeof original !== 'function') continue;
+    target[method] = (...args: unknown[]) => {
+      const node = original.apply(ctx, args);
+      created.push({ kind, node });
+      return node;
+    };
+  }
+  return created;
+}
+
+function callText(call: AutomationCall): string {
+  const at = nineDigitsText(call.time);
+  switch (call.method) {
+    case 'setValueAtTime':
+      return `set ${nineDigitsText(call.value)} @${at}`;
+    case 'linearRampToValueAtTime':
+      return `lin ${nineDigitsText(call.value)} @${at}`;
+    case 'exponentialRampToValueAtTime':
+      return `exp ${nineDigitsText(call.value)} @${at}`;
+    case 'cancelScheduledValues':
+      return `cancel @${at}`;
+    case 'setTargetAtTime':
+      return `target ${nineDigitsText(call.value)} @${at} tau ${nineDigitsText(call.timeConstant)}`;
+  }
+}
+
+/** What the recorder reads of a rendered or created buffer. */
+interface BufferData {
+  length: number;
+  sampleRate: number;
+  numberOfChannels: number;
+  getChannelData(channel: number): Float32Array;
+}
+
+function isBuffer(value: unknown): value is BufferData {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'getChannelData' in value &&
+    'numberOfChannels' in value
+  );
+}
+
+/** The summary of one channel: root mean square, peak, and the first four samples (nine digits). */
+function summarise(samples: ArrayLike<number>): Json {
+  let sum = 0;
+  let peak = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const v = samples[i];
+    sum += v * v;
+    peak = Math.max(peak, Math.abs(v));
+  }
+  return {
+    rms: nineDigits(samples.length === 0 ? 0 : Math.sqrt(sum / samples.length)),
+    peak: nineDigits(peak),
+    head: Array.from({ length: Math.min(4, samples.length) }, (_, i) => nineDigits(samples[i]))
+  };
+}
+
+/** Turns the nodes a context made into the layer 3 `graph` object. */
+function describeGraph(
+  ctx: FakeAudioContext,
+  created: { kind: string; node: NodeRecord }[],
+  length: number | null
+): Json {
+  const names = new Map<unknown, string>();
+  created.forEach(({ node }, index) => {
+    names.set(node, `n${index}`);
+    for (const [key, value] of Object.entries(node)) {
+      if (value instanceof FakeAudioParam) names.set(value, `n${index}.${key}`);
+    }
+  });
+  const buffers = new Map<unknown, string>();
+  const bufferList: Json[] = [];
+  const bufferId = (value: BufferData | Float32Array): string => {
+    const known = buffers.get(value);
+    if (known !== undefined) return known;
+    const id = `b${buffers.size}`;
+    buffers.set(value, id);
+    if (value instanceof Float32Array) {
+      bufferList.push({ id, kind: 'curve', length: value.length, channels: [summarise(value)] });
+    } else {
+      bufferList.push({
+        id,
+        kind: 'audio',
+        length: value.length,
+        sampleRate: value.sampleRate,
+        channels: Array.from({ length: value.numberOfChannels }, (_, c) =>
+          summarise(value.getChannelData(c))
+        )
+      });
+    }
+    return id;
+  };
+  const waves = new Map<unknown, string>();
+  const waveList: Json[] = [];
+  const waveId = (wave: FakePeriodicWave): string => {
+    const known = waves.get(wave);
+    if (known !== undefined) return known;
+    const id = `w${waves.size}`;
+    waves.set(wave, id);
+    waveList.push({
+      id,
+      real: Array.from(wave.real, (v) => nineDigits(v)),
+      imag: Array.from(wave.imag, (v) => nineDigits(v)),
+      disableNormalization: wave.constraints?.disableNormalization ?? false
+    });
+    return id;
+  };
+
+  const counts: Record<string, Json> = {};
+  const nodes: Json[] = created.map(({ kind, node }, index) => {
+    counts[kind] = ((counts[kind] as number | undefined) ?? 0) + 1;
+    const defaults = fresh(kind, node);
+    const fields: Record<string, Json> = {};
+    const params: Record<string, Json> = {};
+    for (const [key, value] of Object.entries(node)) {
+      if (SKIPPED_FIELDS.has(key) || typeof value === 'function') continue;
+      if (value instanceof FakeAudioParam) {
+        if (value.calls.length > 0) params[key] = value.calls.map(callText);
+        continue;
+      }
+      if (value instanceof FakePeriodicWave) {
+        fields.wave = waveId(value);
+        continue;
+      }
+      if (value instanceof Float32Array) {
+        fields[key] = bufferId(value);
+        continue;
+      }
+      if (isBuffer(value)) {
+        fields[key] = bufferId(value);
+        continue;
+      }
+      if (value === null || value === undefined) continue;
+      const fallback = (defaults as Record<string, unknown> | undefined)?.[key];
+      if (JSON.stringify(encodeValue(value)) === JSON.stringify(encodeValue(fallback))) continue;
+      fields[key] = encodeValue(value);
+    }
+    const record: Record<string, Json> = { id: `n${index}`, kind };
+    if (Object.keys(fields).length > 0) record.fields = fields;
+    if (Object.keys(params).length > 0) record.params = params;
+    if (node.started?.length) record.start = node.started.map((t) => nineDigits(t));
+    if (node.stopped?.length) record.stop = node.stopped.map((t) => nineDigits(t));
+    if (node.bufferHistory?.length) {
+      // What is heard from each time on: the last impulse response given at that time.
+      const first = node.bufferHistory[0].time;
+      const heard = new Map<number | 'first', string | null>();
+      for (const { time, buffer } of node.bufferHistory) {
+        heard.set(time === first ? 'first' : time, isBuffer(buffer) ? bufferId(buffer) : null);
+      }
+      record.heard = [...heard].map(([time, id]) => [
+        time === 'first' ? time : nineDigits(time),
+        id
+      ]);
+    }
+    if (node.disconnectCount) record.disconnects = node.disconnectCount;
+    const to = (node.connections ?? []).map(({ node: target, output, input }) => {
+      const name = names.get(target) ?? 'unknown';
+      return output === 0 && input === 0 ? name : `${name} out ${output} in ${input}`;
+    });
+    if (to.length > 0) record.to = to;
+    return record;
+  });
+
+  // Waves created but never given to an oscillator are still part of what the engine did.
+  for (const wave of ctx.periodicWaves) waveId(wave);
+
+  return {
+    sampleRate: ctx.sampleRate,
+    length,
+    channels: ctx.destination.channelCount,
+    counts: { ...counts, total: created.length },
+    nodes,
+    buffers: bufferList,
+    waves: waveList
+  };
+}
+
+/** Fields of a fake node that are bookkeeping, not part of the graph. */
+const SKIPPED_FIELDS = new Set([
+  'connectedTo',
+  'connections',
+  'disconnectCount',
+  'started',
+  'stopped',
+  'strictTimes',
+  'bufferHistory',
+  'current',
+  'clock',
+  'maxChannelCount'
+]);
+
+/** A fresh node of the same class, whose fields are the defaults a recorded node is compared with. */
+function fresh(kind: string, node: NodeRecord): object | undefined {
+  if (kind === 'destination') return new FakeAudioDestinationNode();
+  const Constructor = node.constructor as new (inputs?: number) => object;
+  const inputs = (node as { numberOfInputs?: number }).numberOfInputs;
+  try {
+    return new Constructor(inputs);
+  } catch {
+    return undefined;
+  }
+}
+
+/** The score text: one line per voice, `v<k> @<seconds> <json of the patch>`. */
+function scoreLines(voices: readonly { at: number; patch: unknown }[]): string[] {
+  return voices.map(
+    (voice, index) =>
+      `v${index} @${nineDigitsText(voice.at)} ${JSON.stringify(encodeValue(voice.patch))}`
+  );
+}
+
+function configure(ref: Reference, ctx: FakeAudioContext, channels: number | undefined): void {
+  if (channels === undefined || channels === 2) return;
+  ctx.destination.channelCount = channels;
+  ctx.destination.maxChannelCount = channels;
+  if (channels > 2) ref.lib.enableMultichannel(ctx as never);
+}
+
+/** Books a voices case on a fresh recording context and describes its graph. */
+function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
+  const ctx = new FakeAudioContext();
+  const created = track(ctx);
+  // Noise and reverb draw from the context's seeded source, as a render does (seed 0).
+  ref.random.seedContext(ctx as never, 0);
+  configure(ref, ctx, spec.output?.channels);
+  let output: unknown;
+  const master = spec.output?.master;
+  if (master !== undefined && master !== false) {
+    const bus = ref.lib.createMasterBus(
+      ctx as never,
+      master === true ? {} : (master as Record<string, never>)
+    );
+    output = bus.input;
+  }
+  for (const voice of spec.voices) {
+    ref.engine.playVoice(ctx as never, ref.engine.resolveParams(voice.patch), voice.at, {
+      output: output as never
+    });
+  }
+  return {
+    ...head(spec),
+    ...(spec.output === undefined ? {} : { output: spec.output as Json }),
+    score: scoreLines(spec.voices),
+    graph: describeGraph(ctx, created, null)
+  };
+}
+
+function head(spec: GraphCase): CaseRecord {
+  return {
+    id: spec.id,
+    group: spec.group,
+    from: spec.from,
+    ...(spec.baseline ? { baseline: true } : {})
+  };
+}
+
+/** Renders a program offline on a recording context and describes its graph. */
+async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<CaseRecord> {
+  const built = build(ref, spec.program);
+  if ('error' in built)
+    return { ...head(spec), program: programJson(spec.program), error: built.error };
+  let context: FakeOfflineAudioContext | undefined;
+  let created: { kind: string; node: NodeRecord }[] = [];
+  const options: RenderOptions = {
+    ...spec.render,
+    context: (init) => {
+      context = new FakeOfflineAudioContext(init);
+      created = track(context);
+      return context as never;
+    }
+  };
+  await ref.lib.renderToBuffer(built.pattern as never, options);
+  if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
+  // The score a render books: the onsets of each cycle, as the renderer collects them.
+  const cycleSeconds = ref.scheduler.cycleSecondsFor(spec.render.bpm, spec.render.cps);
+  const cycles =
+    spec.render.cycles ?? Math.ceil((spec.render.seconds ?? cycleSeconds) / cycleSeconds);
+  const voices: { at: number; patch: unknown }[] = [];
+  for (let k = 0; k < cycles; k++) {
+    const span = { begin: new ref.lib.Fraction(k), end: new ref.lib.Fraction(k + 1) };
+    for (const voice of ref.scheduler.collectOnsets(
+      built.pattern as never,
+      span,
+      0,
+      cycleSeconds,
+      spec.render.gated ?? true
+    )) {
+      if (spec.render.seconds === undefined || voice.startTime < spec.render.seconds) {
+        voices.push({ at: voice.startTime, patch: voice.params });
+      }
+    }
+  }
+  return {
+    ...head(spec),
+    program: programJson(spec.program),
+    render: encodeValue(spec.render),
+    score: scoreLines(voices),
+    graph: describeGraph(context, created, context.length)
+  };
+}
+
+/** Records one layer 3 case; a case whose booking throws records the message. */
+export async function recordGraphCase(ref: Reference, spec: GraphCase): Promise<CaseRecord> {
+  try {
+    return spec.kind === 'voices' ? recordVoicesCase(ref, spec) : await recordRenderCase(ref, spec);
+  } catch (error) {
+    return { ...head(spec), error: messageOf(error) };
+  }
+}
+
+/** Records every layer 3 file of the first subset. */
+export async function recordLayer3(
+  ref: Reference,
+  cases: readonly GraphCase[]
+): Promise<CorpusFile[]> {
+  const files: CorpusFile[] = [];
+  for (const group of LAYER3_GROUPS) {
+    const records: CaseRecord[] = [];
+    for (const spec of cases.filter((candidate) => candidate.group === group)) {
+      records.push(await recordGraphCase(ref, spec));
+    }
+    files.push({ layer: 3, group, cases: records });
+  }
+  return files;
+}

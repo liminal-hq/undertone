@@ -58,3 +58,23 @@ placeBuilding.play();
 ```
 
 `.nudge(0.02)` offsets a voice's start by seconds (great for arpeggiated one-shots), and `.slide(0.07)` glides the pitch down from an octave above — the classic downward "thunk".
+
+## Looking inside a pattern
+
+A pattern is a function from a span of time to events, so you can ask it what it holds without playing it. `pattern.query({ begin, end })` takes a `TimeSpan` of exact `Fraction`s (cycle numbers, with no rounding error) and returns `Hap`s: each has a `value`, a `whole` (the event's full extent) and a `part` (the piece of it inside the span you asked about). `hasOnset(hap)` is true when the part starts the event, which is the test the scheduler uses to decide whether to start a voice, so an event that began before your span is reported but has no onset.
+
+```ts standalone
+import { Fraction, hasOnset, note } from '@liminal-hq/undertone';
+
+const pattern = note('c4 e4').sound('triangle');
+
+// The first half of cycle 0 holds the c4 onset.
+const first = pattern.query({ begin: new Fraction(0), end: new Fraction(1, 2) });
+console.log(first.map((hap) => hasOnset(hap))); // [true]
+
+// Starting a quarter of the way in lands part-way through that event: no onset.
+const late = pattern.query({ begin: new Fraction(1, 4), end: new Fraction(1, 2) });
+console.log(late.map((hap) => hasOnset(hap))); // [false]
+
+pattern.play();
+```

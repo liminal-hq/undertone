@@ -1,0 +1,1774 @@
+{
+  "corpus": 1,
+  "layer": 1,
+  "group": "notes",
+  "cases": [
+    {
+      "id": "notes-note-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single note name",
+      "program": [["note","c4"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"c4"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":"c4"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"c4"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":"c4"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":"c4"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-02",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation into multiple pitched events",
+      "program": [["note","c4 e4 g4"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":"c4"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"e4"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"g4"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":"c4"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":"e4"}},
+          {"whole":["5/3","2/1"],"part":["5/3","2/1"],"value":{"pitch":"g4"}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":"c4"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":"e4"}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":"g4"}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"pitch":"c4"}},
+          {"whole":["10/3","11/3"],"part":["10/3","11/3"],"value":{"pitch":"e4"}},
+          {"whole":["11/3","4/1"],"part":["11/3","4/1"],"value":{"pitch":"g4"}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":"c4"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"e4"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"g4"}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":"c4"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":"e4"}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":"g4"}}
+        ],
+        [
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"e4"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"g4"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":"c4"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":"e4"}},
+          {"whole":["5/3","2/1"],"part":["5/3","7/4"],"value":{"pitch":"g4"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-03",
+      "group": "notes",
+      "from": "docs/recipes.md: pluck",
+      "program": [["note","c4 e4 g4 e4"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c4"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e4"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g4"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e4"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c4"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e4"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g4"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e4"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c4"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e4"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g4"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e4"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":"c4"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":"e4"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g4"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e4"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c4"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e4"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g4"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e4"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c4"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e4"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g4"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e4"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":"e4"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g4"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e4"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c4"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e4"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g4"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-04",
+      "group": "notes",
+      "from": "docs/recipes.md: acid",
+      "program": [["note","a1 [a1 a2] c2 <e2 g1>"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"a1"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":"a1"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"c2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"a1"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":"a1"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"a2"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"c2"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"g1"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"a1"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":"a1"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"a2"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"c2"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e2"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":"a1"}},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":{"pitch":"a1"}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"pitch":"a2"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"c2"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"g1"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"a1"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":"a1"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"c2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"a1"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":"a1"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"a2"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"c2"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e2"}}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":{"pitch":"a1"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"c2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"a1"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":"a1"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"a2"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"c2"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-05",
+      "group": "notes",
+      "from": "docs/recipes.md: bass",
+      "program": [["note","<a1 f1 c2 g1>(3,8)"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":"a1"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a1"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"a1"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":"f1"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"f1"}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"pitch":"f1"}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":"c2"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"c2"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"c2"}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"pitch":"g1"}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"pitch":"g1"}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"pitch":"g1"}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":"a1"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a1"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"a1"}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":"c2"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"c2"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"c2"}}
+        ],
+        [
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"a1"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"a1"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":"f1"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"f1"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-06",
+      "group": "notes",
+      "from": "docs/recipes.md: kick",
+      "program": [["note","c1 ~ [~ c1] ~"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c1"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c1"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c1"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":"c1"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c1"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":"c1"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":"c1"}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"pitch":"c1"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c1"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c1"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c1"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":"c1"}}
+        ],
+        [
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c1"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c1"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":"c1"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-07",
+      "group": "notes",
+      "from": "generated: sharps and flats",
+      "program": [["note","f#3 Bb2 c#5"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":"f#3"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"c#5"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":"f#3"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["5/3","2/1"],"part":["5/3","2/1"],"value":{"pitch":"c#5"}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":"f#3"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":"c#5"}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"pitch":"f#3"}},
+          {"whole":["10/3","11/3"],"part":["10/3","11/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["11/3","4/1"],"part":["11/3","4/1"],"value":{"pitch":"c#5"}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":"f#3"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"c#5"}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":"f#3"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":"c#5"}}
+        ],
+        [
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":"c#5"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":"f#3"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":"Bb2"}},
+          {"whole":["5/3","2/1"],"part":["5/3","7/4"],"value":{"pitch":"c#5"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-08",
+      "group": "notes",
+      "from": "generated: speed",
+      "program": [["note","c3*8"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":"c3"}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":"c3"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":"c3"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":"c3"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c3"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"c3"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"c3"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":"c3"}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":"c3"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":"c3"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"c3"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":"c3"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":"c3"}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"pitch":"c3"}},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":{"pitch":"c3"}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":"c3"}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":"c3"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":"c3"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"c3"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":"c3"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":"c3"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"c3"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":"c3"}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"pitch":"c3"}},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":{"pitch":"c3"}},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":{"pitch":"c3"}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"pitch":"c3"}},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":{"pitch":"c3"}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"pitch":"c3"}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"pitch":"c3"}},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":{"pitch":"c3"}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":"c3"}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":"c3"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":"c3"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":"c3"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c3"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"c3"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"c3"}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":"c3"}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":"c3"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":"c3"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":"c3"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":"c3"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":"c3"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"c3"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":"c3"}}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":{"pitch":"c3"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":"c3"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":"c3"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"c3"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"c3"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":"c3"}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":"c3"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":"c3"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":"c3"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":"c3"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":"c3"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-09",
+      "group": "notes",
+      "from": "src/control.test.ts: passes raw Hz numbers through",
+      "program": [["note","110 220 440"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":110}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":220}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":110}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":220}},
+          {"whole":["5/3","2/1"],"part":["5/3","2/1"],"value":{"pitch":440}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":110}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":220}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":440}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"pitch":110}},
+          {"whole":["10/3","11/3"],"part":["10/3","11/3"],"value":{"pitch":220}},
+          {"whole":["11/3","4/1"],"part":["11/3","4/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":110}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":220}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":110}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":220}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":220}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":110}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":220}},
+          {"whole":["5/3","2/1"],"part":["5/3","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-10",
+      "group": "notes",
+      "from": "docs/recipes.md: groove",
+      "program": [["note","e2 e2 g2 e2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"e2"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"e2"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e2"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g2"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":"e2"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"e2"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e2"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g2"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e2"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":"e2"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":"e2"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g2"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":"e2"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"e2"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"e2"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e2"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g2"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":"e2"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":"e2"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g2"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":"e2"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"e2"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e2"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g2"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-11",
+      "group": "notes",
+      "from": "docs/recipes.md: mallet",
+      "program": [["note","c5 e5 g5 e5*2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c5"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e5"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g5"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"e5"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"e5"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c5"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e5"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g5"}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"pitch":"e5"}},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":{"pitch":"e5"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c5"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e5"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g5"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"e5"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":"e5"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":"c5"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":"e5"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":"g5"}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"pitch":"e5"}},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":{"pitch":"e5"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":"c5"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":"e5"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g5"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"e5"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"e5"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":"c5"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":"e5"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":"g5"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":"e5"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":"e5"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":"e5"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":"g5"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":"e5"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":"e5"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":"c5"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":"e5"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":"g5"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-12",
+      "group": "notes",
+      "from": "generated: a chord as a stack",
+      "program": [["note","[c3,e3,g3]"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"c3"}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"g3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":"c3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":"g3"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"c3"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"g3"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":"c3"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":"g3"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"c3"}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":"g3"}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"c3"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":"g3"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":"c3"}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":"g3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":"c3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":"g3"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-13",
+      "group": "notes",
+      "from": "generated: five steps",
+      "program": [["note","c3 e3 g3 b3 c4"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":"c3"}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":"e3"}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":"g3"}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":"b3"}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":"c4"}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":"c3"}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":"e3"}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":"g3"}},
+          {"whole":["8/5","9/5"],"part":["8/5","9/5"],"value":{"pitch":"b3"}},
+          {"whole":["9/5","2/1"],"part":["9/5","2/1"],"value":{"pitch":"c4"}},
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":"c3"}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":"e3"}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":"g3"}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":"b3"}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":"c4"}},
+          {"whole":["3/1","16/5"],"part":["3/1","16/5"],"value":{"pitch":"c3"}},
+          {"whole":["16/5","17/5"],"part":["16/5","17/5"],"value":{"pitch":"e3"}},
+          {"whole":["17/5","18/5"],"part":["17/5","18/5"],"value":{"pitch":"g3"}},
+          {"whole":["18/5","19/5"],"part":["18/5","19/5"],"value":{"pitch":"b3"}},
+          {"whole":["19/5","4/1"],"part":["19/5","4/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":"c3"}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":"e3"}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":"g3"}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":"b3"}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":"c3"}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":"e3"}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":"g3"}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":"b3"}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":"c4"}}
+        ],
+        [
+          {"whole":["1/5","2/5"],"part":["1/3","2/5"],"value":{"pitch":"e3"}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":"g3"}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":"b3"}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":"c4"}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":"c3"}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":"e3"}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":"g3"}},
+          {"whole":["8/5","9/5"],"part":["8/5","7/4"],"value":{"pitch":"b3"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-note-14",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects invalid notes eagerly, at build time",
+      "program": [["note","zz"]],
+      "error": "Mini-notation error at position 0 in \"zz\": Invalid note name: \"zz\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+    },
+    {
+      "id": "notes-note-15",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects invalid notes eagerly, at build time",
+      "program": [["note","c4 h9"]],
+      "error": "Mini-notation error at position 3 in \"c4 h9\": Invalid note name: \"h9\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+    },
+    {
+      "id": "notes-note-16",
+      "group": "notes",
+      "from": "src/control.test.ts: passes raw Hz numbers through",
+      "program": [["note",440]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":440}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":440}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds an unpitched pattern from a sound type",
+      "program": [["sound","white"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"soundType":"white"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"soundType":"white"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"soundType":"white"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-02",
+      "group": "notes",
+      "from": "docs/recipes.md: hats",
+      "program": [["sound","white*8"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"soundType":"white"}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"soundType":"white"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"soundType":"white"}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"soundType":"white"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"soundType":"white"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"soundType":"white"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"soundType":"white"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"soundType":"white"}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"soundType":"white"}},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":{"soundType":"white"}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"soundType":"white"}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"soundType":"white"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"soundType":"white"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"soundType":"white"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"soundType":"white"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"soundType":"white"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"soundType":"white"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"soundType":"white"}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"soundType":"white"}},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":{"soundType":"white"}},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":{"soundType":"white"}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"soundType":"white"}},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":{"soundType":"white"}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"soundType":"white"}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"soundType":"white"}},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"soundType":"white"}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"soundType":"white"}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"soundType":"white"}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"soundType":"white"}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"soundType":"white"}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"soundType":"white"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"soundType":"white"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"soundType":"white"}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"soundType":"white"}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"soundType":"white"}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"soundType":"white"}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"soundType":"white"}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"soundType":"white"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"soundType":"white"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"soundType":"white"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-03",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation of sound types",
+      "program": [["sound","white ~ pink(3,8)"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"soundType":"white"}},
+          {"whole":["2/3","17/24"],"part":["2/3","17/24"],"value":{"soundType":"pink"}},
+          {"whole":["19/24","5/6"],"part":["19/24","5/6"],"value":{"soundType":"pink"}},
+          {"whole":["11/12","23/24"],"part":["11/12","23/24"],"value":{"soundType":"pink"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"soundType":"white"}},
+          {"whole":["5/3","41/24"],"part":["5/3","41/24"],"value":{"soundType":"pink"}},
+          {"whole":["43/24","11/6"],"part":["43/24","11/6"],"value":{"soundType":"pink"}},
+          {"whole":["23/12","47/24"],"part":["23/12","47/24"],"value":{"soundType":"pink"}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"soundType":"white"}},
+          {"whole":["8/3","65/24"],"part":["8/3","65/24"],"value":{"soundType":"pink"}},
+          {"whole":["67/24","17/6"],"part":["67/24","17/6"],"value":{"soundType":"pink"}},
+          {"whole":["35/12","71/24"],"part":["35/12","71/24"],"value":{"soundType":"pink"}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"soundType":"white"}},
+          {"whole":["11/3","89/24"],"part":["11/3","89/24"],"value":{"soundType":"pink"}},
+          {"whole":["91/24","23/6"],"part":["91/24","23/6"],"value":{"soundType":"pink"}},
+          {"whole":["47/12","95/24"],"part":["47/12","95/24"],"value":{"soundType":"pink"}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"soundType":"white"}},
+          {"whole":["2/3","17/24"],"part":["2/3","17/24"],"value":{"soundType":"pink"}},
+          {"whole":["19/24","5/6"],"part":["19/24","5/6"],"value":{"soundType":"pink"}},
+          {"whole":["11/12","23/24"],"part":["11/12","23/24"],"value":{"soundType":"pink"}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"soundType":"white"}},
+          {"whole":["8/3","65/24"],"part":["8/3","65/24"],"value":{"soundType":"pink"}},
+          {"whole":["67/24","17/6"],"part":["67/24","17/6"],"value":{"soundType":"pink"}},
+          {"whole":["35/12","71/24"],"part":["35/12","71/24"],"value":{"soundType":"pink"}}
+        ],
+        [
+          {"whole":["2/3","17/24"],"part":["2/3","17/24"],"value":{"soundType":"pink"}},
+          {"whole":["19/24","5/6"],"part":["19/24","5/6"],"value":{"soundType":"pink"}},
+          {"whole":["11/12","23/24"],"part":["11/12","23/24"],"value":{"soundType":"pink"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"soundType":"white"}},
+          {"whole":["5/3","41/24"],"part":["5/3","41/24"],"value":{"soundType":"pink"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-04",
+      "group": "notes",
+      "from": "generated: oscillator types",
+      "program": [["sound","sine triangle square sawtooth"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"soundType":"sine"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"soundType":"triangle"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"soundType":"square"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"soundType":"sawtooth"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"soundType":"sine"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"soundType":"triangle"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"soundType":"square"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"soundType":"sawtooth"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"soundType":"sine"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"soundType":"triangle"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"soundType":"square"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"soundType":"sawtooth"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"soundType":"sine"}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"soundType":"triangle"}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"soundType":"square"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"soundType":"sawtooth"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"soundType":"sine"}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"soundType":"triangle"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"soundType":"square"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"soundType":"sawtooth"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"soundType":"sine"}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"soundType":"triangle"}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"soundType":"square"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"soundType":"sawtooth"}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"soundType":"triangle"}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"soundType":"square"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"soundType":"sawtooth"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"soundType":"sine"}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"soundType":"triangle"}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"soundType":"square"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-05",
+      "group": "notes",
+      "from": "docs/recipes.md: sound(white*16)",
+      "program": [["sound","white*16"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/16"],"part":["0/1","1/16"],"value":{"soundType":"white"}},
+          {"whole":["1/16","1/8"],"part":["1/16","1/8"],"value":{"soundType":"white"}},
+          {"whole":["1/8","3/16"],"part":["1/8","3/16"],"value":{"soundType":"white"}},
+          {"whole":["3/16","1/4"],"part":["3/16","1/4"],"value":{"soundType":"white"}},
+          {"whole":["1/4","5/16"],"part":["1/4","5/16"],"value":{"soundType":"white"}},
+          {"whole":["5/16","3/8"],"part":["5/16","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","7/16"],"part":["3/8","7/16"],"value":{"soundType":"white"}},
+          {"whole":["7/16","1/2"],"part":["7/16","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","9/16"],"part":["1/2","9/16"],"value":{"soundType":"white"}},
+          {"whole":["9/16","5/8"],"part":["9/16","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","11/16"],"part":["5/8","11/16"],"value":{"soundType":"white"}},
+          {"whole":["11/16","3/4"],"part":["11/16","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","13/16"],"part":["3/4","13/16"],"value":{"soundType":"white"}},
+          {"whole":["13/16","7/8"],"part":["13/16","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","15/16"],"part":["7/8","15/16"],"value":{"soundType":"white"}},
+          {"whole":["15/16","1/1"],"part":["15/16","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","17/16"],"part":["1/1","17/16"],"value":{"soundType":"white"}},
+          {"whole":["17/16","9/8"],"part":["17/16","9/8"],"value":{"soundType":"white"}},
+          {"whole":["9/8","19/16"],"part":["9/8","19/16"],"value":{"soundType":"white"}},
+          {"whole":["19/16","5/4"],"part":["19/16","5/4"],"value":{"soundType":"white"}},
+          {"whole":["5/4","21/16"],"part":["5/4","21/16"],"value":{"soundType":"white"}},
+          {"whole":["21/16","11/8"],"part":["21/16","11/8"],"value":{"soundType":"white"}},
+          {"whole":["11/8","23/16"],"part":["11/8","23/16"],"value":{"soundType":"white"}},
+          {"whole":["23/16","3/2"],"part":["23/16","3/2"],"value":{"soundType":"white"}},
+          {"whole":["3/2","25/16"],"part":["3/2","25/16"],"value":{"soundType":"white"}},
+          {"whole":["25/16","13/8"],"part":["25/16","13/8"],"value":{"soundType":"white"}},
+          {"whole":["13/8","27/16"],"part":["13/8","27/16"],"value":{"soundType":"white"}},
+          {"whole":["27/16","7/4"],"part":["27/16","7/4"],"value":{"soundType":"white"}},
+          {"whole":["7/4","29/16"],"part":["7/4","29/16"],"value":{"soundType":"white"}},
+          {"whole":["29/16","15/8"],"part":["29/16","15/8"],"value":{"soundType":"white"}},
+          {"whole":["15/8","31/16"],"part":["15/8","31/16"],"value":{"soundType":"white"}},
+          {"whole":["31/16","2/1"],"part":["31/16","2/1"],"value":{"soundType":"white"}},
+          {"whole":["2/1","33/16"],"part":["2/1","33/16"],"value":{"soundType":"white"}},
+          {"whole":["33/16","17/8"],"part":["33/16","17/8"],"value":{"soundType":"white"}},
+          {"whole":["17/8","35/16"],"part":["17/8","35/16"],"value":{"soundType":"white"}},
+          {"whole":["35/16","9/4"],"part":["35/16","9/4"],"value":{"soundType":"white"}},
+          {"whole":["9/4","37/16"],"part":["9/4","37/16"],"value":{"soundType":"white"}},
+          {"whole":["37/16","19/8"],"part":["37/16","19/8"],"value":{"soundType":"white"}},
+          {"whole":["19/8","39/16"],"part":["19/8","39/16"],"value":{"soundType":"white"}},
+          {"whole":["39/16","5/2"],"part":["39/16","5/2"],"value":{"soundType":"white"}},
+          {"whole":["5/2","41/16"],"part":["5/2","41/16"],"value":{"soundType":"white"}},
+          {"whole":["41/16","21/8"],"part":["41/16","21/8"],"value":{"soundType":"white"}},
+          {"whole":["21/8","43/16"],"part":["21/8","43/16"],"value":{"soundType":"white"}},
+          {"whole":["43/16","11/4"],"part":["43/16","11/4"],"value":{"soundType":"white"}},
+          {"whole":["11/4","45/16"],"part":["11/4","45/16"],"value":{"soundType":"white"}},
+          {"whole":["45/16","23/8"],"part":["45/16","23/8"],"value":{"soundType":"white"}},
+          {"whole":["23/8","47/16"],"part":["23/8","47/16"],"value":{"soundType":"white"}},
+          {"whole":["47/16","3/1"],"part":["47/16","3/1"],"value":{"soundType":"white"}},
+          {"whole":["3/1","49/16"],"part":["3/1","49/16"],"value":{"soundType":"white"}},
+          {"whole":["49/16","25/8"],"part":["49/16","25/8"],"value":{"soundType":"white"}},
+          {"whole":["25/8","51/16"],"part":["25/8","51/16"],"value":{"soundType":"white"}},
+          {"whole":["51/16","13/4"],"part":["51/16","13/4"],"value":{"soundType":"white"}},
+          {"whole":["13/4","53/16"],"part":["13/4","53/16"],"value":{"soundType":"white"}},
+          {"whole":["53/16","27/8"],"part":["53/16","27/8"],"value":{"soundType":"white"}},
+          {"whole":["27/8","55/16"],"part":["27/8","55/16"],"value":{"soundType":"white"}},
+          {"whole":["55/16","7/2"],"part":["55/16","7/2"],"value":{"soundType":"white"}},
+          {"whole":["7/2","57/16"],"part":["7/2","57/16"],"value":{"soundType":"white"}},
+          {"whole":["57/16","29/8"],"part":["57/16","29/8"],"value":{"soundType":"white"}},
+          {"whole":["29/8","59/16"],"part":["29/8","59/16"],"value":{"soundType":"white"}},
+          {"whole":["59/16","15/4"],"part":["59/16","15/4"],"value":{"soundType":"white"}},
+          {"whole":["15/4","61/16"],"part":["15/4","61/16"],"value":{"soundType":"white"}},
+          {"whole":["61/16","31/8"],"part":["61/16","31/8"],"value":{"soundType":"white"}},
+          {"whole":["31/8","63/16"],"part":["31/8","63/16"],"value":{"soundType":"white"}},
+          {"whole":["63/16","4/1"],"part":["63/16","4/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["0/1","1/16"],"part":["0/1","1/16"],"value":{"soundType":"white"}},
+          {"whole":["1/16","1/8"],"part":["1/16","1/8"],"value":{"soundType":"white"}},
+          {"whole":["1/8","3/16"],"part":["1/8","3/16"],"value":{"soundType":"white"}},
+          {"whole":["3/16","1/4"],"part":["3/16","1/4"],"value":{"soundType":"white"}},
+          {"whole":["1/4","5/16"],"part":["1/4","5/16"],"value":{"soundType":"white"}},
+          {"whole":["5/16","3/8"],"part":["5/16","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","7/16"],"part":["3/8","7/16"],"value":{"soundType":"white"}},
+          {"whole":["7/16","1/2"],"part":["7/16","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","9/16"],"part":["1/2","9/16"],"value":{"soundType":"white"}},
+          {"whole":["9/16","5/8"],"part":["9/16","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","11/16"],"part":["5/8","11/16"],"value":{"soundType":"white"}},
+          {"whole":["11/16","3/4"],"part":["11/16","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","13/16"],"part":["3/4","13/16"],"value":{"soundType":"white"}},
+          {"whole":["13/16","7/8"],"part":["13/16","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","15/16"],"part":["7/8","15/16"],"value":{"soundType":"white"}},
+          {"whole":["15/16","1/1"],"part":["15/16","1/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["2/1","33/16"],"part":["2/1","33/16"],"value":{"soundType":"white"}},
+          {"whole":["33/16","17/8"],"part":["33/16","17/8"],"value":{"soundType":"white"}},
+          {"whole":["17/8","35/16"],"part":["17/8","35/16"],"value":{"soundType":"white"}},
+          {"whole":["35/16","9/4"],"part":["35/16","9/4"],"value":{"soundType":"white"}},
+          {"whole":["9/4","37/16"],"part":["9/4","37/16"],"value":{"soundType":"white"}},
+          {"whole":["37/16","19/8"],"part":["37/16","19/8"],"value":{"soundType":"white"}},
+          {"whole":["19/8","39/16"],"part":["19/8","39/16"],"value":{"soundType":"white"}},
+          {"whole":["39/16","5/2"],"part":["39/16","5/2"],"value":{"soundType":"white"}},
+          {"whole":["5/2","41/16"],"part":["5/2","41/16"],"value":{"soundType":"white"}},
+          {"whole":["41/16","21/8"],"part":["41/16","21/8"],"value":{"soundType":"white"}},
+          {"whole":["21/8","43/16"],"part":["21/8","43/16"],"value":{"soundType":"white"}},
+          {"whole":["43/16","11/4"],"part":["43/16","11/4"],"value":{"soundType":"white"}},
+          {"whole":["11/4","45/16"],"part":["11/4","45/16"],"value":{"soundType":"white"}},
+          {"whole":["45/16","23/8"],"part":["45/16","23/8"],"value":{"soundType":"white"}},
+          {"whole":["23/8","47/16"],"part":["23/8","47/16"],"value":{"soundType":"white"}},
+          {"whole":["47/16","3/1"],"part":["47/16","3/1"],"value":{"soundType":"white"}}
+        ],
+        [
+          {"whole":["5/16","3/8"],"part":["1/3","3/8"],"value":{"soundType":"white"}},
+          {"whole":["3/8","7/16"],"part":["3/8","7/16"],"value":{"soundType":"white"}},
+          {"whole":["7/16","1/2"],"part":["7/16","1/2"],"value":{"soundType":"white"}},
+          {"whole":["1/2","9/16"],"part":["1/2","9/16"],"value":{"soundType":"white"}},
+          {"whole":["9/16","5/8"],"part":["9/16","5/8"],"value":{"soundType":"white"}},
+          {"whole":["5/8","11/16"],"part":["5/8","11/16"],"value":{"soundType":"white"}},
+          {"whole":["11/16","3/4"],"part":["11/16","3/4"],"value":{"soundType":"white"}},
+          {"whole":["3/4","13/16"],"part":["3/4","13/16"],"value":{"soundType":"white"}},
+          {"whole":["13/16","7/8"],"part":["13/16","7/8"],"value":{"soundType":"white"}},
+          {"whole":["7/8","15/16"],"part":["7/8","15/16"],"value":{"soundType":"white"}},
+          {"whole":["15/16","1/1"],"part":["15/16","1/1"],"value":{"soundType":"white"}},
+          {"whole":["1/1","17/16"],"part":["1/1","17/16"],"value":{"soundType":"white"}},
+          {"whole":["17/16","9/8"],"part":["17/16","9/8"],"value":{"soundType":"white"}},
+          {"whole":["9/8","19/16"],"part":["9/8","19/16"],"value":{"soundType":"white"}},
+          {"whole":["19/16","5/4"],"part":["19/16","5/4"],"value":{"soundType":"white"}},
+          {"whole":["5/4","21/16"],"part":["5/4","21/16"],"value":{"soundType":"white"}},
+          {"whole":["21/16","11/8"],"part":["21/16","11/8"],"value":{"soundType":"white"}},
+          {"whole":["11/8","23/16"],"part":["11/8","23/16"],"value":{"soundType":"white"}},
+          {"whole":["23/16","3/2"],"part":["23/16","3/2"],"value":{"soundType":"white"}},
+          {"whole":["3/2","25/16"],"part":["3/2","25/16"],"value":{"soundType":"white"}},
+          {"whole":["25/16","13/8"],"part":["25/16","13/8"],"value":{"soundType":"white"}},
+          {"whole":["13/8","27/16"],"part":["13/8","27/16"],"value":{"soundType":"white"}},
+          {"whole":["27/16","7/4"],"part":["27/16","7/4"],"value":{"soundType":"white"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-06",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects unknown sound types eagerly",
+      "program": [["sound","bogus"]],
+      "error": "Mini-notation error at position 0 in \"bogus\": Invalid sound type: \"bogus\". Expected one of sine, triangle, square, sawtooth, halfsine, abssine, pulsesine, white, pink, brown."
+    },
+    {
+      "id": "notes-s-01",
+      "group": "notes",
+      "from": "src/control.test.ts: behaves exactly like sound() for a synth type",
+      "program": [["s","square"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"soundType":"square"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"soundType":"square"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"soundType":"square"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"soundType":"square"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"soundType":"square"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-s-02",
+      "group": "notes",
+      "from": "src/control.test.ts: treats an unknown word as a sample name instead of throwing",
+      "program": [["s","bd ~ [bd bd] sd"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"sampleName":"bd"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"sampleName":"bd"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"sampleName":"bd"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"sampleName":"sd"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"sampleName":"bd"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"sampleName":"bd"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"sampleName":"bd"}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"sampleName":"sd"}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"sampleName":"bd"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"sampleName":"bd"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"sampleName":"bd"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"sampleName":"sd"}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"sampleName":"bd"}},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":{"sampleName":"bd"}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"sampleName":"bd"}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"sampleName":"sd"}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"sampleName":"bd"}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"sampleName":"bd"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"sampleName":"bd"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"sampleName":"sd"}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"sampleName":"bd"}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"sampleName":"bd"}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"sampleName":"bd"}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"sampleName":"sd"}}
+        ],
+        [
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"sampleName":"bd"}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"sampleName":"bd"}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"sampleName":"sd"}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"sampleName":"bd"}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"sampleName":"bd"}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"sampleName":"bd"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-s-03",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation mixing synth types and sample names, underscores included",
+      "program": [["s","gm_acoustic_bass"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"sampleName":"gm_acoustic_bass"}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"sampleName":"gm_acoustic_bass"}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"sampleName":"gm_acoustic_bass"}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"sampleName":"gm_acoustic_bass"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"sampleName":"gm_acoustic_bass"}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"sampleName":"gm_acoustic_bass"}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"sampleName":"gm_acoustic_bass"}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"sampleName":"gm_acoustic_bass"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-s-04",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation mixing synth types and sample names, underscores included",
+      "program": [["s","bd sine hh*2"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"sampleName":"bd"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"soundType":"sine"}},
+          {"whole":["2/3","5/6"],"part":["2/3","5/6"],"value":{"sampleName":"hh"}},
+          {"whole":["5/6","1/1"],"part":["5/6","1/1"],"value":{"sampleName":"hh"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"sampleName":"bd"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"soundType":"sine"}},
+          {"whole":["5/3","11/6"],"part":["5/3","11/6"],"value":{"sampleName":"hh"}},
+          {"whole":["11/6","2/1"],"part":["11/6","2/1"],"value":{"sampleName":"hh"}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"sampleName":"bd"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"soundType":"sine"}},
+          {"whole":["8/3","17/6"],"part":["8/3","17/6"],"value":{"sampleName":"hh"}},
+          {"whole":["17/6","3/1"],"part":["17/6","3/1"],"value":{"sampleName":"hh"}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"sampleName":"bd"}},
+          {"whole":["10/3","11/3"],"part":["10/3","11/3"],"value":{"soundType":"sine"}},
+          {"whole":["11/3","23/6"],"part":["11/3","23/6"],"value":{"sampleName":"hh"}},
+          {"whole":["23/6","4/1"],"part":["23/6","4/1"],"value":{"sampleName":"hh"}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"sampleName":"bd"}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"soundType":"sine"}},
+          {"whole":["2/3","5/6"],"part":["2/3","5/6"],"value":{"sampleName":"hh"}},
+          {"whole":["5/6","1/1"],"part":["5/6","1/1"],"value":{"sampleName":"hh"}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"sampleName":"bd"}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"soundType":"sine"}},
+          {"whole":["8/3","17/6"],"part":["8/3","17/6"],"value":{"sampleName":"hh"}},
+          {"whole":["17/6","3/1"],"part":["17/6","3/1"],"value":{"sampleName":"hh"}}
+        ],
+        [
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"soundType":"sine"}},
+          {"whole":["2/3","5/6"],"part":["2/3","5/6"],"value":{"sampleName":"hh"}},
+          {"whole":["5/6","1/1"],"part":["5/6","1/1"],"value":{"sampleName":"hh"}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"sampleName":"bd"}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"soundType":"sine"}},
+          {"whole":["5/3","11/6"],"part":["5/3","7/4"],"value":{"sampleName":"hh"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-bank-01",
+      "group": "notes",
+      "from": "src/control.test.ts: .bank() sets a bank prefix used for sample lookup",
+      "program": [["s","bd sd"],["bank","RolandTR909"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"sampleBank":"RolandTR909","sampleName":"bd"}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"sampleBank":"RolandTR909","sampleName":"sd"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-sound-07",
+      "group": "notes",
+      "from": "src/control.test.ts: .sound() also clears a previously-set sample name — sampleName otherwise wins in the engine",
+      "program": [["s","bd sd"],["sound","square"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"soundType":"square"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"soundType":"square"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"soundType":"square"}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"soundType":"square"}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"soundType":"square"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"soundType":"square"}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"soundType":"square"}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"soundType":"square"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"soundType":"square"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"soundType":"square"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"soundType":"square"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"soundType":"square"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"soundType":"square"}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"soundType":"square"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-s-05",
+      "group": "notes",
+      "from": "src/control.test.ts: .s() clears the previous soundType/sampleName when switching between them",
+      "program": [["note","c3 e3"],["sound","sawtooth"],["s","bd"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3","sampleName":"bd"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"pitch":"e3","sampleName":"bd"}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":"e3","sampleName":"bd"}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"pitch":"e3","sampleName":"bd"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3","sampleName":"bd"}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":"e3","sampleName":"bd"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3","sampleName":"bd"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":"c3","sampleName":"bd"}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"pitch":"e3","sampleName":"bd"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-01",
+      "group": "notes",
+      "from": "src/control.test.ts: resolves n()'s degree into pitch via a scale spec",
+      "program": [["n","0 1 2 3 4 5 6 7"],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":440}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":440}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":440}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"pitch":440}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":440}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":440}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":523.2511306011972}}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":440}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":493.8833012561241}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":261.6255653005986}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":329.6275569128699}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":349.2282314330039}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-02",
+      "group": "notes",
+      "from": "src/control.test.ts: resolves n()'s degree into pitch via a scale spec",
+      "program": [["n","0 2 4 7"],["scale","D5:minor"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":880}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":1174.6590716696303}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":880}},
+          {"whole":["7/4","2/1"],"part":["7/4","2/1"],"value":{"pitch":1174.6590716696303}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":880}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":1174.6590716696303}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":880}},
+          {"whole":["15/4","4/1"],"part":["15/4","4/1"],"value":{"pitch":1174.6590716696303}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":880}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":1174.6590716696303}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":880}},
+          {"whole":["11/4","3/1"],"part":["11/4","3/1"],"value":{"pitch":1174.6590716696303}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":880}},
+          {"whole":["3/4","1/1"],"part":["3/4","1/1"],"value":{"pitch":1174.6590716696303}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":698.4564628660078}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":880}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-03",
+      "group": "notes",
+      "from": "docs/recipes.md: shimmer",
+      "program": [["n","<0 4 2 7>*2 ~ <4 9> ~"],["scale","a3:minorPentatonic"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":220}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":783.9908719634985}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":220}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["7/2","15/4"],"part":["7/2","15/4"],"value":{"pitch":783.9908719634985}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":220}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":220}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/2","11/4"],"part":["5/2","11/4"],"value":{"pitch":391.99543598174927}}
+        ],
+        [
+          {"whole":["1/2","3/4"],"part":["1/2","3/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":587.3295358348151}},
+          {"whole":["3/2","7/4"],"part":["3/2","7/4"],"value":{"pitch":783.9908719634985}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-04",
+      "group": "notes",
+      "from": "docs/recipes.md: lead",
+      "program": [["n","<0 2 4 7 4 2>*2 ~"],["scale","c4:dorian"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":311.12698372208087}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":523.2511306011972}},
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":311.12698372208087}},
+          {"whole":["3/1","13/4"],"part":["3/1","13/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["13/4","7/2"],"part":["13/4","7/2"],"value":{"pitch":311.12698372208087}}
+        ],
+        [
+          {"whole":["0/1","1/4"],"part":["0/1","1/4"],"value":{"pitch":261.6255653005986}},
+          {"whole":["1/4","1/2"],"part":["1/4","1/2"],"value":{"pitch":311.12698372208087}}
+        ],
+        [
+          {"whole":["2/1","9/4"],"part":["2/1","9/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["9/4","5/2"],"part":["9/4","5/2"],"value":{"pitch":311.12698372208087}}
+        ],
+        [
+          {"whole":["1/4","1/2"],"part":["1/3","1/2"],"value":{"pitch":311.12698372208087}},
+          {"whole":["1/1","5/4"],"part":["1/1","5/4"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/4","3/2"],"part":["5/4","3/2"],"value":{"pitch":523.2511306011972}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-05",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation into multiple degree events, negatives included",
+      "program": [["n","-3 -1 0 7 8"],["scale","e3:harmonicMinor"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":369.9944227116344}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["8/5","9/5"],"part":["8/5","9/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["9/5","2/1"],"part":["9/5","2/1"],"value":{"pitch":369.9944227116344}},
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":369.9944227116344}},
+          {"whole":["3/1","16/5"],"part":["3/1","16/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["16/5","17/5"],"part":["16/5","17/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["17/5","18/5"],"part":["17/5","18/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["18/5","19/5"],"part":["18/5","19/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["19/5","4/1"],"part":["19/5","4/1"],"value":{"pitch":369.9944227116344}}
+        ],
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":369.9944227116344}}
+        ],
+        [
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":369.9944227116344}}
+        ],
+        [
+          {"whole":["1/5","2/5"],"part":["1/3","2/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":329.6275569128699}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":369.9944227116344}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":155.56349186104046}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":164.81377845643496}},
+          {"whole":["8/5","9/5"],"part":["8/5","7/4"],"value":{"pitch":329.6275569128699}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-06",
+      "group": "notes",
+      "from": "generated: chromatic degrees",
+      "program": [["n","0 3 6 9 12"],["scale","f2:chromatic"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":174.61411571650194}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["8/5","9/5"],"part":["8/5","9/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["9/5","2/1"],"part":["9/5","2/1"],"value":{"pitch":174.61411571650194}},
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":174.61411571650194}},
+          {"whole":["3/1","16/5"],"part":["3/1","16/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["16/5","17/5"],"part":["16/5","17/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["17/5","18/5"],"part":["17/5","18/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["18/5","19/5"],"part":["18/5","19/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["19/5","4/1"],"part":["19/5","4/1"],"value":{"pitch":174.61411571650194}}
+        ],
+        [
+          {"whole":["0/1","1/5"],"part":["0/1","1/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["1/5","2/5"],"part":["1/5","2/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":174.61411571650194}}
+        ],
+        [
+          {"whole":["2/1","11/5"],"part":["2/1","11/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["11/5","12/5"],"part":["11/5","12/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["12/5","13/5"],"part":["12/5","13/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["13/5","14/5"],"part":["13/5","14/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["14/5","3/1"],"part":["14/5","3/1"],"value":{"pitch":174.61411571650194}}
+        ],
+        [
+          {"whole":["1/5","2/5"],"part":["1/3","2/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["2/5","3/5"],"part":["2/5","3/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["3/5","4/5"],"part":["3/5","4/5"],"value":{"pitch":146.8323839587038}},
+          {"whole":["4/5","1/1"],"part":["4/5","1/1"],"value":{"pitch":174.61411571650194}},
+          {"whole":["1/1","6/5"],"part":["1/1","6/5"],"value":{"pitch":87.30705785825097}},
+          {"whole":["6/5","7/5"],"part":["6/5","7/5"],"value":{"pitch":103.82617439498628}},
+          {"whole":["7/5","8/5"],"part":["7/5","8/5"],"value":{"pitch":123.47082531403103}},
+          {"whole":["8/5","9/5"],"part":["8/5","7/4"],"value":{"pitch":146.8323839587038}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-07",
+      "group": "notes",
+      "from": "generated: a spaced scale name",
+      "program": [["n","0 1 2"],["scale","g4:Harmonic Minor"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":440}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":466.1637615180899}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":440}},
+          {"whole":["5/3","2/1"],"part":["5/3","2/1"],"value":{"pitch":466.1637615180899}},
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":440}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":466.1637615180899}},
+          {"whole":["3/1","10/3"],"part":["3/1","10/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["10/3","11/3"],"part":["10/3","11/3"],"value":{"pitch":440}},
+          {"whole":["11/3","4/1"],"part":["11/3","4/1"],"value":{"pitch":466.1637615180899}}
+        ],
+        [
+          {"whole":["0/1","1/3"],"part":["0/1","1/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":440}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":466.1637615180899}}
+        ],
+        [
+          {"whole":["2/1","7/3"],"part":["2/1","7/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["7/3","8/3"],"part":["7/3","8/3"],"value":{"pitch":440}},
+          {"whole":["8/3","3/1"],"part":["8/3","3/1"],"value":{"pitch":466.1637615180899}}
+        ],
+        [
+          {"whole":["1/3","2/3"],"part":["1/3","2/3"],"value":{"pitch":440}},
+          {"whole":["2/3","1/1"],"part":["2/3","1/1"],"value":{"pitch":466.1637615180899}},
+          {"whole":["1/1","4/3"],"part":["1/1","4/3"],"value":{"pitch":391.99543598174927}},
+          {"whole":["4/3","5/3"],"part":["4/3","5/3"],"value":{"pitch":440}},
+          {"whole":["5/3","2/1"],"part":["5/3","7/4"],"value":{"pitch":466.1637615180899}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-scale-08",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects an invalid scale spec eagerly, at build time",
+      "program": [["n","0 1 2"],["scale","C4:bogus"]],
+      "error": "Unknown scale name: \"bogus\". Expected one of major, ionian, minor, aeolian, dorian, phrygian, lydian, mixolydian, locrian, harmonicminor, melodicminor, majorpentatonic, minorpentatonic, chromatic."
+    },
+    {
+      "id": "notes-n-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single degree",
+      "program": [["n",3]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"degree":3}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"degree":3}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"degree":3}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"degree":3}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"degree":3}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"degree":3}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"degree":3}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"degree":3}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-n-02",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects non-integer input eagerly, at build time",
+      "program": [["n",1.5]],
+      "error": "Invalid scale degree: 1.5. Expected an integer."
+    },
+    {
+      "id": "notes-n-03",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects non-integer input eagerly, at build time",
+      "program": [["n","0 1.5"]],
+      "error": "Mini-notation error at position 2 in \"0 1.5\": Invalid scale degree: \"1.5\". Expected an integer."
+    },
+    {
+      "id": "notes-scale-09",
+      "group": "notes",
+      "from": "src/control.test.ts: leaves already-pitched events (from note()) untouched",
+      "program": [["note","c3 e3"],["scale","C4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":"c3"}},
+          {"whole":["3/2","2/1"],"part":["3/2","2/1"],"value":{"pitch":"e3"}},
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":"c3"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":"e3"}},
+          {"whole":["3/1","7/2"],"part":["3/1","7/2"],"value":{"pitch":"c3"}},
+          {"whole":["7/2","4/1"],"part":["7/2","4/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["0/1","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["2/1","5/2"],"part":["2/1","5/2"],"value":{"pitch":"c3"}},
+          {"whole":["5/2","3/1"],"part":["5/2","3/1"],"value":{"pitch":"e3"}}
+        ],
+        [
+          {"whole":["0/1","1/2"],"part":["1/3","1/2"],"value":{"pitch":"c3"}},
+          {"whole":["1/2","1/1"],"part":["1/2","1/1"],"value":{"pitch":"e3"}},
+          {"whole":["1/1","3/2"],"part":["1/1","3/2"],"value":{"pitch":"c3"}},
+          {"whole":["3/2","2/1"],"part":["3/2","7/4"],"value":{"pitch":"e3"}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-n-04",
+      "group": "notes",
+      "from": "generated: n() over a signal with events",
+      "program": [["n",[["sine"],["segment",8],["range",0,7]]],["scale","D4:major"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":329.6275569128699}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["7/4","15/8"],"part":["7/4","15/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["15/8","2/1"],"part":["15/8","2/1"],"value":{"pitch":329.6275569128699}},
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/1","25/8"],"part":["3/1","25/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["25/8","13/4"],"part":["25/8","13/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["13/4","27/8"],"part":["13/4","27/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["27/8","7/2"],"part":["27/8","7/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["7/2","29/8"],"part":["7/2","29/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["29/8","15/4"],"part":["29/8","15/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["15/4","31/8"],"part":["15/4","31/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["31/8","4/1"],"part":["31/8","4/1"],"value":{"pitch":329.6275569128699}}
+        ],
+        [
+          {"whole":["0/1","1/8"],"part":["0/1","1/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["1/8","1/4"],"part":["1/8","1/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/4","3/8"],"part":["1/4","3/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":329.6275569128699}}
+        ],
+        [
+          {"whole":["2/1","17/8"],"part":["2/1","17/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["17/8","9/4"],"part":["17/8","9/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["9/4","19/8"],"part":["9/4","19/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["19/8","5/2"],"part":["19/8","5/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["5/2","21/8"],"part":["5/2","21/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["21/8","11/4"],"part":["21/8","11/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["11/4","23/8"],"part":["11/4","23/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["23/8","3/1"],"part":["23/8","3/1"],"value":{"pitch":329.6275569128699}}
+        ],
+        [
+          {"whole":["1/4","3/8"],"part":["1/3","3/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["3/8","1/2"],"part":["3/8","1/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["1/2","5/8"],"part":["1/2","5/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["5/8","3/4"],"part":["5/8","3/4"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/4","7/8"],"part":["3/4","7/8"],"value":{"pitch":293.6647679174076}},
+          {"whole":["7/8","1/1"],"part":["7/8","1/1"],"value":{"pitch":329.6275569128699}},
+          {"whole":["1/1","9/8"],"part":["1/1","9/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["9/8","5/4"],"part":["9/8","5/4"],"value":{"pitch":493.8833012561241}},
+          {"whole":["5/4","11/8"],"part":["5/4","11/8"],"value":{"pitch":587.3295358348151}},
+          {"whole":["11/8","3/2"],"part":["11/8","3/2"],"value":{"pitch":493.8833012561241}},
+          {"whole":["3/2","13/8"],"part":["3/2","13/8"],"value":{"pitch":391.99543598174927}},
+          {"whole":["13/8","7/4"],"part":["13/8","7/4"],"value":{"pitch":329.6275569128699}}
+        ]
+      ]
+    },
+    {
+      "id": "notes-chord-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single chord symbol",
+      "program": [["chord","<Dm9 BbM7 Gm9 A7sus>"],["voicing"]],
+      "queries": [["0","4"],["0","1"],["2","3"],["1/3","7/4"]],
+      "haps": [
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":659.2551138257398}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":233.08188075904496}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/1","2/1"],"part":["1/1","2/1"],"value":{"pitch":440}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":195.99771799087463}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":233.08188075904496}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":220}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":329.6275569128699}},
+          {"whole":["3/1","4/1"],"part":["3/1","4/1"],"value":{"pitch":391.99543598174927}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":440}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["0/1","1/1"],"part":["0/1","1/1"],"value":{"pitch":659.2551138257398}}
+        ],
+        [
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":195.99771799087463}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":233.08188075904496}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["2/1","3/1"],"part":["2/1","3/1"],"value":{"pitch":440}}
+        ],
+        [
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":293.6647679174076}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":349.2282314330039}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":440}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":523.2511306011972}},
+          {"whole":["0/1","1/1"],"part":["1/3","1/1"],"value":{"pitch":659.2551138257398}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":233.08188075904496}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":293.6647679174076}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":349.2282314330039}},
+          {"whole":["1/1","2/1"],"part":["1/1","7/4"],"value":{"pitch":440}}
+        ]
+      ]
+    }
+  ]
+}

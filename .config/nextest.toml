@@ -1,0 +1,10 @@
+# nextest settings: the `ci` profile writes JUnit that pr-results reads.
+#
+# (c) Copyright 2026 Liminal HQ, Scott Morris
+# SPDX-License-Identifier: MIT
+
+[profile.ci]
+retries = 1
+
+[profile.ci.junit]
+path = "junit.xml"

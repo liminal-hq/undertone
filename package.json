@@ -21,6 +21,7 @@
     "watch": "tsc -w",
     "typecheck:docs": "tsc -p docs/.vitepress/tsconfig.json",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml",
     "test:watch": "vitest",
     "bench": "vitest bench --run",
     "lint": "eslint .",
@@ -29,7 +30,12 @@
     "docs:api": "typedoc",
     "docs:dev": "bun run docs:api && vitepress dev docs",
     "docs:build": "bun run docs:api && vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "api:record": "bun conformance/api/report.ts record",
+    "api:check": "bun conformance/api/report.ts check",
+    "conformance:record": "bun conformance/recorder/record.ts record",
+    "conformance:check": "bun conformance/recorder/record.ts check",
+    "typecheck:conformance": "tsc -p conformance/tsconfig.json"
   },
   "keywords": [
     "web-audio",
@@ -59,6 +65,7 @@
     "codemirror": "^6.0.2",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.10.3",
     "mermaid": "^11.16.1",
     "prettier": "^3.9.6",
     "typedoc": "^0.28.20",

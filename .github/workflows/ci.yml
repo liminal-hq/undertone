@@ -18,13 +18,19 @@ defaults:
   run:
     shell: bash
 
+# Jobs run in the shared images from liminal-hq/.github (public), pinned by digest.
+# The digests come from docs/reference/recommended-image-pins.md there (last updated 2026-11-10); bump them on purpose.
+#   ci-web:  Node 24.22.2, pnpm 10.32.1, Bun 1.4.4 (satisfies package.json engines: node >=20, bun >=1.2)
+#   ci-rust: Rust 1.98.0 (matches rust-toolchain.toml), rustfmt, Clippy, cargo-nextest, cargo-deny, git, jq; no wasm32 target, no Node
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Build library
         run: bun run build
@@ -35,12 +41,26 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Run tests
-        run: bun run test
+        run: bun run test:ci
+      - name: Upload frontend test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-test-results
+          path: test-results/junit.xml
+          if-no-files-found: ignore
+      - name: Upload the event file
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: event-file
+          path: ${{ github.event_path }}
       - name: Write summary
         if: always()
         run: echo "## Test" >> "${GITHUB_STEP_SUMMARY}"
@@ -48,9 +68,10 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: ESLint
         run: bun run lint
@@ -61,9 +82,10 @@ jobs:
   format:
     name: Format
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Prettier check
         run: bun run format:check
@@ -74,9 +96,10 @@ jobs:
   docs:
     name: Docs (build + typecheck)
     runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
     steps:
       - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Typecheck docs theme
         run: bun run typecheck:docs
@@ -85,3 +108,135 @@ jobs:
       - name: Write summary
         if: always()
         run: echo "## Docs" >> "${GITHUB_STEP_SUMMARY}"
+
+  api:
+    name: API report
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check the public API report
+        run: bun run api:check
+      - name: Write summary
+        if: always()
+        run: echo "## API report" >> "${GITHUB_STEP_SUMMARY}"
+
+  conformance:
+    name: Conformance corpus
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check the corpus is current
+        run: bun run conformance:check
+      - name: Write summary
+        if: always()
+        run: echo "## Conformance corpus" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-fmt:
+    name: Rust format
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Write summary
+        if: always()
+        run: echo "## Rust format" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-clippy:
+    name: Rust Clippy
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Write summary
+        if: always()
+        run: echo "## Rust Clippy" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-test:
+    name: Rust tests
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run tests
+        run: cargo nextest run --workspace --locked --profile ci
+      - name: Upload Rust test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rust-test-results
+          path: target/nextest/ci/junit.xml
+          if-no-files-found: ignore
+      - name: Write summary
+        if: always()
+        run: echo "## Rust tests" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-doc:
+    name: Rust docs (doc tests + cargo doc)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Doc tests
+        run: cargo test --doc --workspace --locked
+      - name: Build API docs
+        run: cargo doc --workspace --no-deps --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - name: Write summary
+        if: always()
+        run: echo "## Rust docs" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-deny:
+    name: Rust dependencies (cargo deny)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check licences, bans, sources, and advisories
+        run: cargo deny check licenses bans sources advisories
+      - name: Write summary
+        if: always()
+        run: echo "## Rust dependencies" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-wasm:
+    name: Rust WebAssembly build
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Build for wasm32
+        run: cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine
+      - name: Write summary
+        if: always()
+        run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-layering:
+    name: Rust crate layering
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check crate layering
+        run: scripts/check-layering.sh
+      - name: Write summary
+        if: always()
+        run: echo "## Rust layering" >> "${GITHUB_STEP_SUMMARY}"

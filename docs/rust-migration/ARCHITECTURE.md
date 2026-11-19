@@ -131,7 +131,7 @@ flowchart LR
 
 ## CI
 
-One job per check, as today (`.github/workflows/ci.yml`), with the summary step each job already writes.
+One job per check, as today (`.github/workflows/ci.yml`), with the summary step each job already writes. The Rust jobs run in the shared `ghcr.io/liminal-hq/ci-rust` image from `liminal-hq/.github`, which is public and pinned by digest (the recommended pin is in that repository's `docs/reference/recommended-image-pins.md`). It provides Rust 1.98.0, rustfmt, Clippy, `cargo-nextest`, `cargo-deny`, `git`, and `jq`; the wasm job adds the `wasm32-unknown-unknown` target with `rustup`. The TypeScript jobs run in the shared `ghcr.io/liminal-hq/ci-web` image (Node 24, pnpm, Bun 1.4.4), also pinned by digest, instead of `oven-sh/setup-bun`.
 
 | Job                                | Command                                                                                                             | From                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |

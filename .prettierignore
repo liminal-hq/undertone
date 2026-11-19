@@ -1,3 +1,7 @@
 dist
 node_modules
 bun.lock
+target
+conformance/api/undertone.api.md
+test-results
+conformance/cases

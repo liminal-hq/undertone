@@ -1,0 +1,407 @@
+{
+  "corpus": 1,
+  "layer": 2,
+  "group": "signals",
+  "cases": [
+    {
+      "id": "signals-lpf-sine",
+      "group": "signals",
+      "from": "docs/guide/patterned-parameters.md: Patterns and signals as controls",
+      "program": [["note","c3*4"],["lpf",[["sine"],["range",300,3000]]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1650,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":3000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1650.0000000000002,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":300,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1650,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":3000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1650.0000000000002,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":300,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-pan-sine2",
+      "group": "signals",
+      "from": "docs/recipes.md: Hats can drift across the field one hit at a time with a signal",
+      "program": [["sound","white*8"],["pan",[["sine2"],["slow",4]]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.1950903220161282,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.38268343236508984,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.5555702330196022,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.7071067811865475,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.8314696123025453,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.9238795325112867,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.9807852804032304,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.9807852804032304,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.9238795325112867,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.8314696123025453,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.7071067811865475,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.5555702330196022,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.38268343236508984,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.19509032201612864,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-lpf-perlin",
+      "group": "signals",
+      "from": "docs/recipes.md: a bass with a filter that wanders on its own",
+      "program": [["note","c2*8"],["sound","sawtooth"],["lpf",[["perlin"],["range",300,2400]]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2053.093434870243,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.15625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2054.0056997058414,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2058.976329019197,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.46875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2068.7337472037525,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2081.5089235897176,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.78125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2094.2840999756827,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2104.0415181602384,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.09375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2109.012147473594,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2109.924412309192,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.40625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2101.791138967853,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":2057.475623005348,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.71875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":1970.4836157460832,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":1856.5868639736436,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":2.03125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":1742.690112201204,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":1655.6981049419392,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":2.34375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterCutoff":1611.382588979434,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-gain-rand",
+      "group": "signals",
+      "from": "docs/recipes.md: random accents that come out the same every time you play",
+      "program": [["note","c3*4"],["gain",[["rand"],["seed",7],["range",0.2,0.6]]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.37077358104288577,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.5721752100624145,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.2846593774855137,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.35356267699971794,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.305317766033113,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.46602876763790846,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4428632142022252,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.36704514771699903,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-pan-saw",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: books the sine at each onset on the panner",
+      "program": [["note","c3 e3 g3 b3"],["pan",[["saw2"]]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-0.5,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.5,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-0.5,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0.5,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-pan-clamped",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: clamps pan to -1..1 and warns once",
+      "program": [["note","c3 e3"],["pan",[["sine"],["mul",3]]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-attack-negative",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: clamps the low side, the start of panslide and autopandepth",
+      "program": [["note","c3 e3"],["attack",[["sine2"]]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":2.220446049250313e-16,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":2.220446049250313e-16,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-rest-keeps-earlier",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: leaves an earlier value in place where a pattern gives none",
+      "program": [["note","c3 e3 g3 b3"],["gain",0.4],["gain",[["seq",[["silence"]],[["saw"]]]]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.5,"nudgeTime":0,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.5,"nudgeTime":0,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-autopan-phase",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: saw.fast(hz * secondsPerCycle) is the phase of an LFO running under the whole loop",
+      "program": [["chord","<Am7 Fmaj7>"],["voicing"],["autopan",0.5],["autopanphase",[["saw"],["fast",1.5]]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":220,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0.5,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":349.2282314330039,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0.5,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0.5,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":523.2511306011972,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"autopan":0.5,"autopanPhase":0.5,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":659.2551138257398,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-every-signal",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: every picks the transformed signal on cycle 0 and the plain one after",
+      "program": [["note","c3 e3"],["pan",[["saw2"],["every",2,[["rev"]]]]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-cat-signals",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: cat plays one signal per cycle, each in its own cycles",
+      "program": [["note","c3*4"],["lpf",[["cat",[["saw"]],[["tri"]]],["range",500,2500]]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":1000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":1500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":2000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":1500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":2500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterCutoff":1500,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-euclid-signal",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: euclid on a signal is a structure: only the pulses get a value",
+      "program": [["note","c3*8"],["gain",[["sine"],["euclid",3,8],["range",0.2,0.6]]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.0625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.5414213562373095,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.2,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.4375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.4,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.5414213562373095,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.2,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-jux-signal",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: jux gives the transformed side a signal-driven filter",
+      "program": [["note","c3 e3 g3 e3"],["jux",[["rev"],["lpf",[["sine"],["range",400,1600]]]]]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1000.0000000000001,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1600,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1000.0000000000001,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1600,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterCutoff":1000,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-lpenv-signal",
+      "group": "signals",
+      "from": "generated: a signal into the filter envelope amount",
+      "program": [["note","a2*4"],["lpf",400],["lpenv",[["saw"],["range",0,2000]]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":500,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":1000,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":1500,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":500,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":1000,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterCutoff":400,"filterDecay":0,"filterEnvAmount":1500,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-slide-signal",
+      "group": "signals",
+      "from": "generated: a signal into the slide time",
+      "program": [["note","c3 e3 g3 e3"],["slide",[["sine"],["range",0,0.1]]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0.05,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0.1,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0.05000000000000002,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0.05,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0.1,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0.05000000000000002,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-delay-brand",
+      "group": "signals",
+      "from": "generated: a random 0 or 1 into the delay send",
+      "program": [["note","c4*8"],["delay",[["brand"]]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.0625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.4375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":0,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayLevel":1,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-panslide-signal",
+      "group": "signals",
+      "from": "generated: panslide from a signal",
+      "program": [["note","c3 e3"],["panslide",[["saw2"]],0.1]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"panSlideFrom":-1,"panSlideTime":0.1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"panSlideFrom":0,"panSlideTime":0.1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"panSlideFrom":-1,"panSlideTime":0.1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"panSlideFrom":0,"panSlideTime":0.1,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-autopandepth-signal",
+      "group": "signals",
+      "from": "src/controlSignals.test.ts: clamps the low side, the start of panslide and autopandepth",
+      "program": [["note","c3 e3"],["autopan",1],["autopandepth",[["sine2"]]]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"autopan":1,"autopanDepth":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"autopan":1,"autopanDepth":2.220446049250313e-16,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"autopan":1,"autopanDepth":0,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"autopan":1,"autopanDepth":2.220446049250313e-16,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-irand-gain",
+      "group": "signals",
+      "from": "generated: whole numbers into a level",
+      "program": [["note","c3*4"],["gain",[["irand",4],["fmap","mul",0.25]]]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.25,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.75,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.25,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.75,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "signals-choose-pan",
+      "group": "signals",
+      "from": "generated: choose into the pan",
+      "program": [["note","c3*4"],["pan",[["choose",-1,0,1]]]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pan":-1,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    }
+  ]
+}

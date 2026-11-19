@@ -8,6 +8,8 @@
 ## Repository Layout
 
 - `src/`: library source — pattern query core (`pattern.ts`) with exact rational time (`fraction.ts`), mini-notation parser (`mini.ts`), note()/sound()/n()/chord()/s() constructors (`control.ts`), synth engine (`engine.ts`), playback scheduler (`scheduler.ts`), multichannel placement (`surround.ts`), pan automation inside a note and pan laws (`panPath.ts`), autopan and the pan slide (`autopan.ts`), note-name/MIDI parsing (`pitch.ts`), named scales (`scale.ts`), chord symbols + voicing (`chord.ts`), bring-your-own-assets sample registry (`samples.ts`), per-orbit reverb/delay buses (`effects.ts`), noise generation (`noise.ts`), seeded random sources (`random.ts`), offline rendering (`render.ts`), WAV encoding (`wav.ts`), shared types (`types.ts`), public exports (`index.ts`)
+- `crates/`: the Rust workspace (root `Cargo.toml`) — `undertone-pattern` (pattern core) and `undertone-engine` (synth engine and scheduler); `conformance/` (the corpus and its recorder) and `packages/` (the npm package and the other bindings) arrive in later milestones of the Rust migration
+- `scripts/`: repository checks, such as `check-layering.sh` for the crate layering rules
 - `src/test-utils/`: hand-written Web Audio fakes shared by the test suite; excluded from the published build
 - `.github/workflows/`: CI (`ci.yml`) and GitHub Pages deployment (`gh-pages.yml`)
 - `assets/`: authored visual assets (`hero.svg`, `icon.svg`)
@@ -67,8 +69,13 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Testing
 
 - Run `bun run test`, `bun run lint`, `bun run format:check`, and `bun run build` before considering work complete.
+- Run the Rust checks CI runs, with a shared target directory: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --locked -- -D warnings`, `cargo nextest run --workspace --locked`, `cargo test --doc --workspace --locked`, `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked`, `cargo deny check`, and `scripts/check-layering.sh`.
+- CI posts test results to pull requests through `pr-results` (`.github/workflows/publish-test-results.yml`, settings in `.github/pr-results.toml`); nextest uses the `ci` profile from `.config/nextest.toml` and CI runs `bun run test:ci` for vitest JUnit. Locally, plain `bun run test` and `cargo nextest run` are unchanged. Keep the `job` names in the settings in step with the job `name:` fields in `ci.yml`.
 - Run `bun run typecheck:docs` and `bun run docs:build` when `docs/.vitepress/theme/` or `docs/playground.md` changes.
+- Run `bun run conformance:check` after any change to `src/` that could alter patterns, controls, or the recorded graph: it regenerates the conformance corpus in memory and fails on any difference. Regenerate with `bun run conformance:record` and review the diff of `conformance/cases/` (see `conformance/README.md`); never edit a case by hand.
 - Engine/synthesis changes need a test against the fake `AudioContext` in `src/test-utils/fakeAudioContext.ts` asserting the resulting node graph and automation calls — not just that the code runs.
+- Engine changes in the Rust crates need a conformance corpus case (once `conformance/` exists); a change to synthesis needs a recorded-graph or render test.
+- Rust builds are heavy: export one shared `CARGO_TARGET_DIR` (and `CARGO_INCREMENTAL=0`) instead of a `target/` per worktree, run one cargo build at a time, and have at most two Rust-building agents at once (see the resource watch in `docs/rust-migration/README.md`).
 - State explicitly when a change hasn't been listened to in a real browser; automated tests cannot verify perceived sound quality.
 
 ## Documentation
@@ -80,13 +87,14 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 ## Project Structure
 
 - TypeScript library, zero runtime dependencies, built on the Web Audio API.
+- The Rust crates in `crates/` are checked by `cargo` (pinned in `rust-toolchain.toml`), with hard tabs from `rustfmt.toml`.
 - Package manager: `bun`. Tests: `vitest`. Lint/format: `eslint` + `prettier`. Build: `tsc` (emits `dist/`, declarations included).
 - Published to npm as `@liminal-hq/undertone`. To release: bump `version` in `package.json` on a `chore/release-v<version>` branch, merge to `main`, then push a matching `vX.Y.Z` tag (or run the "Release" workflow via `workflow_dispatch`). CI verifies the build, attaches the npm tarball to a GitHub release, and publishes to npm — the npm publish step waits for manual approval on the `npm-publish` environment in the Actions UI before it runs.
 
 ## Licence and Copyright
 
 - **Requirement:** New source files (and substantially rewritten source files) should include a short header as the first content in the file.
-- **Applies to:** `.ts` files in `src/` and `docs/.vitepress/theme/`.
+- **Applies to:** `.ts` files in `src/`, `docs/.vitepress/theme/`, and (as they arrive) `packages/` and `conformance/`, and `.rs` files in `crates/`.
 - **Do not add headers to:** generated files (`dist/`), lockfiles, config files (`.json`, `.yml`), markdown docs, or the SVG asset.
 
 Preferred header format for TypeScript:
@@ -98,7 +106,16 @@ Preferred header format for TypeScript:
 // SPDX-License-Identifier: MIT
 ```
 
+Rust files use the same shape with the crates' licence, `MIT OR Apache-2.0`:
+
+```rust
+// Brief one-line summary of what this file does
+//
+// (c) Copyright 2026 Liminal HQ, Scott Morris
+// SPDX-License-Identifier: MIT OR Apache-2.0
+```
+
 - Keep the summary to one concise sentence.
-- Place the header before `import` statements.
+- Place the header before `import` (or `use`) statements.
 - Leave one blank line between the header and the first code line.
 - Preserve existing valid licence headers when already present.

@@ -19,6 +19,29 @@ note('c4(5,8)').sound('triangle').surround(135).loop({ ctx, bpm: 120 });
 
 On plain stereo hardware the same code still sounds right — the fold-down is automatic — so surround placement is safe to ship speculatively.
 
+### The gains behind a placement
+
+A surround placement is eight channel gains in a fixed order, exported as `CHANNEL_ORDER` (`FL`, `FR`, `C`, `LFE`, `SL`, `SR`, `RL`, `RR`), and `MAX_CHANNELS` is how many there are (8). `surroundGains(angleDegrees)` returns the gains `.surround()` uses for an angle: 0 is front-centre, positive angles run clockwise, and the LFE channel is always silent. `foldToStereo(gains)` returns the `[left, right]` pair those gains fold down to on a stereo destination, which is what plain hardware plays.
+
+```ts standalone
+import {
+  CHANNEL_ORDER,
+  MAX_CHANNELS,
+  foldToStereo,
+  note,
+  surroundGains
+} from '@liminal-hq/undertone';
+
+const gains = surroundGains(135); // rear right
+console.log(
+  MAX_CHANNELS,
+  CHANNEL_ORDER.map((name, i) => `${name}=${gains[i].toFixed(2)}`)
+);
+console.log(foldToStereo(gains)); // [left, right]
+
+note('c4(5,8)').sound('triangle').surround(135).loop({ bpm: 120 });
+```
+
 ## Pan in the Strudel style
 
 There are three layers of pan movement, from the one that follows the music to the one that follows the clock. Pick the lightest that does the job.

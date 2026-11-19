@@ -270,6 +270,8 @@ bun run build          # tsc -> dist/
 bun run docs:dev       # docs site + live playground at http://localhost:5173
 ```
 
+The Rust crates under `crates/` need a Rust toolchain; `rust-toolchain.toml` pins it, so `rustup` installs it on first use. Use `cargo test --workspace` to run their tests. CI also runs `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --locked -- -D warnings`, `cargo nextest run --workspace --locked`, `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked`, `cargo deny check`, and `scripts/check-layering.sh`; set `CARGO_TARGET_DIR` to a shared directory if you keep several worktrees, to save disk.
+
 ## License
 
 MIT

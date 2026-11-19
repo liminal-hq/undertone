@@ -1,0 +1,41 @@
+# pr-results settings: one comment, a check run per suite, and the other CI jobs in a table.
+#
+# (c) Copyright 2026 Liminal HQ, Scott Morris
+# SPDX-License-Identifier: MIT
+
+schema = 1
+title = "Undertone checks"
+
+[comment]
+style = "guided"
+other_checks = true
+
+[comment.check_commands]
+"Build" = "bun run build"
+"Lint" = "bun run lint"
+"Format" = "bun run format:check"
+"Docs (build + typecheck)" = "bun run typecheck:docs && bun run docs:build"
+"API report" = "bun run api:check"
+"Conformance corpus" = "bun run conformance:check"
+"Rust format" = "cargo fmt --all -- --check"
+"Rust Clippy" = "cargo clippy --workspace --all-targets --locked -- -D warnings"
+"Rust docs (doc tests + cargo doc)" = "cargo test --doc --workspace --locked"
+"Rust dependencies (cargo deny)" = "cargo deny check licenses bans sources advisories"
+"Rust WebAssembly build" = "cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine"
+"Rust crate layering" = "scripts/check-layering.sh"
+
+[[suite]]
+name = "Rust tests"
+check = "Undertone Rust tests"
+artifact = "rust-test-results"
+files = ["**/junit.xml"]
+flavour = "nextest"
+job = "Rust tests"
+
+[[suite]]
+name = "TypeScript tests"
+check = "Undertone TypeScript tests"
+artifact = "frontend-test-results"
+files = ["**/junit.xml"]
+flavour = "vitest"
+job = "Test"

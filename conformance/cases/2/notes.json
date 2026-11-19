@@ -1,0 +1,763 @@
+{
+  "corpus": 1,
+  "layer": 2,
+  "group": "notes",
+  "cases": [
+    {
+      "id": "notes-note-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single note name",
+      "program": [["note","c4"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-02",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation into multiple pitched events",
+      "program": [["note","c4 e4 g4"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6666666666666666,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.6666666666666667,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-03",
+      "group": "notes",
+      "from": "docs/recipes.md: pluck",
+      "program": [["note","c4 e4 g4 e4"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-04",
+      "group": "notes",
+      "from": "docs/recipes.md: acid",
+      "program": [["note","a1 [a1 a2] c2 <e2 g1>"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-05",
+      "group": "notes",
+      "from": "docs/recipes.md: bass",
+      "program": [["note","<a1 f1 c2 g1>(3,8)"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"a1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"f1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"f1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"f1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-06",
+      "group": "notes",
+      "from": "docs/recipes.md: kick",
+      "program": [["note","c1 ~ [~ c1] ~"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c1","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-07",
+      "group": "notes",
+      "from": "generated: sharps and flats",
+      "program": [["note","f#3 Bb2 c#5"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"f#3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.41666666666666663,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"Bb2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c#5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"f#3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.6666666666666665,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"Bb2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.0833333333333335,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c#5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-08",
+      "group": "notes",
+      "from": "generated: speed",
+      "program": [["note","c3*8"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.0625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.4375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-09",
+      "group": "notes",
+      "from": "src/control.test.ts: passes raw Hz numbers through",
+      "program": [["note","110 220 440"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":110,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6666666666666666,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":220,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":110,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.6666666666666665,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":220,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.3333333333333335,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.6666666666666666,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-10",
+      "group": "notes",
+      "from": "docs/recipes.md: groove",
+      "program": [["note","e2 e2 g2 e2"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e2","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-11",
+      "group": "notes",
+      "from": "docs/recipes.md: mallet",
+      "program": [["note","c5 e5 g5 e5*2"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.09375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.34375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.15625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e5","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-12",
+      "group": "notes",
+      "from": "generated: a chord as a stack",
+      "program": [["note","[c3,e3,g3]"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-13",
+      "group": "notes",
+      "from": "generated: five steps",
+      "program": [["note","c3 e3 g3 b3 c4"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.4,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.6,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.4,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.8,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"g3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"b3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3.6,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.4,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c4","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-note-14",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects invalid notes eagerly, at build time",
+      "program": [["note","zz"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "error": "Mini-notation error at position 0 in \"zz\": Invalid note name: \"zz\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+    },
+    {
+      "id": "notes-note-15",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects invalid notes eagerly, at build time",
+      "program": [["note","c4 h9"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "error": "Mini-notation error at position 3 in \"c4 h9\": Invalid note name: \"h9\". Expected e.g. \"c2\", \"a4\", \"f#3\", \"bb3\"."
+    },
+    {
+      "id": "notes-note-16",
+      "group": "notes",
+      "from": "src/control.test.ts: passes raw Hz numbers through",
+      "program": [["note",440]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds an unpitched pattern from a sound type",
+      "program": [["sound","white"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-02",
+      "group": "notes",
+      "from": "docs/recipes.md: hats",
+      "program": [["sound","white*8"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-03",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation of sound types",
+      "program": [["sound","white ~ pink(3,8)"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.8333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}},
+        {"at":0.9895833333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}},
+        {"at":1.1458333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.41666666666666663,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.0833333333333335,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}},
+        {"at":2.2395833333333335,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}},
+        {"at":2.3958333333333335,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.05208333333333333,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"pink","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-04",
+      "group": "notes",
+      "from": "generated: oscillator types",
+      "program": [["sound","sine triangle square sawtooth"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"triangle","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sawtooth","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-05",
+      "group": "notes",
+      "from": "docs/recipes.md: sound(white*16)",
+      "program": [["sound","white*16"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":2.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}},
+        {"at":3.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"white","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-sound-06",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects unknown sound types eagerly",
+      "program": [["sound","bogus"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "error": "Mini-notation error at position 0 in \"bogus\": Invalid sound type: \"bogus\". Expected one of sine, triangle, square, sawtooth, halfsine, abssine, pulsesine, white, pink, brown."
+    },
+    {
+      "id": "notes-s-01",
+      "group": "notes",
+      "from": "src/control.test.ts: behaves exactly like sound() for a synth type",
+      "program": [["s","square"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-s-02",
+      "group": "notes",
+      "from": "src/control.test.ts: treats an unknown word as a sample name instead of throwing",
+      "program": [["s","bd ~ [bd bd] sd"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"sd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.8125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"sd","slideTime":0,"soundType":"sine","sustain":1}}
+      ]
+    },
+    {
+      "id": "notes-s-03",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation mixing synth types and sample names, underscores included",
+      "program": [["s","gm_acoustic_bass"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"gm_acoustic_bass","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":2,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"gm_acoustic_bass","slideTime":0,"soundType":"sine","sustain":1}}
+      ]
+    },
+    {
+      "id": "notes-s-04",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation mixing synth types and sample names, underscores included",
+      "program": [["s","bd sine hh*2"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6666666666666666,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"hh","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.8333333333333334,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"hh","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":1.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.6666666666666667,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"hh","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":1.8333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleName":"hh","slideTime":0,"soundType":"sine","sustain":1}}
+      ]
+    },
+    {
+      "id": "notes-bank-01",
+      "group": "notes",
+      "from": "src/control.test.ts: .bank() sets a bank prefix used for sample lookup",
+      "program": [["s","bd sd"],["bank","RolandTR909"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleBank":"RolandTR909","sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleBank":"RolandTR909","sampleName":"sd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleBank":"RolandTR909","sampleName":"bd","slideTime":0,"soundType":"sine","sustain":1}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.625,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"sampleBank":"RolandTR909","sampleName":"sd","slideTime":0,"soundType":"sine","sustain":1}}
+      ]
+    },
+    {
+      "id": "notes-sound-07",
+      "group": "notes",
+      "from": "src/control.test.ts: .sound() also clears a previously-set sample name — sampleName otherwise wins in the engine",
+      "program": [["s","bd sd"],["sound","square"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"square","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-s-05",
+      "group": "notes",
+      "from": "src/control.test.ts: .s() clears the previous soundType/sampleName when switching between them",
+      "program": [["note","c3 e3"],["sound","sawtooth"],["s","bd"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"sustain":1}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"sustain":1}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"sustain":1}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"sampleName":"bd","slideTime":0,"sustain":1}}
+      ]
+    },
+    {
+      "id": "notes-scale-01",
+      "group": "notes",
+      "from": "src/control.test.ts: resolves n()'s degree into pitch via a scale spec",
+      "program": [["n","0 1 2 3 4 5 6 7"],["scale","C4:major"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":349.2282314330039,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":523.2511306011972,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":349.2282314330039,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":523.2511306011972,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-02",
+      "group": "notes",
+      "from": "src/control.test.ts: resolves n()'s degree into pitch via a scale spec",
+      "program": [["n","0 2 4 7"],["scale","D5:minor"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":587.3295358348151,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":698.4564628660078,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":880,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.9375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":1174.6590716696303,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":587.3295358348151,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":698.4564628660078,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":880,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.1875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.3125,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":1174.6590716696303,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-03",
+      "group": "notes",
+      "from": "docs/recipes.md: shimmer",
+      "program": [["n","<0 4 2 7>*2 ~ <4 9> ~"],["scale","a3:minorPentatonic"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":220,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.0625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":587.3295358348151,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":783.9908719634985,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-04",
+      "group": "notes",
+      "from": "docs/recipes.md: lead",
+      "program": [["n","<0 2 4 7 4 2>*2 ~"],["scale","c4:dorian"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":261.6255653005986,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":311.12698372208087,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.5,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":523.2511306011972,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-05",
+      "group": "notes",
+      "from": "src/control.test.ts: parses mini-notation into multiple degree events, negatives included",
+      "program": [["n","-3 -1 0 7 8"],["scale","e3:harmonicMinor"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":123.47082531403103,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":155.56349186104046,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.4,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":164.81377845643496,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":369.9944227116344,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":123.47082531403103,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":155.56349186104046,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.4,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":164.81377845643496,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.6,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.8,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":369.9944227116344,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-06",
+      "group": "notes",
+      "from": "generated: chromatic degrees",
+      "program": [["n","0 3 6 9 12"],["scale","f2:chromatic"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":87.30705785825097,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":103.82617439498628,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":123.47082531403103,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":146.8323839587038,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":174.61411571650194,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":87.30705785825097,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":103.82617439498628,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":123.47082531403103,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":146.8323839587038,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":0.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":174.61411571650194,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-07",
+      "group": "notes",
+      "from": "generated: a spaced scale name",
+      "program": [["n","0 1 2"],["scale","g4:Harmonic Minor"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.16666666666666666,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.3333333333333333,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":466.1637615180899,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.6666666666666666,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.8333333333333334,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":466.1637615180899,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-scale-08",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects an invalid scale spec eagerly, at build time",
+      "program": [["n","0 1 2"],["scale","C4:bogus"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "error": "Unknown scale name: \"bogus\". Expected one of major, ionian, minor, aeolian, dorian, phrygian, lydian, mixolydian, locrian, harmonicminor, melodicminor, majorpentatonic, minorpentatonic, chromatic."
+    },
+    {
+      "id": "notes-n-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single degree",
+      "program": [["n",3]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"degree":3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"degree":3,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-n-02",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects non-integer input eagerly, at build time",
+      "program": [["n",1.5]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "error": "Invalid scale degree: 1.5. Expected an integer."
+    },
+    {
+      "id": "notes-n-03",
+      "group": "notes",
+      "from": "src/control.test.ts: rejects non-integer input eagerly, at build time",
+      "program": [["n","0 1.5"]],
+      "cycles": [0,2],
+      "cps": 2,
+      "gated": false,
+      "error": "Mini-notation error at position 2 in \"0 1.5\": Invalid scale degree: \"1.5\". Expected an integer."
+    },
+    {
+      "id": "notes-scale-09",
+      "group": "notes",
+      "from": "src/control.test.ts: leaves already-pitched events (from note()) untouched",
+      "program": [["note","c3 e3"],["scale","C4:major"]],
+      "cycles": [0,2],
+      "cps": 0.5,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":2,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"c3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":3,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":"e3","release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-n-04",
+      "group": "notes",
+      "from": "generated: n() over a signal with events",
+      "program": [["n",[["sine"],["segment",8],["range",0,7]]],["scale","D4:major"]],
+      "cycles": [0,2],
+      "cps": 1,
+      "gated": false,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":587.3295358348151,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.125,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":587.3295358348151,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.375,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":493.8833012561241,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.5,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":391.99543598174927,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.625,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.75,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.875,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":329.6275569128699,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    },
+    {
+      "id": "notes-chord-01",
+      "group": "notes",
+      "from": "src/control.test.ts: builds a one-event-per-cycle pattern from a single chord symbol",
+      "program": [["chord","<Dm9 BbM7 Gm9 A7sus>"],["voicing"]],
+      "cycles": [0,2],
+      "cps": 0.8,
+      "gated": true,
+      "events": [
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":349.2282314330039,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":523.2511306011972,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":0,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":659.2551138257398,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":233.08188075904496,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":293.6647679174076,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":349.2282314330039,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}},
+        {"at":1.25,"params":{"attack":0.01,"decay":0.1,"delayFeedback":0.35,"delayTime":0.3,"duration":1.25,"filterAttack":0,"filterDecay":0,"filterEnvAmount":0,"filterRelease":0,"filterSustain":1,"gainLevel":0.8,"nudgeTime":0,"pitch":440,"release":0.05,"roomSize":3,"slideTime":0,"soundType":"sine","sustain":0}}
+      ]
+    }
+  ]
+}

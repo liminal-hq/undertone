@@ -35,3 +35,18 @@ const handle = stack(progression, bass, melody).loop({ bpm: 96 });
 ```
 
 The alternations line up because they all cycle at the same rate: each cycle gets one chord, the matching bass root, and the next two melody degrees.
+
+## Note names, MIDI numbers, and frequencies
+
+Three small helpers convert between the ways of naming a pitch. `noteToMidi('c4')` gives the MIDI number (60, with `a4` at 69), `noteToFrequency()` gives hertz from a note name or a MIDI number (`noteToFrequency('a4')` is 440), and `midiToFrequency()` does the same from a number alone. They are handy for anything that wants a frequency in hertz rather than a note, such as a filter cutoff that follows the key:
+
+```ts standalone
+import { midiToFrequency, note, noteToFrequency, noteToMidi } from '@liminal-hq/undertone';
+
+const root = noteToMidi('a2'); // 45
+const cutoff = midiToFrequency(root + 24); // two octaves above the root, in hertz
+
+// A bass line whose filter sits at the pitch of a4 (440 Hz) rather than a magic number.
+note('a2 a2 c3 e3').sound('sawtooth').sustain(0.3).lpf(noteToFrequency('a4')).loop({ bpm: 110 });
+note('a4').sound('sine').lpf(cutoff).play();
+```
