@@ -11,8 +11,10 @@
 //! frequency for every frequency in its band, so playing the wave does not alias. The oscillator picks the
 //! table for the frequency it is playing and reads it with linear interpolation.
 //!
-//! The four built-in types use the specification's coefficients and are not normalised; a periodic wave made
-//! with `createPeriodicWave` is scaled so its peak is 1 unless normalisation was disabled.
+//! The four built-in types use the specification's coefficients and are normalised like a periodic wave made
+//! with `createPeriodicWave` (unless that disabled it): the scale is one over the peak of the table with the
+//! most partials, applied to every band. A truncated square or sawtooth overshoots by the Gibbs factor
+//! 1.179, so they are scaled to 0.848 of the ideal wave, as Chromium's are (measured in layer 4, `R-layer4.md`).
 
 use crate::graph::OscillatorType;
 use crate::math::{pow, sin};
@@ -98,7 +100,7 @@ impl WaveTables {
 				OscillatorType::Triangle => 8.0 * sin(pi_n / 2.0) / (pi_n * pi_n),
 			};
 		}
-		Self::new(&[], &imag, false, sample_rate)
+		Self::new(&[], &imag, true, sample_rate)
 	}
 
 	/// The band for a fundamental of `frequency` hertz (its sign is ignored).

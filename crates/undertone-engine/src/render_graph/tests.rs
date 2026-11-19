@@ -47,6 +47,9 @@ fn a_mono_source_fills_both_stereo_channels() {
 	assert_eq!(out[0], out[1]);
 }
 
+/// One over the peak of a many-partial square or sawtooth sum (the Gibbs overshoot, 1.179).
+const GIBBS_SCALE: f64 = 0.848;
+
 #[test]
 fn the_other_oscillator_types_have_their_waveform_levels() {
 	let level = |kind: OscillatorType| {
@@ -55,10 +58,11 @@ fn the_other_oscillator_types_have_their_waveform_levels() {
 		graph.set_oscillator_type(osc, kind);
 		rms(&graph.render_all()[0])
 	};
-	// A square's RMS is 1 (a little under, band-limited), a triangle's 1 over root 3, a sawtooth's too.
-	assert!((level(OscillatorType::Square) - 1.0).abs() < 0.02);
+	// The ideal RMS of a square is 1, of a triangle and a sawtooth 1 over root 3; the square and the sawtooth are
+	// scaled by the table's normalisation, one over the Gibbs overshoot of their partial sums (about 0.848).
+	assert!((level(OscillatorType::Square) - GIBBS_SCALE).abs() < 0.01);
 	assert!((level(OscillatorType::Triangle) - 1.0 / 3.0_f64.sqrt()).abs() < 0.01);
-	assert!((level(OscillatorType::Sawtooth) - 1.0 / 3.0_f64.sqrt()).abs() < 0.01);
+	assert!((level(OscillatorType::Sawtooth) - GIBBS_SCALE / 3.0_f64.sqrt()).abs() < 0.01);
 }
 
 #[test]
@@ -83,8 +87,9 @@ fn an_oscillator_does_not_alias_near_nyquist() {
 	let osc = osc_to_destination(&mut graph, 11_000.0);
 	graph.set_oscillator_type(osc, OscillatorType::Sawtooth);
 	let out = graph.render_all();
-	// At 11 kHz only the fundamental fits below 24 kHz: the output is a plain sine of amplitude 2/pi.
-	assert!((peak(&out[0]) - (2.0 / core::f32::consts::PI)).abs() < 5e-3);
+	// At 11 kHz only the fundamental fits below 24 kHz: the output is a plain sine of amplitude 2/pi, normalised.
+	let expected = 2.0 / core::f64::consts::PI * GIBBS_SCALE;
+	assert!((f64::from(peak(&out[0])) - expected).abs() < 5e-3);
 }
 
 #[test]

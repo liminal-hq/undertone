@@ -54,9 +54,9 @@
 //!
 //! - **Oscillators** are band-limited by wave tables (one per third of an octave of pitch, linearly
 //!   interpolated), as browsers do, but the table sizes, the band edges, and so the exact partials near
-//!   Nyquist are this crate's own. The built-in types are not normalised, a custom wave is (unless it was
-//!   made with normalisation disabled); a browser may normalise the built-ins too, which would change the
-//!   level of a square or sawtooth by up to about 1 dB (to be checked against a browser render).
+//!   Nyquist are this crate's own. The built-in types are normalised like a custom wave (unless it was
+//!   made with normalisation disabled), as Chromium's are: layer 4 measured its square and sawtooth at 0.848 of the
+//!   ideal wave (one over the Gibbs overshoot of the partial sum), which this crate now matches.
 //! - **The dynamics compressor** implements the algorithm the specification and browsers share (a saturating
 //!   soft-knee curve, a 6 ms pre-delay so the gain reduction is in place before the loud sample arrives, a
 //!   detector that releases over a few milliseconds, an attack that reaches the target in the attack time,
