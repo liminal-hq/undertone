@@ -151,6 +151,20 @@ jobs:
         if: always()
         run: echo "## Test classification" >> "${GITHUB_STEP_SUMMARY}"
 
+  voice-params:
+    name: VoiceParams names
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check the VoiceParams field list is current
+        run: bun run voice-params:check
+      - name: Write summary
+        if: always()
+        run: echo "## VoiceParams names" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-fmt:
     name: Rust format
     runs-on: ubuntu-24.04
