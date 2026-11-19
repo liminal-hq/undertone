@@ -9,12 +9,14 @@
 //! octave bands from one FFT of the whole channel, RMS per 100 ms window), and the two are compared in
 //! decibels.
 //!
-//! The test **measures**: it prints one table of every case's differences (`--nocapture`), writes the same
-//! tables in Markdown to the file named by `LAYER4_RESULTS` when that is set, and asserts only a loose guard
-//! ([`GUARD_DB`]) so that a gross break fails. The proposed tolerances are reported next to each figure but do not
-//! fail the test. A band or a window below [`FLOOR`] in both renders is not compared (it is more than 80 dB
-//! under full scale, where a reverb tail or a filter's skirt differs for reasons nobody can hear). Nothing in
-//! it was listened to.
+//! The cases are recorded on 128-frame boundaries without delay feedback, so Chromium's two quirks do not apply
+//! (`R-layer4.md`), and every case without a `quirk` label is **asserted** against the tolerances of
+//! [`tolerance`] (the proposed ones, kept by D-32). A case labelled `delay-feedback` or `mid-quantum-start` keeps
+//! the quirk on record and is asserted against the wider documented guard of [`quirk_guard`] instead. The test
+//! prints one table of every case's differences (`--nocapture`) and writes the same tables in Markdown to the file
+//! named by `LAYER4_RESULTS` when that is set. A band or a window below [`FLOOR`] in both renders is not compared
+//! (it is more than 80 dB under full scale, where a reverb tail or a filter's skirt differs for reasons nobody can
+//! hear). Nothing in it was listened to.
 
 mod common;
 
@@ -23,11 +25,6 @@ use serde_json::Value;
 use std::fmt::Write as _;
 use std::path::Path;
 
-/// The loosest difference, in decibels, the test lets through for the channel RMS and peak while the true figures are recorded.
-const GUARD_DB: f64 = 3.0;
-/// The same for a band or a window, which are compared at levels down to -80 dBFS, where the browser's own quirks show (a
-/// voice that starts inside a render quantum has another phase there, see `R-layer4.md`), so the guard is wider.
-const GUARD_DB_QUIET: f64 = 12.0;
 /// Linear amplitude under which a band or window pair is not compared (-80 dBFS).
 const FLOOR: f64 = 1e-4;
 /// The bands' upper edges in Hz (`BAND_EDGES` in `renderSummary.ts`).
@@ -35,7 +32,8 @@ const BAND_EDGES: [f64; 7] = [125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.
 /// A window's length in seconds.
 const WINDOW_SECONDS: f64 = 0.1;
 
-/// The proposed tolerances (`CONFORMANCE.md`), in decibels.
+/// The tolerances, in decibels, a case is held to.
+#[derive(Clone, Copy)]
 struct Tolerance {
 	rms: f64,
 	peak: f64,
@@ -43,8 +41,8 @@ struct Tolerance {
 	window: f64,
 }
 
-/// The master limiter off (measured in the plan) and on (proposed). With the limiter on, only the peak and the
-/// RMS have a proposed figure; the band and window figures are reported against the limiter-off numbers.
+/// The proposed tolerances (`CONFORMANCE.md`, kept by D-32): the master limiter off, and on. With the limiter
+/// on, `CONFORMANCE.md` gives a peak and an RMS figure; the band and window figures are the limiter-off ones.
 fn tolerance(limiter_on: bool) -> Tolerance {
 	if limiter_on {
 		Tolerance {
@@ -60,6 +58,32 @@ fn tolerance(limiter_on: bool) -> Tolerance {
 			band: 0.1,
 			window: 0.05,
 		}
+	}
+}
+
+/// The documented guard of a case that keeps a Chromium quirk on record (`R-layer4.md`): the measured worst
+/// differences rounded up, so that the quirk stays visible and a break far beyond it still fails. A case with no
+/// label is held to [`tolerance`] instead.
+fn quirk_guard(quirk: &str) -> Tolerance {
+	match quirk {
+		// Echoes after the first arrive 128 frames late per pass, so a window holding an echo edge differs
+		// (measured: RMS 0.17, peak 0.53, band 0.47, window 6.8 dB).
+		"delay-feedback" => Tolerance {
+			rms: 0.25,
+			peak: 0.75,
+			band: 0.75,
+			window: 7.5,
+		},
+		// A voice starting inside a quantum has another phase there, so overlapping voices sum differently
+		// and the quietest bands (near -80 dBFS) differ by up to 12 dB (measured: RMS 0.02, peak 0.12, band 11.9,
+		// window 0.11 dB).
+		"mid-quantum-start" => Tolerance {
+			rms: 0.05,
+			peak: 0.25,
+			band: 12.5,
+			window: 0.25,
+		},
+		other => panic!("unknown quirk label {other}"),
 	}
 }
 
@@ -220,6 +244,8 @@ impl Worst {
 struct Measured {
 	id: String,
 	limiter_on: bool,
+	/// The label of a case that keeps a Chromium quirk on record.
+	quirk: Option<String>,
 	rms: Worst,
 	peak: Worst,
 	band: Worst,
@@ -235,6 +261,7 @@ fn compare(id: &str, limiter_on: bool, rust: &[Channel], browser: &[Channel]) ->
 	let mut m = Measured {
 		id: id.to_string(),
 		limiter_on,
+		quirk: None,
 		rms: Worst::default(),
 		peak: Worst::default(),
 		band: Worst::default(),
@@ -270,6 +297,16 @@ fn compare(id: &str, limiter_on: bool, rust: &[Channel], browser: &[Channel]) ->
 	m
 }
 
+impl Measured {
+	/// What the case is held to: the proposed tolerances, or the guard of its quirk.
+	fn limit(&self) -> Tolerance {
+		match &self.quirk {
+			Some(quirk) => quirk_guard(quirk),
+			None => tolerance(self.limiter_on),
+		}
+	}
+}
+
 fn flag(measured: f64, tolerance: f64) -> &'static str {
 	if measured.abs() <= tolerance {
 		""
@@ -281,16 +318,19 @@ fn flag(measured: f64, tolerance: f64) -> &'static str {
 fn render_tables(results: &[Measured]) -> String {
 	let mut out = String::new();
 	out.push_str(
-		"| case | limiter | RMS dB | peak dB | band dB (band) | window dB (window) | bands / windows compared |\n",
+		"| case | limiter | held to | RMS dB | peak dB | band dB (band) | window dB (window) | bands / windows compared |\n",
 	);
-	out.push_str("| --- | --- | ---: | ---: | ---: | ---: | --- |\n");
+	out.push_str("| --- | --- | --- | ---: | ---: | ---: | ---: | --- |\n");
 	for m in results {
-		let t = tolerance(m.limiter_on);
+		let t = m.limit();
 		let _ = writeln!(
 			out,
-			"| `{}` | {} | {:+.4}{} | {:+.4}{} | {:+.3}{} ({}) | {:+.3}{} ({}) | {} / {} |",
+			"| `{}` | {} | {} | {:+.4}{} | {:+.4}{} | {:+.3}{} ({}) | {:+.3}{} ({}) | {} / {} |",
 			m.id,
 			if m.limiter_on { "on" } else { "off" },
+			m.quirk
+				.as_deref()
+				.map_or("proposed".to_string(), |q| format!("quirk guard: {q}")),
 			m.rms.db,
 			flag(m.rms.db, t.rms),
 			m.peak.db,
@@ -326,7 +366,7 @@ fn render_tables(results: &[Measured]) -> String {
 }
 
 #[test]
-fn rust_renders_match_the_browser_summaries_within_a_loose_guard() {
+fn rust_renders_meet_the_proposed_tolerances_and_the_quirk_cases_their_guards() {
 	let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../conformance/cases/4/renders.json");
 	let file: Value = serde_json::from_str(&std::fs::read_to_string(path).expect("reads"))
 		.expect("the corpus file is JSON");
@@ -368,6 +408,10 @@ fn rust_renders_match_the_browser_summaries_within_a_loose_guard() {
 		}
 		let limiter_on = case["render"]["master"] != Value::Bool(false);
 		let mut measured = compare(id, limiter_on, &rust, &browser);
+		measured.quirk = case
+			.get("quirk")
+			.and_then(Value::as_str)
+			.map(str::to_string);
 		measured.frames = frames as usize;
 		results.push(measured);
 	}
@@ -388,19 +432,33 @@ fn rust_renders_match_the_browser_summaries_within_a_loose_guard() {
 		std::fs::write(path, format!("Chromium {version}\n\n{tables}"))
 			.expect("writes the results");
 	}
+	let mut failures = Vec::new();
 	for m in &results {
-		for (what, worst, guard) in [
-			("RMS", m.rms, GUARD_DB),
-			("peak", m.peak, GUARD_DB),
-			("band", m.band, GUARD_DB_QUIET),
-			("window", m.window, GUARD_DB_QUIET),
+		let limit = m.limit();
+		for (what, worst, allowed) in [
+			("RMS", m.rms, limit.rms),
+			("peak", m.peak, limit.peak),
+			("band", m.band, limit.band),
+			("window", m.window, limit.window),
 		] {
-			assert!(
-				worst.db.abs() <= guard,
-				"{}: {what} differs by {:+.3} dB (guard {guard} dB)",
-				m.id,
-				worst.db
-			);
+			if worst.db.abs() > allowed || worst.db.is_nan() {
+				failures.push(format!(
+					"{}: {what} differs by {:+.4} dB at index {} (allowed {allowed} dB, {})",
+					m.id,
+					worst.db,
+					worst.at,
+					m.quirk
+						.as_deref()
+						.map_or("proposed tolerance".to_string(), |q| format!(
+							"quirk guard {q}"
+						))
+				));
+			}
 		}
 	}
+	assert!(
+		failures.is_empty(),
+		"outside the tolerances:\n{}",
+		failures.join("\n")
+	);
 }
