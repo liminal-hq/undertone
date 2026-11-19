@@ -68,7 +68,7 @@ note('c3 e3 g3 e3').sound('abssine').fm(1.5).fmh(2).fmwave('halfsine').loop();
 
 The names are also exported: `SHAPED_WAVE_TYPES` is the list of the three, and `isShapedWave(word)` says whether a string is one of them, which is handy when you accept a waveform name from your own configuration and need to tell a shaped wave from a plain oscillator type.
 
-```ts standalone
+```ts live
 import { SHAPED_WAVE_TYPES, isShapedWave, note } from '@liminal-hq/undertone';
 
 console.log(SHAPED_WAVE_TYPES); // ['halfsine', 'abssine', 'pulsesine']

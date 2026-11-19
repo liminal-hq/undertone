@@ -40,7 +40,7 @@ The alternations line up because they all cycle at the same rate: each cycle get
 
 Three small helpers convert between the ways of naming a pitch. `noteToMidi('c4')` gives the MIDI number (60, with `a4` at 69), `noteToFrequency()` gives hertz from a note name or a MIDI number (`noteToFrequency('a4')` is 440), and `midiToFrequency()` does the same from a number alone. They are handy for anything that wants a frequency in hertz rather than a note, such as a filter cutoff that follows the key:
 
-```ts standalone
+```ts live
 import { midiToFrequency, note, noteToFrequency, noteToMidi } from '@liminal-hq/undertone';
 
 const root = noteToMidi('a2'); // 45

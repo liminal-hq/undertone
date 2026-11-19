@@ -11,10 +11,11 @@ import * as lib from './index';
 import { clearSamples } from './samples';
 import { resetTempo } from './scheduler';
 import { resetWarnings } from './warn';
+import { runSnippet } from '../docs/.vitepress/theme/live/runSnippet';
 import { EXAMPLE_GROUPS } from '../docs/.vitepress/theme/playground/examples';
 import { FakeAudioContext, FakeOfflineAudioContext } from './test-utils/fakeAudioContext';
 
-// A fenced block whose info string is `ts standalone` promises that it runs as written: it imports
+// A fenced block whose info string is `ts standalone` or `ts live` promises that it runs as written: it imports
 // everything it uses, defines everything it refers to, and plays or renders what it builds. This
 // file executes each one. A plain `ts` block is a fragment and is not run. See the top of recipes.md.
 
@@ -30,17 +31,25 @@ interface Snippet {
   page: string;
   line: number;
   code: string;
+  /** True for a `ts live` block, which the site also makes editable. */
+  live: boolean;
 }
 
 function standaloneSnippets(page: string): Snippet[] {
   const lines = readFileSync(join(ROOT, page), 'utf8').split('\n');
   const found: Snippet[] = [];
   for (let i = 0; i < lines.length; i++) {
-    if (/^```ts standalone\s*$/.test(lines[i])) {
+    const fence = /^```ts (standalone|live)\s*$/.exec(lines[i]);
+    if (fence) {
       const start = i + 1;
       let end = start;
       while (end < lines.length && !lines[end].startsWith('```')) end++;
-      found.push({ page, line: start, code: lines.slice(start, end).join('\n') });
+      found.push({
+        page,
+        line: start,
+        code: lines.slice(start, end).join('\n'),
+        live: fence[1] === 'live'
+      });
       i = end;
     }
   }
@@ -152,6 +161,21 @@ describe('standalone documentation snippets', () => {
         ).toBeGreaterThan(0);
         expect(console.warn, 'it makes the library warn').not.toHaveBeenCalled();
       });
+
+      if (snippet.live) {
+        it(`${snippet.page}:${snippet.line} runs through the live runner and stops`, async () => {
+          const before = startedVoices();
+          const lines: string[] = [];
+          const run = runSnippet(snippet.code, { log: (line) => lines.push(line) });
+          await run.done;
+          runClocks(6);
+          expect(startedVoices() - before, 'the live runner played nothing').toBeGreaterThan(0);
+          run.stop();
+          const afterStop = startedVoices();
+          runClocks(6);
+          expect(startedVoices(), 'a loop kept sounding after stop()').toBe(afterStop);
+        });
+      }
     }
   }
 });

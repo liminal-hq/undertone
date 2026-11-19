@@ -59,11 +59,15 @@ placeBuilding.play();
 
 `.nudge(0.02)` offsets a voice's start by seconds (great for arpeggiated one-shots), and `.slide(0.07)` glides the pitch down from an octave above — the classic downward "thunk".
 
+## Live examples
+
+Code blocks with a **Play** button on the guide's pages are live: they run the real library in your browser. Press Play to hear one (the first press is also what lets the browser start audio), Stop to silence it, and edit the code in the box before pressing Play again to hear your change. Reset puts the original code back. Only one example sounds at a time, so starting another stops the first, and leaving the page stops it too. Errors your edit causes appear under the example. Keep the `import` line as it is, or import any other name the library exports. Without scripts the same blocks show as ordinary highlighted code.
+
 ## Looking inside a pattern
 
 A pattern is a function from a span of time to events, so you can ask it what it holds without playing it. `pattern.query({ begin, end })` takes a `TimeSpan` of exact `Fraction`s (cycle numbers, with no rounding error) and returns `Hap`s: each has a `value`, a `whole` (the event's full extent) and a `part` (the piece of it inside the span you asked about). `hasOnset(hap)` is true when the part starts the event, which is the test the scheduler uses to decide whether to start a voice, so an event that began before your span is reported but has no onset.
 
-```ts standalone
+```ts live
 import { Fraction, hasOnset, note } from '@liminal-hq/undertone';
 
 const pattern = note('c4 e4').sound('triangle');
