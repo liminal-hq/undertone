@@ -5,6 +5,7 @@
 
 import { encodeValue, messageOf, programJson } from './format';
 import type { CaseRecord, CorpusFile, Json } from './format';
+import { channelPrograms } from './channelsData';
 import { instrumentPrograms } from './instrumentsData';
 import { build } from './programs';
 import type { ProgramCase } from './programs';
@@ -32,7 +33,8 @@ export const LAYER2_GROUPS = [
   'signals',
   'chords',
   'drift',
-  'instruments'
+  'instruments',
+  'channels'
 ] as const;
 
 /** The layer 1 groups whose programs are also booked as layer 2 cases, in the order they are derived. */
@@ -263,7 +265,10 @@ export function layer2Cases(layer1: readonly ProgramCase[]): VoiceCase[] {
       ...VARIANTS[position % VARIANTS.length]
     });
   });
-  const hand: [string, [string, string, Program][]][] = [['instruments', instrumentPrograms()]];
+  const hand: [string, [string, string, Program][]][] = [
+    ['instruments', instrumentPrograms()],
+    ['channels', channelPrograms()]
+  ];
   for (const [group, programs] of hand) {
     programs.forEach(([stem, from, program], position) => {
       out.push({

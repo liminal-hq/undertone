@@ -6,6 +6,7 @@
 import type { ControlPatch } from '../../src/types';
 import type { GraphCase, OutputSetup, RenderGraphCase, VoicesGraphCase } from './graph';
 import type { Program, Step } from './interpret';
+import { channelsCases } from './channelsData';
 import { instrumentsCases } from './instrumentsData';
 import { optionsCases } from './optionsData';
 import { voicesCases } from './voicesData';
@@ -472,6 +473,7 @@ export function layer3Cases(): GraphCase[] {
     ...renders(),
     ...voicesCases(),
     ...optionsCases(),
-    ...instrumentsCases()
+    ...instrumentsCases(),
+    ...channelsCases()
   ];
 }
