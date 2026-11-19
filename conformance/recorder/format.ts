@@ -79,7 +79,8 @@ const LINEWISE: Record<string, number> = {
   score: 1,
   nodes: 1,
   buffers: 1,
-  waves: 1
+  waves: 1,
+  registry: 1
 };
 
 function emitLines(value: Json, depth: number, indent: string): string {

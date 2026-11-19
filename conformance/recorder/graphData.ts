@@ -9,6 +9,7 @@ import type { Program, Step } from './interpret';
 import { channelsCases } from './channelsData';
 import { instrumentsCases } from './instrumentsData';
 import { optionsCases } from './optionsData';
+import { samplesCases } from './samplesData';
 import { scoreCases } from './scoreData';
 import { voicesCases } from './voicesData';
 
@@ -476,6 +477,7 @@ export function layer3Cases(): GraphCase[] {
     ...optionsCases(),
     ...instrumentsCases(),
     ...channelsCases(),
-    ...scoreCases()
+    ...scoreCases(),
+    ...samplesCases()
   ];
 }

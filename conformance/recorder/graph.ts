@@ -39,6 +39,19 @@ export type Instrument =
   | { preset: 'glassBell' | 'roundBass' | 'softPad' | 'pluck' | 'lead' }
   | { fmVoice: Record<string, unknown> };
 
+/**
+ * A decoded sample registered before booking (`registerSample(name, { buffer, baseNote })`): the PCM a host
+ * hands over, one array per channel. `before` is the index of the voice it is registered before (default 0, so
+ * up front); a render case registers everything up front.
+ */
+export interface SampleSpec {
+  name: string;
+  sampleRate: number;
+  channels: readonly (readonly number[])[];
+  baseNote?: string | number;
+  before?: number;
+}
+
 interface CaseBase {
   id: string;
   group: string;
@@ -59,6 +72,10 @@ export interface VoicesGraphCase extends CaseBase {
     surround?: number;
   }[];
   output?: OutputSetup;
+  /** The sample registry: what is registered, and when (see `SampleSpec`). */
+  registry?: readonly SampleSpec[];
+  /** Voice indices that `clearSamples()` is called before (ahead of that voice's registrations). */
+  clearBefore?: readonly number[];
 }
 
 /** A program rendered offline on a recording context (the render options as JSON, without `context`). */
@@ -66,6 +83,8 @@ export interface RenderGraphCase extends CaseBase {
   kind: 'render';
   program: Program;
   render: Omit<RenderOptions, 'context'>;
+  /** The sample registry, all registered before the render starts. */
+  registry?: readonly SampleSpec[];
 }
 
 /**
@@ -87,7 +106,8 @@ export const LAYER3_GROUPS = [
   'options',
   'instruments',
   'channels',
-  'score'
+  'score',
+  'samples'
 ] as const;
 
 const CREATORS = [
@@ -348,6 +368,19 @@ function instrumentPatch(ref: Reference, instrument: Instrument): ControlPatch {
   return ref.lib.fmVoice(instrument.fmVoice);
 }
 
+/** Registers a decoded sample in the reference's registry, as a host that has decoded it would. */
+function registerDecoded(ref: Reference, make: FakeAudioContext, sample: SampleSpec): void {
+  const length = sample.channels[0]?.length ?? 0;
+  const buffer = make.createBuffer(sample.channels.length, length, sample.sampleRate);
+  sample.channels.forEach((values, channel) => {
+    buffer.getChannelData(channel).set(Float32Array.from(values));
+  });
+  ref.lib.registerSample(sample.name, {
+    buffer,
+    ...(sample.baseNote === undefined ? {} : { baseNote: sample.baseNote })
+  });
+}
+
 /** Books a voices case on a fresh recording context and describes its graph. */
 function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
   const ctx = new FakeAudioContext();
@@ -378,14 +411,21 @@ function recordVoicesCase(ref: Reference, spec: VoicesGraphCase): CaseRecord {
         : { channelGains: ref.lib.surroundGains(voice.surround) })
     }
   }));
-  for (const voice of voices) {
+  const registry = spec.registry ?? [];
+  voices.forEach((voice, index) => {
+    if (spec.clearBefore?.includes(index)) ref.lib.clearSamples();
+    for (const sample of registry) {
+      if ((sample.before ?? 0) === index) registerDecoded(ref, ctx, sample);
+    }
     ref.engine.playVoice(ctx as never, ref.engine.resolveParams(voice.patch), voice.at, {
       output: output as never
     });
-  }
+  });
   return {
     ...head(spec),
     ...(spec.output === undefined ? {} : { output: spec.output as Json }),
+    ...(spec.registry === undefined ? {} : { registry: encodeValue(spec.registry) }),
+    ...(spec.clearBefore === undefined ? {} : { clearBefore: [...spec.clearBefore] }),
     score: scoreLines(voices),
     graph: describeGraph(ctx, created, null)
   };
@@ -415,6 +455,8 @@ async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<
       return context as never;
     }
   };
+  const scratch = new FakeAudioContext();
+  for (const sample of spec.registry ?? []) registerDecoded(ref, scratch, sample);
   await ref.lib.renderToBuffer(built.pattern as never, options);
   if (context === undefined) throw new Error(`${spec.id}: the render made no context`);
   // The score a render books: the onsets of each cycle, as the renderer collects them.
@@ -440,6 +482,7 @@ async function recordRenderCase(ref: Reference, spec: RenderGraphCase): Promise<
     ...head(spec),
     program: programJson(spec.program),
     render: encodeValue(spec.render),
+    ...(spec.registry === undefined ? {} : { registry: encodeValue(spec.registry) }),
     score: scoreLines(voices),
     graph: describeGraph(context, created, context.length)
   };
@@ -494,11 +537,15 @@ async function recordScoreCase(ref: Reference, spec: ScoreGraphCase): Promise<Ca
 
 /** Records one layer 3 case; a case whose booking throws records the message. */
 export async function recordGraphCase(ref: Reference, spec: GraphCase): Promise<CaseRecord> {
+  // The reference's registry is process-wide: every case starts and ends with it empty.
+  ref.lib.clearSamples();
   try {
     if (spec.kind === 'score') return await recordScoreCase(ref, spec);
     return spec.kind === 'voices' ? recordVoicesCase(ref, spec) : await recordRenderCase(ref, spec);
   } catch (error) {
     return { ...head(spec), error: messageOf(error) };
+  } finally {
+    ref.lib.clearSamples();
   }
 }
 
