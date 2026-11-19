@@ -14,6 +14,9 @@ use undertone_pattern::chord::{self, VoicingOptions};
 use undertone_pattern::control;
 use undertone_pattern::controls::{ArgKind, Control, ControlInput, control_spec};
 use undertone_pattern::drift::{self, DriftOptions};
+use undertone_pattern::instruments::{
+	EnvelopeDefinition, FmVoiceDefinition, LayerOptions, fm_presets, fm_voice, layer,
+};
 use undertone_pattern::random::Seed;
 use undertone_pattern::signal;
 use undertone_pattern::{
@@ -304,6 +307,80 @@ fn drift_options(object: &Json) -> Built<DriftOptions> {
 	Ok(options)
 }
 
+/// A voice patch as the corpus writes it: a plain object, `{"$fmVoice": definition}`, or `{"$preset": name}`.
+fn patch_value(json: &Json) -> Built<Value> {
+	Ok(match json {
+		Json::Num(_, n) => Value::Num(*n),
+		Json::Str(s) | Json::Wide(_, s) => Value::Str(s.clone()),
+		Json::Bool(b) => Value::Bool(*b),
+		Json::Null => Value::Undefined,
+		Json::Arr(items) => Value::List(items.iter().map(patch_value).collect::<Built<_>>()?),
+		Json::Obj(fields) => {
+			if let Some(definition) = json.get("$fmVoice") {
+				return Ok(fm_voice(&fm_definition(definition)?)?);
+			}
+			if let Some(name) = json.get("$preset") {
+				let name = name.as_str().expect("a preset name");
+				return match fm_presets().get(name) {
+					Some(preset) => Ok(preset.clone()),
+					None => uncovered(&format!("the preset {name}")),
+				};
+			}
+			Value::Map(
+				fields
+					.iter()
+					.map(|(key, value)| Ok((key.clone(), patch_value(value)?)))
+					.collect::<Built<_>>()?,
+			)
+		}
+	})
+}
+
+fn envelope_definition(json: Option<&Json>) -> EnvelopeDefinition {
+	let field = |name: &str| json.and_then(|j| j.get(name)).and_then(Json::as_f64);
+	EnvelopeDefinition {
+		attack: field("attack"),
+		decay: field("decay"),
+		sustain: field("sustain"),
+		release: field("release"),
+	}
+}
+
+/// The `fmVoice` definition object of a patch.
+fn fm_definition(json: &Json) -> Built<FmVoiceDefinition> {
+	let wave = |name: &str| {
+		json.get(name)
+			.and_then(|j| j.get("type"))
+			.and_then(Json::as_str)
+			.map(str::to_string)
+	};
+	Ok(FmVoiceDefinition {
+		harmonicity: json.get("harmonicity").and_then(Json::as_f64),
+		modulation_index: json.get("modulationIndex").and_then(Json::as_f64),
+		oscillator: wave("oscillator"),
+		modulation: wave("modulation"),
+		envelope: envelope_definition(json.get("envelope")),
+		modulation_envelope: envelope_definition(json.get("modulationEnvelope")),
+		level: json.get("level").and_then(Json::as_f64),
+		pan: json.get("pan").and_then(Json::as_f64),
+	})
+}
+
+/// The options object of a `layer` step.
+fn layer_options(json: Option<&Json>) -> LayerOptions {
+	let list = |name: &str| -> Vec<f64> {
+		json.and_then(|j| j.get(name))
+			.and_then(Json::as_arr)
+			.map(|items| items.iter().map(num).collect())
+			.unwrap_or_default()
+	};
+	LayerOptions {
+		stagger: json.and_then(|j| j.get("stagger")).and_then(Json::as_f64),
+		levels: list("levels"),
+		pans: list("pans"),
+	}
+}
+
 /// Methods that run side effects or leave the data model, so a program may not name them.
 const FORBIDDEN: [&str; 6] = ["query", "sampleAt", "play", "loop", "render", "constructor"];
 
@@ -414,6 +491,16 @@ fn apply(pattern: &Pat, step: &Json) -> Built<Pat> {
 			Ok(pattern.voicing(options))
 		}
 		"drift" => Ok(drift::drift(pattern, drift_options(&raw[0])?)?),
+		"voice" => Ok(pattern.voice(&patch_value(&raw[0])?)),
+		"layer" => {
+			let voices = raw[0]
+				.as_arr()
+				.expect("a list of voices")
+				.iter()
+				.map(patch_value)
+				.collect::<Built<Vec<_>>>()?;
+			Ok(layer(pattern, &voices, &layer_options(raw.get(1)))?)
+		}
 		other => uncovered(&format!("method {other}() (not in the spike's scope)")),
 	}
 }

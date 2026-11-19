@@ -25,6 +25,7 @@ pub mod drift;
 pub mod error;
 pub mod fraction;
 pub mod hap;
+pub mod instruments;
 pub mod js;
 pub(crate) mod math;
 pub mod mini;
@@ -48,7 +49,7 @@ pub use pattern::{
 pub use query::ForeignTable;
 pub use query::{ForeignHost, ForeignId, Query};
 pub use serialize::Wire;
-pub use value::{Datum, MapFn, ParsedScale, Value};
+pub use value::{Datum, LayerMap, MapFn, ParsedScale, Value};
 
 /// The name of this crate, as a placeholder item until the pattern core lands.
 ///
