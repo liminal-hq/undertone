@@ -574,15 +574,39 @@ impl RenderGraph {
 		BufferId::new(index as u32)
 	}
 
+	#[cfg(test)]
 	fn retire_node(&mut self, index: usize) {
-		if index == 0 || self.nodes[index].retired {
+		self.retire_nodes(&[index]);
+	}
+
+	/// Retires nodes: each is emptied and its number kept for reuse, and every connection any node (shared
+	/// ones included) still had to one of them is removed, so a number given out again starts with no edges
+	/// into it.
+	fn retire_nodes(&mut self, indices: &[usize]) {
+		let mut gone: Vec<usize> = Vec::with_capacity(indices.len());
+		for &index in indices {
+			if index == 0 || self.nodes[index].retired {
+				continue;
+			}
+			let mut node = Node::placeholder();
+			node.retired = true;
+			node.silent = true;
+			self.nodes[index] = node;
+			self.free_nodes.push(index);
+			gone.push(index);
+		}
+		if gone.is_empty() {
 			return;
 		}
-		let mut node = Node::placeholder();
-		node.retired = true;
-		node.silent = true;
-		self.nodes[index] = node;
-		self.free_nodes.push(index);
+		for node in &mut self.nodes {
+			node.connections.retain(|connection| {
+				let target = match connection.target {
+					Target::Node(id) => id.index(),
+					Target::Param(id) => id.node().index(),
+				};
+				!gone.contains(&target)
+			});
+		}
 		self.dirty = true;
 	}
 
@@ -1549,9 +1573,7 @@ impl Graph for RenderGraph {
 			return;
 		};
 		self.free_scopes.push(slot);
-		for index in record.nodes {
-			self.retire_node(index);
-		}
+		self.retire_nodes(&record.nodes);
 		for index in record.buffers {
 			self.retire_buffer_at(index);
 		}
