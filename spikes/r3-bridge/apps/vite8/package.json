@@ -1,0 +1,11 @@
+{
+  "name": "r3-vite8-app",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "vite": "8.2.1"
+  },
+  "dependencies": {
+    "@liminal-hq/undertone": "file:../../liminal-hq-undertone-0.0.0-r3-spike.tgz"
+  }
+}

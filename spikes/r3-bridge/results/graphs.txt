@@ -1,0 +1,43 @@
+[
+  {
+    "id": "placement-off-plain",
+    "nodes": 3,
+    "bytes": 443,
+    "bridgeEqualsCorpus": true,
+    "bridgeEqualsLiveReference": true,
+    "liveReferenceEqualsCorpus": true
+  },
+  {
+    "id": "placement-pan-default",
+    "nodes": 4,
+    "bytes": 526,
+    "bridgeEqualsCorpus": true,
+    "bridgeEqualsLiveReference": true,
+    "liveReferenceEqualsCorpus": true
+  },
+  {
+    "id": "placement-off-filter-envelope",
+    "nodes": 4,
+    "bytes": 578,
+    "bridgeEqualsCorpus": true,
+    "bridgeEqualsLiveReference": true,
+    "liveReferenceEqualsCorpus": true
+  },
+  {
+    "id": "placement-pan-law-minus6",
+    "nodes": 6,
+    "bytes": 668,
+    "bridgeEqualsCorpus": true,
+    "bridgeEqualsLiveReference": true,
+    "liveReferenceEqualsCorpus": true
+  },
+  {
+    "id": "placement-pan-path-ramp",
+    "nodes": 4,
+    "bytes": 538,
+    "bridgeEqualsCorpus": true,
+    "bridgeEqualsLiveReference": true,
+    "liveReferenceEqualsCorpus": true
+  }
+]
+ALL FIVE EQUAL

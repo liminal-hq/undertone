@@ -1,0 +1,122 @@
+{
+  "runtime": "deno 2.9.8",
+  "settle": "gc",
+  "gcInLoop": false,
+  "step1": {
+    "every.count": { "imports": 0, "callbacks": 0, "haps": 2000 },
+    "every.query": { "imports": 0, "callbacks": 0, "haps": 2000 },
+    "jux.count": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "jux.query": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "every+jux.count": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "every+jux.query": { "imports": 0, "callbacks": 0, "haps": 4000 },
+    "foreign.count": { "imports": 8000, "callbacks": 2000, "haps": 2000 },
+    "foreign.query": { "imports": 8000, "callbacks": 2000, "haps": 2000 },
+    "custom.count": { "imports": 11000, "callbacks": 1000, "haps": 1000 },
+    "custom.query": { "imports": 11000, "callbacks": 1000, "haps": 1000 },
+    "tree": "(stack (control pan literal (pure Num(-1.0)) (every 2 (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))) (rev (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")}))))))) (control pan literal (pure Num(1.0)) (rev (every 2 (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))) (rev (stack (compress 0 1/2 (pure Map({\"pitch\": Str(\"c4\")}))) (compress 1/2 1 (pure Map({\"pitch\": Str(\"e4\")})))))))))"
+  },
+  "step2": {
+    "seq32Plain": {
+      "haps": 32,
+      "medianSingleUs": 69.4500000000744,
+      "medianBatchUs": 69.78498999999829
+    },
+    "seq32Foreign": {
+      "haps": 32,
+      "medianSingleUs": 72.65900000038528,
+      "medianBatchUs": 73.01538000000164
+    },
+    "fast32Plain": {
+      "haps": 32,
+      "medianSingleUs": 79.42000000002736,
+      "medianBatchUs": 79.70666000000165
+    },
+    "fast32Foreign": {
+      "haps": 32,
+      "medianSingleUs": 83.92000000003463,
+      "medianBatchUs": 84.11874999999782
+    },
+    "custom32": {
+      "haps": 32,
+      "medianSingleUs": 19.800000000032014,
+      "medianBatchUs": 34.495999999999185
+    }
+  },
+  "step3": [
+    {
+      "repeat": 1,
+      "createdThisRepeat": 1000000,
+      "loopMs": 862,
+      "samples": [
+        { "patterns": 0, "live": 20, "created": 20, "memoryBytes": 1179648 },
+        { "patterns": 100000, "live": 20000, "created": 100020, "memoryBytes": 13697024 },
+        { "patterns": 200000, "live": 21000, "created": 200020, "memoryBytes": 13697024 },
+        { "patterns": 300000, "live": 51000, "created": 300020, "memoryBytes": 22478848 },
+        { "patterns": 400000, "live": 20000, "created": 400020, "memoryBytes": 22478848 },
+        { "patterns": 500000, "live": 120000, "created": 500020, "memoryBytes": 31195136 },
+        { "patterns": 600000, "live": 80000, "created": 600020, "memoryBytes": 38731776 },
+        { "patterns": 700000, "live": 90000, "created": 700020, "memoryBytes": 38731776 },
+        { "patterns": 800000, "live": 80000, "created": 800020, "memoryBytes": 38731776 },
+        { "patterns": 900000, "live": 80000, "created": 900020, "memoryBytes": 38731776 },
+        { "patterns": 1000000, "live": 40000, "created": 1000020, "memoryBytes": 38731776 }
+      ],
+      "liveAtLoopEnd": 40000,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 108,
+      "memoryAfterSettle": 38731776,
+      "checksum": 1000,
+      "sinkLength": 0
+    },
+    {
+      "repeat": 2,
+      "createdThisRepeat": 1000000,
+      "loopMs": 865,
+      "samples": [
+        { "patterns": 0, "live": 0, "created": 1000020, "memoryBytes": 38731776 },
+        { "patterns": 100000, "live": 100000, "created": 1100020, "memoryBytes": 38731776 },
+        { "patterns": 200000, "live": 60000, "created": 1200020, "memoryBytes": 38862848 },
+        { "patterns": 300000, "live": 70000, "created": 1300020, "memoryBytes": 38862848 },
+        { "patterns": 400000, "live": 60000, "created": 1400020, "memoryBytes": 38862848 },
+        { "patterns": 500000, "live": 60000, "created": 1500020, "memoryBytes": 38862848 },
+        { "patterns": 600000, "live": 30000, "created": 1600020, "memoryBytes": 38862848 },
+        { "patterns": 700000, "live": 130000, "created": 1700020, "memoryBytes": 38862848 },
+        { "patterns": 800000, "live": 90000, "created": 1800020, "memoryBytes": 38862848 },
+        { "patterns": 900000, "live": 100000, "created": 1900020, "memoryBytes": 38862848 },
+        { "patterns": 1000000, "live": 90000, "created": 2000020, "memoryBytes": 38862848 }
+      ],
+      "liveAtLoopEnd": 90000,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 113,
+      "memoryAfterSettle": 38862848,
+      "checksum": 1000,
+      "sinkLength": 0
+    },
+    {
+      "repeat": 3,
+      "createdThisRepeat": 1000000,
+      "loopMs": 869,
+      "samples": [
+        { "patterns": 0, "live": 0, "created": 2000020, "memoryBytes": 38862848 },
+        { "patterns": 100000, "live": 100000, "created": 2100020, "memoryBytes": 38862848 },
+        { "patterns": 200000, "live": 60001, "created": 2200020, "memoryBytes": 38862848 },
+        { "patterns": 300000, "live": 70001, "created": 2300020, "memoryBytes": 38862848 },
+        { "patterns": 400000, "live": 60001, "created": 2400020, "memoryBytes": 38862848 },
+        { "patterns": 500000, "live": 60001, "created": 2500020, "memoryBytes": 38862848 },
+        { "patterns": 600000, "live": 50001, "created": 2600020, "memoryBytes": 38862848 },
+        { "patterns": 700000, "live": 80002, "created": 2700020, "memoryBytes": 38862848 },
+        { "patterns": 800000, "live": 40002, "created": 2800020, "memoryBytes": 38862848 },
+        { "patterns": 900000, "live": 50002, "created": 2900020, "memoryBytes": 38862848 },
+        { "patterns": 1000000, "live": 40002, "created": 3000020, "memoryBytes": 38862848 }
+      ],
+      "liveAtLoopEnd": 40002,
+      "liveAfterSettle": 0,
+      "settledWithinTenSeconds": true,
+      "settledAtMs": 107,
+      "memoryAfterSettle": 38862848,
+      "checksum": 1000,
+      "sinkLength": 0
+    }
+  ]
+}

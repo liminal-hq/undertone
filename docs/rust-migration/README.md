@@ -54,17 +54,17 @@ Rust builds eat disk and memory, and this machine has only about 48 GB free. Bef
 
 ## Status
 
-| Milestone                                                         | Stack (branches `<type>/<short-description>`) | PRs                     | State                                 |
-| ----------------------------------------------------------------- | --------------------------------------------- | ----------------------- | ------------------------------------- |
-| [M0: Plan on main](milestones/M0-plan-on-main.md)                 | `docs/rust-migration-plan` (one pull request) | #45                     | Merged (`40b2cbf`)                    |
-| [M1: Workspace and oracle](milestones/M1-workspace-and-oracle.md) | stack #49                                     | #46, #47, #48, #51, #52 | Merged (`36943dc`)                    |
-| [M2: Spikes](milestones/M2-spikes.md)                             | planned in the milestone document             | none yet                | In progress (RF-07 and RF-08 started) |
-| [M3: Pattern core](milestones/M3-pattern-core.md)                 | planned in the milestone document             | none yet                | Not started                           |
-| [M4: Engine](milestones/M4-engine.md)                             | planned in the milestone document             | none yet                | Not started                           |
-| [M5: Scheduler and facade](milestones/M5-scheduler-and-facade.md) | planned in the milestone document             | none yet                | Not started                           |
-| [M6: JS bridge](milestones/M6-js-bridge.md)                       | planned in the milestone document             | none yet                | Not started                           |
-| [M7: Outputs](milestones/M7-outputs.md)                           | planned in the milestone document             | none yet                | Not started                           |
-| [M8: Site and release](milestones/M8-site-and-release.md)         | planned in the milestone document             | none yet                | Not started                           |
+| Milestone                                                         | Stack (branches `<type>/<short-description>`) | PRs                                                      | State              |
+| ----------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | ------------------ |
+| [M0: Plan on main](milestones/M0-plan-on-main.md)                 | `docs/rust-migration-plan` (one pull request) | #45                                                      | Merged (`40b2cbf`) |
+| [M1: Workspace and oracle](milestones/M1-workspace-and-oracle.md) | stack #49                                     | #46, #47, #48, #51, #52                                  | Merged (`36943dc`) |
+| [M2: Spikes](milestones/M2-spikes.md)                             | stack #56                                     | #54, #55, #57, #58, #59, #60, and the design adjustments | In review          |
+| [M3: Pattern core](milestones/M3-pattern-core.md)                 | planned in the milestone document             | none yet                                                 | Not started        |
+| [M4: Engine](milestones/M4-engine.md)                             | planned in the milestone document             | none yet                                                 | Not started        |
+| [M5: Scheduler and facade](milestones/M5-scheduler-and-facade.md) | planned in the milestone document             | none yet                                                 | Not started        |
+| [M6: JS bridge](milestones/M6-js-bridge.md)                       | planned in the milestone document             | none yet                                                 | Not started        |
+| [M7: Outputs](milestones/M7-outputs.md)                           | planned in the milestone document             | none yet                                                 | Not started        |
+| [M8: Site and release](milestones/M8-site-and-release.md)         | planned in the milestone document             | none yet                                                 | Not started        |
 
 States: Not started, In progress, In review (pull requests open, waiting for the person), Merged. Update this table in the same pull request that changes a milestone's state.
 

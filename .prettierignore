@@ -5,3 +5,9 @@ target
 conformance/api/undertone.api.md
 test-results
 conformance/cases
+spikes/**/target
+spikes/**/node_modules
+spikes/**/pkg
+spikes/**/out
+spikes/**/bun.lock
+conformance/test-classes.json

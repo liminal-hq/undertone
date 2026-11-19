@@ -1,0 +1,7 @@
+== clean: -p r4-control -p r4-worklet
+wall 9.2 s, user 13.2 s, sys 1.6 s, peak RSS of largest child 494 MB
+== clean: -p r4-control
+wall 9.1 s, user 12.1 s, sys 1.6 s, peak RSS of largest child 494 MB
+== clean: -p r4-worklet
+wall 1.9 s, user 1.9 s, sys 0.2 s, peak RSS of largest child 184 MB
+5.1M	/home/scott/.cache/undertone-spike-r4-target

@@ -1,0 +1,21 @@
+FAIL  vite5-static-default :: [vite:esbuild-transpile] Transform failed with 1 error:
+OK    vite5-static-cli-esnext
+OK    vite5-static-cfg-esnext
+OK    vite5-static-cfg-baseline
+FAIL  vite5-playground-default :: [vite:esbuild-transpile] Transform failed with 1 error:
+OK    vite5-playground-cli-esnext
+OK    vite5-playground-cfg-esnext
+OK    vite5-playground-cfg-baseline
+OK    vite8-static-default
+OK    vite8-static-cli-esnext
+OK    vite8-static-cfg-esnext
+OK    vite8-static-cfg-baseline
+OK    vite8-playground-default
+OK    vite8-playground-cli-esnext
+OK    vite8-playground-cfg-esnext
+OK    vite8-playground-cfg-baseline
+OK    vite5-init-default
+OK    vite5-init-cfg-esnext
+OK    dynamic (no bundler)
+FAIL  vitepress-default (VitePress 1.6.4 on Vite 5.4.21, no build options) :: Top-level await is not available in the configured target environment ("chrome87", "edge88", "es2020", "firefox78", "safari14" + 2 overrides)
+OK    vitepress-esnext (vite: { build: { target: 'esnext' } }; client and server bundles built and the page rendered)

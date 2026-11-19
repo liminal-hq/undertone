@@ -1,0 +1,34 @@
+[package]
+name = "r4-control"
+description = "Throwaway spike R4: the control module grown to the whole API (stubbed) for the size budget"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["named-controls", "signals", "scales", "engine"]
+# 53 named control exports (one wasm-bindgen method each); off leaves the three table-driven dispatchers.
+named-controls = []
+# The signal constructors and the seed and sampling methods exported.
+signals = []
+# `scale()` and the scale constructors exported.
+scales = []
+# The engine crate linked (its maths tables) and exported.
+engine = ["dep:undertone-engine"]
+# `VoiceParams`-sized data crossing through `serde-wasm-bindgen`, as API-MAPPING.md plans (D-11).
+serde-params = ["dep:serde", "dep:serde-wasm-bindgen"]
+# The same data through `serde_json` instead (the comparison the spec asks for; not planned).
+json-params = ["dep:serde", "dep:serde_json"]
+
+[dependencies]
+undertone-pattern = { path = "../../../crates/undertone-pattern" }
+undertone-engine = { path = "../../../crates/undertone-engine", optional = true }
+wasm-bindgen = "=0.2.125"
+js-sys = "=0.3.102"
+serde = { version = "1", features = ["derive"], optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+serde_json = { version = "1", optional = true }

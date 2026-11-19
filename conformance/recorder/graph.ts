@@ -76,7 +76,7 @@ type NodeRecord = object & {
 };
 
 /** Wraps a context so every node it makes is kept in creation order (the destination is `n0`). */
-function track(ctx: FakeAudioContext): { kind: string; node: NodeRecord }[] {
+export function track(ctx: FakeAudioContext): { kind: string; node: NodeRecord }[] {
   const created: { kind: string; node: NodeRecord }[] = [
     { kind: 'destination', node: ctx.destination }
   ];
@@ -143,7 +143,7 @@ function summarise(samples: ArrayLike<number>): Json {
 }
 
 /** Turns the nodes a context made into the layer 3 `graph` object. */
-function describeGraph(
+export function describeGraph(
   ctx: FakeAudioContext,
   created: { kind: string; node: NodeRecord }[],
   length: number | null

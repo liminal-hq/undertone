@@ -1,0 +1,12 @@
+Vite dev servers (`vite <app> --host 127.0.0.1`), loaded once in headless Chromium 149; "ok" means the app produced its result.
+Run by hand with apps/browser/dev-check.mjs (one run each, not repeated).
+
+vite8 static, no config                                        ok
+vite5 static, no config                                        FAIL  dependency optimiser: Top-level await is not available in the configured target environment ("es2020" ...)
+vite5 static, build.target esnext only                         FAIL  the same optimiser error (the optimiser does not read build.target)
+vite5 static, build.target esnext + optimizeDeps.esbuildOptions.target esnext
+                                                               FAIL  WebAssembly.instantiate(): expected magic word 00 61 73 6d, found 3c 21 64 6f (the pre-bundled copy loses the .wasm URL: the server returned HTML)
+vite5 static, build.target esnext + optimizeDeps.exclude ['@liminal-hq/undertone']
+                                                               ok
+vite5 init (no top-level await), no config                     FAIL  the same wasm magic-word error (any wasm package under Vite 5's optimiser)
+vite5 init, optimizeDeps.exclude                               ok

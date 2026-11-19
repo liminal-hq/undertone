@@ -35,7 +35,9 @@
     "api:check": "bun conformance/api/report.ts check",
     "conformance:record": "bun conformance/recorder/record.ts record",
     "conformance:check": "bun conformance/recorder/record.ts check",
-    "typecheck:conformance": "tsc -p conformance/tsconfig.json"
+    "typecheck:conformance": "tsc -p conformance/tsconfig.json",
+    "test-classes:check": "bun conformance/recorder/test-classes.ts check",
+    "test-classes:update": "bun conformance/recorder/test-classes.ts update"
   },
   "keywords": [
     "web-audio",

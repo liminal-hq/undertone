@@ -1,0 +1,9 @@
+{
+  "name": "r2-handles-spike",
+  "private": true,
+  "type": "module",
+  "description": "Throwaway spike R2 harness; not part of the root workspace",
+  "devDependencies": {
+    "playwright-core": "1.65.1"
+  }
+}

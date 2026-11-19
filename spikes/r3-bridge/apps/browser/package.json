@@ -1,0 +1,8 @@
+{
+  "name": "r3-browser-runner",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright-core": "1.65.1"
+  }
+}

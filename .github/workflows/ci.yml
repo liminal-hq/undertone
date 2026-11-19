@@ -137,6 +137,20 @@ jobs:
         if: always()
         run: echo "## Conformance corpus" >> "${GITHUB_STEP_SUMMARY}"
 
+  test-classes:
+    name: Test classification
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Check every test is classified
+        run: bun run test-classes:check
+      - name: Write summary
+        if: always()
+        run: echo "## Test classification" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-fmt:
     name: Rust format
     runs-on: ubuntu-24.04
@@ -212,6 +226,36 @@ jobs:
       - name: Write summary
         if: always()
         run: echo "## Rust dependencies" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-arm64:
+    name: Rust tests (ARM64)
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run tests
+        run: cargo nextest run --workspace --locked
+      - name: Run tests with the C library maths
+        run: cargo nextest run -p undertone-engine --no-default-features --locked
+      - name: Write summary
+        if: always()
+        run: echo "## Rust tests (ARM64)" >> "${GITHUB_STEP_SUMMARY}"
+
+  rust-freebsd:
+    name: Rust FreeBSD build
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the FreeBSD target
+        run: rustup target add x86_64-unknown-freebsd
+      - name: Check the crates for FreeBSD
+        run: cargo check --locked --target x86_64-unknown-freebsd -p undertone-pattern -p undertone-engine
+      - name: Write summary
+        if: always()
+        run: echo "## Rust FreeBSD build" >> "${GITHUB_STEP_SUMMARY}"
 
   rust-wasm:
     name: Rust WebAssembly build

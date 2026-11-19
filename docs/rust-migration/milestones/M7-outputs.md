@@ -23,6 +23,7 @@ Undertone produces sound without Web Audio: natively in real time, in a browser 
 - **Steps:** (1) the raw-ABI crate over the engine; (2) the processor and the bridge's backend switch in `packages/undertone`; (3) a harness page that reports underruns, the 99th percentile of `process`, and drift; (4) **documentation:** a worklet section in `docs/guide/runtimes.md` (opt-in, cross-origin isolation, the foreign-leaf restriction), and the measured numbers.
 - **Acceptance (formerly spike R6):** on a mid-range phone, a Steam Deck, and Chromium throttled six times (the person runs them with the harness page), no underrun over five minutes, the 99th percentile of `process` at most 40% of the 128-frame budget, drift zero against frames. If not met, the backend still ships as opt-in with the numbers documented, and Web Audio stays the default (D-09).
 - **Risks:** the device checks need the person's time (batched into one request); a pattern with a foreign leaf cannot run in the worklet (refused with a diagnostic).
+- **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** decide whether the worklet queries patterns or only plays booked voices before RF-24 fixes the combined budget: the pattern core is about 65 KB of the measured worklet (R4), so the answer moves the combined limit by about 70 KB (D-07).
 
 ### RF-30. Rendering with no browser (WASI, Node, Bun, Deno)
 
@@ -30,6 +31,10 @@ Undertone produces sound without Web Audio: natively in real time, in a browser 
 - **Objective (formerly spike R8):** render a pattern to WAV under `wasmtime` (`wasm32-wasip1`, a small CLI in `crates/undertone/examples/` or `crates/undertone-cli`), and through the package in Node 20, Bun 1.2, and Deno with no Web Audio.
 - **Steps:** (1) the WASI build and CLI; (2) the same render through the package in each runtime; (3) a CI job that builds the WASI target; (4) **documentation:** a "Rendering without a browser" section in `docs/guide/rendering-and-export.md` (and a Rust counterpart), with the commands.
 - **Acceptance:** the same bits as the native render, or within R9's tolerance; a CI job builds the WASI target.
+
+## Platforms
+
+The pure crates are checked for ARM64 (tests, from M2) and FreeBSD (`cargo check` for `x86_64-unknown-freebsd`, from M2) in CI. In this milestone: build and test `undertone-native` on ARM64 Linux (the `ubuntu-24.04-arm` runner and the shared `ci-rust` image, which is published for both architectures); decide whether `cpal` gives FreeBSD an output (its ALSA-compatible and OSS paths are unverified, so this is an open question for RF-28) and, if it does, run the tests in a FreeBSD virtual machine with a third-party action pinned by commit SHA; and list Apple silicon and Windows on ARM in the release matrix (M8) with what was and was not run.
 
 ## Planned stack
 

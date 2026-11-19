@@ -5,7 +5,38 @@
 
 //! Pattern query core and mini-notation for Undertone.
 //!
-//! This crate will hold the pure, audio-free part of Undertone: exact rational time, patterns, and the mini-notation parser.
+//! This crate is the pure, audio-free part of Undertone: exact rational time ([`Fraction`]), spans and events ([`Span`], [`Hap`]), and the [`js`] module that reproduces the JavaScript number and string behaviour the reference depends on.
+//!
+//! The crate uses `alloc` types only, and its floating-point maths comes from one small module with two back-ends: the pure-Rust `libm` crate (the default, so it is `no_std` and gives the same numbers on every target, decision D-23) or the standard library (`--no-default-features --features std`).
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+#[cfg(test)]
+#[macro_use]
+extern crate std;
+
+pub mod control;
+pub mod error;
+pub mod fraction;
+pub mod hap;
+pub mod js;
+pub(crate) mod math;
+pub mod mini;
+pub mod pattern;
+pub mod random;
+pub mod signal;
+pub mod value;
+
+pub use error::{Error, Result};
+pub use fraction::Fraction;
+pub use hap::{Hap, Span};
+pub use pattern::{
+	ArithOp, CustomQuery, ForeignFn, Node, Pattern, arrange, cat, compress, fast, pure, seq,
+	silence, slow, stack, timecat,
+};
+pub use value::{Datum, MapFn, ParsedScale, Value};
 
 /// The name of this crate, as a placeholder item until the pattern core lands.
 ///

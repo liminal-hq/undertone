@@ -7,8 +7,15 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["libm"]
+# Use the pure-Rust `libm` crate for the engine's maths, the same code on every target (D-23). Build with
+# `--no-default-features` to use the platform C library instead.
+libm = ["dep:libm"]
+
 [dependencies]
 undertone-pattern = { path = "../undertone-pattern", version = "0.0.0" }
+libm = { version = "0.2.16", optional = true }
 
 [lints]
 workspace = true

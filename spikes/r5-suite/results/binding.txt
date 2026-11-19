@@ -1,0 +1,126 @@
+file | public n/pass | internal n/pass | web-audio n/pass | covered
+conformance/recorder/properties.test.ts | 7/7 | 0/0 | 0/0 | yes
+docs/.vitepress/theme/playground/importScript.test.ts | 0/0 | 15/11 | 0/0 | no
+src/autopan.test.ts | 19/0 | 0/0 | 1/0 | no
+src/chord.test.ts | 0/0 | 11/0 | 0/0 | no
+src/control.test.ts | 52/40 | 0/0 | 0/0 | yes
+src/controlSignals.test.ts | 165/0 | 0/0 | 1/0 | no
+src/docSnippets.test.ts | 56/0 | 0/0 | 0/0 | no
+src/effects.test.ts | 20/0 | 0/0 | 0/0 | no
+src/engine.test.ts | 43/0 | 0/0 | 3/0 | no
+src/fm.test.ts | 19/0 | 0/0 | 0/0 | no
+src/fraction.test.ts | 7/7 | 0/0 | 0/0 | yes
+src/gate.test.ts | 17/0 | 0/0 | 1/0 | no
+src/handles.test.ts | 20/0 | 0/0 | 4/0 | no
+src/masterBus.test.ts | 15/0 | 2/0 | 2/0 | no
+src/mini.test.ts | 14/14 | 0/0 | 0/0 | yes
+src/noise.test.ts | 1/0 | 9/0 | 0/0 | no
+src/panLaw.test.ts | 9/0 | 2/0 | 0/0 | no
+src/panPath.test.ts | 19/0 | 0/0 | 0/0 | no
+src/pattern.test.ts | 63/62 | 2/0 | 0/0 | yes
+src/pitch.test.ts | 12/12 | 0/0 | 0/0 | yes
+src/pitchCurve.test.ts | 11/0 | 2/0 | 0/0 | no
+src/random.test.ts | 0/0 | 4/0 | 0/0 | no
+src/render.test.ts | 31/0 | 0/0 | 1/0 | no
+src/samples.test.ts | 18/0 | 0/0 | 0/0 | no
+src/scale.test.ts | 0/0 | 10/0 | 0/0 | no
+src/scheduler.test.ts | 12/0 | 4/0 | 6/0 | no
+src/signal.test.ts | 37/32 | 0/0 | 0/0 | yes
+src/surround.test.ts | 11/0 | 0/0 | 0/0 | no
+src/tools.test.ts | 27/0 | 0/0 | 1/0 | no
+src/wav.test.ts | 14/0 | 0/0 | 0/0 | no
+src/waves.test.ts | 5/0 | 7/0 | 1/0 | no
+public all [ 724, 174 ] covered [ 192, 174 ]
+internal all [ 68, 11 ] covered [ 2, 0 ]
+web-audio all [ 21, 0 ] covered [ 0, 0 ]
+
+failure causes among public tests (count, cause, examples):
+166 | uncovered not bound: TypeError: (0 , resetWarnings) is not a function | controlSignals.test.ts: a bad time from a signal > a loop tick with a bad signal still books the other events ; controlSignals.test.ts: a bad time from a signal
+84 | uncovered not bound: TypeError: (0 , resolveParams) is not a function | autopan.test.ts: autopan > adds nothing without an autopan rate ; autopan.test.ts: autopan > adds to a pan path, which sets the centre
+27 | uncovered not bound: TypeError: (0 , clearSamples) is not a function | docSnippets.test.ts: standalone documentation snippets > finds the marked blocks on the recipes page ; engine.test.ts: sample voices > an explicit sustain still
+17 | uncovered not bound: TypeError: (0 , score) is not a function | autopan.test.ts: score() autopan > carries a period in ticks into a rate in Hz, with the depth, shape and phase ; panLaw.test.ts: panLaw > is given to every sco
+17 | uncovered not bound: fm | fm.test.ts: FM depth envelope > creates no envelope gain unless an fm envelope control is set ; fm.test.ts: FM depth envelope > defaults to an exponential curve
+15 | uncovered not bound: TypeError: (0 , getOrbitBus) is not a function | effects.test.ts: OrbitBus.setDelay > applies the change at the given time instead of now ; effects.test.ts: OrbitBus.setDelay > re-applies only the value that a
+14 | uncovered not bound: decay | docSnippets.test.ts: standalone documentation snippets > README.md:35 runs as written and plays something ; docSnippets.test.ts: standalone documentation snippe
+13 | uncovered not bound: sustain | docSnippets.test.ts: standalone documentation snippets > README.md:57 runs as written and plays something ; docSnippets.test.ts: standalone documentation snippe
+13 | uncovered not bound: TypeError: (0 , encodeWav) is not a function | wav.test.ts: encodeWav > accepts an AudioBuffer-like source ; wav.test.ts: encodeWav > clamps out-of-range samples
+12 | uncovered not bound: TypeError: (0 , createMasterBus) is not a function | masterBus.test.ts: createMasterBus > applies the default limiter settings at the current time ; masterBus.test.ts: createMasterBus > computes compensation from 
+12 | uncovered not bound: TypeError: (0 , renderToBuffer) is not a function | masterBus.test.ts: createMasterBus ceiling > reaches a render through its master options ; render.test.ts: renderToBuffer > books every node before rendering st
+11 | uncovered not bound: play | docSnippets.test.ts: standalone documentation snippets > docs/guide/getting-started.md:66 runs as written and plays something ; fm.test.ts: FM graph > adds no n
+9 | uncovered not bound: release | docSnippets.test.ts: standalone documentation snippets > docs/guide/rendering-and-export.md:35 runs as written and plays something ; gate.test.ts: cut() > leave
+6 | uncovered not bound: penv | pitchCurve.test.ts: penv() > can be patterned per event ; pitchCurve.test.ts: penv() > is ignored by noise voices
+6 | uncovered not bound: TypeError: (0 , surroundGains) is not a function | surround.test.ts: surroundGains > conserves power everywhere on the ring ; surround.test.ts: surroundGains > handles the wraparound pair dead-behind
+5 | uncovered other: Error: imports chord, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/coming-from-strudel.md:76 runs as written and plays something ; docSnippets.test.ts: standalone do
+5 | uncovered other: AssertionError: expected [Function] to throw error matching /must not be negative/ but got '(0 , __vite_ssr_im | fm.test.ts: FM control validation > rejects bad values ; gate.test.ts: duration() > rejects a negative duration
+5 | uncovered not bound: TypeError: (0 , drift) is not a function | tools.test.ts: layer composes with the notes it layers > keeps timing from drift() when wrapped around it ; tools.test.ts: seededRandom and drift > changes noth
+4 | COVERED not bound: TypeError: (0 , chord) is not a function | control.test.ts: chord > builds a one-event-per-cycle pattern from a single chord symbol ; control.test.ts: chord > parses mini-notation and alternation of chor
+4 | uncovered not bound: loop | docSnippets.test.ts: standalone documentation snippets > docs/guide/signals.md:104 runs as written and plays something ; docSnippets.test.ts: standalone documen
+4 | uncovered not bound: TypeError: (0 , buildImpulseResponse) is not a function | effects.test.ts: buildImpulseResponse > decays: later samples average a much smaller magnitude than earlier ones ; effects.test.ts: buildImpulseResponse > is a 
+4 | uncovered not bound: TypeError: (0 , seedContext) is not a function | effects.test.ts: seeded impulse responses > depends on seed, orbit and size, not on build order ; effects.test.ts: seeded impulse responses > differs between se
+4 | uncovered not bound: velocity | gate.test.ts: velocity() > defaults to full strength and can be patterned per event ; gate.test.ts: velocity() > scales the carrier peak only, leaving the envel
+4 | uncovered not bound: panpath | panPath.test.ts: panpath() > feeds the voice panPath, at a given frame rate ; panPath.test.ts: panpath() > replaces pan() and follows a pan law
+3 | uncovered other: Error: imports score, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > README.md:240 runs as written and plays something ; docSnippets.test.ts: standalone documentation snipp
+3 | uncovered other: Error: imports encodeWav, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > README.md:75 runs as written and plays something ; docSnippets.test.ts: standalone documentation snippe
+3 | uncovered not bound: TypeError: (0 , playParams) is not a function | handles.test.ts: playVoices and playParams > builds the same graph from a frozen full VoiceParams literal as from defaults ; handles.test.ts: playVoices and pla
+3 | uncovered not bound: pitchsteps | pitchCurve.test.ts: pitchsteps() > defaults to 140 frames per second ; pitchCurve.test.ts: pitchsteps() > jumps to each offset at the given frame rate and holds
+3 | uncovered not bound: nudge | render.test.ts: booking in windows > books late and early nudges that reorder voices as booking up front does ; scheduler.test.ts: play > respects each event's 
+3 | uncovered not bound: TypeError: (0 , setcpm) is not a function | scheduler.test.ts: resetTempo > restores the plain 120bpm (2-second cycle) default ; scheduler.test.ts: setcpm > is overridden by an explicit bpm on the call
+3 | COVERED not bound: TypeError: (0 , seededRandom) is not a function | signal.test.ts: random signals > freeze the scheme: seededRandom of seed|kind|n/d, stable from 0.4.0 ; signal.test.ts: random signals > give the same values how
+3 | uncovered not bound: TypeError: (0 , fmVoice) is not a function | tools.test.ts: fmVoice > converts a Tone.js-shaped definition into plain Undertone controls ; tools.test.ts: fmVoice > is JSON-safe and rejects bad values
+3 | uncovered not bound: TypeError: (0 , layer) is not a function | tools.test.ts: layer > keeps a layer's own pan when no pan is given, and rejects bad input ; tools.test.ts: layer > stacks the voices with a start stagger, leve
+2 | uncovered not bound: panslide | autopan.test.ts: panslide > is set by panslide(), which checks its start and time ; docSnippets.test.ts: standalone documentation snippets > docs/recipes.md:398
+2 | uncovered other: Error: imports loadSamples, registerSamples, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/coming-from-strudel.md:61 runs as written and plays something ; docSnippets.test.ts: standalone do
+2 | uncovered not bound: room | render.test.ts: booking in windows > books room sends on separate orbits as booking up front does ; render.test.ts: booking in windows > ignores a sample that i
+2 | uncovered not bound: render | render.test.ts: booking in windows > rejects a window that is not positive or shorter than two render quanta ; render.test.ts: render() shortcuts > Pattern.rend
+2 | uncovered not bound: TypeError: (0 , enableMultichannel) is not a function | surround.test.ts: enableMultichannel > claims the full hardware channel count with discrete interpretation ; surround.test.ts: enableMultichannel > leaves plain
+2 | uncovered not bound: TypeError: (0 , createMonoFold) is not a function | tools.test.ts: createMonoFold > can sit in front of a custom output and take a stereo mix ; tools.test.ts: createMonoFold > is a one-channel explicit gain conne
+1 | uncovered not bound: autopan | autopan.test.ts: autopan > is set by autopan(), autopandepth(), autopanshape() and autopanphase(), which check their values
+1 | uncovered other: AssertionError: expected [Function] to throw error including 'score() autopan periodTicks must be a…' but got  | autopan.test.ts: score() autopan > checks the period, depth, shape and phase
+1 | COVERED not bound: decay | control.test.ts: chainable controls > covers the full envelope/filter/slide/nudge vocabulary
+1 | COVERED not bound: late | control.test.ts: chainable controls > late() and early() set nudgeTime with opposite sign
+1 | COVERED not bound: channels | control.test.ts: chainable controls > places voices on the 7.1 ring via channels() and surround()
+1 | COVERED not bound: hpf | control.test.ts: chainable controls > sets the effects controls, patterned strings included
+1 | COVERED other: AssertionError: expected [Function] to throw error matching /Unknown chord quality/ but got '(0 , __vite_ssr_i | control.test.ts: chord > rejects an invalid chord symbol eagerly, at build time
+1 | COVERED not bound: early | control.test.ts: patterned parameters > early() negates a patterned value the same way it negates a scalar
+1 | COVERED not bound: TypeError: (0 , voicingPitches) is not a function | control.test.ts: voicing > expands one chord event into simultaneous notes matching voicingPitches()
+1 | COVERED not bound: voicing | control.test.ts: voicing > leaves already-pitched events (from note()) untouched
+1 | uncovered other: ReferenceError: fmPresets is not defined | docSnippets.test.ts: score() playground examples > Tick score sets the bpm its score needs
+1 | uncovered other: Error: imports buildImpulseResponse, getOrbitBus, seededRandom, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/effects.md:81 runs as written and plays something
+1 | uncovered other: Error: imports SHAPED_WAVE_TYPES, isShapedWave, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/fm-synthesis.md:71 runs as written and plays something
+1 | uncovered other: Error: imports fmVoice, fmPresets, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/instruments-and-scores.md:13 runs as written and plays something
+1 | uncovered other: Error: imports fmPresets, layer, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/instruments-and-scores.md:38 runs as written and plays something
+1 | uncovered other: Error: imports fmPresets, score, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/instruments-and-scores.md:54 runs as written and plays something
+1 | uncovered other: Error: imports drift, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/instruments-and-scores.md:78 runs as written and plays something
+1 | uncovered other: Error: imports clearSamples, getSampleBaseNote, getSampleBuffer, isSampleRegistered, loadSamples, registerSamp | docSnippets.test.ts: standalone documentation snippets > docs/guide/samples.md:49 runs as written and plays something
+1 | uncovered other: Error: imports enableMultichannel, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/stereo-and-surround.md:11 runs as written and plays something
+1 | uncovered other: Error: imports playParams, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/guide/stereo-and-surround.md:121 runs as written and plays something
+1 | uncovered other: Error: imports CHANNEL_ORDER, MAX_CHANNELS, foldToStereo, surroundGains, which @liminal-hq/undertone does not  | docSnippets.test.ts: standalone documentation snippets > docs/guide/stereo-and-surround.md:26 runs as written and plays something
+1 | uncovered other: Error: imports createMasterBus, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/recipes.md:353 runs as written and plays something
+1 | uncovered not bound: legato | docSnippets.test.ts: standalone documentation snippets > docs/recipes.md:406 runs as written and plays something
+1 | uncovered other: Error: imports createMasterBus, encodeWav, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/recipes.md:511 runs as written and plays something
+1 | uncovered other: Error: imports encodeWav, fmPresets, score, which @liminal-hq/undertone does not export | docSnippets.test.ts: standalone documentation snippets > docs/recipes.md:562 runs as written and plays something
+1 | uncovered not bound: fmi | fm.test.ts: FM graph > accepts the fmi alias and per-event patterns
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /either bpm or cps/ but got '(0 , __vite_ssr_impor | handles.test.ts: pattern play handle and cps > rejects both bpm and cps, and a non-positive cps
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /0 dBFS or below/ but got '(0 , __vite_ssr_import_ | masterBus.test.ts: createMasterBus ceiling > rejects a ceiling above full scale or not a level
+1 | uncovered other: AssertionError: expected [Function] to throw error including 'panpath() needs a non-empty array of …' but got  | panPath.test.ts: panpath() > rejects empty, out-of-range or badly timed paths, and a rate with points
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /panPath tick must be an integer/ but got '(0 , __ | panPath.test.ts: score panPath > rejects fractional, negative or backwards ticks and pans that are not numbers
+1 | COVERED wrapper check not written (error message differs) | pattern.test.ts: arithmetic > rejects anything but a number or a pattern
+1 | uncovered not bound: slide | pitchCurve.test.ts: combining curves > lets steps beat penv beat slide, and warns once
+1 | uncovered not bound: delay | render.test.ts: booking in windows > books delay sends with different times on one orbit as booking up front does
+1 | uncovered not bound: surround | render.test.ts: booking in windows > books surround placement folded to four channels as booking up front does
+1 | uncovered not bound: TypeError: (0 , registerSample) is not a function | render.test.ts: renderToBuffer > decodes registered samples on the offline context before booking
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /bpm must be positive/ but got '(0 , __vite_ssr_im | scheduler.test.ts: play > rejects a non-positive bpm
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /must be positive/ but got '(0 , __vite_ssr_import | scheduler.test.ts: setcpm > rejects a non-positive cpm
+1 | COVERED not bound: TypeError: (0 , timeRandom) is not a function | signal.test.ts: perlin > passes through its own random value at every whole cycle
+1 | COVERED not bound: signal(fn) with a JavaScript sampler | signal.test.ts: signal(fn) > passes the cycle time as a number, not the phase
+1 | uncovered not bound (an export is undefined): TypeError: Cannot read properties of undefined (reading 'length') | surround.test.ts: foldToStereo > folds centre, LFE, sides, and rears into both/left/right appropriately
+1 | uncovered not bound: TypeError: (0 , foldToStereo) is not a function | surround.test.ts: foldToStereo > passes plain stereo through
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /finite/ but got '(0 , surro | surround.test.ts: surroundGains > rejects non-finite angles
+1 | uncovered not bound (an export is undefined): TypeError: Cannot read properties of undefined (reading 'glassBell') | tools.test.ts: fmPresets and pattern.voice() > are frozen plain data that turn a note pattern into an FM voice
+1 | uncovered other: TypeError: Cannot convert undefined or null to object | tools.test.ts: fmPresets and pattern.voice() > every preset sounds as FM
+1 | uncovered not bound (an export is undefined): TypeError: Cannot read properties of undefined (reading 'pluck') | tools.test.ts: fmPresets and pattern.voice() > lets controls chained after voice() win
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /ticksPerSecond/ but got '(0 , __vite_ssr_import_7 | tools.test.ts: score > rejects malformed scores
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /timing must not be negative/ but got '(0 , __vite | tools.test.ts: seededRandom and drift > rejects bad options
+1 | uncovered not bound: TypeError: (0 , seededRandom) is not a function | tools.test.ts: seededRandom and drift > repeats the same sequence for the same seed, differs for another, and stays in range
+1 | uncovered other: AssertionError: expected [Function] to throw error matching /no channels/ but got '(0 ,  | wav.test.ts: encodeWav > throws clear errors
+1 | uncovered other: AssertionError: expected [Function] to not throw an error but 'TypeError: (0 , __vite_ssr_import_1__…' was thr | waves.test.ts: shaped waves as FM modulators > accepts the new names and still rejects others

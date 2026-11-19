@@ -7,5 +7,18 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["libm"]
+# Use the pure-Rust `libm` crate for floor, sin, cos, pow, and sqrt: the same code on every target and CPU (D-23), and no need for `std`.
+libm = ["dep:libm"]
+# Use the standard library: its `f64` maths when `libm` is off (`--no-default-features --features std`), and `std::error::Error` for `Error`.
+std = []
+
+[dependencies]
+libm = { version = "0.2.16", optional = true }
+
 [lints]
 workspace = true
+
+[dev-dependencies]
+proptest = { version = "1.12.0", default-features = false, features = ["std"] }

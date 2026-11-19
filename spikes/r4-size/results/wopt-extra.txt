@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 1.05s
+control | wasm-opt -Oz | 1.5 s | raw 221061 | brotli11 83695
+control | wasm-opt -Oz --converge | 3.8 s | raw 220870 | brotli11 83494
+control | wasm-opt -O3 --converge | 3.4 s | raw 236445 | brotli11 82881
+control | wasm-opt -Oz --converge --zero-filled-memory --low-memory-unused | 3.9 s | raw 220070 | brotli11 83057
+worklet | wasm-opt -Oz | 1.6 s | raw 195268 | brotli11 75767
+worklet | wasm-opt -Oz --converge | 3.7 s | raw 195093 | brotli11 75486
+worklet | wasm-opt -O3 --converge | 3.2 s | raw 200139 | brotli11 75157
+worklet | wasm-opt -Oz --converge --zero-filled-memory --low-memory-unused | 3.8 s | raw 194278 | brotli11 75206

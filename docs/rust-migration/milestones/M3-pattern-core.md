@@ -19,6 +19,7 @@ Every package in this milestone follows the same rule: **a behaviour lands with 
 - **Acceptance:** corpus layer 1 green for every case in groups `core`, `combinators`, `mini`; the property tests pass at 10,000 cases; `cargo doc` clean.
 - **Risks:** `Fraction` overflow (`i128` against JavaScript's doubles beyond 2^53: corpus cases at the edge, Rust's behaviour documented as the truth, D-13).
 - **Hand-off:** none.
+- **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** start from the R1 crate (`undertone-pattern`, merged with the M2 stack): `Fraction`, `Span`, `Hap`, `Pattern`, the nodes, `mini::parse`, the signals, and the `js` rules are there and pass 308 of 309 layer 1 programs. Profile `Pattern::query` natively and in WebAssembly first: R2 measured about 2 µs a hap, the largest part of a 32-hap query, and a typed fast path for small fractions is the likely fix (this does not block M3).
 
 ### RF-14. Controls, `ControlInput`, and `VoiceParams`
 
@@ -29,6 +30,7 @@ Every package in this milestone follows the same rule: **a behaviour lands with 
 - **Acceptance:** corpus layer 2 (controls to resolved `VoiceParams`) green; the name-map test passes; the `VoiceParams` JSON round-trips every field name.
 - **Risks:** where controls live: the method sits on `Pattern<ControlMap>` in `undertone-pattern`, but the resolution into `VoiceParams` is the engine's; keep the pattern crate free of the engine (the layering check enforces it) by making `ControlMap` the pattern crate's type and `resolve_params(&ControlMap)` the engine's.
 - **Hand-off:** none.
+- **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** R1's control methods are `control(Control, ControlArg)` with four controls; the named methods (`gain`, `lpf`, and the rest) come from the full control table, and R4 measured that a three-export dispatcher costs the same size as 53 named exports (0.6 KB), so the bridge may generate either.
 
 ### RF-15. Notes, sounds, scales, chords, voicing, pitch
 
@@ -39,6 +41,7 @@ Every package in this milestone follows the same rule: **a behaviour lands with 
 - **Acceptance:** corpus groups `notes`, `scales`, `chords` green.
 - **Risks:** clean-room: the tables come only from this repository's TypeScript.
 - **Hand-off:** none.
+- **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** `notes-chord-01` is the one layer 1 program R1 does not cover (`chord()` and `voicing()`), and 7 of the 18 R5 failures in the covered files are chord and voicing tests.
 
 ### RF-16. Signals and the point sampler
 

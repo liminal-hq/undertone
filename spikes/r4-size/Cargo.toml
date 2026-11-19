@@ -1,0 +1,20 @@
+# Throwaway spike R4: WebAssembly size and build time of the control module and the worklet module.
+# Its own workspace: the root workspace (`members = ["crates/*"]`) never sees these crates.
+[workspace]
+resolver = "3"
+members = ["control", "worklet"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# The D-07 profile. The lever experiments override `opt-level` on the command line with
+# `CARGO_PROFILE_RELEASE_OPT_LEVEL`.
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+codegen-units = 1
+strip = true

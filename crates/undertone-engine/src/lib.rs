@@ -6,6 +6,12 @@
 //! Synth engine and scheduler for Undertone.
 //!
 //! This crate will turn patterns from [`undertone_pattern`] into sound.
+//!
+//! The [`math`] module holds the transcendental maths the recorded graphs depend on. It uses the
+//! pure-Rust `libm` crate by default, so the same numbers come out on every platform; build with
+//! `--no-default-features` for the platform C library.
+
+pub mod math;
 
 /// The name of this crate, as a placeholder item until the engine lands.
 ///
