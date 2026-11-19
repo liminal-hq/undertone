@@ -936,3 +936,71 @@ fn a_retired_node_does_not_disturb_the_others_that_play_on() {
 	// The 1 kHz sine alone has an RMS of 1/sqrt(2).
 	assert!((rms(&block) - core::f64::consts::FRAC_1_SQRT_2).abs() < 1e-2);
 }
+
+#[test]
+fn retiring_a_scope_removes_the_edges_that_shared_nodes_had_to_its_nodes() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	// A shared oscillator feeds a gain that belongs to a scope.
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Oscillator);
+	let frequency = graph.param(shared, ParamKind::Frequency);
+	graph.set_value_at_time(frequency, 1_000.0, 0.0);
+	graph.start(shared, 0.0);
+	graph.end_shared();
+	graph.begin_scope();
+	let scoped = graph.create_node(NodeKind::Gain);
+	graph.connect_node(shared, scoped);
+	graph.connect_node(scoped, graph.destination());
+	let scope = graph.end_scope();
+	graph.retire_scope(scope);
+
+	// The next gain takes the retired number, but nothing connects the shared oscillator to it.
+	let again = graph.create_node(NodeKind::Gain);
+	assert_eq!(again.index(), scoped.index());
+	graph.connect_node(again, graph.destination());
+	let out = graph.render_all();
+	assert_eq!(peak(&out[0]), 0.0, "a dangling edge fed the new node");
+}
+
+#[test]
+fn retiring_a_scope_removes_the_parameter_edges_shared_nodes_had_to_its_nodes() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_shared();
+	let shared = graph.create_node(NodeKind::Oscillator);
+	graph.start(shared, 0.0);
+	graph.end_shared();
+	graph.begin_scope();
+	let scoped = graph.create_node(NodeKind::Gain);
+	let gain = graph.param(scoped, ParamKind::Gain);
+	graph.connect(shared, Target::Param(gain), 0, 0);
+	let scope = graph.end_scope();
+	graph.retire_scope(scope);
+
+	let again = graph.create_node(NodeKind::Gain);
+	assert_eq!(again.index(), scoped.index());
+	let carrier = graph.create_node(NodeKind::Oscillator);
+	graph.start(carrier, 0.0);
+	graph.connect_node(carrier, again);
+	graph.connect_node(again, graph.destination());
+	graph.set_value_at_time(graph.param(again, ParamKind::Gain), 0.0, 0.0);
+	let out = graph.render_all();
+	assert_eq!(peak(&out[0]), 0.0, "a dangling parameter edge modulated the new node");
+}
+
+#[test]
+fn retiring_a_stale_scope_twice_does_not_retire_a_newer_scope_that_reused_its_number() {
+	let mut graph = RenderGraph::new(RATE, 1, 4_800);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 440.0);
+	let old = graph.end_scope();
+	graph.retire_scope(old);
+	graph.begin_scope();
+	osc_to_destination(&mut graph, 660.0);
+	let newer = graph.end_scope();
+	assert_ne!(old, newer, "a reused slot carries a new generation");
+	let before = graph.live_nodes();
+	graph.retire_scope(old);
+	assert_eq!(graph.live_nodes(), before, "the stale scope retired a newer one");
+	graph.retire_scope(newer);
+	assert_eq!(graph.live_nodes(), before - 1);
+}
