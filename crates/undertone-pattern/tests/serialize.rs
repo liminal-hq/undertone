@@ -72,7 +72,8 @@ fn answers<T: undertone_pattern::Wire>(
 		.map(|span| {
 			out.clear();
 			pattern.query_into(*span, &mut out);
-			format!("{out:?}")
+			// The plain query, then the checked one, errors included.
+			format!("{out:?}\u{1}{:?}", pattern.try_query(*span))
 		})
 		.collect();
 	let samples = points
@@ -127,7 +128,13 @@ fn same_on_another_thread<T: undertone_pattern::Wire>(
 		haps: here
 			.0
 			.iter()
-			.map(|w| w.matches("Hap {").count())
+			.map(|w| {
+				w.split('\u{1}')
+					.next()
+					.unwrap_or("")
+					.matches("Hap {")
+					.count()
+			})
 			.sum::<usize>(),
 		samples: here.1.len(),
 	}
@@ -448,6 +455,106 @@ fn custom_and_foreign_leaves_are_refused_wherever_they_sit() {
 	let e = seq(vec![sine(), foreign]).serialize().unwrap_err();
 	assert!(e.message().contains("Foreign"), "{e}");
 	assert!(e.message().contains("host"), "{e}");
+}
+
+// --- Chords, voicing, and drift ----------------------------------------------------------------
+
+/// How many windows of `pattern` fail when queried with `try_query`.
+fn failing_windows(pattern: &Pattern<Value>, spans: &[Span]) -> usize {
+	spans
+		.iter()
+		.filter(|span| pattern.try_query(**span).is_err())
+		.count()
+}
+
+#[test]
+fn the_chords_and_drift_corpus_programs_answer_the_same_on_another_thread() {
+	let spans = windows(1_000);
+	let (mut trees, mut errors, mut total) = (0, 0, Compared::default());
+	let mut refused = Vec::new();
+	for (group, file) in corpus_files(1) {
+		if group != "chords" && group != "drift" && group != "notes" {
+			continue;
+		}
+		for (id, pattern) in programs(&file) {
+			match pattern.serialize() {
+				Ok(_) => {
+					errors += failing_windows(&pattern, &spans);
+					let c = same_on_another_thread(&format!("{group}/{id}"), &pattern, 1_000);
+					total.haps += c.haps;
+					total.samples += c.samples;
+					trees += 1;
+				}
+				Err(e) => refused.push(format!("{group}/{id}: {e}")),
+			}
+		}
+	}
+	println!(
+		"chords, drift, and notes corpus: {trees} trees rebuilt on another thread, 1,000 windows and 500 samples each, {} haps and {} samples compared, {errors} windows answered with an error (compared too), none differed; {} refused",
+		total.haps,
+		total.samples,
+		refused.len()
+	);
+	assert!(refused.is_empty(), "{refused:?}");
+	assert!(trees >= 150, "only {trees} trees were checked");
+}
+
+#[test]
+fn voicing_and_drift_options_cross_exactly() {
+	use undertone_pattern::chord::{Anchor, VoicingOptions, chord};
+	use undertone_pattern::drift::{DriftOptions, drift};
+	let spans = windows(200);
+	let base = control::note("c3 e3*2 g3 ~").unwrap();
+	let mut options = vec![DriftOptions::new(7.0), DriftOptions::new("song \u{1f941}")];
+	let mut full = DriftOptions::new(-0.0);
+	(
+		full.timing,
+		full.level,
+		full.cents,
+		full.pan,
+		full.push,
+		full.cycles_per_pass,
+	) = (0.02, 0.1, 5.0, 0.25, -0.01, 2.0);
+	options.push(full);
+	let mut lone = DriftOptions::new("x");
+	lone.seed_utf16 = Some(vec![0x61, 0xd800, 0x62]);
+	lone.timing = 0.5;
+	options.push(lone);
+	let mut trees: Vec<(String, Pattern<Value>)> = Vec::new();
+	for (i, o) in options.into_iter().enumerate() {
+		trees.push((format!("drift {i}"), drift(&base, o).unwrap()));
+	}
+	for anchor in [
+		None,
+		Some(Anchor::Midi(48.5)),
+		Some(Anchor::Name("c3".into())),
+		Some(Anchor::Name("zz".into())),
+	] {
+		let name = format!("voicing {anchor:?}");
+		let tree = chord("C Am7 <F G7>")
+			.unwrap()
+			.voicing(VoicingOptions { anchor });
+		trees.push((name, tree));
+	}
+	let bad = trees.last().unwrap().1.clone();
+	assert_eq!(
+		failing_windows(&bad, &spans),
+		spans.len(),
+		"a bad anchor fails every query"
+	);
+	for (name, tree) in &trees {
+		assert!(tree.can_fail(), "{name}");
+		same_on_another_thread(name, tree, 200);
+		let rebuilt = Pattern::<Value>::deserialize(&tree.serialize().unwrap()).unwrap();
+		assert_eq!(
+			rebuilt.can_fail(),
+			tree.can_fail(),
+			"{name}: the fallible flag"
+		);
+	}
+	// The lone surrogate is kept as units, not turned into a replacement character.
+	let text = trees[3].1.serialize().unwrap();
+	assert!(text.contains(" u 3 97 55296 98 "), "{text}");
 }
 
 // --- The property ------------------------------------------------------------------------------

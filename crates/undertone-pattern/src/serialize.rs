@@ -5,7 +5,7 @@
 
 //! Serialising a pattern tree and rebuilding it elsewhere.
 //!
-//! A tree of data nodes, signals included, can be written as text with [`Pattern::serialize`] and rebuilt with [`Pattern::deserialize`]. The rebuilt tree queries exactly as the original does: the same haps in the same order, and the same `sample_at` values to the last bit. The point is the audio worklet (RF-29): the main thread builds the pattern, sends the text, and the worklet rebuilds the tree and queries it off the main thread. Nothing is shared between the two sides but a string.
+//! A tree of data nodes, signals, chords, `voicing`, and `drift` included, can be written as text with [`Pattern::serialize`] and rebuilt with [`Pattern::deserialize`]. The rebuilt tree queries exactly as the original does: the same haps in the same order, and the same `sample_at` values to the last bit. The point is the audio worklet (RF-29): the main thread builds the pattern, sends the text, and the worklet rebuilds the tree and queries it off the main thread. Nothing is shared between the two sides but a string.
 //!
 //! # What cannot cross
 //!
@@ -14,7 +14,7 @@
 //! - [`Node::Custom`], a [`Query`](crate::Query) written in Rust, which includes every closure given to [`Pattern::from_fn`] and [`Pattern::fmap_with`], and so also a `Pattern<f64>` handed to a control (it is mapped with a closure on the way in).
 //! - [`Node::Foreign`], a callback that lives in the host, such as a JavaScript function behind the bridge (`signal(fn)` there). Its [`ForeignId`](crate::ForeignId) means something only to the host that registered it.
 //!
-//! A tree holding either one stays on the thread that built it. Everything else crosses: every signal, `seed`, `segment`, `range`, `range2`, `rangex`, `add`, `sub`, `mul`, `div`, `round`, `floor`, `fast`, `slow`, `rev`, `every` (the tree holds the transformed pattern it built, never the function), `cat`, `seq`, `timecat`, `stack`, `arrange`, `euclid`, `pure`, `n`, `scale`, and every control with a number, a string, or a pattern of data nodes.
+//! A tree holding either one stays on the thread that built it. Everything else crosses: every signal, `seed`, `segment`, `range`, `range2`, `rangex`, `add`, `sub`, `mul`, `div`, `round`, `floor`, `fast`, `slow`, `rev`, `every` (the tree holds the transformed pattern it built, never the function), `cat`, `seq`, `timecat`, `stack`, `arrange`, `euclid`, `pure`, `n`, `scale`, `chord`, `voicing` (every option), `drift` (every option, a seed kept as UTF-16 units included), and every control with a number, a string, or a pattern of data nodes.
 //!
 //! # The format
 //!
@@ -40,14 +40,18 @@
 //! | `sig` | a signal | its kind, then its seed |
 //! | `sa` | sample (a signal's `euclid`) | the source, the structure |
 //! | `sg` | segment | a fraction, the source |
-//! | `map` | a named map | the map, the child |
+//! | `map` | a named map (`voicing` and `drift` too) | the map, the child |
 //! | `ai` | arithmetic | `add`, `sub`, `mul` or `div`, the left, the right |
 //! | `dg` | `n(pattern)` | child |
 //!
+//! A rebuilt tree is as fallible as the original: whether a query can fail ([`Pattern::can_fail`]) follows from the nodes, and [`Pattern::try_query`] returns the same haps or the same error on both sides.
+//!
 //! The text comes from a pattern the program built, so [`Pattern::deserialize`] checks what the tree needs to avoid a panic or a divide by zero (a factor above zero, a section of at least one cycle, a denominator that is not zero) and refuses anything it does not understand, but it is not a defence against hostile input: a tree can still be made large, or deep (the depth is limited to 128).
 
+use crate::chord::{Anchor, VoicingOptions};
 use crate::control;
 use crate::controls::{Control, ControlSource};
+use crate::drift::DriftOptions;
 use crate::error::{Error, Result};
 use crate::fraction::Fraction;
 use crate::pattern::{ArithOp, Node, Pattern, pure};
@@ -489,6 +493,44 @@ fn write_map(f: &MapFn, w: &mut Writer) {
 				w.int(i128::from(*interval));
 			}
 		}
+		MapFn::Voicing(options) => {
+			w.word("voicing");
+			match &options.anchor {
+				None => w.word("-"),
+				Some(Anchor::Midi(midi)) => {
+					w.word("m");
+					w.number(*midi);
+				}
+				Some(Anchor::Name(name)) => {
+					w.word("n");
+					w.text(name);
+				}
+			}
+		}
+		MapFn::Drift(options) => {
+			w.word("drift");
+			write_seed(&options.seed, w);
+			match &options.seed_utf16 {
+				None => w.word("-"),
+				Some(units) => {
+					w.word("u");
+					w.int(units.len() as i128);
+					for unit in units {
+						w.int(i128::from(*unit));
+					}
+				}
+			}
+			for n in [
+				options.timing,
+				options.level,
+				options.cents,
+				options.pan,
+				options.push,
+				options.cycles_per_pass,
+			] {
+				w.number(n);
+			}
+		}
 		MapFn::Merge(fields) => {
 			w.word("merge");
 			w.int(fields.len() as i128);
@@ -542,6 +584,42 @@ fn read_map(r: &mut Reader<'_>) -> Result<MapFn> {
 			MapFn::Scale(ParsedScale {
 				root_midi,
 				intervals,
+			})
+		}
+		"voicing" => MapFn::Voicing(VoicingOptions {
+			anchor: match r.word()? {
+				"-" => None,
+				"m" => Some(Anchor::Midi(r.number()?)),
+				"n" => Some(Anchor::Name(r.text()?.into())),
+				other => return Err(r.error(alloc::format!("`{other}` is not an anchor"))),
+			},
+		}),
+		"drift" => {
+			let seed = read_seed(r)?;
+			let seed_utf16 = match r.word()? {
+				"-" => None,
+				"u" => {
+					let count = r.count()?;
+					let mut units = Vec::with_capacity(count);
+					for _ in 0..count {
+						let n = r.int()?;
+						units.push(
+							u16::try_from(n).map_err(|_| r.error("a UTF-16 unit is too large"))?,
+						);
+					}
+					Some(units)
+				}
+				other => return Err(r.error(alloc::format!("`{other}` is not - or u"))),
+			};
+			MapFn::Drift(DriftOptions {
+				seed,
+				seed_utf16,
+				timing: r.number()?,
+				level: r.number()?,
+				cents: r.number()?,
+				pan: r.number()?,
+				push: r.number()?,
+				cycles_per_pass: r.number()?,
 			})
 		}
 		"merge" => {
