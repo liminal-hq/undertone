@@ -24,6 +24,7 @@ pub(crate) struct DelayLine {
 	length: usize,
 	channels: usize,
 	write: usize,
+	/// The longest delay outside a cycle, in frames.
 	max_frames: f64,
 	/// Frames of silence written since the last sound; a full ring of them means the line is empty.
 	quiet: usize,
@@ -32,9 +33,12 @@ pub(crate) struct DelayLine {
 impl DelayLine {
 	pub(crate) fn new(max_seconds: f64, sample_rate: f64) -> Self {
 		let max_frames = (max_seconds * sample_rate).ceil().max(1.0);
+		// A cycle needs at least one quantum of delay, even when the maximum time is shorter (a low sample
+		// rate), so the ring is sized for whichever is longer.
+		let ring_frames = max_frames.max(QUANTUM as f64);
 		Self {
 			ring: Vec::new(),
-			length: max_frames as usize + QUANTUM + 2,
+			length: ring_frames as usize + QUANTUM + 2,
 			channels: 0,
 			write: 0,
 			max_frames,
@@ -58,7 +62,11 @@ impl DelayLine {
 	}
 
 	fn frames(&self, seconds: f64, sample_rate: f64, minimum: f64) -> f64 {
-		(seconds * sample_rate).clamp(minimum, self.max_frames)
+		// The minimum wins over the maximum (a cycle's quantum can exceed a short maximum), and a NaN reads as
+		// the minimum. `clamp` would panic on an inverted range.
+		let wanted = seconds * sample_rate;
+		let wanted = if wanted.is_nan() { minimum } else { wanted };
+		wanted.min(self.max_frames).max(minimum)
 	}
 
 	/// Reads the delayed signal of frame `i` of the quantum, whose first frame is written at `base`.

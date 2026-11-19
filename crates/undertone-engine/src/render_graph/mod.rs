@@ -312,28 +312,57 @@ pub struct RenderGraph {
 	staged_used: usize,
 }
 
+/// The lowest sample rate a [`RenderGraph`] accepts, in hertz.
+pub const MIN_SAMPLE_RATE: f64 = 1.0;
+
+/// The highest sample rate a [`RenderGraph`] accepts, in hertz (the same bound as a render's).
+pub const MAX_SAMPLE_RATE: f64 = crate::render::MAX_SAMPLE_RATE;
+
 impl RenderGraph {
 	/// A graph that renders `length_frames` frames of `channels` channels at `sample_rate` hertz, with only the
 	/// destination in it. The destination's maximum channel count is `channels`.
 	///
+	/// The sample rate must be finite and from [`MIN_SAMPLE_RATE`] (1 Hz) to [`MAX_SAMPLE_RATE`]
+	/// (1,000,000 Hz): outside that, delay lines and filters would work with meaningless or unbounded sizes.
+	/// A host with a rate it did not choose should use [`RenderGraph::try_new`].
+	///
 	/// # Panics
 	///
-	/// Panics if `sample_rate` is not positive and finite, or `channels` is not between 1 and 32.
+	/// Panics if `sample_rate` is outside that range or not a number, or `channels` is not between 1 and 32.
 	pub fn new(sample_rate: f64, channels: u32, length_frames: u64) -> Self {
-		assert!(
-			sample_rate.is_finite() && sample_rate > 0.0,
-			"sample rate must be positive"
-		);
-		assert!(
-			(1..=MAX_NODE_CHANNELS as u32).contains(&channels),
-			"channels must be 1 to {MAX_NODE_CHANNELS}"
-		);
+		match Self::try_new(sample_rate, channels, length_frames) {
+			Ok(graph) => graph,
+			Err(error) => panic!("{}", error.message()),
+		}
+	}
+
+	/// As [`RenderGraph::new`], with an error in place of a panic.
+	///
+	/// # Errors
+	///
+	/// Fails when `sample_rate` is not a number from [`MIN_SAMPLE_RATE`] to [`MAX_SAMPLE_RATE`], or `channels`
+	/// is not between 1 and 32.
+	pub fn try_new(
+		sample_rate: f64,
+		channels: u32,
+		length_frames: u64,
+	) -> undertone_pattern::Result<Self> {
+		if !(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&sample_rate) {
+			return Err(undertone_pattern::Error::new(format!(
+				"sample rate must be from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz, got {sample_rate}"
+			)));
+		}
+		if !(1..=MAX_NODE_CHANNELS as u32).contains(&channels) {
+			return Err(undertone_pattern::Error::new(format!(
+				"channels must be 1 to {MAX_NODE_CHANNELS}, got {channels}"
+			)));
+		}
 		let channels = channels as usize;
 		let mut destination = Node::placeholder();
 		destination.count = channels;
 		destination.mode = ChannelCountMode::Explicit;
 		destination.silent = false;
-		Self {
+		Ok(Self {
 			sample_rate,
 			channels,
 			max_channels: channels,
@@ -349,16 +378,7 @@ impl RenderGraph {
 			dirty: true,
 			staged: vec![0.0; channels * QUANTUM],
 			staged_used: QUANTUM,
-		}
-	}
-
-	/// Placeholder until the sample rate is checked.
-	pub fn try_new(
-		sample_rate: f64,
-		channels: u32,
-		length_frames: u64,
-	) -> undertone_pattern::Result<Self> {
-		Ok(Self::new(sample_rate, channels, length_frames))
+		})
 	}
 
 	/// How many frames the render is to make in all.
