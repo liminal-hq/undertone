@@ -83,7 +83,8 @@
 //! A render is bounded at [`MAX_RENDER_SAMPLES`] (2^28, a gibibyte of `f32`) samples in all channels, on top of the
 //! engine's 268,435,456 frames per channel: a larger render, or one the machine cannot hold, returns an error
 //! before it renders anything, where the reference would run out of memory (decision D-37, a deliberate
-//! difference from the reference, like the engine's other bounds).
+//! difference from the reference, like the engine's other bounds). The bound is on one collected result: a
+//! `Player` streams without a lifetime limit, so it can render for as long as it is kept.
 //!
 //! Samples a pattern plays are decoded PCM that the host registers (decision D-30): Undertone bundles none and
 //! fetches nothing. `RenderOptions::register_sample` and `Player::register_sample` take a name, a

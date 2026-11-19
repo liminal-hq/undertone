@@ -427,7 +427,33 @@ impl RenderGraph {
 		})
 	}
 
-	/// How many frames the render is to make in all.
+	/// A graph that renders without an end, for a host that streams it in blocks: its length is `u64::MAX`
+	/// frames, so [`render_block`](RenderGraph::render_block) never returns fewer frames than asked (the frame
+	/// counters are `u64`, which a real-time stream at the highest sample rate would take about 584,000 years
+	/// to count out). [`MAX_RENDER_LENGTH_FRAMES`] bounds a render that is collected into memory, not one that
+	/// is streamed; [`RenderGraph::render_all`] panics on a streaming graph.
+	///
+	/// # Errors
+	///
+	/// As [`RenderGraph::try_new`].
+	///
+	/// ```
+	/// use undertone_engine::render_graph::RenderGraph;
+	///
+	/// let mut graph = RenderGraph::try_streaming(48_000.0, 2)?;
+	/// let (mut left, mut right) = (vec![0.0_f32; 480], vec![0.0_f32; 480]);
+	/// assert_eq!(graph.render_block(&mut [&mut left, &mut right]), 480);
+	/// assert_eq!(graph.length_frames(), u64::MAX);
+	/// # Ok::<(), undertone_pattern::Error>(())
+	/// ```
+	pub fn try_streaming(sample_rate: f64, channels: u32) -> undertone_pattern::Result<Self> {
+		let mut graph = Self::try_new(sample_rate, channels, 0)?;
+		graph.length_frames = u64::MAX;
+		Ok(graph)
+	}
+
+	/// How many frames the render is to make in all (`u64::MAX` for a [`streaming`](RenderGraph::try_streaming)
+	/// graph).
 	pub fn length_frames(&self) -> u64 {
 		self.length_frames
 	}
@@ -514,7 +540,7 @@ impl RenderGraph {
 			}
 			let take = (QUANTUM - self.staged_used)
 				.min(wanted - written)
-				.min((self.length_frames - self.produced) as usize);
+				.min(usize::try_from(self.length_frames - self.produced).unwrap_or(usize::MAX));
 			for (channel, slice) in out.iter_mut().enumerate() {
 				let from = channel * QUANTUM + self.staged_used;
 				slice[written..written + take].copy_from_slice(&self.staged[from..from + take]);
@@ -533,7 +559,8 @@ impl RenderGraph {
 	/// Panics if the whole render would hold over 2^31 samples (8 GiB); stream such a render with
 	/// [`RenderGraph::render_block`] instead.
 	pub fn render_all(&mut self) -> Vec<Vec<f32>> {
-		let remaining = (self.length_frames - self.produced.min(self.length_frames)) as usize;
+		let remaining = usize::try_from(self.length_frames - self.produced.min(self.length_frames))
+			.unwrap_or(usize::MAX);
 		assert!(
 			remaining.saturating_mul(self.channels) <= 1 << 31,
 			"render_all would hold {remaining} frames of {} channels; use render_block",

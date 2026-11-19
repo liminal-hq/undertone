@@ -1012,3 +1012,35 @@ fn retiring_a_stale_scope_twice_does_not_retire_a_newer_scope_that_reused_its_nu
 	graph.retire_scope(newer);
 	assert_eq!(graph.live_nodes(), before - 1);
 }
+
+#[test]
+fn a_streaming_graph_has_no_end_and_renders_what_a_bounded_graph_does() {
+	let mut bounded = RenderGraph::new(RATE, 1, 5_000);
+	let mut streaming = RenderGraph::try_streaming(RATE, 1).unwrap();
+	assert_eq!(streaming.length_frames(), u64::MAX);
+	osc_to_destination(&mut bounded, 440.0);
+	osc_to_destination(&mut streaming, 440.0);
+	let expected = bounded.render_all();
+	let mut heard = Vec::new();
+	let mut block = vec![0.0_f32; 1_000];
+	for _ in 0..5 {
+		assert_eq!(streaming.render_block(&mut [block.as_mut_slice()]), 1_000);
+		heard.extend_from_slice(&block);
+	}
+	assert_eq!(heard, expected[0]);
+	// Past where the bounded graph ended, it keeps going.
+	assert_eq!(streaming.render_block(&mut [block.as_mut_slice()]), 1_000);
+	assert_eq!(streaming.frames_rendered(), 6_000);
+}
+
+#[test]
+fn a_streaming_graph_checks_its_rate_and_channels_like_any_other() {
+	assert!(RenderGraph::try_streaming(0.0, 2).is_err());
+	assert!(RenderGraph::try_streaming(RATE, 0).is_err());
+}
+
+#[test]
+#[should_panic(expected = "use render_block")]
+fn render_all_on_a_streaming_graph_panics_before_allocating() {
+	RenderGraph::try_streaming(RATE, 2).unwrap().render_all();
+}

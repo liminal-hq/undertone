@@ -177,22 +177,12 @@ impl<G: Graph + std::fmt::Debug, C: Clock + std::fmt::Debug> std::fmt::Debug for
 	}
 }
 
-/// How many frames the offline player's graph renders in all. A test-only small bound stands in for the
-/// engine's 268,435,456 so a test reaches it with a few thousand frames, not a hundred minutes of audio.
-const fn lifetime_frames() -> u64 {
-	if cfg!(test) {
-		TEST_LIFETIME_FRAMES
-	} else {
-		MAX_RENDER_LENGTH_FRAMES
-	}
-}
-
-/// The small bound [`lifetime_frames`] gives under test.
-const TEST_LIFETIME_FRAMES: u64 = 100_000;
-
 impl Player {
-	/// An offline player: a [`RenderGraph`] of the options' sample rate and channels, and a [`ManualClock`]
-	/// that [`render_seconds`](Player::render_seconds) and [`render_block`](Player::render_block) move.
+	/// An offline player: a streaming [`RenderGraph`] (one with no end, see [`RenderGraph::try_streaming`]) of
+	/// the options' sample rate and channels, and a [`ManualClock`] that
+	/// [`render_seconds`](Player::render_seconds) and [`render_block`](Player::render_block) move. The player
+	/// can render for as long as it is kept: only a single collected result is bounded (see
+	/// [`render_seconds`](Player::render_seconds)).
 	///
 	/// # Errors
 	///
@@ -205,7 +195,8 @@ impl Player {
 				options.channels
 			)));
 		}
-		let graph = RenderGraph::try_new(options.sample_rate, options.channels, lifetime_frames())?;
+		// Streaming: the player's lifetime is not bounded (D-37 bounds one collected render, below).
+		let graph = RenderGraph::try_streaming(options.sample_rate, options.channels)?;
 		let clock = ManualClock::new(options.sample_rate);
 		let setup = OutputSetup {
 			master: match options.master {
@@ -247,7 +238,8 @@ impl Player {
 	///
 	/// This is the offline player's audio callback: a host that wants the audio itself (to send it to a device
 	/// or a file as it goes) calls it with whatever block size it likes; the samples do not depend on the block
-	/// size.
+	/// size. A player made by [`Player::new`] streams without limit, so it always returns `out`'s full length;
+	/// a short count only comes from a graph of the host's own that ends ([`Player::with_graph`]).
 	///
 	/// # Errors
 	///
@@ -303,8 +295,10 @@ impl Player {
 	/// # Errors
 	///
 	/// A `seconds` that is not positive and finite, longer than the engine's bound (268,435,456 frames), more
-	/// than [`MAX_RENDER_SAMPLES`](crate::MAX_RENDER_SAMPLES) samples in all channels (decision D-37), one the
-	/// machine cannot hold (an error, not an abort), or a
+	/// than [`MAX_RENDER_SAMPLES`](crate::MAX_RENDER_SAMPLES) samples in all channels (decision D-37, a bound on
+	/// this one result, not on how long the player renders over its life), one the machine cannot hold (an
+	/// error, not an abort), a graph that ended before the frames asked for were made (an
+	/// [`ErrorKind::Invalid`](crate::ErrorKind::Invalid) error, never short audio), or a
 	/// [`render_block`](Player::render_block) failure.
 	///
 	/// ```
@@ -349,7 +343,9 @@ impl Player {
 			}
 			done += written;
 			if written < take {
-				break;
+				return Err(Error::new(format!(
+					"the render ended after {done} of {frames} frames"
+				)));
 			}
 		}
 		RenderedAudio::new(sample_rate, channels)
@@ -1062,7 +1058,8 @@ mod tests {
 
 	#[test]
 	fn streaming_in_small_blocks_is_not_limited_by_the_players_lifetime() {
-		// 120,000 frames is past the test bound (100,000), as 93 minutes at 48 kHz is past the real one.
+		// 120,000 frames at 1 kHz, in small blocks, as a player kept for hours would render; the engine's old
+		// lifetime bound (268,435,456 frames, 93 minutes at 48 kHz) is too far to reach in a test.
 		let frames = 120_000;
 		let mut player = looping_player();
 		let mut streamed = vec![Vec::new(); 2];
@@ -1092,5 +1089,29 @@ mod tests {
 		// Whatever the earlier calls did, a render that is short is an error, never quiet padding.
 		let heard = player.render_seconds(30.0).unwrap();
 		assert_eq!(heard.frames(), 30_000);
+	}
+
+	#[test]
+	fn a_graph_that_ends_makes_render_seconds_an_error_not_short_audio() {
+		let graph = RenderGraph::new(1_000.0, 2, 500);
+		let mut player = Player::with_graph(
+			graph,
+			ManualClock::new(1_000.0),
+			OutputSetup::default(),
+			SchedulerOptions::default(),
+		)
+		.unwrap();
+		let error = player.render_seconds(1.0).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		assert!(error.message().contains("500 of 1000"), "{error}");
+	}
+
+	#[test]
+	fn one_collected_render_is_still_bounded_per_call() {
+		let mut player = offline();
+		let error = player.render_seconds(1e9).unwrap_err();
+		assert_eq!(error.kind(), ErrorKind::Invalid);
+		// The refusal moved nothing: the player renders on.
+		assert_eq!(player.render_seconds(0.25).unwrap().frames(), 2_000);
 	}
 }
