@@ -7,5 +7,10 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["std"]
+# The floating-point maths (floor, sin, cos, powf) comes from the standard library. Without it the crate needs a maths provider (see `math.rs`).
+std = []
+
 [lints]
 workspace = true
