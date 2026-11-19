@@ -133,6 +133,11 @@ function apply(ref: Reference, pattern: AnyPattern, step: Step): AnyPattern {
     const map = make(Number(arg ?? 0));
     return pattern.fmap((value) => map(value as number));
   }
+  if (name === 'drift') {
+    // drift(pattern, options) is a free function in the reference, not a method; as a step it takes the options object.
+    const options = argument(ref, raw[0]) as Parameters<typeof ref.lib.drift>[1];
+    return ref.lib.drift(pattern as never, options) as unknown as AnyPattern;
+  }
   if (FORBIDDEN_METHODS.has(name)) throw new Error(`Method "${name}" is not allowed in a program`);
   const method = (pattern as unknown as Record<string, unknown>)[name];
   if (typeof method !== 'function') throw new Error(`Unknown method "${name}"`);

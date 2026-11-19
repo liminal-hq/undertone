@@ -49,7 +49,8 @@ export const LAYER1_GROUPS = [
   'signals',
   'mini',
   'scales',
-  'chords'
+  'chords',
+  'drift'
 ] as const;
 
 export function parseFraction(ref: Reference, text: string) {

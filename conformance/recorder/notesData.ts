@@ -1,4 +1,4 @@
-// Layer 1 `scales` and `chords` groups as data: scale tables, chord qualities, and voicing
+// Layer 1 `scales`, `chords`, and `drift` groups as data: scale tables, chord qualities and voicing, seeded drift
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -10,6 +10,12 @@ import type { ProgramCase, SpanText } from './programs';
 /** Two spans: two whole cycles, and a span that starts inside a cycle. */
 const TWO_SPANS: readonly SpanText[] = [
   ['0', '2'],
+  ['1/3', '7/4']
+];
+
+/** Drift is keyed by the pass, so it is queried over four cycles and a span that starts inside a cycle. */
+const DRIFT_SPANS: readonly SpanText[] = [
+  ['0', '4'],
   ['1/3', '7/4']
 ];
 
@@ -526,5 +532,363 @@ export function chordCases(): ProgramCase[] {
   for (const [stem, source, from] of bad) {
     out.push(make(`err-${stem}`, from, voiced(source)));
   }
+  return out;
+}
+
+/** The seeds, and the notes they are applied to, for the `drift` group. */
+type DriftOptions = Record<string, unknown>;
+
+const driftOn = (base: Step, options: DriftOptions, ...more: Step[]): Step[] => [
+  base,
+  ...more,
+  ['drift', options]
+];
+
+/**
+ * `drift(pattern, options)`: seeded humanisation keyed `seed|pass|n/d|pitch`. The pitch in the key is
+ * printed the JavaScript way, so a Hz float from `n().scale()` or `voicing()` puts a 16 or 17 digit
+ * number in the key, and a note name puts the name. Layer 1 records the patched values (the `nudgeTime`,
+ * `velocity`, `pitch`, and `pan` of each hap); layer 2, derived, records the resolved voices.
+ */
+export function driftCases(): ProgramCase[] {
+  const make = caseMaker('drift', DRIFT_SPANS);
+  const out: ProgramCase[] = [];
+  const base: Step = ['note', 'c3 e3 g3 e3'];
+  const D = 'src/drift.test.ts';
+  // generated: each option alone, with a seed per number and string form.
+  const alone: [string, DriftOptions][] = [
+    ['timing', { timing: 0.01 }],
+    ['level', { level: 0.2 }],
+    ['cents', { cents: 15 }],
+    ['pan', { pan: 0.3 }],
+    ['push', { push: 0.02 }],
+    ['push', { push: -0.03 }]
+  ];
+  for (const seed of [1, 'song']) {
+    for (const [stem, options] of alone) {
+      out.push(
+        make(
+          stem,
+          G(`${stem} alone with seed ${JSON.stringify(seed)}`),
+          driftOn(base, { seed, ...options })
+        )
+      );
+    }
+  }
+  out.push(
+    make(
+      'all',
+      `${D}: every option together`,
+      driftOn(base, { seed: 7, timing: 0.012, level: 0.15, cents: 10, pan: 0.4, push: 0.005 })
+    )
+  );
+  out.push(
+    make(
+      'all',
+      G('every option together, different seed'),
+      driftOn(base, { seed: 8, timing: 0.012, level: 0.15, cents: 10, pan: 0.4, push: 0.005 })
+    )
+  );
+  out.push(make('off', G('nothing set: off unless a range is set'), driftOn(base, { seed: 1 })));
+  out.push(
+    make(
+      'off',
+      G('every range zero'),
+      driftOn(base, { seed: 1, timing: 0, level: 0, cents: 0, pan: 0, push: 0 })
+    )
+  );
+  // generated: seed forms, which the key prints with JavaScript's number and string conversion.
+  const seeds: unknown[] = [
+    0,
+    1,
+    2,
+    42,
+    -1,
+    -42,
+    1.5,
+    0.1,
+    1e-7,
+    1e21,
+    123456789012,
+    4294967296,
+    4294967297,
+    -2147483648,
+    9007199254740991,
+    0.30000000000000004,
+    '',
+    '0',
+    '1',
+    'a|b',
+    'drift|0',
+    'é',
+    '😀',
+    '\ud800',
+    'seed with spaces',
+    'x'.repeat(200)
+  ];
+  for (const seed of seeds) {
+    out.push(
+      make(
+        'seed',
+        G(`seed ${JSON.stringify(seed)}: the key is built with JavaScript conversion`),
+        driftOn(base, { seed, timing: 0.02, level: 0.1, cents: 20, pan: 0.2 })
+      )
+    );
+  }
+  out.push(
+    make(
+      'seed',
+      G('no seed at all: the key starts with the word undefined'),
+      driftOn(base, { timing: 0.02 })
+    )
+  );
+  // generated: passes. The seed advances every pass; a pass is cyclesPerPass cycles.
+  for (const cyclesPerPass of [1, 2, 3, 4, 5, 8, 16, 100]) {
+    out.push(
+      make(
+        'pass',
+        G(`cyclesPerPass ${cyclesPerPass}`),
+        driftOn(['note', 'c3 <e3 g3> [c4 e4]*2'], {
+          seed: 3,
+          timing: 0.01,
+          level: 0.1,
+          cyclesPerPass
+        })
+      )
+    );
+  }
+  out.push(
+    make(
+      'pass',
+      G('a long slow pattern: positions inside a pass are fractions of a cycle'),
+      driftOn(['note', 'c3/3 e3/2'], { seed: 3, timing: 0.01, cyclesPerPass: 2 })
+    )
+  );
+  // generated: positions inside a cycle give the n/d of the key.
+  const positions: [string, string][] = [
+    ['c3*3', 'thirds'],
+    ['c3*7', 'sevenths'],
+    ['c3(3,8)', 'euclid eighths'],
+    ['c3(5,12,2)', 'euclid twelfths'],
+    ['c3*16', 'sixteenths'],
+    ['[c3 e3]*3 g3', 'nested speeds'],
+    ['c3@3 e3', 'weights'],
+    ['c3 ~ e3 ~', 'rests: no hap, no key'],
+    ['c3*0.5', 'a note every two cycles'],
+    ['c3 [e3 g3 b3 d4 f4]', 'a group of five']
+  ];
+  for (const [source, what] of positions) {
+    out.push(
+      make(
+        'position',
+        G(`positions: ${what}`),
+        driftOn(['note', source], { seed: 5, timing: 0.01, level: 0.1, cents: 12, pan: 0.2 })
+      )
+    );
+  }
+  // generated: pitches in the key (a name, Hz numbers, derived floats, chord notes, no pitch).
+  out.push(
+    make(
+      'pitch',
+      G('note names'),
+      driftOn(['note', 'c3 f#3 Bb3 c-1'], { seed: 9, timing: 0.01, cents: 10 })
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('Hz numbers: 440, 220.5, and 1e21 as the key prints them'),
+      driftOn(['note', '440 220.5'], { seed: 9, timing: 0.01, cents: 10 })
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('a pitch of a hundred digits: Hz from a long decimal'),
+      driftOn(['note', '261.6255653005986'], { seed: 9, timing: 0.01, cents: 10 })
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('scale degrees give Hz floats with 16 digits in the key'),
+      driftOn(['n', '0 2 4 7'], { seed: 9, timing: 0.01, cents: 10 }, ['scale', 'c4:major'])
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('negative and large degrees in the key'),
+      driftOn(['n', '-3 0 12 30'], { seed: 9, timing: 0.01, cents: 10 }, ['scale', 'a2:dorian'])
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('a chord voiced into several notes at one onset: each key has its own pitch'),
+      driftOn(['chord', 'Cmaj7 Am9'], { seed: 9, timing: 0.01, level: 0.1, cents: 10, pan: 0.2 }, [
+        'voicing'
+      ])
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('unpitched sounds: the key ends with a bar and nothing'),
+      driftOn(['sound', 'white*4'], { seed: 9, timing: 0.01, level: 0.1, cents: 10, pan: 0.2 })
+    )
+  );
+  out.push(
+    make(
+      'pitch',
+      G('sample names: cents do not apply'),
+      driftOn(['s', 'bd sd hh sd'], { seed: 9, timing: 0.01, level: 0.1, cents: 10, pan: 0.2 })
+    )
+  );
+  // generated: the patch already holds values the drift adds to.
+  out.push(
+    make(
+      'patch',
+      G('an earlier nudge adds to the drift'),
+      driftOn(base, { seed: 2, timing: 0.01 }, ['nudge', 0.05])
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('an earlier velocity scales'),
+      driftOn(base, { seed: 2, level: 0.3 }, ['velocity', 0.5])
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('an earlier pan adds and clamps'),
+      driftOn(base, { seed: 2, pan: 0.8 }, ['pan', 0.9])
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('a pan beyond range is clamped by the control before drift'),
+      driftOn(base, { seed: 2, pan: 2 }, ['pan', -0.9])
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('a large pan range clamps the result to -1..1'),
+      driftOn(base, { seed: 2, pan: 5 })
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('a large level goes below zero or above two'),
+      driftOn(base, { seed: 2, level: 3 })
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('push alone does not use the random source'),
+      driftOn(base, { seed: 2, push: 0.1 }, ['nudge', 0.05])
+    )
+  );
+  out.push(
+    make(
+      'patch',
+      G('push added to an earlier negative nudge'),
+      driftOn(base, { seed: 2, push: 0.1 }, ['nudge', -0.1])
+    )
+  );
+  out.push(
+    make('patch', G('drift then more controls'), [
+      ...driftOn(base, { seed: 2, timing: 0.01, cents: 5 }),
+      ['gain', 0.5],
+      ['lpf', 1500]
+    ])
+  );
+  out.push(
+    make('patch', G("drift twice: the second drift keys on the first drift's pitch"), [
+      base,
+      ['drift', { seed: 1, cents: 10 }],
+      ['drift', { seed: 1, cents: 10, timing: 0.01 }]
+    ])
+  );
+  out.push(
+    make('patch', G('drift under every, rev, fast, and jux'), [
+      base,
+      ['drift', { seed: 4, timing: 0.01, level: 0.1 }],
+      ['every', 2, [['rev']]],
+      ['fast', 2]
+    ])
+  );
+  out.push(
+    make('patch', G('drift over a stack'), [
+      ['stack', [['note', 'c3 e3']], [['note', 'g4*3']]],
+      ['drift', { seed: 4, timing: 0.01, level: 0.1, cents: 7, pan: 0.2 }]
+    ])
+  );
+  out.push(
+    make('patch', G('a signal-driven control leaves the haps with a whole'), [
+      base,
+      ['pan', [['sine']]],
+      ['drift', { seed: 4, pan: 0.2 }]
+    ])
+  );
+  // errors
+  const errors: [string, DriftOptions, string][] = [
+    ['cycles', { seed: 1, cyclesPerPass: 0 }, G('cyclesPerPass zero')],
+    ['cycles', { seed: 1, cyclesPerPass: -1 }, G('cyclesPerPass negative')],
+    ['cycles', { seed: 1, cyclesPerPass: 1.5 }, G('cyclesPerPass fractional')],
+    ['cycles', { seed: 1, cyclesPerPass: '2' }, G('cyclesPerPass as a string')],
+    ['cycles', { seed: 1, cyclesPerPass: null }, G('cyclesPerPass null: not an integer')],
+    ['negative', { seed: 1, timing: -0.01 }, G('timing negative')],
+    ['negative', { seed: 1, level: -0.1 }, G('level negative')],
+    ['negative', { seed: 1, cents: -1 }, G('cents negative')],
+    ['negative', { seed: 1, pan: -0.5 }, G('pan negative')],
+    [
+      'negative',
+      { seed: 1, timing: 0.01, level: -1, pan: -1 },
+      G('the first negative option is the one reported')
+    ],
+    ['negative', { seed: 1, timing: 'x' }, G('a word for timing is not >= 0')],
+    [
+      'negative',
+      { seed: 1, timing: null },
+      G('null timing is destructured as null, which is >= 0 and drifts nothing')
+    ]
+  ];
+  for (const [stem, options, from] of errors) {
+    out.push(make(`err-${stem}`, from, driftOn(base, options)));
+  }
+  // generated: queries over negative cycles (the pass is a floor) and a query that starts mid-cycle.
+  out.push(
+    make(
+      'window',
+      G('negative cycles: the pass number is negative'),
+      driftOn(base, { seed: 6, timing: 0.01, level: 0.1, cyclesPerPass: 2 }),
+      [
+        ['-4', '0'],
+        ['-3/2', '-1/2'],
+        ['-1', '0'],
+        ['0', '4'],
+        ['7/3', '11/3']
+      ]
+    )
+  );
+  out.push(
+    make(
+      'window',
+      G('the same drift over a window that starts inside a note'),
+      driftOn(base, { seed: 6, timing: 0.01, level: 0.1, cyclesPerPass: 2 }),
+      [
+        ['1/8', '5/8'],
+        ['5/8', '9/8'],
+        ['0', '2']
+      ]
+    )
+  );
   return out;
 }

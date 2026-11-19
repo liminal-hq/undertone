@@ -7,7 +7,7 @@ import { DEFAULT_SAMPLES, words } from './programs';
 import type { ProgramCase, SpanText } from './programs';
 import type { Program, Step } from './interpret';
 import { miniCases } from './miniData';
-import { chordCases, scaleCases } from './notesData';
+import { chordCases, driftCases, scaleCases } from './notesData';
 
 let counter = new Map<string, number>();
 
@@ -871,6 +871,7 @@ export function layer1Programs(): ProgramCase[] {
     ...signals(),
     ...miniCases(),
     ...scaleCases(),
-    ...chordCases()
+    ...chordCases(),
+    ...driftCases()
   ];
 }
