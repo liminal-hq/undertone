@@ -23,6 +23,15 @@ use undertone_pattern::{
 
 // --- The check ---------------------------------------------------------------------------------
 
+/// How many windows the heavy tests ask of each tree: `clamp(PROPTEST_CASES / 10, 20, 1000)`, so the default of 10,000 cases (pushes to `main`) asks the full 1,000 and a pull request's `PROPTEST_CASES=1000` asks 100. The full numbers are the default; the variable only makes a run cheaper. The samples are half as many.
+fn heavy_windows() -> usize {
+	let cases: usize = std::env::var("PROPTEST_CASES")
+		.ok()
+		.and_then(|c| c.parse().ok())
+		.unwrap_or(10_000);
+	(cases / 10).clamp(20, 1000)
+}
+
 /// A small deterministic generator, so both threads ask the same questions and a failure repeats.
 struct Lcg(u64);
 
@@ -95,11 +104,12 @@ fn same_on_another_thread<T: undertone_pattern::Wire>(
 	name: &str,
 	pattern: &Pattern<T>,
 	window_count: usize,
+	sample_count: usize,
 ) -> Compared {
 	let text = pattern
 		.serialize()
 		.unwrap_or_else(|e| panic!("{name}: {e}"));
-	let (spans, points) = (windows(window_count), instants(500));
+	let (spans, points) = (windows(window_count), instants(sample_count));
 	let there = {
 		let (text, spans, points) = (text.clone(), spans.clone(), points.clone());
 		std::thread::spawn(move || {
@@ -179,6 +189,7 @@ fn programs(file: &Json) -> Vec<(String, Pat)> {
 
 #[test]
 fn the_signals_corpus_programs_answer_the_same_on_another_thread() {
+	let heavy = heavy_windows();
 	let mut trees = 0;
 	let mut refused = Vec::new();
 	let mut total = Compared::default();
@@ -190,7 +201,7 @@ fn the_signals_corpus_programs_answer_the_same_on_another_thread() {
 			for (id, pattern) in programs(&file) {
 				match pattern.serialize() {
 					Ok(_) => {
-						let c = same_on_another_thread(&id, &pattern, 1_000);
+						let c = same_on_another_thread(&id, &pattern, heavy, heavy / 2);
 						total.haps += c.haps;
 						total.samples += c.samples;
 						trees += 1;
@@ -204,7 +215,8 @@ fn the_signals_corpus_programs_answer_the_same_on_another_thread() {
 		}
 	}
 	println!(
-		"signals corpus: {trees} trees rebuilt on another thread, 1,000 windows and 500 samples each, {} haps and {} samples compared, none differed; {} refused (Custom): {refused:?}",
+		"signals corpus: {trees} trees rebuilt on another thread, {heavy} windows and {} samples each, {} haps and {} samples compared, none differed; {} refused (Custom): {refused:?}",
+		heavy / 2,
 		total.haps,
 		total.samples,
 		refused.len()
@@ -214,6 +226,12 @@ fn the_signals_corpus_programs_answer_the_same_on_another_thread() {
 
 #[test]
 fn every_corpus_program_round_trips() {
+	// 20 windows and 500 samples by default (heavy / 50, 25 samples a window), 10 and 250 on a pull request.
+	let light = (heavy_windows() / 50).max(10);
+	println!(
+		"round trip of the other corpus groups: {light} windows and {} samples each",
+		light * 25
+	);
 	let mut trees = 0;
 	let mut refused = 0;
 	for layer in [1, 2] {
@@ -224,7 +242,12 @@ fn every_corpus_program_round_trips() {
 			for (id, pattern) in programs(&file) {
 				match pattern.serialize() {
 					Ok(_) => {
-						same_on_another_thread(&format!("{group}/{id}"), &pattern, 20);
+						same_on_another_thread(
+							&format!("{group}/{id}"),
+							&pattern,
+							light,
+							light * 25,
+						);
 						trees += 1;
 					}
 					Err(e) => {
@@ -247,6 +270,7 @@ fn sine() -> Pattern<f64> {
 
 #[test]
 fn every_signal_and_combinator_crosses() {
+	let heavy = heavy_windows();
 	let mut trees: Vec<(&str, Pattern<f64>)> = Vec::new();
 	for name in [
 		"sine", "cosine", "saw", "isaw", "tri", "square", "sine2", "cosine2", "saw2", "isaw2",
@@ -336,13 +360,14 @@ fn every_signal_and_combinator_crosses() {
 	));
 	let mut compared = Compared::default();
 	for (name, tree) in &trees {
-		let c = same_on_another_thread(name, tree, 1_000);
+		let c = same_on_another_thread(name, tree, heavy, heavy / 2);
 		compared.haps += c.haps;
 		compared.samples += c.samples;
 	}
 	println!(
-		"{} hand-built f64 trees: {} haps and {} samples compared, none differed",
+		"{} hand-built f64 trees, {heavy} windows and {} samples each: {} haps and {} samples compared, none differed",
 		trees.len(),
+		heavy / 2,
 		compared.haps,
 		compared.samples
 	);
@@ -350,6 +375,11 @@ fn every_signal_and_combinator_crosses() {
 
 #[test]
 fn controls_and_voices_cross() {
+	let heavy = heavy_windows();
+	println!(
+		"controls and voices: {heavy} windows and {} samples each",
+		heavy / 2
+	);
 	let note = |s: &str| control::note(s).unwrap();
 	let lfo = periodic::<Value>(Shape::Sine, false).range(200.0, 2000.0);
 	let trees: Vec<(&str, Pattern<Value>)> = vec![
@@ -396,7 +426,7 @@ fn controls_and_voices_cross() {
 		),
 	];
 	for (name, tree) in &trees {
-		same_on_another_thread(name, tree, 1_000);
+		same_on_another_thread(name, tree, heavy, heavy / 2);
 	}
 	// Strings, maps, lists, and booleans as values.
 	let rich = Value::Map(
@@ -413,6 +443,7 @@ fn controls_and_voices_cross() {
 		"a map value",
 		&cat(vec![pure(rich), pure(Value::Num(2.0))]),
 		100,
+		500,
 	);
 }
 
@@ -469,7 +500,8 @@ fn failing_windows(pattern: &Pattern<Value>, spans: &[Span]) -> usize {
 
 #[test]
 fn the_chords_and_drift_corpus_programs_answer_the_same_on_another_thread() {
-	let spans = windows(1_000);
+	let heavy = heavy_windows();
+	let spans = windows(heavy);
 	let (mut trees, mut errors, mut total) = (0, 0, Compared::default());
 	let mut refused = Vec::new();
 	for (group, file) in corpus_files(1) {
@@ -480,7 +512,12 @@ fn the_chords_and_drift_corpus_programs_answer_the_same_on_another_thread() {
 			match pattern.serialize() {
 				Ok(_) => {
 					errors += failing_windows(&pattern, &spans);
-					let c = same_on_another_thread(&format!("{group}/{id}"), &pattern, 1_000);
+					let c = same_on_another_thread(
+						&format!("{group}/{id}"),
+						&pattern,
+						heavy,
+						heavy / 2,
+					);
 					total.haps += c.haps;
 					total.samples += c.samples;
 					trees += 1;
@@ -490,7 +527,8 @@ fn the_chords_and_drift_corpus_programs_answer_the_same_on_another_thread() {
 		}
 	}
 	println!(
-		"chords, drift, and notes corpus: {trees} trees rebuilt on another thread, 1,000 windows and 500 samples each, {} haps and {} samples compared, {errors} windows answered with an error (compared too), none differed; {} refused",
+		"chords, drift, and notes corpus: {trees} trees rebuilt on another thread, {heavy} windows and {} samples each, {} haps and {} samples compared, {errors} windows answered with an error (compared too), none differed; {} refused",
+		heavy / 2,
 		total.haps,
 		total.samples,
 		refused.len()
@@ -544,7 +582,7 @@ fn voicing_and_drift_options_cross_exactly() {
 	);
 	for (name, tree) in &trees {
 		assert!(tree.can_fail(), "{name}");
-		same_on_another_thread(name, tree, 200);
+		same_on_another_thread(name, tree, 200, 500);
 		let rebuilt = Pattern::<Value>::deserialize(&tree.serialize().unwrap()).unwrap();
 		assert_eq!(
 			rebuilt.can_fail(),
