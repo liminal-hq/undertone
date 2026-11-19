@@ -188,11 +188,26 @@ for (const [file, tests] of Object.entries(files)) {
     v(sf);
     return best;
   };
+  // A hook (beforeEach, afterEach, beforeAll) that calls a test-support symbol applies to the tests of its file
+  const hookIds = new Set();
+  const hooks = (n) => {
+    if (
+      ts.isCallExpression(n) &&
+      ts.isIdentifier(n.expression) &&
+      /^(before|after)(Each|All)$/.test(n.expression.text)
+    )
+      idsOf(n).forEach((x) => hookIds.add(x));
+    ts.forEachChild(n, hooks);
+  };
+  hooks(sf);
   const seen = new Map();
   for (const t of tests) {
     const node = find(t.location.line, t.location.column);
     if (!node) throw new Error(`no call at ${rel}:${t.location.line}`);
     const ids = idsOf(node);
+    const hookSupport = [...hookIds].filter(
+      (id) => imp.get(id) && !imp.get(id).type && SUPPORT.has(imp.get(id).orig ?? id)
+    );
     const priv = [];
     const shims = [];
     const support = [];
@@ -212,6 +227,8 @@ for (const [file, tests] of Object.entries(files)) {
         continue;
       else if (!pub.has(name)) priv.push(name);
     }
+    for (const h of hookSupport)
+      if (!support.includes(imp.get(h).orig ?? h)) support.push(imp.get(h).orig ?? h);
     const timer = TIMER_IDS.filter((x) => ids.has(x));
     const key = rel + '\u0000' + t.name;
     const n = (seen.get(key) ?? 0) + 1;
