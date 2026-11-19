@@ -42,6 +42,7 @@ pub mod pitch_curve;
 pub mod random;
 pub mod render;
 pub mod score;
+pub mod render_graph;
 pub mod surround;
 pub mod voice;
 pub mod warn;
