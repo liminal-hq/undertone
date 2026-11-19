@@ -1006,4 +1006,23 @@ mod tests {
 		let panner = graph.create_node(NodeKind::StereoPanner);
 		graph.param(panner, ParamKind::Gain);
 	}
+
+	#[test]
+	fn a_nan_sample_makes_the_peak_nan_as_math_max_does() {
+		let mut graph = LogGraph::new(44_100.0, 2);
+		let curve = graph.create_curve(&[0.5, f32::NAN, 0.25]);
+		let wave_shaper = graph.create_node(NodeKind::WaveShaper);
+		graph.set_curve(wave_shaper, Some(curve));
+		let buffer = graph.create_buffer(1, 3, 44_100.0);
+		graph
+			.buffer_channel_mut(buffer, 0)
+			.copy_from_slice(&[f32::NAN, 0.5, 0.25]);
+		let source = graph.create_node(NodeKind::BufferSource);
+		graph.set_buffer(source, Some(buffer));
+		let record = graph.finish(None);
+		for summary in [&record.buffers[0].channels[0], &record.buffers[1].channels[0]] {
+			assert!(summary.peak.is_nan() && summary.rms.is_nan());
+		}
+		assert!(record.to_json("").contains(r#""peak":{"$num":"NaN"}"#));
+	}
 }
