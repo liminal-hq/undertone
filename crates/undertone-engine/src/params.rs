@@ -26,6 +26,7 @@
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use undertone_pattern::{ControlMap, Value};
 
 /// A waveform or noise colour a voice can be synthesised from: the TypeScript `SoundType`.
 ///
@@ -528,6 +529,185 @@ impl VoiceParams {
 			cut_group: None,
 		}
 	}
+}
+
+/// The value of the sample rule: a voice with a sample name and no `sustain` holds (a sustain of 1)
+/// instead of the synth's percussive 0.
+const SAMPLE_DEFAULT_SUSTAIN: f64 = 1.0;
+
+impl SoundType {
+	/// The sound type a name spells (`"sine"`, `"white"`, and so on), or `None` for any other word.
+	pub fn from_name(name: &str) -> Option<SoundType> {
+		Some(match name {
+			"sine" => SoundType::Sine,
+			"triangle" => SoundType::Triangle,
+			"square" => SoundType::Square,
+			"sawtooth" => SoundType::Sawtooth,
+			"halfsine" => SoundType::Halfsine,
+			"abssine" => SoundType::Abssine,
+			"pulsesine" => SoundType::Pulsesine,
+			"white" => SoundType::White,
+			"pink" => SoundType::Pink,
+			"brown" => SoundType::Brown,
+			_ => return None,
+		})
+	}
+}
+
+impl FmWave {
+	fn from_name(name: &str) -> Option<FmWave> {
+		Some(match name {
+			"sine" => FmWave::Sine,
+			"triangle" => FmWave::Triangle,
+			"square" => FmWave::Square,
+			"sawtooth" => FmWave::Sawtooth,
+			"halfsine" => FmWave::Halfsine,
+			"abssine" => FmWave::Abssine,
+			"pulsesine" => FmWave::Pulsesine,
+			_ => return None,
+		})
+	}
+}
+
+/// Fills a pattern event's control map out to a complete set of voice parameters: the TypeScript's
+/// `resolveParams(patch)`, which is `{ ...DEFAULT_PARAMS, ...patch }` plus the sample rule.
+///
+/// - **Defaults:** the fields [`VoiceParams::empty`] lists. A control the map sets replaces its default.
+/// - **`undefined`:** a field the map holds as [`Value::Undefined`] replaces its default with nothing.
+///   That is how `.s("bd")` leaves `soundType` unset, and it makes [`VoiceParams::sound_type`] `None`.
+/// - **The sample rule:** a voice with a `sampleName` and no `sustain` gets a `sustain` of 1.
+/// - **Not parameters:** `degree` and `chord` (a pattern that reaches play time unresolved) and any other
+///   key are ignored, as `VoiceParams` has no field for them.
+///
+/// The reference trusts the shape of what the controls wrote; so does this. A value of the wrong kind
+/// (a string for `gainLevel`) cannot come from the control methods, and is read as unset. A word that is
+/// not a sound type, which `sound()` and `s()` do not check, leaves `soundType` unset.
+///
+/// ```
+/// use undertone_engine::params::{resolve_params, Pitch, SoundType};
+/// use undertone_pattern::control::note;
+/// use undertone_pattern::{Fraction, Span};
+///
+/// let pattern = note("c3 e3")?.gain(0.5)?.lpf(1200.0)?;
+/// let haps = pattern.query(Span::new(Fraction::from_int(0), Fraction::from_int(1)));
+/// let params = resolve_params(&haps[0].value);
+/// assert_eq!(params.pitch, Some(Pitch::Name("c3".into())));
+/// assert_eq!(params.gain_level, 0.5);
+/// assert_eq!(params.filter_cutoff, Some(1200.0));
+/// assert_eq!(params.sound_type, Some(SoundType::Sine)); // a default
+/// assert_eq!(params.attack, 0.01); // a default
+/// # Ok::<(), undertone_pattern::Error>(())
+/// ```
+pub fn resolve_params(patch: &ControlMap) -> VoiceParams {
+	let mut params = VoiceParams::empty();
+	let num = |key: &str| patch.get(key).and_then(Value::as_number);
+	let text = |key: &str| match patch.get(key) {
+		Some(Value::Str(s)) => Some(s.as_str()),
+		_ => None,
+	};
+	let list = |key: &str| match patch.get(key) {
+		Some(Value::List(items)) => Some(items),
+		_ => None,
+	};
+	let numbers = |key: &str| {
+		list(key).map(|items| {
+			items
+				.iter()
+				.map(|v| v.as_number().unwrap_or(f64::NAN))
+				.collect::<Vec<f64>>()
+		})
+	};
+
+	// `soundType` is the one default that a patch can erase on purpose.
+	params.sound_type = match patch.get_raw("soundType") {
+		None => params.sound_type,
+		Some(Value::Str(name)) => SoundType::from_name(name),
+		Some(_) => None,
+	};
+	params.pitch = match patch.get("pitch") {
+		Some(Value::Str(name)) => Some(Pitch::Name(name.clone())),
+		Some(Value::Num(hz)) => Some(Pitch::Hz(*hz)),
+		_ => None,
+	};
+	params.sample_name = text("sampleName").map(String::from);
+	params.sample_bank = text("sampleBank").map(String::from);
+
+	params.gain_level = num("gainLevel").unwrap_or(params.gain_level);
+	params.attack = num("attack").unwrap_or(params.attack);
+	params.decay = num("decay").unwrap_or(params.decay);
+	params.sustain = num("sustain").unwrap_or(params.sustain);
+	params.release = num("release").unwrap_or(params.release);
+	params.filter_cutoff = num("filterCutoff");
+	params.filter_env_amount = num("filterEnvAmount").unwrap_or(params.filter_env_amount);
+	params.filter_attack = num("filterAttack").unwrap_or(params.filter_attack);
+	params.filter_decay = num("filterDecay").unwrap_or(params.filter_decay);
+	params.filter_sustain = num("filterSustain").unwrap_or(params.filter_sustain);
+	params.filter_release = num("filterRelease").unwrap_or(params.filter_release);
+	params.hpf_cutoff = num("hpfCutoff");
+	params.phaser_rate = num("phaserRate");
+	params.room_level = num("roomLevel");
+	params.room_size = num("roomSize").unwrap_or(params.room_size);
+	params.delay_level = num("delayLevel");
+	params.delay_time = num("delayTime").unwrap_or(params.delay_time);
+	params.delay_feedback = num("delayFeedback").unwrap_or(params.delay_feedback);
+	params.orbit = num("orbit");
+	params.slide_time = num("slideTime").unwrap_or(params.slide_time);
+	params.pitch_env_amount = num("pitchEnvAmount");
+	params.pitch_attack = num("pitchAttack");
+	params.pitch_decay = num("pitchDecay");
+	params.pitch_steps = numbers("pitchSteps");
+	params.pitch_step_rate = num("pitchStepRate");
+	params.fm_index = num("fmIndex");
+	params.fm_harmonicity = num("fmHarmonicity");
+	params.fm_attack = num("fmAttack");
+	params.fm_decay = num("fmDecay");
+	params.fm_sustain = num("fmSustain");
+	params.fm_release = num("fmRelease");
+	params.fm_env_curve = match text("fmEnvCurve") {
+		Some("lin") => Some(FmEnvCurve::Lin),
+		Some("exp") => Some(FmEnvCurve::Exp),
+		_ => None,
+	};
+	params.fm_wave = text("fmWave").and_then(FmWave::from_name);
+	params.nudge_time = num("nudgeTime").unwrap_or(params.nudge_time);
+	params.pan = num("pan");
+	params.pan_path = list("panPath").map(|points| {
+		points
+			.iter()
+			.map(|point| PanPoint {
+				time: point
+					.get("time")
+					.and_then(Value::as_number)
+					.unwrap_or(f64::NAN),
+				pan: point
+					.get("pan")
+					.and_then(Value::as_number)
+					.unwrap_or(f64::NAN),
+			})
+			.collect()
+	});
+	params.autopan = num("autopan");
+	params.autopan_depth = num("autopanDepth");
+	params.autopan_shape = match text("autopanShape") {
+		Some("sine") => Some(AutopanShape::Sine),
+		Some("triangle") => Some(AutopanShape::Triangle),
+		Some("square") => Some(AutopanShape::Square),
+		_ => None,
+	};
+	params.autopan_phase = num("autopanPhase");
+	params.pan_slide_from = num("panSlideFrom");
+	params.pan_slide_time = num("panSlideTime");
+	params.pan_law = num("panLaw");
+	params.channel_gains = numbers("channelGains");
+	params.duration = num("duration");
+	params.legato = num("legato");
+	params.velocity = num("velocity");
+	params.cut_group = num("cutGroup");
+
+	if params.sample_name.is_some() && patch.get("sustain").is_none() {
+		params.sustain = SAMPLE_DEFAULT_SUSTAIN;
+	}
+	params
 }
 
 impl Default for VoiceParams {
