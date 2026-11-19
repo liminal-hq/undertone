@@ -124,7 +124,12 @@ pub fn nine_digits_text(value: f64) -> String {
 	if value == 0.0 {
 		return String::from(if value.is_sign_negative() { "-0" } else { "0" });
 	}
-	layout(value < 0.0, &nine(value.abs()))
+	// `Number(value.toPrecision(9))` reads the nine digits back as a double, and `String` prints the shortest
+	// text of that double. They differ from the nine digits only where a double has fewer than nine digits of
+	// precision, which is the subnormals (`5e-324`, not `4.94065646e-324`).
+	let rounded = layout(false, &nine(value.abs()));
+	let read_back: f64 = rounded.parse().expect("nine digits are a number");
+	layout(value < 0.0, &shortest(read_back))
 }
 
 /// A number as the corpus JSON holds it at nine digits: the same text as [`nine_digits_text`], except that the
