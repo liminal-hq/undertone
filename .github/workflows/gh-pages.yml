@@ -16,7 +16,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The Rust API docs are built in the shared Rust CI image (the digest is the one ci.yml pins) and handed to the site build.
+  rustdoc:
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build the Rust API docs
+        run: cargo doc --no-deps --workspace --locked
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+      - name: Upload the Rust API docs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rustdoc
+          path: target/doc
+          if-no-files-found: error
+          retention-days: 1
+
   build:
+    needs: rustdoc
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -27,6 +50,15 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+
+      - name: Download the Rust API docs
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: rustdoc
+          path: docs/public/rust
+
+      - name: Check the Rust guide
+        run: bash scripts/check-rust-docs.sh
 
       - name: Build the docs site
         run: bun run docs:build
