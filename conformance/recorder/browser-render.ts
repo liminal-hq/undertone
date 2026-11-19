@@ -8,7 +8,13 @@ import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { browserJson, renderHead, RENDERS_PATH, serialiseRenders } from './renders';
+import {
+  browserJson,
+  checkRenderQuirks,
+  renderHead,
+  RENDERS_PATH,
+  serialiseRenders
+} from './renders';
 import type { BrowserRecord } from './renders';
 import { renderCases } from './rendersData';
 import { loadReference, repoRoot } from './reference';
@@ -92,6 +98,8 @@ async function main(): Promise<void> {
   }
 
   const ref = await loadReference();
+  const problems = renderCases().flatMap((spec) => checkRenderQuirks(ref, spec));
+  if (problems.length > 0) throw new Error(problems.join('\n'));
   const warn = console.warn;
   console.warn = () => undefined; // the reference warns once per clamp; the corpus records values, not logs
   const script = await bundlePage();

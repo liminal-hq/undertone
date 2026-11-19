@@ -13,7 +13,21 @@ export interface RenderCase {
   from: string;
   program: Program;
   render: Omit<RenderOptions, 'context'>;
+  /**
+   * Set only on a case that keeps a Chromium quirk on record (`R-layer4.md`). Every other case is recorded on
+   * 128-frame boundaries without delay feedback (`checkRenderQuirks`), so the quirks do not apply and it is held
+   * to the proposed tolerances.
+   * - `delay-feedback`: the program has a delay send with feedback, and Chromium adds 128 frames to every pass through the loop.
+   * - `mid-quantum-start`: a voice starts inside a render quantum, and Chromium runs its oscillator at the wrong frequency for the rest of that quantum.
+   */
+  quirk?: Quirk;
 }
+
+/** The two Chromium behaviours a labelled case documents. */
+export type Quirk = 'delay-feedback' | 'mid-quantum-start';
+
+/** Frames in a Web Audio render quantum. */
+export const RENDER_QUANTUM = 128;
 
 const note = (source: string): Step => ['note', source];
 const sound = (type: string): Step => ['sound', type];
@@ -31,7 +45,16 @@ function voice(type: string, source = 'a2 e3 a3 e4'): Program {
   ];
 }
 
-const RAW = { sampleRate: 48000, channels: 2, cps: 1, cycles: 2, master: false } as const;
+/**
+ * The two timing setups the cases use. Every onset must land on a multiple of 128 frames (a render quantum) **and be
+ * exact in a double**: with an onset such as 0.4 * 3 = 1.2000000000000002 s, Chromium puts the voice's first sample
+ * one event too early (a gain event at the next instant, so the first sample is at the unset gain: a click of up to
+ * full scale). So the sample rates are 2^k times a small odd number and the cycles a power of two seconds:
+ * - `S49` is 49152 Hz (3 * 2^14) at one cycle a second: an eighth of a cycle is 6144 frames (48 quanta), and every onset is a multiple of 1/128 s, exact in a double.
+ * - `S32` is 32768 Hz at one cycle a second: a cycle is 256 quanta, so every power-of-two division of it (down to 1/256) is whole quanta.
+ */
+const S49 = { sampleRate: 49152, channels: 2, cps: 1, cycles: 2, master: false } as const;
+const S32 = { sampleRate: 32768, channels: 2, cps: 1, cycles: 2, master: false } as const;
 
 /** The loud chord pattern the limiter cases share: well above full scale before the master bus. */
 const LOUD: Program = [
@@ -94,7 +117,7 @@ const MIX: Program = [
       ['roomsize', 2],
       ['delay', 0.25],
       ['delaytime', 0.25],
-      ['delayfeedback', 0.4],
+      ['delayfeedback', 0],
       ['pan', 0.6]
     ],
     [
@@ -110,14 +133,14 @@ const MIX: Program = [
   ]
 ];
 
-/** The seventeen cases, each at most four seconds. */
+/** The twenty cases, each at most four seconds. */
 export function renderCases(): RenderCase[] {
   return [
     ...(['sine', 'triangle', 'square', 'sawtooth'] as const).map((type) => ({
       id: `render-voice-${type}`,
       from: `a ${type} voice over four notes (A2 to E4), master bus off`,
       program: voice(type),
-      render: { ...RAW }
+      render: { ...S49 }
     })),
     {
       id: 'render-voice-white',
@@ -130,7 +153,20 @@ export function renderCases(): RenderCase[] {
         ['release', 0.05],
         ['gain', 0.5]
       ],
-      render: { ...RAW }
+      render: { ...S49 }
+    },
+    {
+      id: 'render-voice-pink-brown',
+      from: 'pink and brown noise hits through the seeded noise buffers, master bus off',
+      program: [
+        sound('pink brown ~ pink'),
+        ['attack', 0.002],
+        ['decay', 0.1],
+        ['sustain', 0],
+        ['release', 0.05],
+        ['gain', 0.5]
+      ],
+      render: { ...S32 }
     },
     {
       id: 'render-filter-sweep',
@@ -148,7 +184,7 @@ export function renderCases(): RenderCase[] {
         ['lpd', 0.05],
         ['lps', 1]
       ],
-      render: { ...RAW, cycles: 3 }
+      render: { ...S32, cycles: 3 }
     },
     {
       id: 'render-envelope',
@@ -163,7 +199,7 @@ export function renderCases(): RenderCase[] {
         ['gain', 0.6],
         ['legato', 0.5]
       ],
-      render: { ...RAW, cycles: 2, tail: 1 }
+      render: { ...S32, cycles: 2, tail: 1 }
     },
     {
       id: 'render-reverb',
@@ -180,11 +216,28 @@ export function renderCases(): RenderCase[] {
         ['room', 0.5],
         ['roomsize', 2]
       ],
-      render: { ...RAW, cycles: 2, tail: 1.5 }
+      render: { ...S32, cycles: 2, tail: 1.5 }
     },
     {
       id: 'render-delay',
-      from: 'a short pluck into the orbit delay (0.25 s, feedback 0.5) with the tail rendered',
+      from: 'a short pluck into the orbit delay (0.25 s, no feedback: one echo) with the tail rendered',
+      program: [
+        note('e4 ~ ~ ~'),
+        sound('square'),
+        ['attack', 0.003],
+        ['decay', 0.08],
+        ['sustain', 0],
+        ['release', 0.05],
+        ['gain', 0.4],
+        ['delay', 0.5],
+        ['delaytime', 0.25],
+        ['delayfeedback', 0]
+      ],
+      render: { ...S32, cycles: 2, tail: 1 }
+    },
+    {
+      id: 'render-quirk-delay-feedback',
+      from: 'KNOWN QUIRK: a short pluck into the orbit delay with feedback 0.5; Chromium adds 128 frames to every pass through the loop',
       program: [
         note('e4 ~ ~ ~'),
         sound('square'),
@@ -197,7 +250,15 @@ export function renderCases(): RenderCase[] {
         ['delaytime', 0.25],
         ['delayfeedback', 0.5]
       ],
-      render: { ...RAW, cycles: 2, tail: 1 }
+      render: { ...S32, cycles: 2, tail: 1 },
+      quirk: 'delay-feedback'
+    },
+    {
+      id: 'render-quirk-mid-quantum-start',
+      from: 'KNOWN QUIRK: four sine notes at 1 cycle a second at 48 kHz, so each starts 96 or 32 frames into a render quantum; Chromium runs the oscillator at the wrong frequency for the rest of that quantum',
+      program: voice('sine'),
+      render: { sampleRate: 48000, channels: 2, cps: 1, cycles: 2, master: false },
+      quirk: 'mid-quantum-start'
     },
     {
       id: 'render-pan-law',
@@ -213,7 +274,7 @@ export function renderCases(): RenderCase[] {
         ['pan', '-1 -0.5 0 0.5 1 0.5 0 -0.5'],
         ['panlaw', -3]
       ],
-      render: { ...RAW, cycles: 2 }
+      render: { ...S49 }
     },
     {
       id: 'render-pan-law-6',
@@ -229,26 +290,26 @@ export function renderCases(): RenderCase[] {
         ['pan', '-1 -0.5 0 0.5 1 0.5 0 -0.5'],
         ['panlaw', -6]
       ],
-      render: { ...RAW, cycles: 2 }
+      render: { ...S49 }
     },
     {
       id: 'render-limiter-off',
       from: 'a loud sawtooth chord pair (gain 1.5) with the master bus off, so it clips the float range',
       program: LOUD,
-      render: { ...RAW, sampleRate: 44100 }
+      render: { ...S32 }
     },
     {
       id: 'render-limiter-on',
       from: 'the same loud pair through the default master bus and its limiter',
       program: LOUD,
-      render: { sampleRate: 44100, channels: 2, cps: 1, cycles: 2, tail: 0.5 }
+      render: { sampleRate: 32768, channels: 2, cps: 1, cycles: 2, tail: 0.5 }
     },
     {
       id: 'render-limiter-ceiling',
       from: 'the same loud pair through the master bus with a -6 dB ceiling',
       program: LOUD,
       render: {
-        sampleRate: 44100,
+        sampleRate: 32768,
         channels: 2,
         cps: 1,
         cycles: 2,
@@ -258,21 +319,21 @@ export function renderCases(): RenderCase[] {
     },
     {
       id: 'render-playground-acid-line',
-      from: 'the playground example Acid line (150 bpm, jux rev), master bus off',
+      from: 'the playground example Acid line (120 bpm, where the playground has 150; jux rev), master bus off',
       program: ACID_LINE,
-      render: { sampleRate: 48000, channels: 2, bpm: 150, cycles: 2, master: false }
+      render: { sampleRate: 49152, channels: 2, bpm: 120, cycles: 2, master: false }
     },
     {
       id: 'render-playground-acid-line-master',
       from: 'the same example through the default master bus',
       program: ACID_LINE,
-      render: { sampleRate: 48000, channels: 2, bpm: 150, cycles: 2 }
+      render: { sampleRate: 49152, channels: 2, bpm: 120, cycles: 2 }
     },
     {
       id: 'render-mix-four-bars',
-      from: 'four bars of bass, pad, lead with reverb and delay, and a hat, through the default master bus',
+      from: 'four bars of bass, pad, lead with reverb and an echo (no feedback), and a hat, through the default master bus',
       program: MIX,
-      render: { sampleRate: 48000, channels: 2, cps: 1, cycles: 4 }
+      render: { sampleRate: 32768, channels: 2, cps: 1, cycles: 4 }
     }
   ];
 }

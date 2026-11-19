@@ -6,13 +6,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { encodeValue, nineDigits, programJson, serialiseFile } from './format';
+import { encodeValue, nineDigits, nineDigitsText, programJson, serialiseFile } from './format';
 import type { CaseRecord, Json } from './format';
 import { renderOnsets, scoreLines } from './graph';
 import { build } from './programs';
 import { BAND_COUNT, windowFrames } from './renderSummary';
 import type { RenderSummary } from './renderSummary';
-import { renderCases } from './rendersData';
+import { RENDER_QUANTUM, renderCases } from './rendersData';
 import type { RenderCase } from './rendersData';
 import type { Reference } from './reference';
 
@@ -37,8 +37,52 @@ export function renderHead(ref: Reference, spec: RenderCase): CaseRecord {
     from: spec.from,
     program: programJson(spec.program),
     render: encodeValue(spec.render),
+    ...(spec.quirk === undefined ? {} : { quirk: spec.quirk }),
     score: scoreLines(renderOnsets(ref, built.pattern, spec.render))
   };
+}
+
+/**
+ * Checks what Chromium's two quirks need (`docs/rust-migration/results/R-layer4.md`), without a browser: every voice
+ * of a case not labelled with a quirk starts on a multiple of 128 frames at the case's sample rate, **exactly in a
+ * double** (an onset such as 1.2000000000000002 s is a hair after its frame, which Chromium treats as a late gain
+ * event, so the first sample is wrong), and no voice has a delay send with feedback. A case labelled with a quirk
+ * really has it, so the label cannot go stale.
+ */
+export function checkRenderQuirks(ref: Reference, spec: RenderCase): string[] {
+  const built = build(ref, spec.program);
+  if ('error' in built) return [`${spec.id}: ${built.error}`];
+  const sampleRate = spec.render.sampleRate ?? 48000;
+  const voices = renderOnsets(ref, built.pattern, spec.render);
+  let misaligned = 0;
+  let feedback = 0;
+  for (const voice of voices) {
+    const quanta = (voice.at * sampleRate) / RENDER_QUANTUM;
+    // The file holds the onset to nine significant digits, so it must also survive that.
+    const printed = Number(nineDigitsText(voice.at));
+    if (quanta !== Math.round(quanta) || printed !== voice.at) misaligned++;
+    const patch = voice.patch as { delayLevel?: number; delayFeedback?: number };
+    if ((patch.delayLevel ?? 0) > 0 && (patch.delayFeedback ?? 0) > 0) feedback++;
+  }
+  const problems: string[] = [];
+  if (voices.length === 0) problems.push(`${spec.id}: the program books no voice`);
+  if (spec.quirk !== 'mid-quantum-start' && misaligned > 0) {
+    problems.push(
+      `${spec.id}: ${misaligned} of ${voices.length} onsets are not exactly on a ${RENDER_QUANTUM}-frame boundary at ${sampleRate} Hz, exact in a double (Chromium starts such a voice at the wrong phase; choose the sample rate and cycle length so they align, or label the case \`mid-quantum-start\`)`
+    );
+  }
+  if (spec.quirk !== 'delay-feedback' && feedback > 0) {
+    problems.push(
+      `${spec.id}: ${feedback} voices have a delay send with feedback (Chromium adds a quantum per pass; use feedback 0, or label the case \`delay-feedback\`)`
+    );
+  }
+  if (spec.quirk === 'mid-quantum-start' && misaligned === 0) {
+    problems.push(`${spec.id}: labelled \`mid-quantum-start\` but every onset is on a boundary`);
+  }
+  if (spec.quirk === 'delay-feedback' && feedback === 0) {
+    problems.push(`${spec.id}: labelled \`delay-feedback\` but no voice has delay feedback`);
+  }
+  return problems;
 }
 
 /** A summary's numbers to nine significant digits, as the file holds them. */
@@ -104,8 +148,9 @@ export function checkRenders(ref: Reference, casesDir: string): string[] {
       problems.push(`${spec.id}: missing from ${RENDERS_PATH}`);
       continue;
     }
+    problems.push(...checkRenderQuirks(ref, spec));
     const head = renderHead(ref, spec);
-    for (const key of ['from', 'program', 'render', 'score']) {
+    for (const key of ['from', 'program', 'render', 'quirk', 'score']) {
       if (JSON.stringify(entry[key]) !== JSON.stringify(head[key])) {
         problems.push(
           `${spec.id}: \`${key}\` differs from the reference's (run the browser render)`
