@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 // It runs in the worklet global scope, so it is plain JavaScript held as text (see workletShim.ts for why): the module the main
-// thread builds is the shim, the render module's glue, and this, in that order, and this is called with the global scope and the
+// thread builds is the shim, the worklet module's glue, and this, in that order, and this is called with the global scope and the
 // glue's exports. It plays booked voices only (D-48): it never queries a pattern. The main thread posts the voices a pattern gave
-// (`collectVoices`, flat) and the frame they start at; the processor books them in the render module's `WorkletEngine` and renders
+// (`collectVoices`, flat) and the frame they start at; the processor books them in the worklet module's `WorkletEngine` and renders
 // each 128-frame block into its output.
 //
 // Messages in (`port.postMessage`):

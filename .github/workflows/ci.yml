@@ -470,13 +470,14 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/wav.ts
       - name: Worklet engine (the render module's streaming export against its offline render)
         run: bun crates/undertone-wasm/tests/js/worklet.ts
-      - name: Upload the two modules and their glue
+      - name: Upload the three modules and their glue
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wasm-module
           path: |
             packages/undertone/wasm/undertone_wasm*
             packages/undertone/wasm/render/undertone_wasm_render*
+            packages/undertone/wasm/worklet/undertone_worklet*
           if-no-files-found: error
           retention-days: 1
       - name: Write summary

@@ -84,6 +84,10 @@ const SECONDS_PER_CYCLE_AT_1_BPM: f64 = 240.0;
 /// `conformance/README.md`.
 pub const MAX_RENDER_CYCLES: f64 = 1_048_576.0;
 
+/// The highest `start_cycle` a render accepts (2^53, the last whole number an `f64` counts exactly). A pass that
+/// starts further on is an error, where the offset would stop being exact.
+pub const MAX_START_CYCLE: f64 = 9_007_199_254_740_992.0;
+
 /// The most frames a render may be (tail included), about an hour and a half at 48000 Hz. The reference has no
 /// bound (a context that size fails to allocate); this one makes the error a message instead of an abort.
 pub const MAX_RENDER_FRAMES: f64 = 268_435_456.0;
@@ -117,6 +121,12 @@ pub enum MasterSetting {
 pub struct RenderOptions {
 	/// Whole pattern cycles to render. Default 1 when `seconds` is omitted. Pass this or `seconds`, not both.
 	pub cycles: Option<f64>,
+	/// The cycle the pass starts at, a whole number from 0 (the default): the render holds cycles `start_cycle` to
+	/// `start_cycle + cycles` of the pattern, with each onset's time counted from the start of the first of them,
+	/// so a pattern that changes from cycle to cycle (`<c3 e3 g3>`) sounds as it does from that cycle on. This is
+	/// what lets a worklet loop go on from cycle to cycle as the Web Audio `loop()` does. The shift is made on the
+	/// exact fraction of the onset, before it becomes seconds.
+	pub start_cycle: Option<f64>,
 	/// Seconds of the pattern to render: onsets at or after this time are dropped, and the pass ends at it.
 	pub seconds: Option<f64>,
 	/// Tempo in beats per minute (four beats a cycle). Pass this or `cps`.
@@ -263,13 +273,39 @@ pub fn collect_onset_values(
 	cycle_seconds: f64,
 	gated: bool,
 ) -> Result<Vec<(f64, ControlMap)>> {
+	collect_onset_values_from(
+		pattern,
+		span,
+		Fraction::from_int(0),
+		pattern_start_time,
+		cycle_seconds,
+		gated,
+	)
+}
+
+/// [`collect_onset_values`] with the pattern's time counted from cycle `origin` instead of cycle 0: an onset at
+/// pattern time `t` starts at `pattern_start_time + (t - origin) * cycle_seconds`. The subtraction is exact (a
+/// [`Fraction`]) and the seconds come after it, so an onset of cycle 5 collected with an origin of 3 has the very
+/// start time of an onset of cycle 2 of a pattern that began there, with no rounding of its own.
+///
+/// # Errors
+///
+/// As [`collect_onsets`].
+pub fn collect_onset_values_from(
+	pattern: &Pattern<ControlMap>,
+	span: Span,
+	origin: Fraction,
+	pattern_start_time: f64,
+	cycle_seconds: f64,
+	gated: bool,
+) -> Result<Vec<(f64, ControlMap)>> {
 	let mut voices = Vec::new();
 	for hap in pattern.try_query(span)? {
 		let Some(whole) = hap.whole else { continue };
 		if whole.begin != hap.part.begin {
 			continue;
 		}
-		let start_time = pattern_start_time + whole.begin.to_f64() * cycle_seconds;
+		let start_time = pattern_start_time + (whole.begin - origin).to_f64() * cycle_seconds;
 		let event_seconds = (whole.end - whole.begin).to_f64() * cycle_seconds;
 		let gate = match hap.value.get("legato").and_then(Value::as_number) {
 			Some(legato) => Some(event_seconds * legato),
@@ -341,6 +377,8 @@ pub struct RenderPlan {
 	pub cycle_seconds: f64,
 	/// How many cycles are queried.
 	pub cycles: f64,
+	/// The whole cycle number the first of them is (0 unless the render was asked to start later).
+	pub start_cycle: f64,
 	/// Seconds of the pass, before the tail: `cycles` cycles, or the `seconds` asked for.
 	pub pass_seconds: f64,
 	/// Frames of the pass, at least 1. A wrapped render is exactly this long.
@@ -419,6 +457,14 @@ impl RenderPlan {
 		}
 		let cycle_seconds = cycle_seconds_for(options.bpm, options.cps, options.default_cpm)?;
 
+		let start_cycle = options.start_cycle.unwrap_or(0.0);
+		if !is_integer(start_cycle) || start_cycle < 0.0 || !(start_cycle <= MAX_START_CYCLE) {
+			return Err(Error::new(format!(
+				"startCycle must be a whole number from 0 to {}, got {}",
+				number_to_string(MAX_START_CYCLE),
+				number_to_string(start_cycle)
+			)));
+		}
 		let (cycles, pass_seconds) = match options.seconds {
 			Some(seconds) => {
 				require_positive("seconds", seconds)?;
@@ -457,6 +503,7 @@ impl RenderPlan {
 			tail,
 			cycle_seconds,
 			cycles,
+			start_cycle,
 			pass_seconds,
 			pass_length: frames(pass_seconds),
 			length: frames(pass_seconds + tail),
@@ -506,14 +553,20 @@ impl RenderPlan {
 	pub fn collect_values(&self, pattern: &Pattern<ControlMap>) -> Result<Vec<(f64, ControlMap)>> {
 		let mut values = Vec::new();
 		let mut cycle = 0.0;
+		let origin = Fraction::from_int(self.start_cycle as i128);
 		while cycle < self.cycles {
-			let span = Span::new(
-				Fraction::from_int(cycle as i128),
-				Fraction::from_int(cycle as i128 + 1),
-			);
-			for (start_time, value) in
-				collect_onset_values(pattern, span, 0.0, self.cycle_seconds, self.gated)?
-			{
+			// Whole cycles, counted from the start cycle: the cycle number is an exact integer all the way (an `f64`
+			// holds every whole number below 2^53), and the shift to the pass's own time is made on the fraction.
+			let first = self.start_cycle as i128 + cycle as i128;
+			let span = Span::new(Fraction::from_int(first), Fraction::from_int(first + 1));
+			for (start_time, value) in collect_onset_values_from(
+				pattern,
+				span,
+				origin,
+				0.0,
+				self.cycle_seconds,
+				self.gated,
+			)? {
 				if self.seconds.is_none() || start_time < self.pass_seconds {
 					values.push((start_time, value));
 				}
@@ -755,6 +808,107 @@ mod tests {
 				.starts_with("default_cpm must be positive and finite")
 			);
 		}
+	}
+
+	/// The pitch of a collected onset, for comparing which cycle's note it is.
+	fn pitch(value: &ControlMap) -> String {
+		match value.get("pitch") {
+			Some(Value::Str(name)) => name.to_string(),
+			other => panic!("no pitch: {other:?}"),
+		}
+	}
+
+	#[test]
+	fn a_pass_from_a_start_cycle_is_the_same_cycles_of_a_long_collection_shifted_back() {
+		// Alternates with the cycle, and has onsets inside the cycle. 1/2 and 1/4 are exact in binary, so with a cycle of
+		// 2 s the shifted start times are equal to the last bit, not only to a tolerance.
+		let pattern = note("<c3 e3 g3> [d4 <f4 a4>]").unwrap();
+		let long = RenderPlan::new(&RenderOptions {
+			cycles: Some(12.0),
+			cps: Some(0.5),
+			..RenderOptions::default()
+		})
+		.unwrap()
+		.collect_values(&pattern)
+		.unwrap();
+		for start in [0u32, 1, 2, 3, 5, 8] {
+			let plan = RenderPlan::new(&RenderOptions {
+				cycles: Some(4.0),
+				start_cycle: Some(f64::from(start)),
+				cps: Some(0.5),
+				..RenderOptions::default()
+			})
+			.unwrap();
+			assert_eq!(plan.start_cycle, f64::from(start));
+			let got = plan.collect_values(&pattern).unwrap();
+			let shift = f64::from(start) * plan.cycle_seconds;
+			let expected: Vec<(f64, ControlMap)> = long
+				.iter()
+				.filter(|(time, _)| *time >= shift && *time < shift + 4.0 * plan.cycle_seconds)
+				.map(|(time, value)| (time - shift, value.clone()))
+				.collect();
+			assert_eq!(got, expected, "from cycle {start}");
+			assert!(!got.is_empty());
+		}
+	}
+
+	#[test]
+	fn a_start_cycle_makes_an_alternating_pattern_go_on_where_it_was() {
+		let pattern = note("<c3 e3 g3>").unwrap();
+		let from = |start: f64| {
+			let plan = RenderPlan::new(&RenderOptions {
+				cycles: Some(3.0),
+				start_cycle: Some(start),
+				..RenderOptions::default()
+			})
+			.unwrap();
+			plan.collect_values(&pattern)
+				.unwrap()
+				.iter()
+				.map(|(time, value)| (*time, pitch(value)))
+				.collect::<Vec<_>>()
+		};
+		let names =
+			|passes: Vec<(f64, String)>| passes.into_iter().map(|(_, n)| n).collect::<Vec<_>>();
+		assert_eq!(names(from(0.0)), ["c3", "e3", "g3"]);
+		assert_eq!(names(from(1.0)), ["e3", "g3", "c3"]);
+		assert_eq!(names(from(4.0)), ["e3", "g3", "c3"]);
+		// Times count from the start of the pass: one onset a cycle, two seconds a cycle.
+		assert_eq!(
+			from(7.0).iter().map(|(t, _)| *t).collect::<Vec<_>>(),
+			[0.0, 2.0, 4.0]
+		);
+		// A very late start is exact too: 9,007,199,254,740,000 is a multiple of 3.
+		let late = 9_007_199_254_740_000.0_f64;
+		assert_eq!(late % 3.0, 0.0);
+		assert_eq!(names(from(late)), ["c3", "e3", "g3"]);
+	}
+
+	#[test]
+	fn a_start_cycle_must_be_a_whole_number_from_zero() {
+		let message = |start: f64| {
+			plan(RenderOptions {
+				start_cycle: Some(start),
+				..RenderOptions::default()
+			})
+			.unwrap_err()
+			.message()
+			.to_string()
+		};
+		assert_eq!(
+			message(1.5),
+			"startCycle must be a whole number from 0 to 9007199254740992, got 1.5"
+		);
+		assert!(message(-1.0).starts_with("startCycle must be a whole number"));
+		assert!(message(f64::NAN).starts_with("startCycle must be a whole number"));
+		assert!(message(1e300).starts_with("startCycle must be a whole number"));
+		assert!(
+			plan(RenderOptions {
+				start_cycle: Some(0.0),
+				..RenderOptions::default()
+			})
+			.is_ok()
+		);
 	}
 
 	#[test]

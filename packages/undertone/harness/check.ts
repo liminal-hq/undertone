@@ -10,7 +10,7 @@
 // Usage: bun packages/undertone/harness/check.ts [--harness SECONDS]
 //
 // What it proves: the worklet loads (the blob module with the shim, the glue, and the processor in a real AudioWorkletGlobalScope,
-// which has no `TextDecoder`), the render module is instantiated from the module posted in `processorOptions`, a pass is posted
+// which has no `TextDecoder`), the worklet module is instantiated from the module posted in `processorOptions`, a pass is posted
 // and booked, and the output equals the package's own offline render of the same pattern. What it does not prove: anything about
 // performance (a headless run has no real audio device, and the offline context renders as fast as it can), or about how it sounds.
 // With `--harness SECONDS` it also opens the harness page on a real-time AudioContext in headless Chromium for that long, which

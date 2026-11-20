@@ -66,7 +66,7 @@ export function serve(port = 8080, isolated = true, hostname = '127.0.0.1') {
 if (import.meta.main) {
   if (
     !existsSync(join(root, 'dist', 'worklet.js')) ||
-    !existsSync(join(root, 'wasm', 'render', 'undertone_wasm_render_bg.wasm'))
+    !existsSync(join(root, 'wasm', 'worklet', 'undertone_worklet_bg.wasm'))
   ) {
     console.error('the package is not built: run `bun run package:build` first');
     process.exit(1);
