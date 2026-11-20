@@ -38,7 +38,11 @@
     "README.md",
     "CHANGELOG.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/index.node.js",
+    "./dist/init.node.js"
+  ],
   "scripts": {
     "build:wasm": "bash ../../scripts/build-wasm.sh",
     "build": "tsc -p tsconfig.json",
