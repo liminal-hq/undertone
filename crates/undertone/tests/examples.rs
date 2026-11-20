@@ -243,6 +243,8 @@ fn every_guide_page_has_an_example_and_every_example_a_test() {
 		.map(|path| path.file_stem().unwrap().to_string_lossy().into_owned())
 		// The Rust guide pages (`rust-*.md`, the documentation package) are not pages of the reference's guide.
 		.filter(|stem| !stem.starts_with("rust-"))
+		// `runtimes.md` is the npm package's loading page (M6), with no reference example to port.
+		.filter(|stem| stem != "runtimes")
 		.collect();
 	pages.sort();
 	let mut mapped: Vec<String> = GUIDE_PAGES
