@@ -31,6 +31,8 @@ other_checks = true
 "Rust WebAssembly build" = "cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine"
 "Rust crate layering" = "scripts/check-layering.sh"
 "WebAssembly bridge" = "scripts/check-wasm-bridge.sh"
+"Render under WASI" = "scripts/check-wasi-render.sh target/render-reference"
+"Render without a browser" = "scripts/check-package-render.sh target/render-reference"
 
 [[suite]]
 name = "Rust tests"
