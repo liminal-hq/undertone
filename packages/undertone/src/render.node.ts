@@ -1,4 +1,4 @@
-// The render module under Node, Bun, and Deno: instantiated synchronously from disk the first time a render or encodeWav needs it
+// The render module under Node, Bun, and Deno: instantiated synchronously from disk the first time a render needs it
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT

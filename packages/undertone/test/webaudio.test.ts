@@ -155,17 +155,27 @@ describe('samples in both modules', () => {
 });
 
 describe('encodeWav', () => {
-  it('encodes through the render module, which a Node entry loads on first use', () => {
+  it('encodes synchronously in TypeScript, without the render module', () => {
     const bytes = encodeWav({ sampleRate: 8000, channels: [new Float32Array([0, 0.5, -0.5])] });
     expect(String.fromCharCode(...bytes.subarray(0, 4))).toBe('RIFF');
     expect(bytes.length).toBe(44 + 6);
   });
 
-  it('reads a plain array as samples instead of handing the module something it cannot hold', () => {
+  it('reads a plain array as samples, as 0.3 did', () => {
     const bytes = encodeWav(
       { sampleRate: 8000, channels: [[0, 0.5] as unknown as Float32Array] },
       { dither: false }
     );
     expect(bytes.length).toBe(44 + 4);
+  });
+
+  it('refuses a bit depth 0.3 never allowed, after the channel checks', () => {
+    const source = { sampleRate: 8000, channels: [new Float32Array(2)] };
+    expect(() => encodeWav(source, { bitDepth: 8 as 16 })).toThrow(
+      'encodeWav: bitDepth must be 16, 24 or 32, got 8'
+    );
+    expect(() => encodeWav({ sampleRate: 8000, channels: [] }, { bitDepth: 8 as 16 })).toThrow(
+      'encodeWav: the source has no channels'
+    );
   });
 });

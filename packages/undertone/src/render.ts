@@ -1,4 +1,4 @@
-// Offline rendering and WAV encoding through the lazily loaded render module, and booking on a caller's offline context
+// Offline rendering through the lazily loaded render module, and booking on a caller's offline context
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@
 // loads: the Node, Bun, and Deno entries instantiate it synchronously from disk on first use; the browser entries import it
 // with a dynamic `import()` and fetch it, on the first render.
 
-import type { OfflineContextInit, RenderOptions, WavOptions, WavSource } from './engineTypes.js';
+import type { OfflineContextInit, RenderOptions } from './engineTypes.js';
 import { Pattern, handleOfPattern } from './pattern.js';
 import type { Hap, TimeSpan } from './pattern.js';
 import { connectRenderSamples, loadSamples, pendingKeysIn } from './samples.js';
@@ -62,12 +62,6 @@ export function loadRender(): Promise<RenderGlue> {
     }
   );
   return loading;
-}
-
-/** The render module now, or `undefined` when it cannot be had synchronously (a browser before its first render). */
-function renderNow(): RenderGlue | undefined {
-  if (!loaded && loader?.sync) ready(loader.sync());
-  return loaded;
 }
 
 /** The render module's warnings are its own set: `./testing`'s `resetWarnings` clears them too. */
@@ -260,43 +254,4 @@ export function renderScore(
   options: RenderOptions
 ): Promise<RenderedAudioBufferLike> {
   return Promise.resolve().then(() => renderVoices(collect(moduleOptions(options)), options));
-}
-
-function channelsOf(source: WavSource): { sampleRate: number; channels: readonly Float32Array[] } {
-  if ('channels' in source) return source;
-  const channels: Float32Array[] = [];
-  for (let i = 0; i < source.numberOfChannels; i++) channels.push(source.getChannelData(i));
-  return { sampleRate: source.sampleRate, channels };
-}
-
-/**
- * Encodes audio as a WAV file and returns its bytes. It runs in the render module: under Node, Bun, and Deno it loads on
- * first use; in a browser it is loaded by the first render, so encode after rendering (or after `await renderToBuffer(...)`
- * of anything) there.
- */
-export function encodeWav(source: WavSource, options: WavOptions = {}): Uint8Array {
-  const module = renderNow();
-  if (!module) {
-    void loadRender().catch(() => undefined);
-    throw new Error(
-      "encodeWav() needs the render module, which a browser loads with the first render: await renderToBuffer() (or a pattern's render()) first"
-    );
-  }
-  const { sampleRate, channels } = channelsOf(source);
-  // The reference's checks of the channels' shape stay here, before anything crosses: the module takes `Float32Array`s
-  // only, and an array that is not one, or a size it should never be asked to allocate, must not reach it.
-  const bitDepth = options.bitDepth ?? 16;
-  if (channels.length === 0) throw new Error('encodeWav: the source has no channels');
-  if (channels.length > 8) {
-    throw new Error(`encodeWav: ${channels.length} channels is more than the 8 WAV supports here`);
-  }
-  const frames = channels[0].length;
-  if (channels.some((c) => c.length !== frames)) {
-    throw new Error('encodeWav: every channel must have the same length');
-  }
-  if (frames * channels.length * (bitDepth / 8) > 0xffffffff - 36) {
-    throw new Error('encodeWav: the audio is too long for a WAV file (over 4 GiB)');
-  }
-  const arrays = channels.map((c) => (c instanceof Float32Array ? c : Float32Array.from(c)));
-  return module.encodeWav(sampleRate, arrays, options);
 }

@@ -12,7 +12,8 @@ export {
   getOrbitBus,
   playParams
 } from './engine.js';
-export { encodeWav, renderToBuffer } from './render.js';
+export { renderToBuffer } from './render.js';
+export { encodeWav } from './wav.js';
 export {
   clearSamples,
   getSampleBaseNote,

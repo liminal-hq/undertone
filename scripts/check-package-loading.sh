@@ -112,12 +112,14 @@ cat >"${app}/page-init/index.html" <<'HTML'
 <!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
 HTML
 cat >"${app}/page-init/main.js" <<'JS'
-import { CHANNEL_ORDER, Fraction, init, mini, note, renderToBuffer } from '@liminal-hq/undertone/init';
+import { CHANNEL_ORDER, Fraction, encodeWav, init, mini, note, renderToBuffer } from '@liminal-hq/undertone/init';
 init().then(async () => {
+  // encodeWav is TypeScript: it works in a browser before any render has loaded the render module.
+  const early = encodeWav({ sampleRate: 8000, channels: [new Float32Array(2)] }).length;
   const haps = mini('a b', (word) => word).query({ begin: new Fraction(0), end: new Fraction(1) });
   const gain = note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel;
   const rendered = await renderToBuffer(note('c3'), { sampleRate: 8000, master: false });
-  document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length} ${rendered.length}`;
+  document.body.textContent = `${early} ${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length} ${rendered.length}`;
 });
 JS
 # Runs a built page's script in Node with a stand-in `document` and a `fetch` that serves the module from disk as
@@ -154,7 +156,7 @@ echo "ok   build.target esnext: built, both modules are assets, and the bundle r
 
 build page-init --outDir ../out-init --emptyOutDir --base ./ >/dev/null || fail "the ./init build at the default target failed"
 [[ "$(ls "${app}"/out-init/assets/*.wasm 2>/dev/null | wc -l)" -ge 2 ]] || fail "the ./init build does not hold both .wasm assets"
-[[ "$(cd "${app}" && node run-built.mjs out-init)" == "a b 0.5 8 16000" ]] || fail "the ./init bundle did not run or render"
-echo "ok   ./init at the default target: built, and the bundle runs and renders"
+[[ "$(cd "${app}" && node run-built.mjs out-init)" == "48 a b 0.5 8 16000" ]] || fail "the ./init bundle did not run, encode, or render"
+echo "ok   ./init at the default target: built, and the bundle runs, encodes a WAV before any render, and renders"
 
 echo "check-package-loading: all checks passed"
