@@ -3,11 +3,13 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import { installControls } from './controlsWiring.js';
 import { loadSync } from './load.node.js';
 
 export * from './api.js';
 
 loadSync();
+installControls();
 
 /** Present so that code written for the browser's explicit init runs unchanged here; the module is already ready. */
 export async function init(): Promise<void> {}
