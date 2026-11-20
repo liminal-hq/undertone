@@ -3,6 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import { resetRenderWarnings } from './render.js';
 import { resetWrapperWarnings } from './warn.js';
 import { glue } from './wasm.js';
 
@@ -16,6 +17,7 @@ export { playVoice, playVoices, seedContext } from './engine.js';
  */
 export function resetWarnings(): void {
   resetWrapperWarnings();
+  resetRenderWarnings();
   try {
     glue.resetWarnings();
   } catch {

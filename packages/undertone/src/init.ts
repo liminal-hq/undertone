@@ -5,8 +5,12 @@
 
 import initWasm from '../wasm/undertone_wasm.js';
 import { install } from './install.js';
+import { browserRenderLoader } from './render.browser.js';
+import { setRenderLoader } from './render.js';
 
 export * from './api.js';
+
+setRenderLoader(browserRenderLoader);
 
 let ready: Promise<void> | undefined;
 

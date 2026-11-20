@@ -16,9 +16,12 @@ import type {
   LoopHandle,
   LoopOptions,
   PlayOptions,
-  PlaybackHandle
+  PlaybackHandle,
+  RenderOptions
 } from './engineTypes.js';
+import { renderToBuffer } from './render.js';
 import { loopOn, playOnce } from './scheduler.js';
+import type { RenderedAudioBufferLike } from './types.js';
 import { glue } from './wasm.js';
 import type { WasmPattern } from './wasm.js';
 
@@ -369,6 +372,18 @@ export class Pattern<T> {
     return loopOn(options, (transport, engine, now, settings) =>
       transport.loop(engine, handle, now, settings)
     );
+  }
+
+  /**
+   * Renders the pattern offline to an audio buffer, with no real-time clock and
+   * a seeded random source, so the same pattern gives the same samples on the
+   * same engine. Pass the result to `encodeWav` to write a file.
+   */
+  render(
+    this: Pattern<ControlPatch>,
+    options: RenderOptions = {}
+  ): Promise<RenderedAudioBufferLike> {
+    return renderToBuffer(this, options);
   }
 
   /**

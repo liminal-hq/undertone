@@ -12,8 +12,3 @@
 +Pattern.free # opt-in freeing of WebAssembly memory (RF-25)
 +Pattern.[Symbol.dispose] # `using pattern = ...`
 +Fraction.fromText # the boundary's text form for times beyond 2^53
-
-# Pending: offline rendering and WAV, in the lazily loaded render module (RF-25c)
-Pattern.render
-encodeWav
-renderToBuffer

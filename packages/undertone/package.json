@@ -27,6 +27,7 @@
       "default": "./wasm/undertone_wasm.js"
     },
     "./wasm/undertone_wasm_bg.wasm": "./wasm/undertone_wasm_bg.wasm",
+    "./wasm/render/undertone_wasm_render_bg.wasm": "./wasm/render/undertone_wasm_render_bg.wasm",
     "./package.json": "./package.json"
   },
   "files": [
@@ -35,13 +36,19 @@
     "wasm/undertone_wasm.d.ts",
     "wasm/undertone_wasm_bg.wasm",
     "wasm/undertone_wasm_bg.wasm.d.ts",
+    "wasm/render/undertone_wasm_render.js",
+    "wasm/render/undertone_wasm_render.d.ts",
+    "wasm/render/undertone_wasm_render_bg.wasm",
+    "wasm/render/undertone_wasm_render_bg.wasm.d.ts",
     "README.md",
     "CHANGELOG.md"
   ],
   "sideEffects": [
     "./dist/index.js",
     "./dist/index.node.js",
-    "./dist/init.node.js"
+    "./dist/init.node.js",
+    "./dist/init.js",
+    "./wasm/render/undertone_wasm_render.js"
   ],
   "scripts": {
     "build:wasm": "bash ../../scripts/build-wasm.sh",

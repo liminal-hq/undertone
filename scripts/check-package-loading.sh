@@ -6,12 +6,13 @@
 
 # The checks of RF-25 (D-17, R3's scratch-app idea on the real package):
 #   1. `npm pack` makes the tarball a user would install, and it holds the built module and no sources or tests;
-#   2. Node and Bun import the package by name (the `node` condition: synchronous load, no await) and run a query, and the
-#      `./init` entry works with its explicit `await init()`;
+#   2. Node and Bun import the package by name (the `node` condition: synchronous load, no await), run a query, render a
+#      note through the lazily loaded render module and encode it as WAV, and the `./init` entry works with its explicit `await init()`;
 #   3. Deno does the same when it is installed (skipped otherwise, and said so);
 #   4. a Vite 5 build of an app that imports the package fails at Vite 5's default target on the top-level `await` (the
 #      documented condition), succeeds with `build.target: 'esnext'`, and succeeds for the `./init` entry at the default target;
-#      the built output holds the module as an asset, and the built bundles run (under Node, with a stand-in `document` and `fetch`), which
+#      the built output holds both modules as assets (the render module's glue a chunk of its own, imported on the first
+#      render), and the built bundles run and render (under Node, with a stand-in `document` and `fetch`), which
 #      catches a bundler dropping the entry's initialisation (what `"sideEffects": false` did before the entries were listed).
 # Needs a built package (`bun run package:build`), npm, Node 22+, Bun, and network access for Vite 5 (npm).
 # Usage: scripts/check-package-loading.sh
@@ -22,7 +23,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 package="${root}/packages/undertone"
 vite_version="5.4.21"
 
-for need in dist/index.js dist/index.node.js wasm/undertone_wasm_bg.wasm; do
+for need in dist/index.js dist/index.node.js wasm/undertone_wasm_bg.wasm wasm/render/undertone_wasm_render_bg.wasm; do
 	if [[ ! -f "${package}/${need}" ]]; then
 		echo "check-package-loading: ${need} is missing; run 'bun run package:build' first" >&2
 		exit 1
@@ -41,7 +42,7 @@ echo "== 1. the tarball"
 (cd "${package}" && npm pack --silent --pack-destination "${work}" >/dev/null)
 tarball="$(ls "${work}"/*.tgz)"
 listing="$(tar -tzf "${tarball}")"
-for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/README.md; do
+for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/wasm/render/undertone_wasm_render.js package/wasm/render/undertone_wasm_render_bg.wasm package/README.md; do
 	grep -qx "${want}" <<<"${listing}" || fail "the tarball lacks ${want}"
 done
 if grep -E '^package/(src|test)/|\.test\.' <<<"${listing}" >/dev/null; then fail "the tarball holds sources or tests"; fi
@@ -55,21 +56,25 @@ JSON
 (cd "${app}" && npm install --silent --no-audit --no-fund "${tarball}")
 
 cat >"${app}/main.mjs" <<'JS'
-import { CHANNEL_ORDER, Fraction, Pattern, hasOnset, mini, note, sine } from '@liminal-hq/undertone';
+import { CHANNEL_ORDER, Fraction, Pattern, encodeWav, hasOnset, mini, note, sine } from '@liminal-hq/undertone';
 const pattern = mini('a b*2', (word) => word);
 const haps = pattern.query({ begin: new Fraction(0), end: new Fraction(1) });
 if (!(pattern instanceof Pattern) || haps.length !== 3 || !hasOnset(haps[0])) throw new Error('unexpected haps');
 if (Math.abs(sine.sampleAt(new Fraction(1, 4)) - 1) > 1e-9) throw new Error('unexpected sine');
 if (note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel !== 0.5) throw new Error('unexpected control');
 if (CHANNEL_ORDER.length !== 8) throw new Error('unexpected constants');
+const rendered = await note('c3').render({ sampleRate: 8000, master: false });
+if (rendered.length !== 16000 || !rendered.getChannelData(0).some((x) => x !== 0)) throw new Error('unexpected render');
+if (encodeWav(rendered).length !== 44 + 16000 * 4) throw new Error('unexpected WAV');
 console.log(`${haps.map((hap) => `${hap.part.begin}:${hap.value}`).join(' ')}`);
 JS
 cat >"${app}/init.mjs" <<'JS'
-import { init, pure, Fraction } from '@liminal-hq/undertone/init';
+import { init, note, pure, Fraction, renderToBuffer } from '@liminal-hq/undertone/init';
 await init();
 await init();
 const haps = pure(7).query({ begin: new Fraction(0), end: new Fraction(2) });
 if (haps.length !== 2 || haps[1].value !== 7) throw new Error('unexpected haps');
+if ((await renderToBuffer(note('c3'), { sampleRate: 8000, master: false })).length !== 16000) throw new Error('unexpected render');
 console.log('init ok');
 JS
 
@@ -97,20 +102,22 @@ cat >"${app}/page/index.html" <<'HTML'
 <!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
 HTML
 cat >"${app}/page/main.js" <<'JS'
-import { CHANNEL_ORDER, Fraction, mini, note } from '@liminal-hq/undertone';
+import { CHANNEL_ORDER, Fraction, encodeWav, mini, note } from '@liminal-hq/undertone';
 const haps = mini('a b', (word) => word).query({ begin: new Fraction(0), end: new Fraction(1) });
 const gain = note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel;
-document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length}`;
+const rendered = await note('c3').render({ sampleRate: 8000, master: false });
+document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length} ${rendered.length} ${encodeWav(rendered).length}`;
 JS
 cat >"${app}/page-init/index.html" <<'HTML'
 <!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
 HTML
 cat >"${app}/page-init/main.js" <<'JS'
-import { CHANNEL_ORDER, Fraction, init, mini, note } from '@liminal-hq/undertone/init';
-init().then(() => {
+import { CHANNEL_ORDER, Fraction, init, mini, note, renderToBuffer } from '@liminal-hq/undertone/init';
+init().then(async () => {
   const haps = mini('a b', (word) => word).query({ begin: new Fraction(0), end: new Fraction(1) });
   const gain = note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel;
-  document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length}`;
+  const rendered = await renderToBuffer(note('c3'), { sampleRate: 8000, master: false });
+  document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length} ${rendered.length}`;
 });
 JS
 # Runs a built page's script in Node with a stand-in `document` and a `fetch` that serves the module from disk as
@@ -128,7 +135,7 @@ globalThis.document = {
   createElement: () => ({ relList: { supports: () => true } }) // Vite's modulepreload polyfill returns early on this
 };
 await import(join(dir, script));
-await new Promise((done) => setTimeout(done, 200));
+await new Promise((done) => setTimeout(done, 1000));
 console.log(document.body.textContent);
 JS
 vite="${app}/node_modules/vite/bin/vite.js"
@@ -141,13 +148,13 @@ grep -q 'Top-level await is not available' <<<"${log}" || fail "the default-targ
 echo "ok   default target: refused the top-level await, as documented"
 
 build page --outDir ../out-esnext --emptyOutDir --base ./ --target esnext >/dev/null || fail "the build with target esnext failed"
-ls "${app}"/out-esnext/assets/*.wasm >/dev/null 2>&1 || fail "the esnext build holds no .wasm asset"
-[[ "$(cd "${app}" && node run-built.mjs out-esnext)" == "a b 0.5 8" ]] || fail "the esnext bundle did not run: the module was not initialised"
-echo "ok   build.target esnext: built, the module is an asset, and the bundle runs"
+[[ "$(ls "${app}"/out-esnext/assets/*.wasm 2>/dev/null | wc -l)" -ge 2 ]] || fail "the esnext build does not hold both .wasm assets"
+[[ "$(cd "${app}" && node run-built.mjs out-esnext)" == "a b 0.5 8 16000 64044" ]] || fail "the esnext bundle did not run or render: a module was not initialised"
+echo "ok   build.target esnext: built, both modules are assets, and the bundle runs and renders"
 
 build page-init --outDir ../out-init --emptyOutDir --base ./ >/dev/null || fail "the ./init build at the default target failed"
-ls "${app}"/out-init/assets/*.wasm >/dev/null 2>&1 || fail "the ./init build holds no .wasm asset"
-[[ "$(cd "${app}" && node run-built.mjs out-init)" == "a b 0.5 8" ]] || fail "the ./init bundle did not run"
-echo "ok   ./init at the default target: built, and the bundle runs"
+[[ "$(ls "${app}"/out-init/assets/*.wasm 2>/dev/null | wc -l)" -ge 2 ]] || fail "the ./init build does not hold both .wasm assets"
+[[ "$(cd "${app}" && node run-built.mjs out-init)" == "a b 0.5 8 16000" ]] || fail "the ./init bundle did not run or render"
+echo "ok   ./init at the default target: built, and the bundle runs and renders"
 
 echo "check-package-loading: all checks passed"

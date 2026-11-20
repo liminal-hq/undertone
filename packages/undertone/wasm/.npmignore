@@ -1,0 +1,2 @@
+# npm reads this file instead of .gitignore here, so the built modules listed in package.json "files" are packed;
+# git keeps ignoring them (.gitignore).

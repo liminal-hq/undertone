@@ -11,6 +11,7 @@ import type {
   RenderOptions
 } from './engineTypes.js';
 import { patternOfHandle } from './pattern.js';
+import { renderScore } from './render.js';
 import { loopOn, playOnce } from './scheduler.js';
 import type { Pattern } from './pattern.js';
 import type { ControlPatch, RenderedAudioBufferLike } from './types.js';
@@ -130,8 +131,6 @@ export function score(definition: ScoreDefinition): Score {
       playOnce(options, (transport, engine, now, settings) =>
         handle.play(transport, engine, now, settings)
       ),
-    render: () => {
-      throw new Error('score().render() is not available until the render module loads (the next change)');
-    }
+    render: (options = {}) => renderScore((settings) => handle.collectVoices(settings), options)
   };
 }

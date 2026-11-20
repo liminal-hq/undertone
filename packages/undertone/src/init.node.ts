@@ -5,9 +5,12 @@
 
 import { install } from './install.js';
 import { loadSync } from './load.node.js';
+import { setRenderLoader } from './render.js';
+import { nodeRenderLoader } from './render.node.js';
 
 export * from './api.js';
 
+setRenderLoader(nodeRenderLoader);
 loadSync();
 install();
 
