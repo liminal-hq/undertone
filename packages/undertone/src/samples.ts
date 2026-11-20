@@ -186,12 +186,13 @@ async function decodeEntry(
  */
 function decoded(ctx: AudioContextLike, key: string, entry: Entry, buffer: AudioBufferLike): void {
   const pcm = pcmOf(buffer);
-  entry.decodedOn.set(ctx, hostOf(buffer, pcm));
+  // Nothing is kept until the modules accept the PCM: a module that rejects it leaves the sample undecoded, and the next call retries.
   if (!entry.pcm) {
-    entry.pcm = pcm;
     glue.loadSample(key, pcm);
     render?.loadSample(key, pcm);
+    entry.pcm = pcm;
   }
+  entry.decodedOn.set(ctx, hostOf(buffer, pcm));
 }
 
 function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferLike> {

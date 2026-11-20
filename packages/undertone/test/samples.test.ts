@@ -265,6 +265,22 @@ describe('what a context keeps of a decoded sample', () => {
     expect(getSampleBuffer(ctx, 'kick')).toBe(buffer);
   });
 
+  it('retries a decode the module rejected, and keeps nothing of the rejected one', async () => {
+    const ctx = new FakeAudioContext();
+    const bad = { numberOfChannels: 0, getChannelData: () => new Float32Array(4) };
+    const good = { getChannelData: () => new Float32Array(4) };
+    const decode = vi
+      .spyOn(ctx, 'decodeAudioData')
+      .mockImplementationOnce(() => Promise.resolve(bad as never))
+      .mockImplementation(() => Promise.resolve(good as never));
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    await expect(loadSamples(ctx, ['kick'])).rejects.toThrow();
+    expect(getSampleBuffer(ctx, 'kick')).toBeUndefined();
+    await loadSamples(ctx, ['kick']); // retried, not served from a cache of the rejected buffer
+    expect(decode).toHaveBeenCalledTimes(2);
+    expect(getSampleBuffer(ctx, 'kick')).toBe(good);
+  });
+
   it('warns once for a voice whose decoded buffer cannot be read', async () => {
     const ctx = new FakeAudioContext();
     vi.spyOn(ctx, 'decodeAudioData').mockImplementation(() =>
