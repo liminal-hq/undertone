@@ -2,7 +2,7 @@
 
 A small procedural synth engine for game sound effects and pattern-based music: Web Audio, mini-notation, euclidean rhythms. This package is Undertone 0.4 rebuilt as a TypeScript bridge over a Rust core compiled to WebAssembly. It keeps 0.4.0's JavaScript names and behaviour; the breaks are listed in [CHANGELOG.md](./CHANGELOG.md).
 
-**Status: unreleased, and part of the way there.** `package.json` says `"private": true` so that `npm publish` refuses until the release work package (RF-33) flips it. Everything that does not play sound is in: `Fraction`, `Pattern` with its queries, transforms, and all 56 control methods (`.gain()`, `.lpf()`, `.pan()`, `.voice()`, `.scale()`, `.voicing()`, ...), the constructors (`note`, `sound`, `s`, `n`, `chord`), the signals and seeded randomness, `drift`, the instruments (`fmVoice`, `fmPresets`, `layer`), `score` (its `pattern`, `cps`, and `seconds`), `resolveParams`, the channel helpers, the pitch helpers, and the types of the whole 0.4.0 API. What plays or renders sound (the engine, the scheduler, rendering, WAV encoding, the sample registry, and the Web Audio helpers) arrives with the engine bindings; `bun run package:api` in the repository lists exactly which names are still pending.
+**Status: unreleased.** `package.json` says `"private": true` so that `npm publish` refuses until the release work package (RF-33) flips it. The whole 0.4.0 API is in: patterns, controls, notes, chords, scales, instruments, scores, signals, `play()`, `loop()`, `playParams`, `setcpm`, the sample registry, the master bus, orbit buses, multichannel output, offline rendering, and WAV encoding. `bun run package:api` in the repository compares the package's exports with the 0.4.0 API report: every name is present with the same declaration.
 
 ## Install
 
@@ -22,6 +22,12 @@ The WebAssembly module has to be instantiated before the API works. Three entrie
 
 The first two are separate loads of the module: a program uses one of them, not both.
 
+> **With `./init`, the constants are `undefined` until `init()` has finished.** `CHANNEL_ORDER`, `MAX_CHANNELS`, `SHAPED_WAVE_TYPES`, and `fmPresets` are read from the module when it loads, so with the `./init` entry they are `undefined` (and every call throws) until `await init()` resolves. Read them after `init()`, not at the top level of a module. The default entry has them set as soon as the import finishes.
+
+### Rendering loads a second module
+
+Offline rendering and WAV encoding are in a second module, `wasm/render/`, which loads the first time it is needed, so a program that only plays never downloads it. In a browser the first `renderToBuffer()`, `.render()`, or `score().render()` imports and fetches it; **`encodeWav()` returns its bytes synchronously, so in a browser call it after a render** (before any render it throws, saying so). Under Node, Bun, and Deno both modules are read from disk on first use, and `encodeWav()` works at any time.
+
 ### Vite 5, and bundler targets
 
 Top-level `await` needs a build target of ES2022 or later. **Vite 5's default build target does not allow it**, so a Vite 5 build (VitePress 1 included) fails with `Top-level await is not available in the configured target environment`. Set the target:
@@ -31,7 +37,9 @@ Top-level `await` needs a build target of ES2022 or later. **Vite 5's default bu
 export default { build: { target: 'esnext' } };
 ```
 
-(`['chrome89', 'firefox89', 'safari15']` also works.) Vite 6 and later need nothing. Or use the `./init` entry, which builds at Vite 5's default target. `bun run package:load` in the repository checks all three cases against the packed tarball.
+(`['chrome89', 'firefox89', 'safari15']` also works.) Vite 6 and later need nothing. Or use the `./init` entry, which builds at Vite 5's default target. `bun run package:load` in the repository checks all three cases against the packed tarball, a render included.
+
+The guide's [Runtimes and loading](https://liminalhq.ca/undertone/guide/runtimes) page has the details for each runtime.
 
 ## Freeing patterns
 
@@ -47,13 +55,11 @@ const once = mini('a b', (word) => word);
 once.free(); // or by hand; calling free() twice is safe
 ```
 
-A freed pattern cannot be used again (it throws `this pattern was freed and cannot be used again`); patterns made from it are unaffected.
+A freed pattern cannot be used again (it throws `this pattern was freed and cannot be used again`); patterns made from it are unaffected. Engines need nothing of the kind: one is made per audio context on first use, and the nodes of finished voices are released as new ones are booked.
 
-## What is pending
+## Testing your own code
 
-Everything that needs the engine: `Pattern.play`, `.loop`, and `.render` (not present yet); `playParams`; `renderToBuffer` and `encodeWav`; `setcpm` and `resetTempo`; the sample registry (`registerSample`, `registerSamples`, `loadSamples`, `clearSamples`, `getSampleBuffer`, `getSampleBaseNote`, `isSampleRegistered`); and the Web Audio helpers (`createMasterBus`, `createMonoFold`, `getOrbitBus`, `enableMultichannel`, `buildImpulseResponse`). Their option and handle types (`PlayOptions`, `LoopHandle`, `RenderOptions`, `MasterBus`, ...) are already declared, so `score(...)` names them as 0.4.0 does. A score's `play()`, `loop()`, and `render()` exist and throw `score().play() is not available until the engine exports land` until then. The list is `conformance/api/package-pending.txt`, and CI fails when it and the package disagree. The `./testing` entry (D-28) has a working `resetWarnings` (the module prints its warnings with `console.warn`, so `vi.spyOn(console, 'warn')` sees them), and `seedContext`, `playVoice`, and `playVoices` that say what they wait for.
-
-`CHANNEL_ORDER`, `MAX_CHANNELS`, `SHAPED_WAVE_TYPES`, and `fmPresets` are read from the module when an entry loads it. With the `./init` entry they are `undefined` until `await init()` has finished.
+`@liminal-hq/undertone/testing` (D-28) has `resetWarnings` (clears every once-only warning, so a test sees one again; the modules print with `console.warn`, so `vi.spyOn(console, 'warn')` sees them), `seedContext(ctx, seed)`, `playVoice(ctx, params, startTime, options?)`, and `playVoices(ctx, voices, when, options?)`.
 
 ## Differences from the reference
 
