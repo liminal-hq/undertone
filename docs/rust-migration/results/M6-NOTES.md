@@ -16,6 +16,7 @@ The stack is #99, #103, #100, #105, #107, #109, and #111, in that order.
 | #107 | `feat/bridge-engine`          | RF-25c and RF-26: the Web Audio replayer, `play`, `loop`, `render`, `renderToBuffer`, the samples, the master bus and effects, TypeDoc over the package, and the ported engine, scheduler, render, WAV, and sample suites with corpus layers 3 and 4 and WAV                                |
 | #109 | `feat/bridge-followups`       | RF-25d: `encodeWav` in TypeScript, decoding a sample when a voice first names it, and the onset-order break B11 (the three decisions of [M6-BOUNDARY.md](M6-BOUNDARY.md) section 15)                                                                                                        |
 | #111 | `fix/bridge-review-findings`  | The six findings of the review of the whole stack, each reproduced with a failing test first                                                                                                                                                                                                |
+| #113 | `fix/bridge-review-round2`    | The five findings of a second review round (a failed `play()` undone, list parameters read through the cap, a failed periodic wave retried, cleared samples released, a failed PCM read retried)                                                                                            |
 
 RF-27 (the suite and the corpus on the bridge) was delivered inside #100, #107, and #109 rather than as a pull request of its own: the tests were ported as each export landed.
 
@@ -37,7 +38,7 @@ RF-27 (the suite and the corpus on the bridge) was delivered inside #100, #107, 
 
 | Size after Brotli 11 | Measured | Limit                                        |
 | -------------------- | -------- | -------------------------------------------- |
-| Main module          | 148.3 KB | Budget 150 KB; 13 KB over the 135 KB warning |
+| Main module          | 148.6 KB | Budget 150 KB; 13 KB over the 135 KB warning |
 | Render module        | 97.3 KB  | Budget 120 KB; warning at 108 KB             |
 | Main glue            | 14.4 KB  |                                              |
 | Render glue          | 5.5 KB   |                                              |
@@ -49,6 +50,7 @@ RF-27 (the suite and the corpus on the bridge) was delivered inside #100, #107, 
 - **There is an eleventh break (D-44).** B11 is the onset order of stacked voices: the Rust scheduler books by onset, where 0.3 booked layer by layer; start times and sound are unchanged.
 - **The engine records, the wrapper replays.** The engine records Web Audio calls as fixed-width numeric records and the wrapper replays them on the caller's context, so the recorded graph on the fake context equals the reference's and a context missing optional factories degrades with the same warnings.
 - **The review of the whole stack found six real defects, all fixed in #111:** a sparse JavaScript array of length 0xffffffff reached `Vec::with_capacity` and stopped the instance (arrays are now limited to 4,194,304 items and reserve at most 1,024 first); a Web Audio call that threw mid-batch dropped the rest of its records (the replayer now applies every record that does not name what the context failed to make, then rethrows the first error); a sample registered again under a name kept its old PCM, and decoded PCM was not kept per registration and per context with its own sample rate; a voice's own periodic waves (autopan phases) were never released; and a failed `init()` was cached. Each has a test that failed first.
+- **A second review round found five more, all real and fixed in #113:** a Web Audio error while replaying `play()` or a loop's first window did not undo the booking (the wrapper now stops and disconnects what the batch made, then rethrows); wasm-bindgen's glue sized `Vec` parameters from `array.length` before the cap applied (five exports now take a plain value read through the capped conversion); a failed periodic wave was never retried; cleared samples stayed retained by decode promises (per-context state now lives on the registry entry); and a failure reading decoded PCM left a cached rejection. Four of the five were verified by Codex running code; each has a test that failed first. The main module is 148,559 bytes after Brotli (1,441 under the budget) and the render module 97,290.
 - **`sideEffects` had to list the entries,** because `false` made Vite drop the module's initialisation.
 
 ## Decisions made in M6
