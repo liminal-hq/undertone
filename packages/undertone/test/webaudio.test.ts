@@ -12,6 +12,7 @@ import {
   note,
   playParams,
   registerSample,
+  registerSamples,
   renderToBuffer,
   resetTempo,
   s,
@@ -151,6 +152,80 @@ describe('samples in both modules', () => {
     clearSamples();
     const silent = await renderToBuffer(s('late'), { sampleRate: 8000, master: false });
     expect(silent.getChannelData(0).every((x) => x === 0)).toBe(true);
+  });
+});
+
+describe('decoding a url or data sample when a voice first names it (as 0.3 did)', () => {
+  /** Lets the fake decodes and fetches settle. */
+  const settle = () => new Promise((done) => setTimeout(done, 0));
+
+  it('decodes only the sample a voice named, and plays it once decoded', async () => {
+    const named = new ArrayBuffer(8);
+    const other = new ArrayBuffer(4);
+    registerSamples({ hat: { data: named }, tom: { data: other } });
+    const ctx = new FakeAudioContext();
+    const decode = vi.spyOn(ctx, 'decodeAudioData');
+    playParams(ctx, [{ pitch: 'a3' }]);
+    expect(decode).not.toHaveBeenCalled(); // a booking that names no sample decodes nothing
+    playParams(ctx, [{ sampleName: 'hat' }, { sampleName: 'hat' }]);
+    expect(decode).toHaveBeenCalledTimes(1);
+    expect(decode.mock.calls[0][0]).toBe(named);
+    expect(ctx.bufferSources).toHaveLength(0); // skipped while decoding, as in 0.3
+    playParams(ctx, [{ sampleName: 'hat' }]); // joins the decode in flight
+    expect(decode).toHaveBeenCalledTimes(1);
+    await settle();
+    playParams(ctx, [{ sampleName: 'hat' }]);
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(decode).toHaveBeenCalledTimes(1); // tom was never named, so never decoded
+  });
+
+  it('decodes the banked key a voice resolves to', async () => {
+    registerSample('kit_sd', { data: new ArrayBuffer(4) });
+    const ctx = new FakeAudioContext();
+    const decode = vi.spyOn(ctx, 'decodeAudioData');
+    s('sd').bank('kit').play({ ctx, when: 0 });
+    expect(decode).toHaveBeenCalledTimes(1);
+    await settle();
+    s('sd').bank('kit').play({ ctx, when: 0 });
+    expect(ctx.bufferSources).toHaveLength(1);
+  });
+
+  it("decodes in a loop's tick when the tick first names the sample", () => {
+    registerSamples({ clap: { data: new ArrayBuffer(4) }, rim: { data: new ArrayBuffer(4) } });
+    const ctx = new FakeAudioContext();
+    const decode = vi.spyOn(ctx, 'decodeAudioData');
+    const { timer, tick } = manualTimer();
+    const looping = s('~ ~ ~ ~ ~ ~ ~ clap').loop({ ctx, timer, bpm: 240 });
+    expect(decode).not.toHaveBeenCalled(); // the first window holds no clap
+    for (let step = 1; step <= 40 && decode.mock.calls.length === 0; step += 1) {
+      ctx.currentTime = step * 0.05;
+      tick();
+    }
+    expect(decode).toHaveBeenCalledTimes(1); // the clap only: rim is registered but never named
+    looping.stop({ voices: 'cut' });
+  });
+
+  it('retries a failed fetch the next time a voice names the sample, warning once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    registerSample('kick', { url: 'https://example.com/kick.wav' });
+    const ctx = new FakeAudioContext();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new Error('network blip'))
+      .mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(4))
+      } as Response);
+    playParams(ctx, [{ sampleName: 'kick' }]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await settle();
+    expect(warn).toHaveBeenCalledWith('undertone: sample "kick" failed to load — voice skipped.');
+    playParams(ctx, [{ sampleName: 'kick' }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await settle();
+    playParams(ctx, [{ sampleName: 'kick' }]);
+    expect(ctx.bufferSources).toHaveLength(1);
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });
 
