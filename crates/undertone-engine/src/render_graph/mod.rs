@@ -109,6 +109,7 @@ use shaper::Shaper;
 use source::SourceState;
 use std::collections::VecDeque;
 use timeline::Timeline;
+use undertone_pattern::js::number_to_string;
 
 /// The renderer's block length in frames: Web Audio's render quantum. The graph always runs in blocks of this
 /// many frames, whatever size the caller asks for.
@@ -384,7 +385,10 @@ impl RenderGraph {
 	) -> undertone_pattern::Result<Self> {
 		if !(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&sample_rate) {
 			return Err(undertone_pattern::Error::new(format!(
-				"sample rate must be from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz, got {sample_rate}"
+				"sample rate must be from {} to {} Hz, got {}",
+				number_to_string(MIN_SAMPLE_RATE),
+				number_to_string(MAX_SAMPLE_RATE),
+				number_to_string(sample_rate)
 			)));
 		}
 		if !(1..=MAX_NODE_CHANNELS as u32).contains(&channels) {
@@ -1520,7 +1524,10 @@ impl Graph for RenderGraph {
 	fn create_buffer(&mut self, channels: u32, length: usize, sample_rate: f64) -> BufferId {
 		assert!(
 			(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&sample_rate),
-			"buffer sample rate must be from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz, got {sample_rate}"
+			"buffer sample rate must be from {} to {} Hz, got {}",
+			number_to_string(MIN_SAMPLE_RATE),
+			number_to_string(MAX_SAMPLE_RATE),
+			number_to_string(sample_rate)
 		);
 		let channels = channels.max(1) as usize;
 		assert!(

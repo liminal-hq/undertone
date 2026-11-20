@@ -34,18 +34,24 @@
 //! - [`score`]: `score(definition)` and the score handle's data (group 15; playing and rendering are part 2b).
 //! - [`warnings`]: the once-only warnings, printed with `console.warn`, and `resetWarnings`.
 
+pub mod booking;
 pub mod build;
 pub mod controls;
 pub mod convert;
 pub mod data;
 pub mod drift;
 pub mod encode;
+pub mod flat;
 pub mod foreign;
 pub mod helpers;
 pub mod notes;
+pub mod options;
 pub mod pattern;
 pub mod record;
+pub mod samples;
 pub mod score;
+pub mod transport;
+pub mod voices;
 pub mod warnings;
 
 pub use pattern::{PatternList, WasmPattern};

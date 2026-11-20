@@ -63,8 +63,8 @@ use crate::math::{js_max, js_min, js_pow};
 use crate::params::resolve_params;
 use crate::samples::Samples;
 use crate::window::{
-	PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window, last_room_sizes,
-	sort_booking_order,
+	BookingWindow, PendingVoice, RENDER_QUANTUM_FRAMES, booking_windows, check_booking_window,
+	last_room_sizes, sort_booking_order,
 };
 use undertone_pattern::js::{is_integer, number_to_string, round};
 use undertone_pattern::random::Seed;
@@ -238,6 +238,31 @@ pub fn collect_onsets(
 	cycle_seconds: f64,
 	gated: bool,
 ) -> Result<Vec<PendingVoice>> {
+	Ok(
+		collect_onset_values(pattern, span, pattern_start_time, cycle_seconds, gated)?
+			.into_iter()
+			.map(|(start_time, value)| PendingVoice {
+				start_time,
+				params: resolve_params(&value),
+			})
+			.collect(),
+	)
+}
+
+/// [`collect_onsets`] before the voices are resolved: each onset's start time and its control map, with the gate's
+/// `duration` added when the event has none. A host that hands voices to another program as plain data sends these and
+/// resolves them there ([`pending_voices`]).
+///
+/// # Errors
+///
+/// As [`collect_onsets`].
+pub fn collect_onset_values(
+	pattern: &Pattern<ControlMap>,
+	span: Span,
+	pattern_start_time: f64,
+	cycle_seconds: f64,
+	gated: bool,
+) -> Result<Vec<(f64, ControlMap)>> {
 	let mut voices = Vec::new();
 	for hap in pattern.try_query(span)? {
 		let Some(whole) = hap.whole else { continue };
@@ -256,12 +281,23 @@ pub fn collect_onsets(
 			// `{ duration, ...value }`: the event's own keys win.
 			map.entry("duration".into()).or_insert(Value::Num(gate));
 		}
-		voices.push(PendingVoice {
-			start_time,
-			params: resolve_params(&value),
-		});
+		voices.push((start_time, value));
 	}
 	Ok(voices)
+}
+
+/// Voices collected as plain data ([`RenderPlan::collect_values`]) resolved and put in booking order, as
+/// [`RenderPlan::collect_voices`] gives them.
+pub fn pending_voices(values: impl IntoIterator<Item = (f64, ControlMap)>) -> Vec<PendingVoice> {
+	let mut voices: Vec<PendingVoice> = values
+		.into_iter()
+		.map(|(start_time, value)| PendingVoice {
+			start_time,
+			params: resolve_params(&value),
+		})
+		.collect();
+	sort_booking_order(&mut voices);
+	voices
 }
 
 /// Books every onset in `span` as a voice on the engine, `start_time` being where cycle 0 starts on the graph's
@@ -458,22 +494,33 @@ impl RenderPlan {
 	///
 	/// As [`collect_onsets`].
 	pub fn collect_voices(&self, pattern: &Pattern<ControlMap>) -> Result<Vec<PendingVoice>> {
-		let mut voices = Vec::new();
+		Ok(pending_voices(self.collect_values(pattern)?))
+	}
+
+	/// The onsets of [`RenderPlan::collect_voices`] before they are resolved and sorted: start times and control maps,
+	/// in the order they were collected (cycle by cycle). [`pending_voices`] turns them into the voices.
+	///
+	/// # Errors
+	///
+	/// As [`collect_onsets`].
+	pub fn collect_values(&self, pattern: &Pattern<ControlMap>) -> Result<Vec<(f64, ControlMap)>> {
+		let mut values = Vec::new();
 		let mut cycle = 0.0;
 		while cycle < self.cycles {
 			let span = Span::new(
 				Fraction::from_int(cycle as i128),
 				Fraction::from_int(cycle as i128 + 1),
 			);
-			for voice in collect_onsets(pattern, span, 0.0, self.cycle_seconds, self.gated)? {
-				if self.seconds.is_none() || voice.start_time < self.pass_seconds {
-					voices.push(voice);
+			for (start_time, value) in
+				collect_onset_values(pattern, span, 0.0, self.cycle_seconds, self.gated)?
+			{
+				if self.seconds.is_none() || start_time < self.pass_seconds {
+					values.push((start_time, value));
 				}
 			}
 			cycle += 1.0;
 		}
-		sort_booking_order(&mut voices);
-		Ok(voices)
+		Ok(values)
 	}
 
 	/// Makes the engine on `graph` and books the pattern on it, up front or in windows.
@@ -515,30 +562,82 @@ impl RenderPlan {
 		graph: G,
 		samples: Samples,
 		pattern: &Pattern<ControlMap>,
-		mut pause: impl FnMut(&mut G, f64) -> Result<()>,
+		pause: impl FnMut(&mut G, f64) -> Result<()>,
 	) -> Result<Engine<G>> {
 		let mut engine = Engine::new(graph, self.output_setup())?;
 		*engine.samples_mut() = samples;
 		let voices = self.collect_voices(pattern)?;
+		self.book_windows(&mut engine, voices, pause)?;
+		Ok(engine)
+	}
+
+	/// As [`RenderPlan::book_pattern_with_samples`], for voices already collected ([`RenderPlan::collect_voices`], in
+	/// its booking order): a host that collected them elsewhere (the WebAssembly main module, which hands plain voices
+	/// to the render module) books them here with the same windows and pauses.
+	///
+	/// # Errors
+	///
+	/// A master bus whose options are invalid ([`Engine::new`]), a voice that fails to book, or `pause` failing.
+	pub fn book_voices_with_samples<G: Graph>(
+		&self,
+		graph: G,
+		samples: Samples,
+		voices: Vec<PendingVoice>,
+		pause: impl FnMut(&mut G, f64) -> Result<()>,
+	) -> Result<Engine<G>> {
+		let mut engine = Engine::new(graph, self.output_setup())?;
+		*engine.samples_mut() = samples;
+		self.book_windows(&mut engine, voices, pause)?;
+		Ok(engine)
+	}
+
+	/// The windows the voices are booked in, in time order, each with the time the render pauses at to book it
+	/// (rounded down to the 128-frame render quantum; `0` for what is booked before the render starts). Without a
+	/// booking window it is one window at `0` holding every voice. With one, a voice that sends to a reverb takes the
+	/// last room size its orbit asks for, so a later window does not swap the impulse response mid-render. The engine
+	/// is asked which voices it would skip (a sample that is not available), so it must hold the samples already.
+	pub fn booking_windows<G: Graph>(
+		&self,
+		engine: &Engine<G>,
+		voices: Vec<PendingVoice>,
+	) -> Vec<BookingWindow> {
 		let Some(window) = self.booking_window else {
-			for voice in &voices {
-				engine.play(&voice.params, voice.start_time)?;
-			}
-			return Ok(engine);
+			return vec![BookingWindow {
+				suspend_at: 0.0,
+				voices,
+			}];
 		};
 		let quantum = RENDER_QUANTUM_FRAMES as f64;
 		let last_pause = (self.length as f64 - 2.0 * quantum) / self.sample_rate;
 		let sized = last_room_sizes(&voices, |params| engine.is_voice_skipped(params));
-		for window in booking_windows(&sized, window, last_pause) {
+		booking_windows(&sized, window, last_pause)
+			.into_iter()
+			.map(|mut window| {
+				if window.suspend_at != 0.0 {
+					let frame =
+						((window.suspend_at * self.sample_rate) / quantum).floor() * quantum;
+					window.suspend_at = frame / self.sample_rate;
+				}
+				window
+			})
+			.collect()
+	}
+
+	fn book_windows<G: Graph>(
+		&self,
+		engine: &mut Engine<G>,
+		voices: Vec<PendingVoice>,
+		mut pause: impl FnMut(&mut G, f64) -> Result<()>,
+	) -> Result<()> {
+		for window in self.booking_windows(engine, voices) {
 			if window.suspend_at != 0.0 {
-				let frame = ((window.suspend_at * self.sample_rate) / quantum).floor() * quantum;
-				pause(engine.graph_mut(), frame / self.sample_rate)?;
+				pause(engine.graph_mut(), window.suspend_at)?;
 			}
 			for voice in &window.voices {
 				engine.play(&voice.params, voice.start_time)?;
 			}
 		}
-		Ok(engine)
+		Ok(())
 	}
 
 	/// The rendered channels as the render returns them: unchanged, or for `wrap` with a tail, folded onto the

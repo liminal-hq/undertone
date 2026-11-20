@@ -16,11 +16,13 @@
 
 use crate::error::{Error, Result};
 use crate::options::{RenderOptions, WavOptions};
+use undertone_engine::engine::Engine;
 use undertone_engine::render::RenderPlan;
 use undertone_engine::render_graph::{MAX_BUFFER_SAMPLES, RenderGraph};
 use undertone_engine::samples::Samples;
 use undertone_engine::score::Score;
 use undertone_engine::wav::encode_wav;
+use undertone_engine::window::PendingVoice;
 use undertone_pattern::{ControlMap, Pattern};
 
 /// The samples of a finished render, one `Vec<f32>` per channel, with the sample rate they were rendered at.
@@ -286,6 +288,38 @@ fn render_planned_in_blocks(
 	pattern: &Pattern<ControlMap>,
 	block_frames: usize,
 ) -> Result<RenderedAudio> {
+	render_booked_in_blocks(plan, block_frames, |graph, pause| {
+		plan.book_pattern_with_samples(graph, samples, pattern, pause)
+	})
+}
+
+/// Renders voices already collected ([`RenderPlan::collect_voices`], in its booking order) as [`render`] renders a
+/// pattern: the same windows, the same blocks, the same bounds. For a host that collects the voices elsewhere (the
+/// WebAssembly main module collects them and hands them to the render module as plain data).
+///
+/// # Errors
+///
+/// As [`render`], except that nothing is queried.
+pub fn render_voices(
+	plan: &RenderPlan,
+	samples: Samples,
+	voices: Vec<PendingVoice>,
+) -> Result<RenderedAudio> {
+	render_booked_in_blocks(plan, RENDER_BLOCK_FRAMES, |graph, pause| {
+		plan.book_voices_with_samples(graph, samples, voices, pause)
+	})
+}
+
+/// Renders what `book` books on the plan's graph, in blocks, pausing where it asks. Generic over the booking, so a
+/// program that renders only collected voices carries no pattern query.
+fn render_booked_in_blocks(
+	plan: &RenderPlan,
+	block_frames: usize,
+	book: impl FnOnce(
+		RenderGraph,
+		&mut dyn FnMut(&mut RenderGraph, f64) -> undertone_pattern::Result<()>,
+	) -> undertone_pattern::Result<Engine<RenderGraph>>,
+) -> Result<RenderedAudio> {
 	let channels = plan.channels as usize;
 	check_render_size(plan.length, channels)?;
 	let graph = RenderGraph::try_new(plan.sample_rate, plan.channels, plan.length as u64)?;
@@ -293,11 +327,12 @@ fn render_planned_in_blocks(
 	let mut block = vec![vec![0.0_f32; block_frames.clamp(1, plan.length.max(1))]; channels];
 	// Without a booking window the render is never paused. With one, each pause renders up to where the next
 	// window's voices start, so the renderer has not yet processed a node that is booked later.
-	let engine = plan.book_pattern_with_samples(graph, samples, pattern, |graph, seconds| {
+	let mut pause = |graph: &mut RenderGraph, seconds: f64| {
 		let frames = (seconds * plan.sample_rate).round() as usize;
 		render_until(graph, &mut rendered, &mut block, frames);
 		Ok(())
-	})?;
+	};
+	let engine = book(graph, &mut pause)?;
 	let mut graph = engine.into_graph();
 	render_until(&mut graph, &mut rendered, &mut block, plan.length);
 	Ok(RenderedAudio {

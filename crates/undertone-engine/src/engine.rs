@@ -278,6 +278,24 @@ impl<G: Graph> Engine<G> {
 		enable_multichannel(&mut self.graph)
 	}
 
+	/// Makes a master bus on the engine's graph ([`create_master_bus`], with this engine's warnings), without
+	/// making it the engine's output: the reference's `createMasterBus(ctx, options)`, whose `input` the host passes
+	/// as the output of the voices it books ([`Engine::play_to`]).
+	///
+	/// # Errors
+	///
+	/// As [`create_master_bus`].
+	pub fn create_master_bus(&mut self, options: MasterBusOptions) -> Result<MasterBus> {
+		create_master_bus(&mut self.graph, &mut self.warnings, options)
+	}
+
+	/// Seeds the noise and reverb randomness from now on (the reference's `seedContext(ctx, seed)`), and starts
+	/// the count of each key's earlier draws again, as a fresh seeding does.
+	pub fn set_seed(&mut self, seed: Seed) {
+		self.seed = seed;
+		self.occurrences.clear();
+	}
+
 	/// How many booked voices the engine still keeps, to stop them early or to cut a group.
 	pub fn voice_count(&self) -> usize {
 		self.voices.len() - self.free_slots.len()

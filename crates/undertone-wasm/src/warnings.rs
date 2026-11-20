@@ -46,13 +46,15 @@ pub fn warn_once(key: &str, message: &str) {
 	}
 }
 
+/// Prints `message` with `console.warn`, whatever was printed before.
 #[cfg(target_arch = "wasm32")]
-fn print(message: &str) {
+pub fn print(message: &str) {
 	console_warn(message);
 }
 
+/// Prints nothing off WebAssembly (the native unit tests).
 #[cfg(not(target_arch = "wasm32"))]
-fn print(_message: &str) {}
+pub fn print(_message: &str) {}
 
 /// Runs a query (or anything that may query) and prints the control warnings it raised that are new to this instance.
 pub fn queried<R>(run: impl FnOnce() -> R) -> R {
