@@ -29,6 +29,17 @@ extern "C" {
 	/// The global `String(value)`, which can throw (a `toString` that throws, or a symbol in some places).
 	#[wasm_bindgen(catch, js_name = String)]
 	fn js_string(value: &JsValue) -> Result<String, JsValue>;
+
+	/// The global `Number(value)`, which can throw (a `valueOf` that throws, a symbol, a `BigInt` does not).
+	#[wasm_bindgen(catch, js_name = Number)]
+	fn js_number(value: &JsValue) -> Result<f64, JsValue>;
+}
+
+/// `Number(value)`, what JavaScript's comparisons and arithmetic make of a value (`null` is 0, `'2'` is 2); `NaN` when it throws.
+pub fn to_number(value: &JsValue) -> f64 {
+	value
+		.as_f64()
+		.unwrap_or_else(|| js_number(value).unwrap_or(f64::NAN))
 }
 
 /// `String(value)`, as a template string or the reference's messages print a value; `"(unprintable)"` when that throws.

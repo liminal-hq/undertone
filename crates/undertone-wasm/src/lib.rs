@@ -26,6 +26,7 @@
 //! - [`notes`]: `note`, `sound`, `s`, `n`, `chord`, and the methods `.scale`, `.voicing`, `.sound`, `.s`, `.bank` (groups 7 and 8).
 //! - [`helpers`]: signals, seeded random numbers, pitch helpers, and the exact fraction helpers (groups 18, 16, 9, 1).
 //! - [`controls`]: the controls table as plain data, and its TypeScript declaration from `ts-rs`.
+//! - [`data`]: instruments, the pure channel helpers, and `resolveParams` (groups 12, 13, 14).
 //! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
 //! - [`convert`]: values and errors across the boundary.
 //! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
@@ -34,6 +35,7 @@
 pub mod build;
 pub mod controls;
 pub mod convert;
+pub mod data;
 pub mod encode;
 pub mod foreign;
 pub mod helpers;
