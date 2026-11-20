@@ -469,7 +469,7 @@ macro_rules! controls {
 		}
 	) => {
 		/// Every control of 0.4.0, one row each, in the order of the [`Control`] enum. The JavaScript bridge reads this table, and the name-map test checks its JavaScript names against the TypeScript.
-		pub const CONTROLS: &[ControlSpec] = &[
+		pub static CONTROLS: &[ControlSpec] = &[
 			$( ControlSpec::$kind($js, $range, $doc).rust(stringify!($name) ) $($(.$key($val))*)? , )*
 			$( ControlSpec::$pkind($pjs, $prange, $pdoc).rust(stringify!($pname)) $($(.$pkey($pval))*)? , )*
 		];
