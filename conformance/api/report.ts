@@ -39,7 +39,7 @@ function emitDeclarations(srcDir: string, outDir: string): string {
 }
 
 /** Builds the report text from the declaration entry point. */
-function buildReport(entry: string): string {
+export function buildReport(entry: string): string {
   const program = ts.createProgram([entry], {
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.ESNext,
@@ -90,8 +90,13 @@ export function generate(): string {
   }
 }
 
-const mode = process.argv[2];
-if (mode === 'record') {
+/** Whether this file is the program being run (and not imported by scripts/check-package-api.ts). */
+const isMain =
+  process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const mode = isMain ? process.argv[2] : undefined;
+if (!isMain) {
+  // Imported for its functions: nothing to run.
+} else if (mode === 'record') {
   writeFileSync(reportPath, generate());
   console.log(`Wrote ${reportPath}`);
 } else if (mode === 'check') {

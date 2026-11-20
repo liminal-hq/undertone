@@ -1,0 +1,148 @@
+# What the package does not export yet, against conformance/api/undertone.api.md (0.4.0): checked by scripts/check-package-api.ts.
+#
+# One name per line, `Name` or `Class.member`. The list only shrinks: CI fails when a missing name is not here and when a name
+# here exists in the package, so each part that lands deletes its lines. Other prefixes:
+#   ~Name  accepts a declaration that differs from the reference (say why)
+#   +Name  accepts a name or member the package adds to the reference (say why)
+
+# Accepted differences
+~Pattern.sample # a getter (the sampler comes from the handle), written `readonly sample: ... | undefined` rather than optional
+
+# Accepted additions
++Pattern.free # opt-in freeing of WebAssembly memory (RF-25)
++Pattern.[Symbol.dispose] # `using pattern = ...`
++Fraction.fromText # the boundary's text form for times beyond 2^53
+
+# Pending: the control methods, generated from controlTable() when RF-24 part 2 exports the dispatcher (RF-25b)
+Pattern.attack
+Pattern.autopan
+Pattern.autopandepth
+Pattern.autopanphase
+Pattern.autopanshape
+Pattern.bank
+Pattern.channels
+Pattern.cut
+Pattern.decay
+Pattern.delay
+Pattern.delayfeedback
+Pattern.delaytime
+Pattern.duration
+Pattern.early
+Pattern.fm
+Pattern.fmattack
+Pattern.fmdecay
+Pattern.fmenv
+Pattern.fmh
+Pattern.fmi
+Pattern.fmrelease
+Pattern.fmsustain
+Pattern.fmwave
+Pattern.gain
+Pattern.hpf
+Pattern.late
+Pattern.legato
+Pattern.lpa
+Pattern.lpd
+Pattern.lpenv
+Pattern.lpf
+Pattern.lpr
+Pattern.lps
+Pattern.nudge
+Pattern.orbit
+Pattern.pan
+Pattern.panlaw
+Pattern.panpath
+Pattern.panslide
+Pattern.pattack
+Pattern.pdecay
+Pattern.penv
+Pattern.phaser
+Pattern.pitchsteps
+Pattern.release
+Pattern.room
+Pattern.roomsize
+Pattern.s
+Pattern.scale
+Pattern.slide
+Pattern.sound
+Pattern.surround
+Pattern.sustain
+Pattern.velocity
+Pattern.voice
+Pattern.voicing
+
+# Pending: playback and rendering of a pattern (RF-26, RF-24 part 2)
+Pattern.loop
+Pattern.play
+Pattern.render
+
+# Pending: everything else of part 2 (chords, notes, scores, drift, instruments, samples, the engine, render, WAV, the scheduler, surround, and their types)
+AudioContextLike
+AudioDestinationNodeLike
+AutopanShape
+CHANNEL_ORDER
+DriftOptions
+DynamicsCompressorNodeLike
+EnvelopeDefinition
+FmVoiceDefinition
+LayerOptions
+LimiterOptions
+LoopHandle
+LoopOptions
+LoopStopOptions
+MAX_CHANNELS
+MasterBus
+MasterBusOptions
+OfflineAudioContextLike
+OfflineContextInit
+OrbitBus
+OutputOptions
+PeriodicWaveLike
+PlayOptions
+PlayParamsOptions
+PlaybackHandle
+RenderOptions
+RenderedAudioBufferLike
+SHAPED_WAVE_TYPES
+SampleSource
+Score
+ScoreAutopan
+ScoreDefinition
+ScoreEvent
+ScorePanPoint
+StopOptions
+TimerLike
+WavOptions
+WavSource
+WaveShaperNodeLike
+buildImpulseResponse
+chord
+clearSamples
+createMasterBus
+createMonoFold
+drift
+enableMultichannel
+encodeWav
+fmPresets
+fmVoice
+foldToStereo
+getOrbitBus
+getSampleBaseNote
+getSampleBuffer
+isSampleRegistered
+isShapedWave
+layer
+loadSamples
+n
+note
+playParams
+registerSample
+registerSamples
+renderToBuffer
+resetTempo
+resolveParams
+s
+score
+setcpm
+sound
+surroundGains
