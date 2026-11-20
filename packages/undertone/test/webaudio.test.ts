@@ -272,6 +272,44 @@ describe('a periodic wave the context failed to make', () => {
   });
 });
 
+describe('undoing a failed play when the source cannot be cut', () => {
+  it('keeps the source known so a later stop record still reaches it, and rethrows the first error', () => {
+    const ctx = new FakeAudioContext();
+    const names = wasm.graphNames() as { ops: string[]; kinds: string[] };
+    const rows = (...r: [string, ...number[]][]) =>
+      [
+        Float64Array.from(
+          r.flatMap(([op, ...x]) => [names.ops.indexOf(op), ...[...x, 0, 0, 0, 0, 0].slice(0, 5)])
+        ),
+        new Float32Array()
+      ] as unknown[];
+    const replayer = new Replayer(ctx);
+    const gain = names.kinds.indexOf('Gain');
+    const osc = names.kinds.indexOf('Oscillator');
+    vi.spyOn(ctx, 'createGain').mockImplementationOnce(() => {
+      throw new Error('first error');
+    });
+    const original = ctx.createOscillator.bind(ctx);
+    vi.spyOn(ctx, 'createOscillator').mockImplementation(() => {
+      const node = original();
+      node.stop = () => {
+        throw new Error('stop failed');
+      };
+      node.disconnect = () => {
+        throw new Error('disconnect failed');
+      };
+      return node;
+    });
+    expect(() =>
+      replayer.replay(rows(['create', 1, osc], ['start', 1, 0], ['create', 2, gain]), {
+        undo: true
+      })
+    ).toThrow('first error');
+    // Still tracked: a later stop record is applied (and reaches the node), not skipped.
+    expect(() => replayer.replay(rows(['stop', 1, 3]))).toThrow('stop failed');
+  });
+});
+
 describe('samples in both modules', () => {
   it('renders a registered buffer in the render module, registered before it loaded or after', async () => {
     const data = new Float32Array(400).fill(0.5);

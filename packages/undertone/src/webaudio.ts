@@ -365,18 +365,23 @@ export class Replayer {
     for (const id of sources) {
       const node = this.#nodes.get(id);
       if (node === undefined) continue; // released within the batch already
+      let cut = false;
       if (started.has(id)) {
         try {
           (node.stop as (when: number) => void)(0);
+          cut = true;
         } catch {
           // A source that cannot be stopped is still cut off below.
         }
       }
       try {
         node.disconnect();
+        cut = true;
       } catch {
         // Nothing more to cut.
       }
+      // Neither call worked: the source may still sound, so it stays known and a later stop or release record tries it again.
+      if (!cut) continue;
       this.#ids.delete(node);
       this.#nodes.delete(id);
       this.#deadNodes.add(id);
