@@ -91,6 +91,13 @@ export interface WorkletOutputOptions {
   glueText?: string;
   /** A module you host yourself (made with `workletModuleSource`), for a page whose policy refuses `blob:` URLs. Skips the blob. */
   moduleUrl?: string | URL;
+  /**
+   * How `process` is timed. Chromium's worklet scope has no `performance.now()` (the statistics then report no times), so
+   * `'spin'` starts a worker that counts in a `SharedArrayBuffer` for the processor to read: a clock with a resolution of
+   * nanoseconds that needs a cross-origin isolated page, and a core's worth of the device while it runs, which a small phone
+   * may feel. Leave it out to run without; `output.timing` and `output.timingNote` say what you got.
+   */
+  clock?: 'spin';
   /** How long to wait for the processor to start or to answer a statistics request, in milliseconds. Default 5000. */
   timeoutMs?: number;
   /** Makes the node (tests give a fake; the default is `new AudioWorkletNode(...)`). */
@@ -135,8 +142,10 @@ export interface WorkletTimes {
 
 /** What the processor measured, and the counts that say whether it kept up. */
 export interface WorkletStats {
-  /** `performance.now` when the worklet scope has it; `none` when it does not (no times are reported). */
-  timing: 'performance.now' | 'none';
+  /** What timed `process`: `performance.now`, `spin-counter`, or `none` (no times are reported). */
+  timing: 'performance.now' | 'spin-counter' | 'none';
+  /** Ticks per millisecond of the spin counter, as the page measured it (`null` for another clock). */
+  clockTicksPerMs: number | null;
   sampleRate: number;
   quantumFrames: number;
   /** The time one block may take: 128 frames at the sample rate, in milliseconds. */
@@ -178,6 +187,10 @@ export interface WorkletOutput {
   readonly node: WorkletNodeLike;
   readonly sampleRate: number;
   readonly channels: number;
+  /** What `process` is timed with: `performance.now` (where the scope has it), `spin-counter` (see `clock`), or `none` (no times). */
+  readonly timing: 'performance.now' | 'spin-counter' | 'none';
+  /** Why `timing` is not what `clock` asked for, when it is not. */
+  readonly timingNote: string | undefined;
   /** Whether the page is cross-origin isolated (a `SharedArrayBuffer` ring would be possible; this backend uses the message port). */
   readonly crossOriginIsolated: boolean;
   /** Plays `cycles` cycles of the pattern once. */
@@ -282,6 +295,61 @@ function handleOf(pattern: PlayablePattern) {
   );
 }
 
+/** The worker's source: it counts in a shared buffer as fast as it can, a 32-bit counter that wraps. */
+const spinWorkerSource = `onmessage = (event) => {
+  const counter = new Int32Array(event.data);
+  let n = 0;
+  for (;;) Atomics.store(counter, 0, (n = (n + 1) | 0));
+};`;
+
+/**
+ * Starts the counting worker and measures how fast it counts, against `performance.now()` on this thread, over a quarter of a
+ * second. Needs a cross-origin isolated page (that is what makes `SharedArrayBuffer` exist) and workers from blobs.
+ */
+async function startSpinClock(): Promise<
+  | { note: string }
+  | { worker: { terminate(): void }; buffer: SharedArrayBuffer; ticksPerMs: number }
+> {
+  const scope = globalThis as {
+    crossOriginIsolated?: boolean;
+    Worker?: new (url: string) => Worker;
+  };
+  if (scope.crossOriginIsolated !== true || typeof SharedArrayBuffer === 'undefined') {
+    return {
+      note: 'the spin clock needs a cross-origin isolated page (serve it with Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp)'
+    };
+  }
+  if (scope.Worker === undefined)
+    return { note: 'the spin clock needs Worker, which is not available here' };
+  const buffer = new SharedArrayBuffer(8);
+  const counter = new Int32Array(buffer);
+  const url = URL.createObjectURL(new Blob([spinWorkerSource], { type: 'text/javascript' }));
+  let worker: Worker;
+  try {
+    worker = new scope.Worker(url);
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    return {
+      note: `the spin clock's worker could not start: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+  URL.revokeObjectURL(url);
+  worker.postMessage(buffer);
+  const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  await wait(60);
+  const t0 = performance.now();
+  const c0 = Atomics.load(counter, 0);
+  await wait(250);
+  const t1 = performance.now();
+  const c1 = Atomics.load(counter, 0);
+  const ticks = (c1 - c0) >>> 0;
+  if (!(ticks > 0 && t1 > t0)) {
+    worker.terminate();
+    return { note: 'the spin clock did not count (its worker did not run)' };
+  }
+  return { worker, buffer, ticksPerMs: ticks / (t1 - t0) };
+}
+
 function isCloneError(error: unknown): boolean {
   return (
     typeof error === 'object' &&
@@ -369,13 +437,19 @@ export async function createWorkletOutput(
   const waiting = new Map<number, (stats: ProcessorStats) => void>();
   let nextId = 0;
   let closed = false;
+  let timing: 'performance.now' | 'spin-counter' | 'none' = 'none';
+  let timingNote: string | undefined;
+  let spinner: { terminate(): void } | undefined;
   const main = { passes: 0, voices: 0, samples: 0 };
   const output: { onerror: ((message: string) => void) | null } = { onerror: null };
 
   node.port.onmessage = (event) => {
     const message = event.data as { type?: string; message?: string; id?: number };
-    if (message.type === 'ready') ready?.();
-    else if (message.type === 'stats' && message.id !== undefined)
+    if (message.type === 'ready') {
+      timing =
+        (message as { timing?: string }).timing === 'performance.now' ? 'performance.now' : 'none';
+      ready?.();
+    } else if (message.type === 'stats' && message.id !== undefined)
       waiting.get(message.id)?.(message as unknown as ProcessorStats);
     else if (message.type === 'error') output.onerror?.(String(message.message));
   };
@@ -393,6 +467,17 @@ export async function createWorkletOutput(
       );
     })
   ]).finally(() => clearTimeout(timer));
+
+  if (options.clock === 'spin' && timing === 'none') {
+    const spun = await startSpinClock();
+    if ('note' in spun) {
+      timingNote = spun.note;
+    } else {
+      spinner = spun.worker;
+      timing = 'spin-counter';
+      node.port.postMessage({ type: 'clock', buffer: spun.buffer, ticksPerMs: spun.ticksPerMs });
+    }
+  }
 
   const post = (message: unknown, transfer: Transferable[] = []): void => {
     if (!closed) node.port.postMessage(message, transfer);
@@ -481,6 +566,12 @@ export async function createWorkletOutput(
     node,
     sampleRate: context.sampleRate,
     channels,
+    get timing() {
+      return timing;
+    },
+    get timingNote() {
+      return timingNote;
+    },
     crossOriginIsolated:
       (globalThis as { crossOriginIsolated?: boolean }).crossOriginIsolated === true,
     play: (pattern, playOptions = {}) => start(pattern, playOptions, false),
@@ -521,6 +612,7 @@ export async function createWorkletOutput(
       post({ type: 'close' });
       closed = true;
       unlink();
+      spinner?.terminate();
       node.disconnect();
       node.port.onmessage = null;
       node.port.close?.();

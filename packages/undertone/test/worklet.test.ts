@@ -668,6 +668,51 @@ describe('the processor in a worklet-like scope', () => {
     expect(processor.process([], [out])).toBe(true);
   });
 
+  it('times process with a spun counter when the scope has no performance, as Chromium has none', () => {
+    const { Processor, context: scopeContext, sandbox, posted } = workletScope();
+    const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;
+    const processor = new Processor({
+      processorOptions: {
+        module: new module.Module(wasmBytes),
+        options: { sampleRate: 48000, channels: 2 }
+      }
+    });
+    expect(posted[0]).toMatchObject({ type: 'ready', timing: 'none' });
+    // The page's worker counts in a shared buffer; here a test bumps it by hand, 100 ticks a millisecond: each block 'takes' 0.5 ms.
+    const buffer = vm.runInContext('new SharedArrayBuffer(8)', scopeContext) as SharedArrayBuffer;
+    const counter = new Int32Array(buffer);
+    processor.port.onmessage?.({ data: { type: 'clock', buffer, ticksPerMs: 100 } });
+    const out = [
+      inRealm(scopeContext, new Float32Array(128)),
+      inRealm(scopeContext, new Float32Array(128))
+    ];
+    // The counter is read before and after the render: a getter-free stand-in bumps it from inside the render call.
+    const engine = (processor as unknown as { engine: { renderBlock(out: unknown): unknown } })
+      .engine;
+    const render = engine.renderBlock.bind(engine);
+    engine.renderBlock = (block: unknown) => {
+      Atomics.add(counter, 0, 50);
+      return render(block);
+    };
+    // Starts near the wrap of a 32-bit counter, and a span is still the difference.
+    Atomics.store(counter, 0, 0x7fffffe0);
+    for (let block = 0; block < 10; block += 1) {
+      sandbox.currentFrame = block * 128;
+      processor.process([], [out]);
+    }
+    processor.port.onmessage?.({ data: { type: 'stats', id: 1 } });
+    const stats = posted.find((message) => message.type === 'stats') as Record<string, unknown>;
+    expect(stats).toMatchObject({ timing: 'spin-counter', clockTicksPerMs: 100, blocks: 10 });
+    const times = stats.processMs as Record<string, number>;
+    expect(times.count).toBe(10);
+    expect(times.max).toBeCloseTo(0.5, 6);
+    // The buckets are 5 microseconds wide, and a percentile is the top of its bucket.
+    expect(times.p99).toBeGreaterThanOrEqual(0.5);
+    expect(times.p99).toBeLessThan(0.51);
+    // 0.5 ms is under a block's budget of 2.67 ms, and over 40% of it only when the budget is smaller.
+    expect(stats.overruns).toBe(0);
+  });
+
   it('holds a pass that arrives before the first block, and drops it when it is cancelled first', () => {
     const { Processor, context: scopeContext, sandbox, posted } = workletScope();
     const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;

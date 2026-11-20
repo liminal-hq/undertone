@@ -14,6 +14,7 @@
 //                                                             `period` frames when it is a number (a loop)
 //   { type: 'cancel', token }                                 stop a queue: what it has not booked yet never is
 //   { type: 'sample', op, name, source|base|decoded }         the sample registry: register, pending, load, or clear
+//   { type: 'clock', buffer, ticksPerMs }                     time with a counter a page worker spins in `buffer`
 //   { type: 'stats', id }                                     answer with the statistics so far
 //   { type: 'reset-stats' }                                   start the statistics again
 //   { type: 'close' }                                         free the engine and stop
@@ -23,21 +24,46 @@
 // first is ahead of the second. A voice posted at host frame F is booked at engine frame F - offset. The offset grows when the
 // host skips blocks (the engine did not get them), and that growth is the drift the statistics report.
 //
-// Timing: `performance.now()` around each `process` call, kept in a histogram of 5 microsecond buckets to 20 ms (no allocation
-// while it runs), and compared with the block's budget (128 frames at the sample rate). Where the scope has no `performance`
-// the statistics say so (`timing: 'none'`) and report no times.
+// Timing: a clock read around each `process` call, kept in a histogram of 5 microsecond buckets to 20 ms (no allocation while it
+// runs), and compared with the block's budget (128 frames at the sample rate). The clock is `performance.now()` where the scope
+// has it. Chromium's worklet scope does not (found by the headless check, harness/check.ts), so the page can send a `clock`
+// message with a SharedArrayBuffer counter that one of its workers spins (it needs a cross-origin isolated page); the counter
+// is read with `Atomics.load` and turned to milliseconds with the ticks per millisecond the page measured. With neither the
+// statistics say so (`timing: 'none'`) and report no times.
 
 export const workletProcessorName = 'undertone-worklet';
 
 export const workletProcessorSource = `(function (scope, glue) {
   const BUCKET_MS = 0.005;
   const BUCKETS = 4000;
-  const clock =
-    typeof scope.performance !== 'undefined' && typeof scope.performance.now === 'function'
-      ? function () {
-          return scope.performance.now();
-        }
-      : undefined;
+  // The clock the timings use: performance.now() where the scope has it (Chromium's worklet scope does not), else a counter that
+  // a worker on the page spins in a SharedArrayBuffer (the page sends it with a clock message), else none.
+  function performanceClock() {
+    if (typeof scope.performance === 'undefined' || typeof scope.performance.now !== 'function') return undefined;
+    return {
+      name: 'performance.now',
+      tick: function () {
+        return scope.performance.now();
+      },
+      span: function (from, to) {
+        return to - from;
+      }
+    };
+  }
+  function counterClock(buffer, ticksPerMs) {
+    const view = new Int32Array(buffer);
+    return {
+      name: 'spin-counter',
+      tick: function () {
+        return Atomics.load(view, 0);
+      },
+      // The counter is 32 bits and wraps: a span is the difference as a signed 32-bit number.
+      span: function (from, to) {
+        return ((to - from) | 0) / ticksPerMs;
+      },
+      ticksPerMs: ticksPerMs
+    };
+  }
 
   function Histogram() {
     this.counts = new Uint32Array(BUCKETS + 1);
@@ -81,6 +107,7 @@ export const workletProcessorSource = `(function (scope, glue) {
       this.options = settings.options || {};
       this.engine = new glue.WorkletEngine(this.options);
       this.channels = this.options.channels || 2;
+      this.clock = performanceClock();
       this.queues = new Map();
       this.waiting = [];
       this.closed = false;
@@ -91,7 +118,7 @@ export const workletProcessorSource = `(function (scope, glue) {
       this.port.onmessage = (event) => this.receive(event.data);
       this.port.postMessage({
         type: 'ready',
-        timing: clock ? 'performance.now' : 'none',
+        timing: this.clock ? this.clock.name : 'none',
         sampleRate: scope.sampleRate,
         channels: this.channels
       });
@@ -135,6 +162,10 @@ export const workletProcessorSource = `(function (scope, glue) {
           case 'sample':
             this.sample(message);
             break;
+          case 'clock':
+            this.clock = counterClock(message.buffer, message.ticksPerMs);
+            this.resetStats();
+            break;
           case 'stats':
             this.port.postMessage(this.stats(message.id));
             break;
@@ -159,10 +190,10 @@ export const workletProcessorSource = `(function (scope, glue) {
         this.late += 1;
         this.maxLate = Math.max(this.maxLate, this.engine.frame - start);
       }
-      const began = clock ? clock() : 0;
+      const began = this.clock ? this.clock.tick() : 0;
       const period = typeof message.period === 'number' ? message.period : undefined;
       const id = this.engine.queue(message.numbers, message.strings, start, period);
-      if (clock) this.queue_.add(clock() - began);
+      if (this.clock) this.queue_.add(this.clock.span(began, this.clock.tick()));
       this.queues.set(message.token, id);
       this.port.postMessage({ type: 'queued', token: message.token, id: id, late: start < this.engine.frame });
     }
@@ -191,13 +222,14 @@ export const workletProcessorSource = `(function (scope, glue) {
       return {
         type: 'stats',
         id: id,
-        timing: clock ? 'performance.now' : 'none',
+        timing: this.clock ? this.clock.name : 'none',
         sampleRate: scope.sampleRate,
         quantumFrames: 128,
         budgetMs: budget,
         blocks: this.blocks,
-        processMs: clock ? this.process_.summary() : null,
-        queueMs: clock ? this.queue_.summary() : null,
+        processMs: this.clock ? this.process_.summary() : null,
+        clockTicksPerMs: this.clock && this.clock.ticksPerMs ? this.clock.ticksPerMs : null,
+        queueMs: this.clock ? this.queue_.summary() : null,
         overruns: this.overruns,
         over40Percent: this.slow,
         skippedBlocks: this.skipped,
@@ -215,7 +247,8 @@ export const workletProcessorSource = `(function (scope, glue) {
 
     process(inputs, outputs) {
       if (this.closed) return false;
-      const began = clock ? clock() : 0;
+      const clock = this.clock;
+      const began = clock ? clock.tick() : 0;
       const host = scope.currentFrame;
       if (this.base === undefined) {
         this.offset = host - this.engine.frame;
@@ -243,7 +276,7 @@ export const workletProcessorSource = `(function (scope, glue) {
       }
       this.blocks += 1;
       if (clock) {
-        const spent = clock() - began;
+        const spent = clock.span(began, clock.tick());
         this.process_.add(spent);
         const budget = (outputs[0][0].length / scope.sampleRate) * 1000;
         if (spent > budget) this.overruns += 1;
