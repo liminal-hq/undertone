@@ -227,4 +227,6 @@ pub use error::{Error, ErrorKind, Result};
 pub use options::{RenderOptions, WavOptions};
 pub use player::{Player, PlayerOptions};
 pub use prelude::*;
-pub use rendering::{MAX_RENDER_SAMPLES, RenderedAudio, render, render_score, render_to_wav};
+pub use rendering::{
+	MAX_RENDER_SAMPLES, RenderedAudio, render, render_score, render_to_wav, render_voices,
+};

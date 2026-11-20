@@ -41,13 +41,17 @@ function compare(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Every test the suite runs now, as `{ file, test }`, from `vitest list` (sorted; a repeated title gets ` #2`, ` #3`). */
+/** Every test the reference suite runs now (the root config's `reference` project; the package's own tests are not classified), as `{ file, test }`, from `vitest list` (sorted; a repeated title gets ` #2`, ` #3`). */
 export function currentTests(): { file: string; test: string }[] {
-  const run = spawnSync(join(root, 'node_modules', '.bin', 'vitest'), ['list', '--json'], {
-    cwd: root,
-    encoding: 'utf8',
-    maxBuffer: 1 << 28
-  });
+  const run = spawnSync(
+    join(root, 'node_modules', '.bin', 'vitest'),
+    ['list', '--json', '--project', 'reference'],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      maxBuffer: 1 << 28
+    }
+  );
   if (run.status !== 0) {
     throw new Error(`vitest list failed (${run.status}): ${run.stderr}`);
   }

@@ -34,6 +34,7 @@ const OTHER_METHODS: &[&str] = &[
 	"add",
 	"div",
 	"every",
+	"fast",
 	"floor",
 	"jux",
 	"loop",

@@ -255,6 +255,15 @@ pub trait Datum: Clone + core::fmt::Debug + PartialEq + Send + Sync + 'static {
 	fn drifted(&self, _options: &DriftOptions, _whole: Span) -> Result<Self> {
 		Ok(self.clone())
 	}
+	/// Whether this is JavaScript's `undefined`, which a control reads as a rest. The default is `false`.
+	fn is_undefined(&self) -> bool {
+		false
+	}
+	/// `String(value)`, for a control's warning: the number as JavaScript prints it by default.
+	fn js_text(&self) -> String {
+		self.as_number()
+			.map_or_else(|| String::from("undefined"), crate::js::number_to_string)
+	}
 }
 
 impl Datum for f64 {
@@ -279,6 +288,9 @@ impl Datum for bool {
 	fn from_number(n: f64) -> Self {
 		n != 0.0
 	}
+	fn js_text(&self) -> String {
+		String::from(if *self { "true" } else { "false" })
+	}
 	fn as_number(&self) -> Option<f64> {
 		None
 	}
@@ -296,6 +308,12 @@ impl Datum for bool {
 impl Datum for Value {
 	fn from_number(n: f64) -> Self {
 		Value::Num(n)
+	}
+	fn is_undefined(&self) -> bool {
+		matches!(self, Value::Undefined)
+	}
+	fn js_text(&self) -> String {
+		crate::controls::js_string(self)
 	}
 	fn as_number(&self) -> Option<f64> {
 		match self {

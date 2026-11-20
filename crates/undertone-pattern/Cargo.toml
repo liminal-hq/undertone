@@ -13,6 +13,13 @@ default = ["libm"]
 libm = ["dep:libm"]
 # Use the standard library: its `f64` maths when `libm` is off (`--no-default-features --features std`), and `std::error::Error` for `Error`.
 std = []
+# Prints and reads numbers (`js::number_to_string`, `js::string_to_number`) through functions the host installs
+# (`js::set_number_formatter`, `js::set_number_parser`), and leaves the Rust ports of ECMAScript's Number::toString and
+# Number(text), with the float printing and parsing they need, out of the build. Only the WebAssembly main module turns
+# it on (its host is JavaScript, whose own `String(x)` and `Number(text)` are the reference's rules): it saves the
+# module 14 KB after Brotli (M6-BOUNDARY.md, section 9). Without installed functions a number prints as an integer
+# when it is one and as `NaN` otherwise, and every text reads as `NaN`, so the feature is not for native builds.
+host-number-format = ["std"]
 
 [dependencies]
 libm = { version = "0.2.16", optional = true }

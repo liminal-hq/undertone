@@ -223,6 +223,9 @@ pub struct Engine<G: Graph> {
 	/// The graph buffers made from registered samples, by registered key: what the reference's context has
 	/// decoded. Kept when the registry is cleared, as the reference keeps it.
 	pub(crate) sample_buffers: HashMap<String, BufferId>,
+	/// The registered keys a voice named while their PCM had not arrived, each once, until the host takes them
+	/// ([`Engine::take_requested_samples`]) to decode them, as the reference's lookup starts a decode.
+	pub(crate) requested_samples: Vec<String>,
 	/// The scopes of voices that are over, each with the time the voice ended, waiting out
 	/// [`RETIRE_AFTER_SECONDS`] before the graph is told to retire them.
 	pub(crate) retiring: Vec<(f64, Scope)>,
@@ -256,6 +259,7 @@ impl<G: Graph> Engine<G> {
 			warnings: Warnings::default(),
 			samples: Samples::default(),
 			sample_buffers: HashMap::new(),
+			requested_samples: Vec::new(),
 			retiring: Vec::new(),
 		};
 		if setup.multichannel {
@@ -276,6 +280,24 @@ impl<G: Graph> Engine<G> {
 	/// does.
 	pub fn enable_multichannel(&mut self) -> u32 {
 		enable_multichannel(&mut self.graph)
+	}
+
+	/// Makes a master bus on the engine's graph ([`create_master_bus`], with this engine's warnings), without
+	/// making it the engine's output: the reference's `createMasterBus(ctx, options)`, whose `input` the host passes
+	/// as the output of the voices it books ([`Engine::play_to`]).
+	///
+	/// # Errors
+	///
+	/// As [`create_master_bus`].
+	pub fn create_master_bus(&mut self, options: MasterBusOptions) -> Result<MasterBus> {
+		create_master_bus(&mut self.graph, &mut self.warnings, options)
+	}
+
+	/// Seeds the noise and reverb randomness from now on (the reference's `seedContext(ctx, seed)`), and starts
+	/// the count of each key's earlier draws again, as a fresh seeding does.
+	pub fn set_seed(&mut self, seed: Seed) {
+		self.seed = seed;
+		self.occurrences.clear();
 	}
 
 	/// How many booked voices the engine still keeps, to stop them early or to cut a group.
@@ -327,6 +349,13 @@ impl<G: Graph> Engine<G> {
 	/// again or cleared; use a new engine for a new set of recordings.
 	pub fn samples_mut(&mut self) -> &mut Samples {
 		&mut self.samples
+	}
+
+	/// The registered samples whose PCM had not arrived when a voice named them since the last call, each key
+	/// once, in the order first named. The host decodes these (the reference's `getSampleBuffer` starts a decode
+	/// when a voice names a sample it does not have yet); the voices that named them were skipped.
+	pub fn take_requested_samples(&mut self) -> Vec<String> {
+		std::mem::take(&mut self.requested_samples)
 	}
 
 	/// The warnings given so far, each key once, in order.

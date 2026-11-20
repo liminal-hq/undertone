@@ -25,6 +25,7 @@ const guideSidebar = [
       { text: 'Arranging Songs', link: '/guide/arranging-songs' },
       { text: 'Stereo & Surround', link: '/guide/stereo-and-surround' },
       { text: 'Rendering & Export', link: '/guide/rendering-and-export' },
+      { text: 'Runtimes & Loading', link: '/guide/runtimes' },
       { text: 'Troubleshooting', link: '/guide/troubleshooting' }
     ]
   },

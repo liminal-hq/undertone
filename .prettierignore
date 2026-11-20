@@ -14,3 +14,6 @@ conformance/test-classes.json
 docs/public/rust
 docs/public/rust-audio
 docs/public/ts-audio
+packages/undertone/wasm/undertone_wasm*
+packages/undertone/wasm/render/undertone_wasm_render*
+crates/undertone-wasm/bindings

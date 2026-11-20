@@ -35,7 +35,7 @@
 //! # Ok::<(), undertone_pattern::Error>(())
 //! ```
 //!
-//! What a pattern may give a control is made safe and never fails: a rest leaves the field unset, a value that is not a finite number leaves it unset, a bounded control clamps (`pan`, `autopandepth`, `autopanphase`, `panslide`), and an open bound leaves the field unset (a negative time, a rate that is not above zero). The reference also prints a warning once per control and kind of problem; that stays with the host, so the Rust crate does not print.
+//! What a pattern may give a control is made safe and never fails: a rest leaves the field unset, a value that is not a finite number leaves it unset, a bounded control clamps (`pan`, `autopandepth`, `autopanphase`, `panslide`), and an open bound leaves the field unset (a negative time, a rate that is not above zero). The reference also prints a warning once per control and kind of problem. The crate never prints: with the `std` feature, a host that wants the warnings runs its queries inside [`collect_warnings`], which hands back each [`ControlWarning`] (the reference's key and message) for the host to print once.
 //!
 //! # The controls that refuse a pattern
 //!
@@ -258,17 +258,55 @@ impl ControlSpec {
 		self.fields[0]
 	}
 
-	/// What a pattern's value means for this control, never failing: `None` leaves the field unset.
-	fn sanitise(&self, raw: Option<f64>) -> Option<f64> {
-		let raw = raw.filter(|v| v.is_finite())?;
-		let bounded = match self.bound {
-			Bound::Open => raw,
-			Bound::Clamp(lo, hi) => hi.min(lo.max(raw)),
-			Bound::UnsetIfNegative if raw < 0.0 => return None,
-			Bound::UnsetIfNotPositive if !(raw > 0.0) => return None,
-			Bound::UnsetIfNegative | Bound::UnsetIfNotPositive => raw,
+	/// What a pattern's value means for this control, never failing: `None` leaves the field unset. A rest (no value, or `undefined`) is silent; anything else that is dealt with is reported to [`collect_warnings`] with the reference's key and message (`sanitiseControl` in `pattern.ts`).
+	fn sanitise<T: Datum>(&self, raw: Option<&T>) -> Option<f64> {
+		let raw = match raw {
+			None => return None,
+			Some(value) if value.is_undefined() => return None,
+			Some(value) => match value.as_number() {
+				Some(v) if v.is_finite() => v,
+				_ => {
+					report(self, "signal-nan-", || {
+						alloc::format!(
+							"undertone: {}() got {} from a pattern; left unset.",
+							self.message_name,
+							value.js_text()
+						)
+					});
+					return None;
+				}
+			},
 		};
-		Some(self.transform(bounded))
+		let needs = match self.bound {
+			Bound::Open => return Some(self.transform(raw)),
+			Bound::Clamp(lo, hi) => {
+				let clamped = hi.min(lo.max(raw));
+				if clamped != raw {
+					report(self, "signal-range-", || {
+						alloc::format!(
+							"undertone: {}() got {} from a pattern; clamped to {}.",
+							self.message_name,
+							js::number_to_string(raw),
+							js::number_to_string(clamped)
+						)
+					});
+				}
+				return Some(self.transform(clamped));
+			}
+			Bound::UnsetIfNegative if raw < 0.0 => "0 or more",
+			Bound::UnsetIfNotPositive if !(raw > 0.0) => "more than 0",
+			Bound::UnsetIfNegative | Bound::UnsetIfNotPositive => {
+				return Some(self.transform(raw));
+			}
+		};
+		report(self, "signal-range-", || {
+			alloc::format!(
+				"undertone: {}() got {} from a pattern; it needs {needs}, so it is left unset.",
+				self.message_name,
+				js::number_to_string(raw)
+			)
+		});
+		None
 	}
 
 	/// The value after the control's own change (negated for `early`).
@@ -283,6 +321,88 @@ impl ControlSpec {
 			self.error,
 			js::number_to_string(v)
 		))
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// Warnings
+// ---------------------------------------------------------------------------------------------
+
+/// A warning the reference prints once (`warnOnce(key, message)`) when a pattern gives a control a value it has to deal with: not a finite number (`signal-nan-<name>`), or outside the control's range (`signal-range-<name>`). `<name>` is the name the messages use (`fm` for `fmi`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ControlWarning {
+	/// The reference's once-only key, such as `signal-range-pan`.
+	pub key: String,
+	/// The message, word for word: `undertone: pan() got 1.4 from a pattern; clamped to 1.`
+	pub message: String,
+}
+
+#[cfg(feature = "std")]
+std::thread_local! {
+	/// The warnings of the [`collect_warnings`] call running on this thread, or `None` when none is.
+	static SINK: core::cell::RefCell<Option<Vec<ControlWarning>>> = const { core::cell::RefCell::new(None) };
+}
+
+/// Runs `run` (queries, usually) and returns what it gave with the control warnings it raised, one per key, in the order first raised. Outside a call nothing is recorded, so a host that does not ask pays nothing. A call inside another keeps its own warnings; the outer call sees only those raised outside the inner one.
+///
+/// ```
+/// use undertone_pattern::control::note;
+/// use undertone_pattern::controls::collect_warnings;
+/// use undertone_pattern::{pure, Fraction, Span, Value};
+/// let p = note("c4 e4")?.pan(pure(Value::Num(3.0)))?;
+/// let (haps, warnings) = collect_warnings(|| p.query(Span::new(Fraction::from_int(0), Fraction::from_int(1))));
+/// assert_eq!(haps[0].value.get("pan"), Some(&Value::Num(1.0)));
+/// assert_eq!(warnings.len(), 1);
+/// assert_eq!(warnings[0].key, "signal-range-pan");
+/// assert_eq!(warnings[0].message, "undertone: pan() got 3 from a pattern; clamped to 1.");
+/// # Ok::<(), undertone_pattern::Error>(())
+/// ```
+#[cfg(feature = "std")]
+pub fn collect_warnings<R>(run: impl FnOnce() -> R) -> (R, Vec<ControlWarning>) {
+	let outer = SINK.with(|sink| sink.replace(Some(Vec::new())));
+	let out = run();
+	let mine = SINK.with(|sink| sink.replace(outer)).unwrap_or_default();
+	(out, mine)
+}
+
+/// Records a warning for the running [`collect_warnings`] call, if any and if its key is new to it; the message is only written then.
+#[cfg(feature = "std")]
+fn report(spec: &ControlSpec, kind: &str, message: impl FnOnce() -> String) {
+	SINK.with(|sink| {
+		let Ok(mut sink) = sink.try_borrow_mut() else {
+			return;
+		};
+		let Some(list) = sink.as_mut() else { return };
+		let name = spec.message_name;
+		if list.iter().any(|w| w.key.strip_prefix(kind) == Some(name)) {
+			return;
+		}
+		list.push(ControlWarning {
+			key: alloc::format!("{kind}{name}"),
+			message: message(),
+		});
+	});
+}
+
+#[cfg(not(feature = "std"))]
+fn report(_spec: &ControlSpec, _kind: &str, _message: impl FnOnce() -> String) {}
+
+/// `String(value)` for a value a pattern gave: a number as JavaScript prints it, an array joined by commas, an object as `[object Object]`.
+pub(crate) fn js_string(value: &Value) -> String {
+	match value {
+		Value::Num(n) => js::number_to_string(*n),
+		Value::Str(s) => s.clone(),
+		Value::Bool(b) => String::from(if *b { "true" } else { "false" }),
+		Value::Undefined => String::from("undefined"),
+		Value::List(items) => items
+			.iter()
+			.map(|item| match item {
+				Value::Undefined => String::new(),
+				other => js_string(other),
+			})
+			.collect::<Vec<_>>()
+			.join(","),
+		Value::Map(_) => String::from("[object Object]"),
 	}
 }
 
@@ -413,8 +533,8 @@ pub(crate) fn query_with_control<T: Datum>(
 	};
 	if !literal && source.has_sampler() {
 		out.extend(haps.into_iter().map(|hap| {
-			let raw = source.sample_at(hap.onset()).and_then(|v| v.as_number());
-			let value = spec.sanitise(raw);
+			let raw = source.sample_at(hap.onset());
+			let value = spec.sanitise(raw.as_ref());
 			apply(hap, value)
 		}));
 		return;
@@ -436,11 +556,10 @@ pub(crate) fn query_with_control<T: Datum>(
 		match covering {
 			None => hap,
 			Some(c) => {
-				let raw = c.value.as_number();
 				let value = if literal {
-					raw.map(|v| spec.transform(v))
+					c.value.as_number().map(|v| spec.transform(v))
 				} else {
-					spec.sanitise(raw)
+					spec.sanitise(Some(&c.value))
 				};
 				apply(hap, value)
 			}
@@ -469,7 +588,7 @@ macro_rules! controls {
 		}
 	) => {
 		/// Every control of 0.4.0, one row each, in the order of the [`Control`] enum. The JavaScript bridge reads this table, and the name-map test checks its JavaScript names against the TypeScript.
-		pub const CONTROLS: &[ControlSpec] = &[
+		pub static CONTROLS: &[ControlSpec] = &[
 			$( ControlSpec::$kind($js, $range, $doc).rust(stringify!($name) ) $($(.$key($val))*)? , )*
 			$( ControlSpec::$pkind($pjs, $prange, $pdoc).rust(stringify!($pname)) $($(.$pkey($pval))*)? , )*
 		];
@@ -1650,5 +1769,65 @@ mod tests {
 			.collect();
 		plain.sort_unstable();
 		assert_eq!(listed, plain);
+	}
+
+	#[test]
+	fn a_pattern_value_that_is_dealt_with_is_reported_once_per_key() {
+		let span = Span::new(Fraction::from_int(0), Fraction::from_int(1));
+		let words = crate::mini::parse("x y", |w| Ok(Value::Str(w.into()))).unwrap();
+		let p = note("c3 e3")
+			.unwrap()
+			.pan(crate::pure(Value::Num(1.4)))
+			.unwrap()
+			.fmi(crate::pure(Value::Num(-1.0)))
+			.unwrap()
+			.fmh(crate::pure(Value::Num(0.0)))
+			.unwrap()
+			.lpf(words)
+			.unwrap()
+			.gain(crate::pure(Value::Undefined))
+			.unwrap()
+			.early(crate::pure(Value::Num(f64::NAN)))
+			.unwrap();
+		let (haps, warnings) = collect_warnings(|| p.query(span));
+		assert_eq!(haps.len(), 2);
+		let got: Vec<(&str, &str)> = warnings
+			.iter()
+			.map(|w| (w.key.as_str(), w.message.as_str()))
+			.collect();
+		assert_eq!(
+			got,
+			[
+				(
+					"signal-range-pan",
+					"undertone: pan() got 1.4 from a pattern; clamped to 1."
+				),
+				(
+					"signal-range-fm",
+					"undertone: fm() got -1 from a pattern; it needs 0 or more, so it is left unset."
+				),
+				(
+					"signal-range-fmh",
+					"undertone: fmh() got 0 from a pattern; it needs more than 0, so it is left unset."
+				),
+				(
+					"signal-nan-lpf",
+					"undertone: lpf() got x from a pattern; left unset."
+				),
+				(
+					"signal-nan-early",
+					"undertone: early() got NaN from a pattern; left unset."
+				),
+			]
+		);
+		// Outside a collection nothing is recorded, and a literal never warns.
+		let quiet = note("c3").unwrap().pan(0.5).unwrap();
+		assert!(collect_warnings(|| quiet.query(span)).1.is_empty());
+		let (_, nested) = collect_warnings(|| {
+			let inner = collect_warnings(|| p.query(span)).1;
+			assert_eq!(inner.len(), 5);
+			p.query(span)
+		});
+		assert_eq!(nested.len(), 5);
 	}
 }

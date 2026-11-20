@@ -1,0 +1,76 @@
+{
+  "name": "@liminal-hq/undertone",
+  "version": "0.4.0",
+  "private": true,
+  "description": "A small procedural synth engine for game SFX and pattern-based music: Web Audio, mini-notation, euclidean rhythms, over a Rust core compiled to WebAssembly.",
+  "type": "module",
+  "main": "./dist/index.node.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "node": "./dist/index.node.js",
+      "default": "./dist/index.js"
+    },
+    "./init": {
+      "types": "./dist/init.d.ts",
+      "node": "./dist/init.node.js",
+      "default": "./dist/init.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    },
+    "./wasm": {
+      "types": "./wasm/undertone_wasm.d.ts",
+      "default": "./wasm/undertone_wasm.js"
+    },
+    "./wasm/undertone_wasm_bg.wasm": "./wasm/undertone_wasm_bg.wasm",
+    "./wasm/render/undertone_wasm_render_bg.wasm": "./wasm/render/undertone_wasm_render_bg.wasm",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "wasm/undertone_wasm.js",
+    "wasm/undertone_wasm.d.ts",
+    "wasm/undertone_wasm_bg.wasm",
+    "wasm/undertone_wasm_bg.wasm.d.ts",
+    "wasm/render/undertone_wasm_render.js",
+    "wasm/render/undertone_wasm_render.d.ts",
+    "wasm/render/undertone_wasm_render_bg.wasm",
+    "wasm/render/undertone_wasm_render_bg.wasm.d.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/index.node.js",
+    "./dist/init.node.js",
+    "./dist/init.js",
+    "./wasm/render/undertone_wasm_render.js"
+  ],
+  "scripts": {
+    "build:wasm": "bash ../../scripts/build-wasm.sh",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "keywords": [
+    "web-audio",
+    "sound-effects",
+    "synthesizer",
+    "procedural-audio",
+    "game-development",
+    "webassembly"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liminal-hq/undertone.git",
+    "directory": "packages/undertone"
+  },
+  "engines": {
+    "node": ">=22",
+    "bun": ">=1.2"
+  }
+}

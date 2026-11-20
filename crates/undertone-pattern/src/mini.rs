@@ -86,15 +86,19 @@ fn tokenize(source: &str) -> Result<Vec<Token>> {
 	Ok(tokens)
 }
 
-struct Parser<'a, T, L> {
+/// The leaf rule, behind a reference: the parser is compiled once per value type, not once per leaf closure (each
+/// constructor and each control's string input has its own closure, and a WebAssembly build would otherwise carry a
+/// copy of the whole parser for each).
+type Leaf<'a, T> = &'a dyn Fn(&str) -> core::result::Result<T, String>;
+
+struct Parser<'a, T> {
 	tokens: Vec<Token>,
 	index: usize,
 	source: &'a str,
-	leaf: L,
-	_marker: core::marker::PhantomData<T>,
+	leaf: Leaf<'a, T>,
 }
 
-impl<T: Datum, L: Fn(&str) -> core::result::Result<T, String>> Parser<'_, T, L> {
+impl<T: Datum> Parser<'_, T> {
 	fn fail(&self, message: &str, pos: Option<usize>) -> Error {
 		let at = pos
 			.or_else(|| self.tokens.get(self.index).map(|t| t.pos))
@@ -355,8 +359,7 @@ pub fn parse<T: Datum>(
 		tokens,
 		index: 0,
 		source,
-		leaf,
-		_marker: core::marker::PhantomData,
+		leaf: &leaf,
 	};
 	let pattern = parser.parse_stack(None)?;
 	parser.expect_end()?;

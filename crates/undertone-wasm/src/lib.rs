@@ -1,0 +1,85 @@
+// The WebAssembly build of Undertone's Rust API: wasm-bindgen exports that the npm package's bridge wraps
+//
+// (c) Copyright 2026 Liminal HQ, Scott Morris
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+//! `undertone-wasm`: the Rust API of [`undertone`] exported to JavaScript through `wasm-bindgen`, built into the
+//! `.wasm` module of the npm package `@liminal-hq/undertone` (RF-24; the TypeScript bridge over it is RF-25).
+//!
+//! It is `publish = false`: it ships inside the npm package, never on crates.io. Users of the JavaScript API never see
+//! these exports directly; the bridge (`packages/undertone`) wraps them under the 0.4.0 names. The rules every export
+//! follows (handles, JavaScript functions, the hap encoding, values, errors, panics, naming, typings) are in
+//! `docs/rust-migration/results/M6-BOUNDARY.md`.
+//!
+//! # Building
+//!
+//! `scripts/build-wasm.sh` builds the module with the `wasm` profile (`opt-level = "z"`, fat LTO, one codegen unit,
+//! `panic = "abort"`), runs `wasm-bindgen --target web --weak-refs` into `packages/undertone/wasm/`, and runs
+//! `wasm-opt -Oz`. On the host the crate builds too (`cargo check -p undertone-wasm`), so its pure-Rust parts are
+//! unit-tested with the rest of the workspace; anything that calls JavaScript runs only in a JavaScript runtime
+//! (`crates/undertone-wasm/tests/js/`).
+//!
+//! # Modules
+//!
+//! - [`pattern`]: the handle ([`WasmPattern`]), its queries, and the list builder ([`PatternList`]).
+//! - [`build`]: the constructors and transforms (groups 3 to 6, and the numeric methods of group 18).
+//! - [`notes`]: `note`, `sound`, `s`, `n`, `chord`, and the methods `.scale`, `.voicing`, `.sound`, `.s`, `.bank` (groups 7 and 8).
+//! - [`helpers`]: signals, seeded random numbers, pitch helpers, and the exact fraction helpers (groups 18, 16, 9, 1).
+//! - [`controls`]: the controls table as plain data, and its TypeScript declaration from `ts-rs`.
+//! - [`data`]: instruments, the pure channel helpers, and `resolveParams` (groups 12, 13, 14).
+//! - [`drift`]: `drift(pattern, options)`, with the options coerced as the reference reads them (group 17).
+//! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
+//! - [`convert`]: values and errors across the boundary.
+//! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
+//! - [`score`]: `score(definition)` and the score handle's data (group 15; its `play`, `loop`, and `collectVoices` are in
+//!   [`transport`] and [`voices`]).
+//! - [`warnings`]: the once-only warnings, printed with `console.warn`, and `resetWarnings`.
+//! - [`record`]: the recorder, `RecordGraph`: the engine's Web Audio calls as fixed-width numeric records for the wrapper to replay.
+//! - [`booking`]: the engine, `WasmEngine` (one per audio context: voices, the master bus, orbit buses, multichannel, the mono fold)
+//!   and `WasmPlayback`.
+//! - [`transport`]: the scheduler, `WasmTransport` (`play`, `loop`, `tick`, tempo), ticked by the wrapper's timer.
+//! - [`samples`]: the sample registry, one per instance, filled with PCM the host decoded.
+//! - [`voices`]: the first half of a render, `collectVoices`: the voices as plain data for the render module.
+//! - [`flat`]: the flat encoding those voices cross in (shared with the render module).
+//! - [`options`]: the option bags read from JavaScript (shared with the render module).
+//!
+//! The render module (`crates/undertone-wasm-render`) is the second, lazily loaded module: rendering and WAV.
+
+pub mod booking;
+pub mod build;
+pub mod controls;
+pub mod convert;
+pub mod data;
+pub mod drift;
+pub mod encode;
+pub mod flat;
+pub mod foreign;
+pub mod helpers;
+pub mod notes;
+pub mod options;
+pub mod pattern;
+pub mod record;
+pub mod samples;
+pub mod score;
+pub mod transport;
+pub mod voices;
+pub mod warnings;
+
+pub use pattern::{PatternList, WasmPattern};
+
+use wasm_bindgen::prelude::*;
+
+/// Runs when the module is instantiated: numbers print through JavaScript's `String(x)` and read through its `Number(text)`
+/// from here on (the pattern crate's `host-number-format`).
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub fn start() {
+	undertone::pattern::js::set_number_formatter(convert::number_text);
+	undertone::pattern::js::set_number_parser(convert::text_number);
+}
+
+/// The version of this build of Undertone (the workspace version), for the bridge to report.
+#[wasm_bindgen(js_name = undertoneVersion)]
+pub fn undertone_version() -> String {
+	env!("CARGO_PKG_VERSION").into()
+}

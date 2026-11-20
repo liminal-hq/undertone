@@ -77,6 +77,44 @@ fn a_pending_sample_is_skipped_silently_until_it_is_loaded() {
 }
 
 #[test]
+fn a_voice_naming_a_pending_sample_asks_the_host_for_that_sample_only() {
+	let mut engine = engine();
+	for name in ["pad", "kit_sd", "unused"] {
+		engine
+			.samples_mut()
+			.register_pending_sample(name, None)
+			.unwrap();
+	}
+	engine
+		.samples_mut()
+		.register_sample("bd", pcm(&[1.0]), None)
+		.unwrap();
+	assert!(engine.take_requested_samples().is_empty());
+	// Asking whether a voice is skipped asks for nothing; only booking does, as only booking looks the buffer up.
+	assert!(engine.is_voice_skipped(&hit("pad")));
+	assert!(engine.take_requested_samples().is_empty());
+	let mut banked = hit("sd");
+	banked.sample_bank = Some("kit".into());
+	engine.play(&hit("pad"), 0.0).unwrap();
+	engine.play(&banked, 0.0).unwrap();
+	engine.play(&hit("pad"), 0.5).unwrap();
+	engine.play(&hit("bd"), 0.0).unwrap();
+	engine.play(&hit("ghost"), 0.0).unwrap();
+	// Each pending key once, in the order first named; a loaded sample and an unregistered name are not asked for.
+	assert_eq!(engine.take_requested_samples(), ["pad", "kit_sd"]);
+	assert!(engine.take_requested_samples().is_empty());
+	engine.play(&hit("pad"), 1.0).unwrap();
+	assert_eq!(engine.take_requested_samples(), ["pad"]);
+	engine
+		.samples_mut()
+		.load_samples([("pad".to_string(), pcm(&[0.5]))])
+		.unwrap();
+	engine.play(&hit("pad"), 1.5).unwrap();
+	assert!(engine.take_requested_samples().is_empty());
+	assert_eq!(engine.warnings().len(), 1); // the unregistered name only
+}
+
+#[test]
 fn a_played_sample_keeps_its_buffer_after_a_clear_and_the_default_base_note() {
 	let mut engine = engine();
 	engine

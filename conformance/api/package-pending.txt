@@ -1,0 +1,14 @@
+# What the package does not export yet, against conformance/api/undertone.api.md (0.4.0): checked by scripts/check-package-api.ts.
+#
+# One name per line, `Name` or `Class.member`. The list only shrinks: CI fails when a missing name is not here and when a name
+# here exists in the package, so each part that lands deletes its lines. Other prefixes:
+#   ~Name  accepts a declaration that differs from the reference (say why)
+#   +Name  accepts a name or member the package adds to the reference (say why)
+
+# Accepted differences
+~Pattern.sample # a getter (the sampler comes from the handle), written `readonly sample: ... | undefined` rather than optional
+
+# Accepted additions
++Pattern.free # opt-in freeing of WebAssembly memory (RF-25)
++Pattern.[Symbol.dispose] # `using pattern = ...`
++Fraction.fromText # the boundary's text form for times beyond 2^53

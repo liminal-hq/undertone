@@ -77,6 +77,7 @@ pub fn is_integer(x: f64) -> bool {
 /// assert_eq!(number_to_string(-0.0), "0");
 /// assert_eq!(number_to_string(f64::NAN), "NaN");
 /// ```
+#[cfg(not(feature = "host-number-format"))]
 pub fn number_to_string(x: f64) -> String {
 	if x.is_nan() {
 		return "NaN".to_string();
@@ -125,6 +126,47 @@ pub fn number_to_string(x: f64) -> String {
 		}
 	};
 	alloc::format!("{sign}{body}")
+}
+
+/// The number reader the host installed with [`set_number_parser`] (the `host-number-format` feature).
+#[cfg(feature = "host-number-format")]
+static NUMBER_PARSER: std::sync::OnceLock<fn(&str) -> f64> = std::sync::OnceLock::new();
+
+/// Installs the function [`string_to_number`] reads with (the `host-number-format` feature): the host's own
+/// `Number(text)`. The first installation stays.
+#[cfg(feature = "host-number-format")]
+pub fn set_number_parser(parser: fn(&str) -> f64) {
+	let _ = NUMBER_PARSER.set(parser);
+}
+
+/// `Number(text)` for a string, read by the function the host installed ([`set_number_parser`]; the
+/// `host-number-format` feature). Before one is installed, every text reads as `NaN`.
+#[cfg(feature = "host-number-format")]
+pub fn string_to_number(text: &str) -> f64 {
+	NUMBER_PARSER.get().map_or(f64::NAN, |parser| parser(text))
+}
+
+/// The number printer the host installed with [`set_number_formatter`] (the `host-number-format` feature).
+#[cfg(feature = "host-number-format")]
+static NUMBER_FORMATTER: std::sync::OnceLock<fn(f64) -> String> = std::sync::OnceLock::new();
+
+/// Installs the function [`number_to_string`] prints with (the `host-number-format` feature): the host's own
+/// `String(x)`. The first installation stays.
+#[cfg(feature = "host-number-format")]
+pub fn set_number_formatter(formatter: fn(f64) -> String) {
+	let _ = NUMBER_FORMATTER.set(formatter);
+}
+
+/// `String(x)` for a number, printed by the formatter the host installed ([`set_number_formatter`]; the
+/// `host-number-format` feature). Before one is installed, an integer within `i64` prints in full and anything else as
+/// `NaN`: the feature is for a host that installs its formatter at start.
+#[cfg(feature = "host-number-format")]
+pub fn number_to_string(x: f64) -> String {
+	match NUMBER_FORMATTER.get() {
+		Some(formatter) => formatter(x),
+		None if is_integer(x) && x.abs() < 9.0e18 => (x as i64).to_string(),
+		None => "NaN".to_string(),
+	}
 }
 
 /// Whether a UTF-16 code unit matches JavaScript's `\s` (and so what `String.prototype.trim` strips).
@@ -195,6 +237,7 @@ pub fn utf16_units(text: &str) -> Vec<u16> {
 /// assert!(string_to_number("..").is_nan());
 /// assert!(string_to_number("inf").is_nan());
 /// ```
+#[cfg(not(feature = "host-number-format"))]
 pub fn string_to_number(text: &str) -> f64 {
 	let text = trim(text);
 	if text.is_empty() {
@@ -237,6 +280,7 @@ pub fn string_to_number(text: &str) -> f64 {
 }
 
 /// Whether `text` is an unsigned decimal literal: digits with an optional fraction, or a fraction alone, then an optional exponent.
+#[cfg(not(feature = "host-number-format"))]
 fn is_decimal_literal(text: &str) -> bool {
 	let bytes = text.as_bytes();
 	let mut i = 0;

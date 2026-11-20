@@ -120,7 +120,7 @@ jobs:
 
   docs:
     name: Docs (build + typecheck)
-    needs: [rust-doc, docs-audio]
+    needs: [rust-doc, docs-audio, wasm-bridge]
     runs-on: ubuntu-24.04
     container:
       image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
@@ -144,6 +144,12 @@ jobs:
         with:
           name: ts-audio
           path: docs/public/ts-audio
+      # TypeDoc documents the bridge package (typedoc.json), whose sources import the modules' generated glue.
+      - name: Download the modules and their glue
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wasm-module
+          path: packages/undertone/wasm
       - name: Test the audio check
         run: bash scripts/check-ts-audio.test.sh
       - name: Check the audio
@@ -365,6 +371,103 @@ jobs:
       - name: Write summary
         if: always()
         run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The WebAssembly bridge (RF-24, D-41), both modules (the main module and the lazily loaded render module): the shared ci-rust image plus the tools the job installs itself, each pinned and checked
+  # against its SHA-256 (the GitHub release digests): the wasm32 target, the wasm-bindgen CLI that crates/undertone-wasm pins
+  # (a prebuilt release binary; `cargo install` from source took 35 s with four jobs and a warm registry on a fast machine), and
+  # Bun (ci-rust has no JavaScript runtime). wasm-opt comes from the binaryen npm package that scripts/wasm-opt/ locks. Switch to
+  # the lighter wasm tier of liminal-hq/.github issue #52 when it lands.
+  wasm-bridge:
+    name: WebAssembly bridge
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    env:
+      WASM_BINDGEN_VERSION: 0.2.125
+      WASM_BINDGEN_SHA256: 21d81ef7414a0a585861a60ea4ae2b7970eccaed09d4a4e05f8bc4b159827dea
+      BUN_VERSION: 1.4.4
+      BUN_SHA256: bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Install the wasm-bindgen CLI
+        run: |
+          name="wasm-bindgen-${WASM_BINDGEN_VERSION}-x86_64-unknown-linux-musl"
+          curl -fsSL -o "/tmp/${name}.tar.gz" "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/${WASM_BINDGEN_VERSION}/${name}.tar.gz"
+          echo "${WASM_BINDGEN_SHA256}  /tmp/${name}.tar.gz" | sha256sum -c -
+          tar -xzf "/tmp/${name}.tar.gz" -C /tmp
+          install -m 755 "/tmp/${name}/wasm-bindgen" /usr/local/bin/wasm-bindgen
+          wasm-bindgen --version
+      - name: Install Bun
+        run: |
+          curl -fsSL -o /tmp/bun-linux-x64.zip "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip"
+          echo "${BUN_SHA256}  /tmp/bun-linux-x64.zip" | sha256sum -c -
+          unzip -q /tmp/bun-linux-x64.zip -d /tmp
+          install -m 755 /tmp/bun-linux-x64/bun /usr/local/bin/bun
+          bun --version
+      - name: Clippy for wasm32
+        run: cargo clippy -p undertone-wasm -p undertone-wasm-render --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: Build the two modules
+        run: bash scripts/build-wasm.sh
+      - name: Check the size budgets
+        run: bun scripts/check-wasm-size.ts
+      - name: Smoke test
+        run: bun crates/undertone-wasm/tests/js/smoke.ts
+      - name: Corpus layer 1
+        run: bun crates/undertone-wasm/tests/js/layer1.ts
+      - name: Corpus layer 2
+        run: bun crates/undertone-wasm/tests/js/layer2.ts
+      - name: Booking, scheduler, samples, and render exports against the reference
+        run: bun crates/undertone-wasm/tests/js/booking.ts
+      - name: Corpus layer 3 (booked, replayed on the fake context)
+        run: bun crates/undertone-wasm/tests/js/layer3.ts
+      - name: Corpus layer 4 (the render module against Chromium's summaries)
+        run: bun crates/undertone-wasm/tests/js/layer4.ts
+      - name: WAV corpus (the render module)
+        run: bun crates/undertone-wasm/tests/js/wav.ts
+      - name: Upload the two modules and their glue
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wasm-module
+          path: |
+            packages/undertone/wasm/undertone_wasm*
+            packages/undertone/wasm/render/undertone_wasm_render*
+          if-no-files-found: error
+          retention-days: 1
+      - name: Write summary
+        if: always()
+        run: echo "## WebAssembly bridge" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The bridge package (RF-25): the TypeScript over the module the wasm-bridge job built (ci-rust has no Node; ci-web has no
+  # wasm32 target). Builds the package, runs its tests, compares its exports with the 0.4.0 API report (conformance/api/
+  # package-pending.txt lists the accepted differences), and loads the packed tarball in Node, Bun, and Vite 5, a render included
+  # (scripts/check-package-loading.sh). The package tests run corpus layers 1 to 4 and the WAV corpus through the package.
+  bridge-package:
+    name: Bridge package
+    needs: [wasm-bridge]
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Download the module and its glue
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wasm-module
+          path: packages/undertone/wasm
+      - name: Build the package
+        run: bun run --cwd packages/undertone build
+      - name: Package tests
+        run: bun run package:test
+      - name: Compare the exports with the API report
+        run: bun run package:api
+      - name: Check loading from the packed tarball
+        run: bash scripts/check-package-loading.sh
+      - name: Write summary
+        if: always()
+        run: echo "## Bridge package" >> "${GITHUB_STEP_SUMMARY}"
 
   rust-layering:
     name: Rust crate layering

@@ -59,6 +59,7 @@ use crate::params::Pitch;
 use crate::render_graph::{MAX_BUFFER_SAMPLES, MAX_SAMPLE_RATE, MIN_SAMPLE_RATE};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use undertone_pattern::js::number_to_string;
 use undertone_pattern::pitch::note_to_frequency;
 use undertone_pattern::{Error, Result};
 
@@ -99,8 +100,10 @@ impl SampleData {
 		}
 		if !(MIN_SAMPLE_RATE..=MAX_SAMPLE_RATE).contains(&self.sample_rate) {
 			return Err(bad(&format!(
-				"an invalid sample rate: {} (from {MIN_SAMPLE_RATE} to {MAX_SAMPLE_RATE} Hz)",
-				self.sample_rate
+				"an invalid sample rate: {} (from {} to {} Hz)",
+				number_to_string(self.sample_rate),
+				number_to_string(MIN_SAMPLE_RATE),
+				number_to_string(MAX_SAMPLE_RATE)
 			)));
 		}
 		let frames = self.frames();

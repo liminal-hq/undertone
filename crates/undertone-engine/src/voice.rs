@@ -154,7 +154,8 @@ impl<G: Graph> Engine<G> {
 
 	/// The graph buffer of a sample (`getSampleBuffer`): the one this engine already made from it, else one
 	/// made now from the registry. `None` skips the voice: an unregistered name warns once (until the registry
-	/// is cleared), and a registered name whose PCM has not arrived is skipped silently.
+	/// is cleared), and a registered name whose PCM has not arrived is skipped silently and noted for the host
+	/// to decode ([`Engine::take_requested_samples`]).
 	fn sample_buffer(&mut self, name: &str, bank: Option<&str>) -> Option<BufferId> {
 		let key = self.samples.lookup_key(name, bank);
 		if let Some(buffer) = self.sample_buffers.get(&key) {
@@ -171,7 +172,12 @@ impl<G: Graph> Engine<G> {
 			}
 			return None;
 		}
-		let data = Arc::clone(self.samples.entry_data(&key)?);
+		let Some(data) = self.samples.entry_data(&key).map(Arc::clone) else {
+			if !self.requested_samples.contains(&key) {
+				self.requested_samples.push(key);
+			}
+			return None;
+		};
 		let buffer =
 			self.graph
 				.create_buffer(data.channels.len() as u32, data.frames(), data.sample_rate);
