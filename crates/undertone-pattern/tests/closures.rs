@@ -14,6 +14,7 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 	let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
 	let mut offenders = Vec::new();
 	let mut allowed = 0;
+	let mut transient = 0;
 	for entry in std::fs::read_dir(&src).unwrap() {
 		let path = entry.unwrap().path();
 		let text = std::fs::read_to_string(&path).unwrap();
@@ -28,6 +29,9 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 			}
 			if code.contains("dyn Query<T>") || code.contains("dyn ForeignHost<T>") {
 				allowed += 1;
+			} else if code.contains("type Leaf<'a, T> = &'a dyn Fn(&str)") {
+				// The mini-notation parser borrows its leaf rule while it parses and never stores it in a tree.
+				transient += 1;
 			} else {
 				offenders.push(format!("{}:{}: {}", path.display(), n + 1, line.trim()));
 			}
@@ -41,6 +45,10 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 		offenders.is_empty(),
 		"closure-holding places outside the escape hatches:\n{}",
 		offenders.join("\n")
+	);
+	assert_eq!(
+		transient, 1,
+		"the mini-notation parser's borrowed leaf rule (mini.rs), which is not part of any tree"
 	);
 	assert_eq!(
 		allowed, 8,
