@@ -98,7 +98,8 @@ Primary categories: `enhancement`, `bug`, `documentation`, `testing`, `ci`, `cho
 - TypeScript library, zero runtime dependencies, built on the Web Audio API.
 - The Rust crates in `crates/` are checked by `cargo` (pinned in `rust-toolchain.toml`), with hard tabs from `rustfmt.toml`.
 - Package manager: `bun`. Tests: `vitest`. Lint/format: `eslint` + `prettier`. Build: `tsc` (emits `dist/`, declarations included).
-- Published to npm as `@liminal-hq/undertone`. To release: bump `version` in `package.json` on a `chore/release-v<version>` branch, merge to `main`, then push a matching `vX.Y.Z` tag (or run the "Release" workflow via `workflow_dispatch`). CI verifies the build, attaches the npm tarball to a GitHub release, and publishes to npm — the npm publish step waits for manual approval on the `npm-publish` environment in the Actions UI before it runs.
+- **Package names:** the TypeScript library in `src/` (the root `package.json`) is the internal, private reference `@liminal-hq/undertone-reference`: the conformance corpus is recorded from it, the docs and playground run on it until the bridge replaces it, and it is never published. `@liminal-hq/undertone` is the public name; it belongs to the WebAssembly bridge package in `packages/undertone/` (M6, RF-25), which takes the name when it is switched in. The release workflow below still describes the TypeScript release path and is re-pointed at the bridge package in RF-32.
+- Releases (until RF-32 re-points them): to release: bump `version` in `package.json` on a `chore/release-v<version>` branch, merge to `main`, then push a matching `vX.Y.Z` tag (or run the "Release" workflow via `workflow_dispatch`). CI verifies the build, attaches the npm tarball to a GitHub release, and publishes to npm — the npm publish step waits for manual approval on the `npm-publish` environment in the Actions UI before it runs.
 
 ## Licence and Copyright
 

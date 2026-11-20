@@ -1,5 +1,6 @@
 {
-  "name": "@liminal-hq/undertone",
+  "name": "@liminal-hq/undertone-reference",
+  "private": true,
   "version": "0.3.0",
   "description": "A small, dependency-free procedural synth engine for game SFX and pattern-based music — Web Audio, mini-notation, euclidean rhythms, zero deps.",
   "type": "module",
