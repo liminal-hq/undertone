@@ -1,0 +1,3 @@
+[install]
+# Hoisted, as before the workspace: tools such as vitest resolve transitive packages (@lezer/*) from the root node_modules.
+linker = "hoisted"
