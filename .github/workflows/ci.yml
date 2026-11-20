@@ -410,6 +410,8 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/smoke.ts
       - name: Corpus layer 1
         run: bun crates/undertone-wasm/tests/js/layer1.ts
+      - name: Corpus layer 2
+        run: bun crates/undertone-wasm/tests/js/layer2.ts
       - name: Write summary
         if: always()
         run: echo "## WebAssembly bridge" >> "${GITHUB_STEP_SUMMARY}"

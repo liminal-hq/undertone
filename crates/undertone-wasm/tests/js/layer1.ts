@@ -5,11 +5,10 @@
 
 // Run after scripts/build-wasm.sh, with Bun (the recorder's modules use extensionless imports):
 //   bun crates/undertone-wasm/tests/js/layer1.ts [group ...]
-// With no group it runs every group part 1 of RF-24 covers (PART_1_GROUPS). For each case it rebuilds the ProgramCase from
+// With no group it runs every group of the corpus (GROUPS). For each case it rebuilds the ProgramCase from
 // the corpus file, records it with conformance/recorder/programs.ts' recordProgram (the `random` group with randomCases.ts'
 // recordRandom) over the test wrapper's `lib` (harness.ts), and compares the record with the corpus. A case whose program
-// names something part 1 does not export (a control, `note`, `s`, or the `drum` leaf rule, which calls `s()`) is skipped and
-// counted, never failed: part 2 of RF-24 adds those names, and this runner then covers them unchanged.
+// names something the module does not export would be skipped and counted, never failed; since part 2a of RF-24 none is.
 //
 // It also compares one window of at least 1,000 haps per program of the `core` and `mini` groups with the TypeScript reference
 // (src/), so the hap encoding is checked at scale, not only on the corpus's short spans.
@@ -33,10 +32,21 @@ import { loadReference } from '../../../../conformance/recorder/reference';
 import type { Json } from '../../../../conformance/recorder/format';
 import { Pattern, lib } from './harness.ts';
 
-/** The layer 1 groups whose programs use only part 1's exports (some cases of the first three still need part 2). */
-export const PART_1_GROUPS = ['core', 'mini', 'combinators', 'signals', 'random'] as const;
+/** Every layer 1 group: part 1 of RF-24 covered the first five, part 2a the rest (and the cases of the first three that need `note` or `s`). */
+export const GROUPS = [
+  'core',
+  'mini',
+  'combinators',
+  'signals',
+  'random',
+  'scales',
+  'chords',
+  'controls',
+  'notes',
+  'drift'
+] as const;
 
-/** Every name a program may use with part 1's exports: the `lib` names, the Pattern methods, and the recorder's own steps. */
+/** Every name a program may use with the module's exports: the `lib` names, the Pattern methods, and the recorder's own steps. */
 const SUPPORTED = new Set<string>([
   ...Object.keys(lib),
   ...Object.getOwnPropertyNames(Pattern.prototype),
@@ -45,10 +55,10 @@ const SUPPORTED = new Set<string>([
   'fmap'
 ]);
 
-/** The leaf rules of `mini` part 1 can run (`drum` calls `s()`, part 2). */
-const SUPPORTED_LEAVES = new Set(['word', 'number', 'pitch']);
+/** The leaf rules of `mini` the module can run (`drum` calls `s()`). */
+const SUPPORTED_LEAVES = new Set(['word', 'number', 'pitch', 'drum']);
 
-/** The first name a program uses that part 1 does not export, or undefined when it can run. */
+/** The first name a program uses that the module does not export, or undefined when it can run. */
 export function unsupported(program: Program): string | undefined {
   for (const [name, ...args] of program) {
     if (!SUPPORTED.has(name)) return name;
@@ -228,7 +238,7 @@ export function largeWindows(group: string, reference: Reference, minimum = 1000
 }
 
 if (import.meta.main) {
-  const groups = process.argv.slice(2).length > 0 ? process.argv.slice(2) : [...PART_1_GROUPS];
+  const groups = process.argv.slice(2).length > 0 ? process.argv.slice(2) : [...GROUPS];
   let failures = 0;
   let total = { cases: 0, passed: 0, skipped: 0 };
   for (const group of groups) {
@@ -241,7 +251,7 @@ if (import.meta.main) {
     };
     const why = [...result.skipped].map(([name, n]) => `${name} ${n}`).join(', ');
     console.log(
-      `${group}: ${result.passed} of ${result.cases} equal, ${skipped} skipped${why ? ` (need part 2: ${why})` : ''}, ${result.failed.length} failed`
+      `${group}: ${result.passed} of ${result.cases} equal, ${skipped} skipped${why ? ` (not exported: ${why})` : ''}, ${result.failed.length} failed`
     );
     for (const failure of result.failed.slice(0, 20)) console.log(`  FAIL ${failure}`);
     failures += result.failed.length;

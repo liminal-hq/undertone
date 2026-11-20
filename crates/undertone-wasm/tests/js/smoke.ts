@@ -1,4 +1,4 @@
-// Smoke test of the WebAssembly module through its exports: haps, lists, transforms, foreign leaves, errors, freeing, memory
+// Smoke test of the WebAssembly module through its exports: haps, lists, transforms, foreign leaves, controls, data, warnings, errors, freeing, memory
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT OR Apache-2.0
@@ -435,6 +435,216 @@ await check('JavaScript functions held by freed leaves are released', () => {
 
 const HANDLES = 100_000;
 const MB = 1024 * 1024;
+
+const values = (pattern: Pattern) =>
+  cycle(pattern).map((hap) => hap.value as Record<string, unknown>);
+const messageOf = (run: () => unknown) => (thrown(run) as Error).message;
+
+await check('note, sound, s, n, chord, scale, and voicing build the reference values', () => {
+  assert.deepEqual(values(lib.note('c3 440')), [{ pitch: 'c3' }, { pitch: 440 }]);
+  assert.deepEqual(values(lib.note(220)), [{ pitch: 220 }]);
+  assert.deepEqual(values(lib.s('bd sine')), [{ sampleName: 'bd' }, { soundType: 'sine' }]);
+  assert.deepEqual(
+    values(lib.n('0 2').scale('C4:major')).map((v) => v.pitch),
+    [261.6255653005986, 329.6275569128699]
+  );
+  assert.equal(values(lib.n(lib.pure(2.7).segment(1))).at(0)?.degree, 2);
+  assert.equal(values(lib.chord('C').voicing()).length, 3);
+  assert.equal(values(lib.chord('C').voicing({ anchor: 'c3' }))[0].pitch, 130.8127826502993);
+  assert.equal(
+    messageOf(() => lib.sound('zap')),
+    'Mini-notation error at position 0 in "zap": Invalid sound type: "zap". Expected one of sine, triangle, square, sawtooth, halfsine, abssine, pulsesine, white, pink, brown.'
+  );
+  // A parse error keeps the source's own UTF-16 code units, as mini() does.
+  assert.equal(
+    messageOf(() => lib.note('c3 \ud83d')),
+    'Mini-notation error at position 3 in "c3 \ud83d": unexpected "\ud83d"'
+  );
+  assert.equal(
+    messageOf(() => lib.n(1.5)),
+    'Invalid scale degree: 1.5. Expected an integer.'
+  );
+});
+
+await check(
+  'the control dispatchers take numbers, strings, and patterns, with the reference messages',
+  () => {
+    const p = lib.note('c3 e3') as unknown as Record<string, (...args: unknown[]) => Pattern>;
+    const gain = values(p.gain('0.2 0.8'));
+    assert.deepEqual(
+      gain.map((v) => v.gainLevel),
+      [0.2, 0.8]
+    );
+    assert.deepEqual(
+      values(p.early(0.1)).map((v) => v.nudgeTime),
+      [-0.1, -0.1]
+    );
+    assert.equal(
+      messageOf(() => p.pan(3)),
+      'pan() position must be between -1 and 1, got 3'
+    );
+    assert.equal(
+      messageOf(() => p.pan('<-.6 1.2>')),
+      'Mini-notation error at position 5 in "<-.6 1.2>": pan() position must be between -1 and 1, got 1.2'
+    );
+    assert.equal(
+      messageOf(() => p.cut(true)),
+      'cut() must be a non-negative integer, got true'
+    );
+    assert.equal(
+      messageOf(() => p.fmenv(1)),
+      `fmenv() must be 'lin' or 'exp', got "1"`
+    );
+    for (const name of [
+      'fmenv',
+      'orbit',
+      'panlaw',
+      'surround',
+      'channels',
+      'panpath',
+      'pitchsteps'
+    ]) {
+      assert.equal(
+        messageOf(() => p[name](lib.sine)),
+        `${name}() takes a plain value, not a pattern; it cannot change from event to event`
+      );
+    }
+    assert.equal(
+      messageOf(() => p.panslide(0.5, lib.sine)),
+      'panslide() takes a plain value, not a pattern; it cannot change from event to event'
+    );
+    assert.equal(
+      messageOf(() => p.panslide(0, '1')),
+      'panslide() time must be zero or more seconds, got 1'
+    );
+    assert.equal(values(p.channels([1, 0.5]))[0].channelGains?.toString(), '1,0.5');
+    assert.equal(
+      messageOf(() => p.channels([1, 'x'])),
+      'channels() gains must be finite and >= 0, got x'
+    );
+    assert.deepEqual(values(p.pitchsteps([0, 12], 70))[0].pitchStepRate, 70);
+    assert.deepEqual(
+      values(
+        p.panpath([
+          { time: 0, pan: -1 },
+          { time: 0.5, pan: 1 }
+        ])
+      )[0].panPath,
+      [
+        { pan: -1, time: 0 },
+        { pan: 1, time: 0.5 }
+      ]
+    );
+    assert.equal(
+      messageOf(() => p.panpath([{ time: 0, pan: 0 }], 10)),
+      'panpath() takes a rate only with an array of pans, not with { time, pan } points'
+    );
+    assert.equal(values(p.surround(90))[0].channelGains?.toString(), '0,0,0,0,0,1,0,0');
+    assert.equal(values(p.voice(lib.fmPresets.pluck).gain(0.9))[0].gainLevel, 0.9);
+    assert.equal(values(p.voice(undefined)).length, 2);
+  }
+);
+
+await check(
+  'a pattern value a control has to deal with warns once per key, until resetWarnings()',
+  () => {
+    const warned: unknown[] = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => void warned.push(...args);
+    try {
+      lib.resetWarnings();
+      const p = (lib.note('c3*4') as unknown as Record<string, (x: unknown) => Pattern>).pan(
+        lib.pure(1.4)
+      );
+      cycle(p);
+      cycle(p, 1, 2);
+      assert.deepEqual(warned, ['undertone: pan() got 1.4 from a pattern; clamped to 1.']);
+      const lpf = (lib.note('c3') as unknown as Record<string, (x: unknown) => Pattern>).lpf(
+        lib.signal(() => NaN)
+      );
+      cycle(lpf);
+      assert.equal(warned[1], 'undertone: lpf() got NaN from a pattern; left unset.');
+      const quiet = (lib.note('c3') as unknown as Record<string, (x: unknown) => Pattern>).pan(
+        lib.signal(() => undefined as unknown as number)
+      );
+      assert.deepEqual(values(quiet), [{ pitch: 'c3' }]);
+      assert.equal(warned.length, 2, 'undefined is a rest: no warning');
+      lib.resetWarnings();
+      cycle(p);
+      assert.equal(warned.length, 3, 'resetWarnings() lets the key warn again');
+    } finally {
+      console.warn = original;
+    }
+  }
+);
+
+await check(
+  'resolveParams, the instruments, the channel helpers, score, and drift give plain data',
+  () => {
+    const params = lib.resolveParams({ degree: 2, sampleName: 'bd' }) as Record<string, unknown>;
+    assert.equal(params.degree, 2, 'a key that is not a field is kept, as the spread keeps it');
+    assert.equal(params.sustain, 1, 'the sample rule');
+    assert.equal(params.soundType, 'sine');
+    assert.ok('pitch' in params && params.pitch === undefined, 'an optional default is undefined');
+    assert.ok(!('pan' in params));
+    assert.equal(
+      (lib.fmVoice({ harmonicity: 2, modulationIndex: 7 }) as { fmIndex: number }).fmIndex,
+      3.5
+    );
+    assert.equal(
+      messageOf(() => lib.fmVoice({ harmonicity: 0 })),
+      'fmVoice() harmonicity must be positive, got 0'
+    );
+    // Map keys come back sorted (M6-BOUNDARY section 3); the reference's order is glassBell, roundBass, softPad, pluck, lead.
+    assert.deepEqual(Object.keys(lib.fmPresets), [
+      'glassBell',
+      'lead',
+      'pluck',
+      'roundBass',
+      'softPad'
+    ]);
+    assert.deepEqual(lib.CHANNEL_ORDER, ['FL', 'FR', 'C', 'LFE', 'SL', 'SR', 'RL', 'RR']);
+    assert.equal(lib.MAX_CHANNELS, 8);
+    assert.deepEqual(lib.SHAPED_WAVE_TYPES, ['halfsine', 'abssine', 'pulsesine']);
+    assert.equal(lib.isShapedWave('abssine'), true);
+    assert.equal(lib.isShapedWave(3), false);
+    assert.deepEqual(lib.surroundGains(0), [0, 0, 1, 0, 0, 0, 0, 0]);
+    assert.equal(
+      messageOf(() => lib.surroundGains(NaN)),
+      'surround() angle must be a finite number, got NaN'
+    );
+    assert.equal(lib.foldToStereo([1, 0, 1])[0], 1 + Math.SQRT1_2);
+    const layered = lib.layer(lib.note('a4'), [{ soundType: 'square' }, {}], {
+      stagger: 0.002,
+      levels: [undefined, 0.5]
+    });
+    const [first, second] = values(layered);
+    assert.equal(first.velocity, undefined, 'a hole in levels leaves the layer as it is');
+    assert.equal(second.velocity, 0.5);
+    assert.equal(second.nudgeTime, 0.002);
+    const cue = lib.score({ ticksPerSecond: 4, lengthTicks: 8, events: [{ tick: 0, note: 'c4' }] });
+    assert.equal(cue.cps, 0.5);
+    assert.equal(cue.seconds, 2);
+    assert.equal(values(cue.pattern)[0].pitch, 'c4');
+    assert.equal(
+      messageOf(() => lib.score({ ticksPerSecond: 0, lengthTicks: 8, events: [] })),
+      'score() ticksPerSecond must be positive, got 0'
+    );
+    const notes = lib.note('c3 e3');
+    assert.equal(
+      messageOf(() => lib.drift(notes, { seed: 1, cyclesPerPass: '2' })),
+      'drift() cyclesPerPass must be a positive integer, got 2'
+    );
+    assert.equal(
+      messageOf(() => lib.drift(notes, { seed: 1, timing: 'x' })),
+      'drift() timing must not be negative, got x'
+    );
+    assert.equal(
+      values(lib.drift(notes, { seed: 1, timing: 0.01, level: null }))[0].nudgeTime,
+      0.0064723130268976095
+    );
+  }
+);
 
 await check(`${HANDLES} short-lived handles with free(): live handles and memory stay flat`, () => {
   const base = lib.mini('a b c', word);

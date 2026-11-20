@@ -13,6 +13,10 @@
 //   - list constructors push each handle into a PatternList (never an array of handles);
 //   - `.query` decodes the flat encoding into Hap objects with the reference's Fraction class;
 //   - `free()` is idempotent (the glue's is not).
+//   - the control methods are installed on Pattern.prototype from controlTable(), one per row, calling the dispatcher the
+//     row's `arg` names (a scalar-only control given a pattern is refused by Rust, except the list controls, whose
+//     arguments the wrapper checks with `instanceof`, as the reference's `rejectPattern` does);
+//   - warnings are printed by the module itself (console.warn); `resetWarnings` clears its once-only set.
 // Runs under Node 22 (type stripping) and Bun; it reads the module from disk (packages/undertone/wasm/, scripts/build-wasm.sh).
 
 import { readFileSync } from 'node:fs';
@@ -216,6 +220,30 @@ export class Pattern<T = unknown> {
     return Pattern.of(this.handle.floor());
   }
 
+  scale(spec: string): Pattern<T> {
+    return Pattern.of(this.handle.scale(spec));
+  }
+
+  voicing(options?: { anchor?: string | number }): Pattern<T> {
+    return Pattern.of(this.handle.voicing(options?.anchor));
+  }
+
+  sound(type: string): Pattern<T> {
+    return Pattern.of(this.handle.sound(type));
+  }
+
+  s(name: string): Pattern<T> {
+    return Pattern.of(this.handle.s(name));
+  }
+
+  bank(name: string): Pattern<T> {
+    return Pattern.of(this.handle.bank(name));
+  }
+
+  voice(patch: unknown): Pattern<T> {
+    return Pattern.of(this.handle.voice(patch));
+  }
+
   private freed = false;
 
   /** Frees the handle at once. Idempotent here: the glue's own `free()` throws "null pointer passed to rust" the second time. */
@@ -228,7 +256,64 @@ export class Pattern<T = unknown> {
 
 const signalNamed = (name: string) => Pattern.of<number>(wasm.signalNamed(name));
 
-/** The reference's names that part 1 exports, as the corpus interpreter looks them up (`ref.lib`). */
+/** One row of the controls table (crates/undertone-wasm/bindings/ControlRow.ts). */
+interface ControlRow {
+  jsName: string;
+  arg: string;
+  scalarOnly: boolean;
+}
+
+const plainValue = (name: string) =>
+  new Error(`${name}() takes a plain value, not a pattern; it cannot change from event to event`);
+
+/** The method a row of the table becomes, by its argument kind. */
+function controlMethod(row: ControlRow): (this: Pattern, ...args: unknown[]) => Pattern {
+  const name = row.jsName;
+  switch (row.arg) {
+    case 'patternableWithTime':
+      return function (this: Pattern, from: unknown, seconds?: unknown) {
+        if (seconds instanceof Pattern) throw plainValue(name);
+        return Pattern.of(
+          from instanceof Pattern
+            ? this.handle.panslidePattern(from.handle, seconds)
+            : this.handle.panslide(from, seconds)
+        );
+      };
+    case 'numberList':
+    case 'path':
+      return function (this: Pattern, list: unknown, rate?: unknown) {
+        if (list instanceof Pattern) throw plainValue(name);
+        if (name === 'channels') return Pattern.of(this.handle.channels(list));
+        if (name === 'pitchsteps') return Pattern.of(this.handle.pitchsteps(list, rate));
+        return Pattern.of(this.handle.panpath(list, rate));
+      };
+    default:
+      return function (this: Pattern, input: unknown) {
+        return Pattern.of(
+          input instanceof Pattern
+            ? this.handle.controlPattern(name, input.handle)
+            : this.handle.control(name, input)
+        );
+      };
+  }
+}
+
+for (const row of wasm.controlTable() as ControlRow[]) {
+  if (Object.prototype.hasOwnProperty.call(Pattern.prototype, row.jsName)) continue; // sound, s, bank
+  Object.defineProperty(Pattern.prototype, row.jsName, {
+    value: controlMethod(row),
+    writable: true,
+    configurable: true
+  });
+}
+
+/** The reference's `Score`, without play, loop, and render (part 2b). */
+function score(definition: unknown) {
+  const handle = wasm.score(definition);
+  return { pattern: Pattern.of(handle.pattern()), cps: handle.cps, seconds: handle.seconds };
+}
+
+/** The reference's names that parts 1 and 2a export, as the corpus interpreter looks them up (`ref.lib`). */
 export const lib = {
   Pattern,
   Fraction,
@@ -269,5 +354,53 @@ export const lib = {
   seededRandom: (seed: number | string) => {
     const random = wasm.seededRandom(seed);
     return () => random.next();
+  },
+  note: (input: unknown) => Pattern.of(wasm.note(input)),
+  sound: (input: unknown) => Pattern.of(wasm.sound(input)),
+  s: (input: unknown) => Pattern.of(wasm.s(input)),
+  n: (input: unknown) =>
+    Pattern.of(input instanceof Pattern ? wasm.nPattern(input.handle) : wasm.n(input)),
+  chord: (input: unknown) => Pattern.of(wasm.chord(input)),
+  drift: (pattern: Pattern, options: unknown) => Pattern.of(wasm.drift(pattern.handle, options)),
+  layer: (notes: Pattern, voices: unknown[], options?: unknown) =>
+    Pattern.of(wasm.layer(notes.handle, voices, options)),
+  fmVoice: (definition: unknown) => wasm.fmVoice(definition),
+  fmPresets: Object.freeze(wasm.fmPresets() as Record<string, unknown>),
+  resolveParams: (patch: unknown) => wasm.resolveParams(patch),
+  score,
+  surroundGains: (angle: number) => wasm.surroundGains(angle),
+  foldToStereo: (gains: number[]) => wasm.foldToStereo(gains),
+  CHANNEL_ORDER: Object.freeze(wasm.channelOrder()),
+  MAX_CHANNELS: wasm.maxChannels(),
+  SHAPED_WAVE_TYPES: Object.freeze(wasm.shapedWaveTypes()),
+  isShapedWave: (word: unknown) => wasm.isShapedWave(word),
+  resetWarnings: () => wasm.resetWarnings()
+};
+
+/** The reference's `collectOnsets` (src/scheduler.ts), over the module's resolveParams: the test stand-in for the scheduler, which is part 2b. */
+export const scheduler = {
+  cycleSecondsFor: (_bpm: number | undefined, cps: number) => 1 / cps,
+  collectOnsets(
+    pattern: Pattern<Record<string, unknown>>,
+    span: TimeSpan,
+    patternStartTime: number,
+    cycleSeconds: number,
+    gated: boolean
+  ) {
+    const voices: { startTime: number; params: unknown }[] = [];
+    for (const hap of pattern.query(span)) {
+      if (!hap.whole || !hap.whole.begin.eq(hap.part.begin)) continue;
+      const startTime = patternStartTime + hap.whole.begin.toNumber() * cycleSeconds;
+      const eventSeconds = hap.whole.end.sub(hap.whole.begin).toNumber() * cycleSeconds;
+      const legato = hap.value.legato as number | undefined;
+      const patch =
+        legato !== undefined
+          ? { duration: eventSeconds * legato, ...hap.value }
+          : gated
+            ? { duration: eventSeconds, ...hap.value }
+            : hap.value;
+      voices.push({ startTime, params: wasm.resolveParams(patch) });
+    }
+    return voices;
   }
 };
