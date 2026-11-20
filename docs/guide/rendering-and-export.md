@@ -63,7 +63,7 @@ Noise and reverb impulse responses are random, so unseeded renders differ slight
 - **Samples are decoded for you.** Registered samples a pattern uses are decoded on the offline context before the render starts. Sample-rate differences between a file and the render are resampled by the browser.
 - **Memory.** The whole render lives in memory, and every event is booked up front unless `bookingWindow` is set. A stereo render is about 23 MB per minute at 48 kHz in 32-bit float, before the nodes the events create. Long pieces may need to be rendered in sections.
 - **It blocks the page.** Web Audio is not available in Workers, so a heavy render runs on the page that asks for it.
-- **Outside a browser.** There is no built-in `OfflineAudioContext` in Node. Pass a `context` factory (for example one built on a Web Audio implementation you choose) that takes `{ numberOfChannels, length, sampleRate }`. Undertone adds no dependency for this.
+- **Outside a browser.** From 0.4 a render needs no `OfflineAudioContext`: without a `context` factory it runs in the WebAssembly render module, so it works in Node, Bun, and Deno as it is (see [Rendering without a browser](#rendering-without-a-browser)). Pass a `context` factory only to book the voices on a Web Audio implementation of your own.
 
 ## WAV files
 
@@ -72,6 +72,30 @@ Noise and reverb impulse responses are random, so unseeded renders differ slight
 - **Bit depth:** 16-bit (default), 24-bit, or 32-bit float. 16-bit adds seeded TPDF dither by default so quiet tails do not turn into rounding noise; pass `dither: false` to turn it off. The `seed` makes the dither, and so the bytes, repeatable.
 - **Channels:** one to eight. Three or more use the extensible header with a speaker mask. 7.1 is reordered into WAV's channel order, so Undertone's surround layout plays on the right speakers in a player.
 - **Size:** the data chunk is limited to 4 GiB. Larger audio throws.
+
+## Rendering without a browser
+
+A render in 0.4 runs in the WebAssembly render module, and `encodeWav` is TypeScript, so a script in Node 22 or later, Bun, or Deno can write a WAV file with no `AudioContext`, no `OfflineAudioContext`, and no browser:
+
+```js
+// render.mjs
+import { note, encodeWav } from '@liminal-hq/undertone';
+import { writeFileSync } from 'node:fs';
+
+const song = note('c3 [e3 g3] <b3 a3> ~').sound('triangle');
+const audio = await song.render({ seconds: 1.5, bpm: 240, sampleRate: 22050, seed: 'level-1' });
+writeFileSync('song.wav', encodeWav(audio, { seed: 'level-1' }));
+```
+
+```sh
+node render.mjs
+bun render.mjs
+deno run -A render.mjs
+```
+
+The same engine is also a command line, `undertone-render` (in `crates/undertone-cli`), and it builds for `wasm32-wasip1`, so a WebAssembly runtime with WASI such as `wasmtime` can render with no JavaScript at all. See [Rust: rendering without a browser](/guide/rust-rendering-and-export#rendering-without-a-browser) for the commands.
+
+**The files are the same bits.** The repository renders five cases (stereo, noise, mono 24-bit, 32-bit float, and six channels) natively, under `wasmtime`, and through the package in Node, Bun, and Deno, and compares the WAV files byte for byte: `scripts/check-wasi-render.sh` and `scripts/check-package-render.sh` do it, and CI runs them. They are identical on every runtime, because the maths is the pure-Rust `libm` everywhere and the dither is seeded. That holds for the maths of the package's render module; it says nothing about the sound, which nobody has listened to.
 
 ## Not covered
 
