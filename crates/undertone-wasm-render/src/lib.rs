@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 //! `undertone-wasm-render`: the second WebAssembly module of the npm package (`packages/undertone/wasm/render/`), loaded
-//! with a dynamic `import()` the first time a render or a WAV is asked for (`renderToBuffer`, `.render()`,
-//! `score.render`, `encodeWav`, all already asynchronous in 0.4.0). The rules are section 13 of
+//! with a dynamic `import()` the first time a render is asked for (`renderToBuffer`, `.render()`, `score.render`, all
+//! already asynchronous in 0.4.0). The rules are section 13 of
 //! `docs/rust-migration/results/M6-BOUNDARY.md`.
 //!
 //! It has **no pattern and no mini-notation**: the main module collects a render's voices (`collectVoices`) and hands
@@ -16,7 +16,8 @@
 //! - [`render::render_voices`] (`renderVoices`): the voices rendered offline (D-14), `{ sampleRate, channels }`.
 //! - [`render::WasmContextRender`] (`ContextRender`): the same voices booked on a recorder instead, for the wrapper to
 //!   replay on the caller's `OfflineAudioContext` (`renderToBuffer(pattern, { context })`), window by window.
-//! - [`render::encode_wav`] (`encodeWav`): samples to WAV bytes.
+//! - [`render::encode_wav`] (`encodeWav`): samples to WAV bytes. The package's own `encodeWav` is TypeScript (RF-25d, so it
+//!   is synchronous in a browser before any render); this export is kept for the module's WAV corpus runner.
 //! - The sample registry (`registerSample`, `registerPendingSample`, `loadSample`, `clearSamples`, ...), one per
 //!   instance like the main module's: the wrapper registers each sample in both.
 //!

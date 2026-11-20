@@ -26,7 +26,7 @@ The first two are separate loads of the module: a program uses one of them, not 
 
 ### Rendering loads a second module
 
-Offline rendering and WAV encoding are in a second module, `wasm/render/`, which loads the first time it is needed, so a program that only plays never downloads it. In a browser the first `renderToBuffer()`, `.render()`, or `score().render()` imports and fetches it; **`encodeWav()` returns its bytes synchronously, so in a browser call it after a render** (before any render it throws, saying so). Under Node, Bun, and Deno both modules are read from disk on first use, and `encodeWav()` works at any time.
+Offline rendering is in a second module, `wasm/render/`, which loads the first time it is needed, so a program that only plays never downloads it. In a browser the first `renderToBuffer()`, `.render()`, or `score().render()` imports and fetches it; under Node, Bun, and Deno it is read from disk on first use. `encodeWav()` is TypeScript and does not need the render module, so it works on every runtime as soon as the main module has loaded (after `init()` with `./init`).
 
 ### Vite 5, and bundler targets
 

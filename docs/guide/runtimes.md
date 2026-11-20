@@ -38,12 +38,12 @@ note('c3 e3 g3').play();
 The package ships two WebAssembly modules:
 
 - **The main module** (`wasm/undertone_wasm_bg.wasm`, about 147 KB after Brotli) holds patterns, controls, chords, instruments, scores, and the engine and scheduler that `play()` and `loop()` book with. It loads with the entry.
-- **The render module** (`wasm/render/undertone_wasm_render_bg.wasm`, about 97 KB after Brotli) holds offline rendering and WAV encoding. It loads the first time it is needed, so a game that only plays sounds never downloads it.
+- **The render module** (`wasm/render/undertone_wasm_render_bg.wasm`, about 97 KB after Brotli) holds offline rendering. It loads the first time it is needed, so a game that only plays sounds never downloads it. WAV encoding (`encodeWav()`) is TypeScript in the package and does not need the render module, so it works as soon as the main module has loaded.
 
 How the render module loads depends on the runtime:
 
-- **In a browser** (both entries), the first `renderToBuffer()`, `pattern.render()`, or `score().render()` imports its glue with a dynamic `import()` and fetches the module. `encodeWav()` returns its bytes synchronously, so it cannot load the module itself: call it after a render, which is the usual order anyway. Before any render it throws `encodeWav() needs the render module, which a browser loads with the first render`.
-- **Under Node, Bun, and Deno**, the module is read from disk and instantiated synchronously the first time a render or `encodeWav()` needs it.
+- **In a browser** (both entries), the first `renderToBuffer()`, `pattern.render()`, or `score().render()` imports its glue with a dynamic `import()` and fetches the module.
+- **Under Node, Bun, and Deno**, the module is read from disk and instantiated synchronously the first time a render needs it.
 
 A render without `context` runs in the render module. A render with `context` books its voices on your `OfflineAudioContext` instead, so the browser's own convolver and compressor make the sound, as 0.3 always did.
 

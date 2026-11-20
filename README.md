@@ -28,7 +28,7 @@ bun add @liminal-hq/undertone
 # or: npm install @liminal-hq/undertone
 ```
 
-From 0.4 the package is a TypeScript layer over a Rust core compiled to WebAssembly, with the same API. The default import loads the module for you (top-level `await` in a browser, a synchronous read under Node, Bun, and Deno). Where top-level `await` is not available, import `@liminal-hq/undertone/init` and `await init()` first. **With `./init`, `CHANNEL_ORDER`, `MAX_CHANNELS`, `SHAPED_WAVE_TYPES`, and `fmPresets` are `undefined` until `init()` has finished**, so read them after it. Rendering and WAV encoding load a second module on first use; in a browser, call `encodeWav()` after a render. Vite 5 needs `build: { target: 'esnext' }`. The [Runtimes and loading](https://liminalhq.ca/undertone/guide/runtimes) guide page has the details.
+From 0.4 the package is a TypeScript layer over a Rust core compiled to WebAssembly, with the same API. The default import loads the module for you (top-level `await` in a browser, a synchronous read under Node, Bun, and Deno). Where top-level `await` is not available, import `@liminal-hq/undertone/init` and `await init()` first. **With `./init`, `CHANNEL_ORDER`, `MAX_CHANNELS`, `SHAPED_WAVE_TYPES`, and `fmPresets` are `undefined` until `init()` has finished**, so read them after it. Rendering loads a second module on first use; `encodeWav()` does not need the render module. Vite 5 needs `build: { target: 'esnext' }`. The [Runtimes and loading](https://liminalhq.ca/undertone/guide/runtimes) guide page has the details.
 
 ## Usage
 
