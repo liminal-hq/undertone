@@ -51,7 +51,6 @@ fn field(value: &JsValue, key: &str) -> JsValue {
 	}
 }
 
-
 /// `surroundGains(angle)`: the eight 7.1 gains that place a sound at an angle on the speaker ring.
 #[wasm_bindgen(js_name = surroundGains)]
 pub fn surround_gains_js(angle: JsValue) -> Result<Array, JsValue> {
