@@ -78,7 +78,8 @@ function worst(a: Float32Array[], b: Float32Array[]): number {
   let most = 0;
   a.forEach((channel, c) => {
     assert.equal(channel.length, b[c].length);
-    for (let i = 0; i < channel.length; i += 1) most = Math.max(most, Math.abs(channel[i] - b[c][i]));
+    for (let i = 0; i < channel.length; i += 1)
+      most = Math.max(most, Math.abs(channel[i] - b[c][i]));
   });
   return most;
 }
@@ -108,31 +109,34 @@ check('streaming blocks of 128 equal the offline render, bit for bit', () => {
   }
 });
 
-check('book at a later frame starts there, and a queue is the offline render to within a few ulps', () => {
-  const collected = collect(song);
-  const expected = offline(collected);
-  const length = expected[0].length;
-  const later = new WorkletEngine(OPTIONS);
-  later.book(collected.numbers, collected.strings, 1000);
-  const got = stream(later, 2, length + 1000);
-  // Not the unshifted render: 1,000 frames is not a multiple of the 128-frame quantum the master bus works in (crates/
-  // undertone-wasm-render/src/stream.rs holds the shifted-voices equality). Silent until it starts, then the same sound.
-  assert.ok(got[0].subarray(0, 1000).every((s) => Math.abs(s) < 1e-9));
-  const rms = (channel: Float32Array) =>
-    Math.sqrt(channel.reduce((sum, s) => sum + s * s, 0) / channel.length);
-  const ratio = rms(got[0].subarray(1000)) / rms(expected[0]);
-  assert.ok(ratio > 0.97 && ratio < 1.03, `the loudness is the render's (${ratio})`);
-  later.free();
+check(
+  'book at a later frame starts there, and a queue is the offline render to within a few ulps',
+  () => {
+    const collected = collect(song);
+    const expected = offline(collected);
+    const length = expected[0].length;
+    const later = new WorkletEngine(OPTIONS);
+    later.book(collected.numbers, collected.strings, 1000);
+    const got = stream(later, 2, length + 1000);
+    // Not the unshifted render: 1,000 frames is not a multiple of the 128-frame quantum the master bus works in (crates/
+    // undertone-wasm-render/src/stream.rs holds the shifted-voices equality). Silent until it starts, then the same sound.
+    assert.ok(got[0].subarray(0, 1000).every((s) => Math.abs(s) < 1e-9));
+    const rms = (channel: Float32Array) =>
+      Math.sqrt(channel.reduce((sum, s) => sum + s * s, 0) / channel.length);
+    const ratio = rms(got[0].subarray(1000)) / rms(expected[0]);
+    assert.ok(ratio > 0.97 && ratio < 1.03, `the loudness is the render's (${ratio})`);
+    later.free();
 
-  const queued = new WorkletEngine(OPTIONS);
-  const id = queued.queue(collected.numbers, collected.strings, 0);
-  assert.equal(queued.queueCount, 1);
-  const heard = stream(queued, 2, length);
-  assert.ok(worst(heard, expected) < 1e-6, 'a queue is the offline render to within a few ulps');
-  assert.equal(queued.queueCount, 0);
-  assert.equal(queued.cancel(id), false);
-  queued.free();
-});
+    const queued = new WorkletEngine(OPTIONS);
+    const id = queued.queue(collected.numbers, collected.strings, 0);
+    assert.equal(queued.queueCount, 1);
+    const heard = stream(queued, 2, length);
+    assert.ok(worst(heard, expected) < 1e-6, 'a queue is the offline render to within a few ulps');
+    assert.equal(queued.queueCount, 0);
+    assert.equal(queued.cancel(id), false);
+    queued.free();
+  }
+);
 
 check('a queued loop repeats every period until it is cancelled', () => {
   const tune = lib.note('c4 e4 g4').sound('triangle').release(0.1);
@@ -148,7 +152,10 @@ check('a queued loop repeats every period until it is cancelled', () => {
   assert.equal(engine.cancel(id), true);
   assert.equal(engine.queueCount, 0);
   const after = stream(engine, 2, 16000);
-  assert.ok(after[0].subarray(8000).every((s) => s === 0), 'what was booked rings out, then silence');
+  assert.ok(
+    after[0].subarray(8000).every((s) => s === 0),
+    'what was booked rings out, then silence'
+  );
   assert.throws(
     () => engine.queue(collected.numbers, collected.strings, 0, 100),
     /period must be longer/
@@ -156,28 +163,37 @@ check('a queued loop repeats every period until it is cancelled', () => {
   engine.free();
 });
 
-check('a sample voice plays from the registry of the render module, and is skipped without it', () => {
-  const pcm = { sampleRate: 8000, channels: [new Float32Array(2000).map((_, i) => Math.sin(i / 20))] };
-  const collected = collect(lib.s('kick'), { sampleRate: 8000, cycles: 1, master: false });
-  const silent = new WorkletEngine({ sampleRate: 8000, master: false });
-  const warn = console.warn;
-  const warnings: string[] = [];
-  console.warn = (message: string) => void warnings.push(message);
-  try {
-    silent.book(collected.numbers, collected.strings, 0);
-    assert.ok(stream(silent, 2, 1024)[0].every((s) => s === 0));
-    assert.ok(warnings.some((message) => message.includes('kick')), warnings.join('|'));
-  } finally {
-    console.warn = warn;
+check(
+  'a sample voice plays from the registry of the render module, and is skipped without it',
+  () => {
+    const pcm = {
+      sampleRate: 8000,
+      channels: [new Float32Array(2000).map((_, i) => Math.sin(i / 20))]
+    };
+    const collected = collect(lib.s('kick'), { sampleRate: 8000, cycles: 1, master: false });
+    const silent = new WorkletEngine({ sampleRate: 8000, master: false });
+    const warn = console.warn;
+    const warnings: string[] = [];
+    console.warn = (message: string) => void warnings.push(message);
+    try {
+      silent.book(collected.numbers, collected.strings, 0);
+      assert.ok(stream(silent, 2, 1024)[0].every((s) => s === 0));
+      assert.ok(
+        warnings.some((message) => message.includes('kick')),
+        warnings.join('|')
+      );
+    } finally {
+      console.warn = warn;
+    }
+    render.registerSample('kick', pcm);
+    const engine = new WorkletEngine({ sampleRate: 8000, master: false });
+    engine.book(collected.numbers, collected.strings, 0);
+    assert.ok(stream(engine, 2, 1024)[0].some((s) => Math.abs(s) > 0.01));
+    render.clearSamples();
+    silent.free();
+    engine.free();
   }
-  render.registerSample('kick', pcm);
-  const engine = new WorkletEngine({ sampleRate: 8000, master: false });
-  engine.book(collected.numbers, collected.strings, 0);
-  assert.ok(stream(engine, 2, 1024)[0].some((s) => Math.abs(s) > 0.01));
-  render.clearSamples();
-  silent.free();
-  engine.free();
-});
+);
 
 check('the refusals: options, channels, voices, and the clock', () => {
   assert.throws(() => new WorkletEngine({ channels: 3 }), /channels must be 1, 2, 4, 6 or 8/);
@@ -189,7 +205,10 @@ check('the refusals: options, channels, voices, and the clock', () => {
   );
   assert.throws(() => engine.book(new Float64Array([0]), 'x' as never, 0), /must be an array/);
   assert.throws(() => engine.renderBlock([new Float32Array(128)]), /needs 2 channels, got 1/);
-  assert.throws(() => engine.renderBlock([new Float32Array(128), new Float32Array(64)]), /one length/);
+  assert.throws(
+    () => engine.renderBlock([new Float32Array(128), new Float32Array(64)]),
+    /one length/
+  );
   assert.throws(() => engine.renderBlock([new Float32Array(128), [] as never]), /Float32Arrays/);
   assert.equal(engine.frame, 0);
   stream(engine, 2, 300);
