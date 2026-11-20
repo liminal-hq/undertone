@@ -1,0 +1,31 @@
+[package]
+name = "undertone-native"
+description = "Play an Undertone Player through the system audio device, with a seam for a host's own audio callback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["cpal"]
+# The `cpal` stream: lists and opens system output devices. Build with `--no-default-features` for the `Sink` seam
+# alone, which needs no system audio library (a host supplies its own callback).
+cpal = ["dep:cpal"]
+
+# The example opens a system device, so it needs the `cpal` feature.
+[[example]]
+name = "play"
+required-features = ["cpal"]
+
+[dependencies]
+undertone = { path = "../undertone", version = "0.0.0" }
+rtrb = "0.3"
+cpal = { version = "0.17", optional = true }
+
+# This table mirrors `[workspace.lints]` with one difference: `unsafe_code` is `deny`, not `forbid`, so that
+# `tests/allocation.rs` (and only that file) can opt in to the `unsafe` a counting global allocator needs, the same
+# arrangement as `undertone-sched`. Nothing under `src/` may use `unsafe`: `scripts/check-layering.sh` (run in CI) fails on it.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"

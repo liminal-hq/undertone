@@ -46,6 +46,7 @@ const guideSidebar = [
       { text: 'Arranging Songs', link: '/guide/rust-arranging-songs' },
       { text: 'Stereo & Surround', link: '/guide/rust-stereo-and-surround' },
       { text: 'Rendering & Export', link: '/guide/rust-rendering-and-export' },
+      { text: 'Playing Natively', link: '/guide/rust-native' },
       { text: 'Troubleshooting', link: '/guide/rust-troubleshooting' },
       { text: 'Rust API reference (rustdoc)', link: '/rust/undertone/', target: '_self' }
     ]

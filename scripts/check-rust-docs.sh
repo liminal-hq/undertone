@@ -17,7 +17,8 @@
 #      snippet import (`<<< @/../crates/...`), and every imported file exists;
 #   2. every example under crates/undertone/examples/ is imported by some page;
 #   3. every page is linked from guideSidebar in docs/.vitepress/config.mts;
-#   3b. every page has exactly one <RustAudio example="NAME" /> and NAME is the file name of an example the page imports.
+#   3b. every page has exactly one <RustAudio example="NAME" /> and NAME is the file name of an example the page imports, except a page that
+#       plays on a device and writes no WAV, which carries the line `<!-- rust-audio: none ... -->` and no player.
 #
 # Rustdoc checks, over the inline code of each page (fenced blocks are skipped):
 #   4. an inline `Type::method` (CamelCase, then snake_case): a page `struct.Type.html`, `enum.Type.html`, `trait.Type.html`, `type.Type.html`,
@@ -174,6 +175,12 @@ check_names() {
 check_audio() {
   local page tags count name
   for page in "$@"; do
+    # A page whose example sends sound to a device and writes no WAV (the native output) says so with this marker, and then must
+    # not have a player either: a player with no audio behind it would 404.
+    if grep -q '^<!-- rust-audio: none' "$page"; then
+      if grep -q '<RustAudio' "$page"; then note "$page: marked 'rust-audio: none' but has a <RustAudio> player"; fi
+      continue
+    fi
     tags=$(grep -oE '<RustAudio[^>]*>' "$page" || true)
     count=$(grep -c . <<<"$tags" || true)
     if [ "$count" -ne 1 ]; then

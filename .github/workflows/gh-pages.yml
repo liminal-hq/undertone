@@ -25,6 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
+
       - name: Build the Rust API docs
         run: bash scripts/build-rust-docs.sh
 
