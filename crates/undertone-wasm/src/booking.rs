@@ -194,6 +194,13 @@ impl WasmEngine {
 		)
 	}
 
+	/// The keys of the pending samples (`registerPendingSample`) that voices named since the last call, each once: the
+	/// wrapper decodes them on the context, as the reference's lookup did when a voice first named a sample.
+	#[wasm_bindgen(js_name = takeRequestedSamples)]
+	pub fn take_requested_samples(&mut self) -> Vec<String> {
+		self.engine.take_requested_samples()
+	}
+
 	/// `seedContext(ctx, seed)`: seeds this context's noise and reverb (a number or a string).
 	#[wasm_bindgen(js_name = seed)]
 	pub fn seed_js(&mut self, value: JsValue) {

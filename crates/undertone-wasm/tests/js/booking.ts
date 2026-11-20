@@ -333,6 +333,12 @@ await check(
     assert.ok(wasm.isSampleRegistered('later'));
     const b = moduleContext();
     assert.equal(b.engine.isVoiceSkipped({ sampleName: 'later' }), true);
+    assert.deepEqual(b.engine.takeRequestedSamples(), []);
+    b.engine.playVoice({ sampleName: 'later' }, 0);
+    b.engine.playVoice({ sampleName: 'later' }, 0.5);
+    b.engine.playVoice({ sampleName: 'bd' }, 0);
+    assert.deepEqual(b.engine.takeRequestedSamples(), ['later']);
+    assert.deepEqual(b.engine.takeRequestedSamples(), []);
     wasm.loadSample('later', pcm);
     assert.equal(b.engine.isVoiceSkipped({ sampleName: 'later' }), false);
     assert.throws(() => wasm.loadSample('ghost', pcm), /Sample "ghost" is not registered/);
