@@ -1,5 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
+  "name": "@liminal-hq/undertone",
   "entryPoints": ["src/index.ts"],
   "out": "docs/api",
   "docsRoot": "docs",
