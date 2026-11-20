@@ -420,11 +420,13 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/layer4.ts
       - name: WAV corpus (the render module)
         run: bun crates/undertone-wasm/tests/js/wav.ts
-      - name: Upload the module and its glue
+      - name: Upload the two modules and their glue
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wasm-module
-          path: packages/undertone/wasm/undertone_wasm*
+          path: |
+            packages/undertone/wasm/undertone_wasm*
+            packages/undertone/wasm/render/undertone_wasm_render*
           if-no-files-found: error
           retention-days: 1
       - name: Write summary

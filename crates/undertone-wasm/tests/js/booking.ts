@@ -80,8 +80,6 @@ function manualTimer() {
   };
 }
 
-const notes = (source: string) => lib.note(source) as unknown as Pattern & { handle: unknown };
-
 await check(
   'play(): one cycle at a tempo, its handle, and a stop, as the reference books them',
   () => {
