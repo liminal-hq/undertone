@@ -5,4 +5,4 @@ Build output: the WebAssembly control module of `@liminal-hq/undertone` and its 
 - `undertone_wasm_bg.wasm`: the module, after `wasm-opt -Oz -all`; `scripts/check-wasm-size.ts` holds it to 150 KB after Brotli (D-07).
 - `undertone_wasm.js` and `undertone_wasm.d.ts`: the glue (`--target web --weak-refs`), which the bridge package wraps (RF-25). The exports and the rules they follow are in `docs/rust-migration/results/M6-BOUNDARY.md`.
 
-The package around this directory (`package.json`, the TypeScript wrappers, loading) arrives in RF-25.
+The package around this directory (`package.json`, the TypeScript wrappers in `src/`, the entries and loading) is `packages/undertone/`; build it with `bun run package:build`.
