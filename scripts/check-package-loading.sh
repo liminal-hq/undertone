@@ -55,11 +55,13 @@ JSON
 (cd "${app}" && npm install --silent --no-audit --no-fund "${tarball}")
 
 cat >"${app}/main.mjs" <<'JS'
-import { Fraction, Pattern, hasOnset, mini, sine } from '@liminal-hq/undertone';
+import { CHANNEL_ORDER, Fraction, Pattern, hasOnset, mini, note, sine } from '@liminal-hq/undertone';
 const pattern = mini('a b*2', (word) => word);
 const haps = pattern.query({ begin: new Fraction(0), end: new Fraction(1) });
 if (!(pattern instanceof Pattern) || haps.length !== 3 || !hasOnset(haps[0])) throw new Error('unexpected haps');
 if (Math.abs(sine.sampleAt(new Fraction(1, 4)) - 1) > 1e-9) throw new Error('unexpected sine');
+if (note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel !== 0.5) throw new Error('unexpected control');
+if (CHANNEL_ORDER.length !== 8) throw new Error('unexpected constants');
 console.log(`${haps.map((hap) => `${hap.part.begin}:${hap.value}`).join(' ')}`);
 JS
 cat >"${app}/init.mjs" <<'JS'
@@ -95,18 +97,20 @@ cat >"${app}/page/index.html" <<'HTML'
 <!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
 HTML
 cat >"${app}/page/main.js" <<'JS'
-import { Fraction, mini } from '@liminal-hq/undertone';
+import { CHANNEL_ORDER, Fraction, mini, note } from '@liminal-hq/undertone';
 const haps = mini('a b', (word) => word).query({ begin: new Fraction(0), end: new Fraction(1) });
-document.body.textContent = haps.map((hap) => hap.value).join(' ');
+const gain = note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel;
+document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length}`;
 JS
 cat >"${app}/page-init/index.html" <<'HTML'
 <!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
 HTML
 cat >"${app}/page-init/main.js" <<'JS'
-import { Fraction, init, mini } from '@liminal-hq/undertone/init';
+import { CHANNEL_ORDER, Fraction, init, mini, note } from '@liminal-hq/undertone/init';
 init().then(() => {
   const haps = mini('a b', (word) => word).query({ begin: new Fraction(0), end: new Fraction(1) });
-  document.body.textContent = haps.map((hap) => hap.value).join(' ');
+  const gain = note('c3').gain(0.5).query({ begin: new Fraction(0), end: new Fraction(1) })[0].value.gainLevel;
+  document.body.textContent = `${haps.map((hap) => hap.value).join(' ')} ${gain} ${CHANNEL_ORDER.length}`;
 });
 JS
 # Runs a built page's script in Node with a stand-in `document` and a `fetch` that serves the module from disk as
@@ -138,12 +142,12 @@ echo "ok   default target: refused the top-level await, as documented"
 
 build page --outDir ../out-esnext --emptyOutDir --base ./ --target esnext >/dev/null || fail "the build with target esnext failed"
 ls "${app}"/out-esnext/assets/*.wasm >/dev/null 2>&1 || fail "the esnext build holds no .wasm asset"
-[[ "$(cd "${app}" && node run-built.mjs out-esnext)" == "a b" ]] || fail "the esnext bundle did not run: the module was not initialised"
+[[ "$(cd "${app}" && node run-built.mjs out-esnext)" == "a b 0.5 8" ]] || fail "the esnext bundle did not run: the module was not initialised"
 echo "ok   build.target esnext: built, the module is an asset, and the bundle runs"
 
 build page-init --outDir ../out-init --emptyOutDir --base ./ >/dev/null || fail "the ./init build at the default target failed"
 ls "${app}"/out-init/assets/*.wasm >/dev/null 2>&1 || fail "the ./init build holds no .wasm asset"
-[[ "$(cd "${app}" && node run-built.mjs out-init)" == "a b" ]] || fail "the ./init bundle did not run"
+[[ "$(cd "${app}" && node run-built.mjs out-init)" == "a b 0.5 8" ]] || fail "the ./init bundle did not run"
 echo "ok   ./init at the default target: built, and the bundle runs"
 
 echo "check-package-loading: all checks passed"
