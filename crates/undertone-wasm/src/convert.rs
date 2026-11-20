@@ -42,6 +42,18 @@ pub fn to_number(value: &JsValue) -> f64 {
 		.unwrap_or_else(|| js_number(value).unwrap_or(f64::NAN))
 }
 
+/// `String(x)` for a number, by JavaScript itself: the formatter the pattern crate prints numbers with in the
+/// WebAssembly build (`host-number-format`).
+pub fn number_text(x: f64) -> String {
+	js_string(&JsValue::from_f64(x)).unwrap_or_default()
+}
+
+/// `Number(text)` for a string, by JavaScript itself: the reader the pattern crate parses numbers with in the
+/// WebAssembly build (`host-number-format`).
+pub fn text_number(text: &str) -> f64 {
+	js_number(&JsValue::from_str(text)).unwrap_or(f64::NAN)
+}
+
 /// `String(value)`, as a template string or the reference's messages print a value; `"(unprintable)"` when that throws.
 pub fn string_of(value: &JsValue) -> String {
 	if let Some(text) = value.as_string() {

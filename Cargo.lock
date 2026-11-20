@@ -409,6 +409,7 @@ dependencies = [
  "serde-wasm-bindgen",
  "ts-rs",
  "undertone",
+ "undertone-pattern",
  "wasm-bindgen",
 ]
 

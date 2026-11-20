@@ -54,8 +54,9 @@ pub const MAX_BUFFER_SECONDS: f64 = 60.0;
 pub(crate) fn frame_count(sample_rate: f64, seconds: f64) -> Result<usize> {
 	if seconds.is_nan() || seconds > MAX_BUFFER_SECONDS {
 		return Err(Error::new(format!(
-			"Cannot create an audio buffer of {} seconds: the longest is {MAX_BUFFER_SECONDS} seconds",
-			number_to_string(seconds)
+			"Cannot create an audio buffer of {} seconds: the longest is {} seconds",
+			number_to_string(seconds),
+			number_to_string(MAX_BUFFER_SECONDS)
 		)));
 	}
 	let frames = js::round(sample_rate * seconds);

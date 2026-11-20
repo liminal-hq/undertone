@@ -51,6 +51,15 @@ pub use pattern::{PatternList, WasmPattern};
 
 use wasm_bindgen::prelude::*;
 
+/// Runs when the module is instantiated: numbers print through JavaScript's `String(x)` and read through its `Number(text)`
+/// from here on (the pattern crate's `host-number-format`).
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub fn start() {
+	undertone::pattern::js::set_number_formatter(convert::number_text);
+	undertone::pattern::js::set_number_parser(convert::text_number);
+}
+
 /// The version of this build of Undertone (the workspace version), for the bridge to report.
 #[wasm_bindgen(js_name = undertoneVersion)]
 pub fn undertone_version() -> String {

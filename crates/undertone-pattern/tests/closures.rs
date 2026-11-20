@@ -15,6 +15,7 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 	let mut offenders = Vec::new();
 	let mut allowed = 0;
 	let mut transient = 0;
+	let mut hooks = 0;
 	for entry in std::fs::read_dir(&src).unwrap() {
 		let path = entry.unwrap().path();
 		let text = std::fs::read_to_string(&path).unwrap();
@@ -32,6 +33,11 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 			} else if code.contains("type Leaf<'a, T> = &'a dyn Fn(&str)") {
 				// The mini-notation parser borrows its leaf rule while it parses and never stores it in a tree.
 				transient += 1;
+			} else if code.contains("pub fn set_number_parser(")
+				|| code.contains("pub fn set_number_formatter(")
+			{
+				// The host's number printer and reader (`host-number-format`, js.rs): process-wide functions, never in a tree.
+				hooks += 1;
 			} else {
 				offenders.push(format!("{}:{}: {}", path.display(), n + 1, line.trim()));
 			}
@@ -49,6 +55,10 @@ fn only_the_two_escape_hatches_hold_behaviour() {
 	assert_eq!(
 		transient, 1,
 		"the mini-notation parser's borrowed leaf rule (mini.rs), which is not part of any tree"
+	);
+	assert_eq!(
+		hooks, 2,
+		"the host's number printer and reader (js.rs, the host-number-format feature), which no tree holds"
 	);
 	assert_eq!(
 		allowed, 8,

@@ -62,8 +62,9 @@ pub fn build_impulse_response<G: Graph>(
 	let sample_rate = graph.sample_rate();
 	let length = frame_count(sample_rate, seconds).map_err(|_| {
 		Error::new(format!(
-			"Cannot make a reverb for a room of {} seconds: the longest is {MAX_BUFFER_SECONDS} seconds (check `room_size`)",
-			number_to_string(seconds)
+			"Cannot make a reverb for a room of {} seconds: the longest is {} seconds (check `room_size`)",
+			number_to_string(seconds),
+			number_to_string(MAX_BUFFER_SECONDS)
 		))
 	})?;
 	let buffer = graph.create_buffer(IR_CHANNELS, length, sample_rate);
