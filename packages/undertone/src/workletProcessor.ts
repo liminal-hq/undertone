@@ -22,7 +22,9 @@
 //
 // Frames: `currentFrame` of the worklet scope is the host's clock, `engine.frame` the engine's own, and `offset` is how far the
 // first is ahead of the second. A voice posted at host frame F is booked at engine frame F - offset. The offset grows when the
-// host skips blocks (the engine did not get them), and that growth is the drift the statistics report.
+// host skips blocks (the engine did not get them), and that growth is the drift the statistics report, counted from the last
+// reset of the statistics. The first two blocks only set the offset (Chromium skips eight quanta between them, before anything
+// is booked), and a pass that arrives before the second block waits for it.
 //
 // Timing: a clock read around each `process` call, kept in a histogram of 5 microsecond buckets to 20 ms (no allocation while it
 // runs), and compared with the block's budget (128 frames at the sample rate). The clock is `performance.now()` where the scope
@@ -112,8 +114,11 @@ export const workletProcessorSource = `(function (scope, glue) {
       this.waiting = [];
       this.closed = false;
       this.errors = [];
-      this.base = undefined;
+      // How many blocks process has seen, to find the first two (never reset), and where the clocks stood: offset is how far
+      // the host's frame is ahead of the engine's, and driftFrom the offset the statistics started counting drift from.
+      this.seen = 0;
       this.offset = 0;
+      this.driftFrom = 0;
       this.resetStats();
       this.port.onmessage = (event) => this.receive(event.data);
       this.port.postMessage({
@@ -135,6 +140,8 @@ export const workletProcessorSource = `(function (scope, glue) {
       this.maxLate = 0;
       this.lastDrift = 0;
       this.maxDrift = 0;
+      // Drift is counted from here: a skip before a reset belongs to the statistics that were reset.
+      this.driftFrom = this.offset;
     }
 
     fail(message) {
@@ -146,8 +153,8 @@ export const workletProcessorSource = `(function (scope, glue) {
       try {
         switch (message.type) {
           case 'play':
-            // Until a block has run the offset between the two clocks is not known: the pass waits for the first block.
-            if (this.base === undefined) this.waiting.push(message);
+            // Until the offset between the two clocks has settled (the second block) the pass waits.
+            if (this.seen < 2) this.waiting.push(message);
             else this.play(message);
             break;
           case 'cancel': {
@@ -233,7 +240,7 @@ export const workletProcessorSource = `(function (scope, glue) {
         overruns: this.overruns,
         over40Percent: this.slow,
         skippedBlocks: this.skipped,
-        driftFrames: this.base === undefined ? 0 : this.offset - this.base,
+        driftFrames: this.offset - this.driftFrom,
         maxDriftFrames: this.maxDrift,
         lateStarts: this.late,
         maxLateFrames: this.maxLate,
@@ -250,10 +257,14 @@ export const workletProcessorSource = `(function (scope, glue) {
       const clock = this.clock;
       const began = clock ? clock.tick() : 0;
       const host = scope.currentFrame;
-      if (this.base === undefined) {
+      this.seen += 1;
+      if (this.seen <= 2) {
+        // The first two blocks set the offset and do not count as drift: Chromium's second block comes eight quanta (1,024 frames,
+        // one device callback under the playback latency hint) after its first, and no pass has been booked yet to be late. The
+        // passes that arrived meanwhile are booked now, for the clock the second block shows.
         this.offset = host - this.engine.frame;
-        this.base = this.offset;
-        for (const message of this.waiting.splice(0)) this.receive(message);
+        this.driftFrom = this.offset;
+        if (this.seen === 2) for (const message of this.waiting.splice(0)) this.receive(message);
       } else {
         const ahead = host - this.engine.frame;
         if (ahead > this.offset) {
@@ -263,7 +274,7 @@ export const workletProcessorSource = `(function (scope, glue) {
           this.offset = ahead;
         }
       }
-      const drift = this.offset - this.base;
+      const drift = this.offset - this.driftFrom;
       if (drift !== this.lastDrift) {
         this.lastDrift = drift;
         if (drift > this.maxDrift) this.maxDrift = drift;

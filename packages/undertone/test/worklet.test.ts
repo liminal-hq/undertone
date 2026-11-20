@@ -632,7 +632,13 @@ describe('the processor in a worklet-like scope', () => {
     // The pass the main thread would post, and the offline render of the same pattern and options.
     const sampleRate = 8000;
     const pattern = note('c3 g3 c4').sound('sawtooth').decay(0.05).lpf(1200);
-    const rendered = await renderToBuffer(pattern, { sampleRate, cycles: 1, seed: 'p' });
+    // The pass is posted for frame 168, 128 after the first block's: the same pattern late by 128 frames, offline (an oscillator's
+    // phase follows the engine's own time, so it is not the same waveform as a render with no delay).
+    const rendered = await renderToBuffer(pattern.late(128 / sampleRate), {
+      sampleRate,
+      cycles: 1,
+      seed: 'p'
+    });
     const { options, nodes } = fakeOptions();
     const context = fakeContext({ sampleRate });
     const output = await createWorkletOutput(context, { ...options, seed: 'p' });
@@ -655,9 +661,10 @@ describe('the processor in a worklet-like scope', () => {
       ...play,
       numbers: inRealm(scopeContext, play.numbers as Float64Array),
       strings: play.strings,
-      frame: 40
+      // A pass waits for the second block (see below), so it is posted for the one after the first block's 128 frames.
+      frame: 40 + 128
     });
-    const blocks = 140;
+    const blocks = 141;
     const heard = [new Float32Array(blocks * 128), new Float32Array(blocks * 128)];
     const out = [
       inRealm(scopeContext, new Float32Array(128)),
@@ -669,7 +676,7 @@ describe('the processor in a worklet-like scope', () => {
       heard[0].set(out[0], block * 128);
       heard[1].set(out[1], block * 128);
     }
-    // The first block anchored the clocks at frame 40; the pass was posted for frame 40, so it starts with the engine.
+    // The first block anchored the clocks at frame 40; the pass was posted for frame 168, so it starts with the second block.
     const expected = [rendered.getChannelData(0), rendered.getChannelData(1)];
     expect(expected[0].length).toBeLessThanOrEqual(heard[0].length);
     let worst = 0;
@@ -733,7 +740,7 @@ describe('the processor in a worklet-like scope', () => {
           ...pass,
           numbers: inRealm(scopeContext, pass.numbers as Float64Array),
           strings: pass.strings,
-          frame: 0
+          frame: 128 // a pass waits for the second block
         }
       });
       const out = [
@@ -749,12 +756,20 @@ describe('the processor in a worklet-like scope', () => {
       return left.subarray(0, frames);
     };
     const offline = async (name: string) =>
+      // The pass starts at frame 128, as the engine would hear it: the pattern late by 128 frames, which is not a whole number
+      // of the oscillator's periods, so a render with no delay is another waveform.
       (
-        await renderToBuffer(note(name).sound('triangle').decay(0.05), {
-          sampleRate,
-          bpm: 240,
-          seed: 'p'
-        })
+        await renderToBuffer(
+          note(name)
+            .sound('triangle')
+            .decay(0.05)
+            .late(128 / sampleRate),
+          {
+            sampleRate,
+            bpm: 240,
+            seed: 'p'
+          }
+        )
       ).getChannelData(0);
     const worst = (a: Float32Array, b: Float32Array): number =>
       a.reduce((most, sample, i) => Math.max(most, Math.abs(sample - b[i])), 0);
@@ -975,6 +990,10 @@ describe('the processor in a worklet-like scope', () => {
       inRealm(scopeContext, new Float32Array(128))
     ];
     sandbox.currentFrame = 5000;
+    processor.process([], [out]);
+    // The offset between the clocks is final after the second block, and the passes are booked then.
+    expect(posted.filter((message) => message.type === 'queued')).toHaveLength(0);
+    sandbox.currentFrame = 5128;
     processor.process([], [out]);
     expect(
       posted.filter((message) => message.type === 'queued').map((message) => message.token)
