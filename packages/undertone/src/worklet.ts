@@ -95,8 +95,8 @@ export interface WorkletOutputOptions {
   moduleUrl?: string | URL;
   /**
    * How `process` is timed. Chromium's worklet scope has no `performance.now()` (the statistics then report no times), so
-   * `'spin'` starts a worker that counts in a `SharedArrayBuffer` for the processor to read: a clock with a resolution of
-   * nanoseconds that needs a cross-origin isolated page, and a core's worth of the device while it runs, which a small phone
+   * `'spin'` starts a worker that writes its own `performance.now()` into a `SharedArrayBuffer` for the processor to read: a
+   * clock with the browser's resolution (5 microseconds on an isolated page) that needs a cross-origin isolated page, and a core's worth of the device while it runs, which a small phone
    * may feel. Leave it out to run without; `output.timing` and `output.timingNote` say what you got.
    */
   clock?: 'spin';
@@ -146,7 +146,7 @@ export interface WorkletTimes {
 export interface WorkletStats {
   /** What timed `process`: `performance.now`, `spin-counter`, or `none` (no times are reported). */
   timing: 'performance.now' | 'spin-counter' | 'none';
-  /** Ticks per millisecond of the spin counter, as the page measured it (`null` for another clock). */
+  /** Ticks per millisecond of the spin counter: 1,000, as it counts microseconds (`null` for another clock). */
   clockTicksPerMs: number | null;
   sampleRate: number;
   quantumFrames: number;
@@ -303,16 +303,23 @@ function handleOf(pattern: PlayablePattern) {
   );
 }
 
-/** The worker's source: it counts in a shared buffer as fast as it can, a 32-bit counter that wraps. */
+/**
+ * The worker's source: it writes the worker's own `performance.now()`, in microseconds, into a shared buffer as fast as it can
+ * (a 32-bit counter that wraps after 35 minutes, and the processor takes spans as signed differences). The counter must be time
+ * and not the number of loop turns: the browser compiles a hot loop again as it runs, and a count of turns changed its rate by
+ * a factor of 1.6 to 3 within seconds (found by a headless Chromium run, so every span measured with it was wrong by that much).
+ */
 const spinWorkerSource = `onmessage = (event) => {
   const counter = new Int32Array(event.data);
-  let n = 0;
-  for (;;) Atomics.store(counter, 0, (n = (n + 1) | 0));
+  for (;;) Atomics.store(counter, 0, (performance.now() * 1000) | 0);
 };`;
 
+/** The ticks of the spin counter in a millisecond: it counts microseconds. */
+const SPIN_TICKS_PER_MS = 1000;
+
 /**
- * Starts the counting worker and measures how fast it counts, against `performance.now()` on this thread, over a quarter of a
- * second. Needs a cross-origin isolated page (that is what makes `SharedArrayBuffer` exist) and workers from blobs.
+ * Starts the clock worker and checks that it runs. Needs a cross-origin isolated page (that is what makes `SharedArrayBuffer`
+ * exist) and workers from blobs.
  */
 async function startSpinClock(): Promise<
   | { note: string }
@@ -345,17 +352,13 @@ async function startSpinClock(): Promise<
   worker.postMessage(buffer);
   const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   await wait(60);
-  const t0 = performance.now();
   const c0 = Atomics.load(counter, 0);
-  await wait(250);
-  const t1 = performance.now();
-  const c1 = Atomics.load(counter, 0);
-  const ticks = (c1 - c0) >>> 0;
-  if (!(ticks > 0 && t1 > t0)) {
+  await wait(40);
+  if (Atomics.load(counter, 0) === c0) {
     worker.terminate();
     return { note: 'the spin clock did not count (its worker did not run)' };
   }
-  return { worker, buffer, ticksPerMs: ticks / (t1 - t0) };
+  return { worker, buffer, ticksPerMs: SPIN_TICKS_PER_MS };
 }
 
 function isCloneError(error: unknown): boolean {
