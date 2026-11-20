@@ -161,10 +161,10 @@ describe('layer composes with the notes it layers', () => {
     expect(ctx.oscillators[0].started[0]).toBeCloseTo(1 + expected, 10);
   });
 
-  // Skipped, unchanged, pending a decision: the Rust scheduler books a window's voices in onset order
-  // (crates/undertone-sched/src/booking.rs, a deliberate difference recorded there but not among D-40's breaks), so layer 1's
-  // first note is booked before layer 0's second and the gains come out [1, 0.5, 0.25, 0.125].
-  it.skip("multiplies the notes' own velocity by the layer level", () => {
+  // Changed for an accepted break (the CHANGELOG's booking order of stacked voices): 0.4 books a window's voices in onset
+  // order (crates/undertone-sched/src/booking.rs), where 0.3 booked them layer by layer, so layer 1's first note is booked
+  // before layer 0's second. Start times and the sound are unchanged; only the order of the nodes differs.
+  it("multiplies the notes' own velocity by the layer level", () => {
     const ctx = new FakeAudioContext();
 
     layer(note('a4 a4').velocity('1 0.25').gain(1), [{}, {}], { levels: [1, 0.5] }).play({
@@ -175,8 +175,8 @@ describe('layer composes with the notes it layers', () => {
     const peaks = ctx.gains.map(
       (g) => g.gain.calls.find((c) => c.method === 'linearRampToValueAtTime')?.value
     );
-    // Playback order is layer by layer: layer 0 (x1), then layer 1 (x0.5).
-    expect(peaks).toEqual([1, 0.25, 0.5, 0.125]);
+    // Booking order is by onset: both layers' first notes (x1, x0.5), then both second notes (0.25 x1, 0.25 x0.5).
+    expect(peaks).toEqual([1, 0.5, 0.25, 0.125]);
   });
 
   it('lets a layer voice override the notes, but inherits what it does not set', () => {
