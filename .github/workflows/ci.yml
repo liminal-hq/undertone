@@ -412,6 +412,8 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/layer1.ts
       - name: Corpus layer 2
         run: bun crates/undertone-wasm/tests/js/layer2.ts
+      - name: Booking, scheduler, samples, and render exports against the reference
+        run: bun crates/undertone-wasm/tests/js/booking.ts
       - name: Corpus layer 3 (booked, replayed on the fake context)
         run: bun crates/undertone-wasm/tests/js/layer3.ts
       - name: Corpus layer 4 (the render module against Chromium's summaries)

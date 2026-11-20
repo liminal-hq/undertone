@@ -74,8 +74,7 @@ for (const path of paths) {
   const gluePath = join(dirname(path), basename(path).replace(/_bg\.wasm$/, '.js'));
   const glue = existsSync(gluePath) ? sizes(readFileSync(gluePath)) : undefined;
   const share = module.brotli / budget.limit;
-  const status =
-    module.brotli > budget.limit ? 'over budget' : share > WARN ? 'warning' : 'ok';
+  const status = module.brotli > budget.limit ? 'over budget' : share > WARN ? 'warning' : 'ok';
   const gzipLimit = GZIP_RATIO * budget.limit;
 
   console.log(`${path} (${budget.label})`);
