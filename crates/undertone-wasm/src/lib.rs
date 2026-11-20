@@ -22,10 +22,12 @@
 //! # Modules
 //!
 //! - [`pattern`]: the handle ([`WasmPattern`]), its queries, and the list builder ([`PatternList`]).
+//! - [`build`]: the constructors and transforms (groups 3 to 6, and the numeric methods of group 18).
 //! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
 //! - [`convert`]: values and errors across the boundary.
 //! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
 
+pub mod build;
 pub mod convert;
 pub mod encode;
 pub mod foreign;
