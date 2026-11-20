@@ -6,22 +6,33 @@
  * variables is the supported way to get gradient hero text, no extra
  * selectors needed.
  *
- * This is undertone's own gradient, not the org's ink/amber mark palette:
- * a frequency-analyzer heat map (violet through magenta to gold), the same
- * colour language every spectrogram and level meter uses for low-to-high
- * energy — apt for a project whose whole surface is "what does this sound
- * do." Dark mode uses the full-brightness end of the scale (the way real
- * spectrogram displays run on dark backgrounds so the hot colours read);
- * light mode stays in the scale's more saturated, lower-energy half, since
- * the gold end would wash out against a white page.
+ * The gradient is undertone's own brand gradient, the one in assets/hero.svg
+ * (the README banner): teal through indigo to purple. Dark mode uses the
+ * banner's colours as they are, bright against the dark page. On a white page
+ * the bright teal would wash out, so light mode runs the same hues one step
+ * deeper (teal 600, indigo 500, purple 600); the name is large type, which
+ * needs a contrast of 3:1.
  */
 :root {
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #8c2981, #de4968);
+  --vp-home-hero-name-background: linear-gradient(to right, #0d9488, #6366f1, #9333ea);
 }
 
 .dark {
-  --vp-home-hero-name-background: linear-gradient(to right, #3b0f70, #de4968, #fe9f6d);
+  --vp-home-hero-name-background: linear-gradient(to right, #2dd4bf, #818cf8, #c084fc);
+}
+
+/*
+ * The hero image (the app icon, on the right of the hero) glows in the same teal and purple as the name: VitePress blurs
+ * `--vp-home-hero-image-background-image` behind the image.
+ */
+:root {
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #0d9488 50%, #9333ea 50%);
+  --vp-home-hero-image-filter: blur(56px);
+}
+
+.dark {
+  --vp-home-hero-image-background-image: linear-gradient(-45deg, #2dd4bf 50%, #c084fc 50%);
 }
 
 /**

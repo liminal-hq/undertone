@@ -6,6 +6,9 @@ hero:
   name: undertone
   text: Procedural sound for games and music
   tagline: A TypeScript synth engine built directly on the Web Audio API — one-shot sound effects, looped grooves, and whole multi-section songs, all from the same pattern. Zero required runtime dependencies. MIT licensed.
+  image:
+    src: /favicon.svg
+    alt: 'The undertone icon, five amplitude bars with the loudest in the middle'
   actions:
     - theme: brand
       text: Get Started
