@@ -3,6 +3,8 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
+import v8 from 'node:v8';
+import vm from 'node:vm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearSamples,
@@ -200,5 +202,50 @@ describe('clearSamples', () => {
     clearSamples();
     const ctx = new FakeAudioContext();
     expect(getSampleBuffer(ctx, 'bd')).toBeUndefined();
+  });
+});
+
+describe('what a context keeps of a decoded sample', () => {
+  /** A garbage collection on demand (Node's `gc`, switched on at run time), so a test can see what is still held. */
+  async function collect(): Promise<void> {
+    v8.setFlagsFromString('--expose-gc');
+    const gc = vm.runInNewContext('gc') as () => void;
+    for (let round = 0; round < 3; round += 1) {
+      await new Promise((done) => setTimeout(done, 0));
+      gc();
+    }
+  }
+
+  /** Decodes `kick` on `ctx` and returns a weak reference to the buffer, holding nothing itself. */
+  async function decodeKick(ctx: FakeAudioContext): Promise<WeakRef<AudioBufferLike>> {
+    let seen: WeakRef<AudioBufferLike> | undefined;
+    // Not a spy: a mock records what it returned, which would hold the buffer itself.
+    ctx.decodeAudioData = () => {
+      const buffer = ctx.createBuffer(1, 8, 44100);
+      seen = new WeakRef(buffer);
+      return Promise.resolve(buffer);
+    };
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    await loadSamples(ctx, ['kick']);
+    return seen as WeakRef<AudioBufferLike>;
+  }
+
+  it('lets go of a decoded buffer when the registry is cleared, though its context lives on', async () => {
+    const ctx = new FakeAudioContext();
+    const seen = await decodeKick(ctx);
+    expect(seen.deref()).toBeDefined();
+    clearSamples();
+    await collect();
+    expect(seen.deref()).toBeUndefined();
+    expect(ctx.currentTime).toBe(0); // the context was alive throughout
+  });
+
+  it('lets go of a decoded buffer when the name is registered again', async () => {
+    const ctx = new FakeAudioContext();
+    const seen = await decodeKick(ctx);
+    registerSample('kick', { data: new ArrayBuffer(16) });
+    await collect();
+    expect(seen.deref()).toBeUndefined();
+    expect(ctx.currentTime).toBe(0);
   });
 });

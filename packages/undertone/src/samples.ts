@@ -14,10 +14,12 @@
 // context plays it (without decoding it again).
 //
 // What a context decoded (a promise in flight, a finished buffer) belongs to the registration it decoded, not to the name: it
-// is kept with its `Entry` and counts only while the registry still holds that very entry. Registering a name again, or
-// clearing the registry, therefore retires what was decoded for the old source (it is dropped when next looked up), and a
-// decode still in flight for it is not kept. A decoded buffer carries the PCM read from itself: another context's decode of the
-// same source may be resampled to its own rate, so no context's PCM stands in for another's.
+// is kept on its `Entry`, in a map keyed by the context, and counts only while the registry still holds that very entry.
+// Registering a name again, or clearing the registry, drops the entry and so everything any context decoded for the old source
+// at once (nothing is left to prune, and a decoded `AudioBuffer` is not retained by a context that lives on), and a decode still
+// in flight for it is not kept. A finished decode is kept only as its buffer, not as its promise. A decoded buffer carries the
+// PCM read from itself: another context's decode of the same source may be resampled to its own rate, so no context's PCM
+// stands in for another's.
 
 import { noteToFrequency } from './helpers.js';
 import type { SampleSource } from './engineTypes.js';
@@ -48,6 +50,10 @@ interface Entry {
   host?: HostBuffer;
   /** The PCM handed to the modules, once there is one. */
   pcm?: Pcm;
+  /** What each context decoded for this registration. */
+  readonly decodedOn: WeakMap<AudioContextLike, HostBuffer>;
+  /** The decodes in flight on each context for this registration (removed when they settle). */
+  readonly pendingOn: WeakMap<AudioContextLike, Promise<AudioBufferLike>>;
 }
 
 function isAudioBufferLike(value: object): value is AudioBufferLike {
@@ -91,45 +97,17 @@ function pcmOf(buffer: AudioBufferLike): Pcm {
 }
 
 const registry = new Map<string, Entry>();
-/** What a context decoded for one registration. */
-interface Decoded {
-  entry: Entry;
-  host: HostBuffer;
-}
-
-/** A decode in flight on a context for one registration. */
-interface Pending {
-  entry: Entry;
-  promise: Promise<AudioBufferLike>;
-}
-
-const decodedByContext = new WeakMap<AudioContextLike, Map<string, Decoded>>();
-const pendingByContext = new WeakMap<AudioContextLike, Map<string, Pending>>();
 const warned = new Set<string>();
 let render: SampleSink | undefined;
 
 setHostBuffers((ctx) => {
   const hosts: HostBuffer[] = [];
-  for (const entry of registry.values()) if (entry.host) hosts.push(entry.host);
-  const decoded = decodedByContext.get(ctx);
-  if (decoded) {
-    for (const key of [...decoded.keys()]) {
-      const found = liveDecoded(ctx, key);
-      if (found) hosts.push(found.host);
-    }
+  for (const entry of registry.values()) {
+    const host = entry.host ?? entry.decodedOn.get(ctx);
+    if (host) hosts.push(host);
   }
   return hosts;
 });
-
-/** What `ctx` decoded for the registration now under `key`; what it decoded for an earlier one is dropped. */
-function liveDecoded(ctx: AudioContextLike, key: string): Decoded | undefined {
-  const map = decodedByContext.get(ctx);
-  const found = map?.get(key);
-  if (found === undefined) return undefined;
-  if (registry.get(key) === found.entry) return found;
-  map?.delete(key);
-  return undefined;
-}
 
 function warnOnce(key: string, message: string): void {
   if (warned.has(key)) return;
@@ -155,7 +133,7 @@ export function connectRenderSamples(sink: SampleSink): void {
 /** Registers one sample under `name` — see SampleSource for the accepted forms. */
 export function registerSample(name: string, source: RegisteredSource): void {
   const normalized = normalizeSource(source);
-  const entry: Entry = { source: normalized };
+  const entry: Entry = { source: normalized, decodedOn: new WeakMap(), pendingOn: new WeakMap() };
   if (normalized.buffer) {
     const pcm = pcmOf(normalized.buffer);
     entry.pcm = pcm;
@@ -202,25 +180,13 @@ async function decodeEntry(
   return ctx.decodeAudioData(data);
 }
 
-function mapOf<V>(
-  weakMap: WeakMap<AudioContextLike, Map<string, V>>,
-  ctx: AudioContextLike
-): Map<string, V> {
-  let map = weakMap.get(ctx);
-  if (!map) {
-    map = new Map();
-    weakMap.set(ctx, map);
-  }
-  return map;
-}
-
 /**
  * Keeps a buffer decoded on `ctx` for `entry`, with the PCM read from that buffer, and hands the PCM to the modules the first
  * time the sample has one (the modules keep the first decode's: one registry per instance).
  */
 function decoded(ctx: AudioContextLike, key: string, entry: Entry, buffer: AudioBufferLike): void {
   const pcm = pcmOf(buffer);
-  mapOf(decodedByContext, ctx).set(key, { entry, host: hostOf(buffer, pcm) });
+  entry.decodedOn.set(ctx, hostOf(buffer, pcm));
   if (!entry.pcm) {
     entry.pcm = pcm;
     glue.loadSample(key, pcm);
@@ -229,35 +195,36 @@ function decoded(ctx: AudioContextLike, key: string, entry: Entry, buffer: Audio
 }
 
 function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferLike> {
-  const pendingForContext = mapOf(pendingByContext, ctx);
   const entry = registry.get(key);
   if (!entry) {
     return Promise.reject(
       new Error(`Sample "${key}" is not registered. Call registerSample() first.`)
     );
   }
-  // A decode in flight, or finished, for this very registration is joined; one for an earlier registration is not.
-  const existing = pendingForContext.get(key);
-  if (existing?.entry === entry) return existing.promise;
+  // A decode finished, or in flight, for this very registration is joined; one for an earlier registration is not (it is gone).
+  const done = entry.decodedOn.get(ctx);
+  if (done) return Promise.resolve(done.buffer);
+  const existing = entry.pendingOn.get(ctx);
+  if (existing) return existing;
 
-  const record: Pending = {
-    entry,
-    promise: decodeEntry(ctx, key, entry.source).then(
-      (buffer) => {
-        // A sample registered again while this decode was in flight keeps its new source.
-        if (registry.get(key) === entry) decoded(ctx, key, entry, buffer);
-        else if (pendingForContext.get(key) === record) pendingForContext.delete(key);
-        return buffer;
-      },
-      (error: unknown) => {
-        // A failure is not cached, so a later call retries (after a network blip, or a new registration).
-        if (pendingForContext.get(key) === record) pendingForContext.delete(key);
-        throw error;
-      }
-    )
+  const settle = (): void => {
+    if (entry.pendingOn.get(ctx) === promise) entry.pendingOn.delete(ctx);
   };
-  pendingForContext.set(key, record);
-  return record.promise;
+  const promise: Promise<AudioBufferLike> = decodeEntry(ctx, key, entry.source).then(
+    (buffer) => {
+      // A sample registered again while this decode was in flight keeps its new source.
+      if (registry.get(key) === entry) decoded(ctx, key, entry, buffer);
+      settle();
+      return buffer;
+    },
+    (error: unknown) => {
+      // A failure is not cached, so a later call retries (after a network blip, or a new registration).
+      settle();
+      throw error;
+    }
+  );
+  entry.pendingOn.set(ctx, promise);
+  return promise;
 }
 
 /**
@@ -314,10 +281,11 @@ export function getSampleBuffer(
   bank?: string
 ): AudioBufferLike | undefined {
   const key = resolveRegisteredKey(name, bank) ?? name;
-  const cached = liveDecoded(ctx, key);
-  if (cached) return cached.host.buffer;
-
   const entry = registry.get(key);
+  if (entry) {
+    const cached = entry.decodedOn.get(ctx);
+    if (cached) return cached.buffer;
+  }
   if (!entry) {
     warnOnce(
       key,
@@ -325,10 +293,7 @@ export function getSampleBuffer(
     );
     return undefined;
   }
-  if (entry.host) {
-    mapOf(decodedByContext, ctx).set(key, { entry, host: entry.host });
-    return entry.host.buffer;
-  }
+  if (entry.host) return entry.host.buffer;
   ensureDecoded(ctx, key).catch(() => {
     warnOnce(key, `undertone: sample "${key}" failed to load — voice skipped.`);
   });
