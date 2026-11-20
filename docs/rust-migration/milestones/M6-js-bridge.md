@@ -1,6 +1,6 @@
 # M6: JS bridge
 
-**Status:** complete and awaiting landing: the stack is built and held unmerged until the person's go. The exit notes are [results/M6-NOTES.md](../results/M6-NOTES.md).
+**Status:** merged to `main` at `ccd8428` (stack #117, #99 to #116). The exit notes are [results/M6-NOTES.md](../results/M6-NOTES.md).
 
 ## Objective
 
@@ -51,7 +51,7 @@
 
 ## Delivered stack
 
-The plan was four pull requests, one work package each. It was built as seven, because RF-24 and RF-25 each grew a second part and the review fixes came last. The stack is #99 > #103 > #100 > #105 > #107 > #109 > #111, held unmerged; #98 (the root package rename) landed before it.
+The plan was four pull requests, one work package each. It was built as seven, because RF-24 and RF-25 each grew a second part and the review fixes came last. The stack is #99 > #103 > #100 > #105 > #107 > #109 > #111 > #113 > #114 > #116, merged together; #98 (the root package rename) landed before it.
 
 | #   | PR   | Branch                        | What it delivered                                                                                                           | Work package        |
 | --- | ---- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------- |

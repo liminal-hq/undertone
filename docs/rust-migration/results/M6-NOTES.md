@@ -1,6 +1,6 @@
 # M6 notes: what the bridge taught us
 
-M6 built `@liminal-hq/undertone` as a TypeScript bridge over two WebAssembly modules built from the Rust, and ran the TypeScript suite and the corpus against it. Nothing was listened to: every figure here comes from recorded node graphs, rendered numbers, byte comparisons, or sizes. The stack is held unmerged until the person's go.
+M6 built `@liminal-hq/undertone` as a TypeScript bridge over two WebAssembly modules built from the Rust, and ran the TypeScript suite and the corpus against it. Nothing was listened to: every figure here comes from recorded node graphs, rendered numbers, byte comparisons, or sizes. The stack (#99 to #116) landed on `main` at `ccd8428`.
 
 ## What was built, per pull request
 
