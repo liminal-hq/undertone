@@ -14,10 +14,18 @@ setRenderLoader(browserRenderLoader);
 
 let ready: Promise<void> | undefined;
 
-/** Instantiates the module once; every call returns the same promise. */
+/**
+ * Instantiates the module once; calls made while it loads, and after it has loaded, share the same promise. A load that fails
+ * (a fetch that dropped, say) is not kept: the next call tries again.
+ */
 export function init(): Promise<void> {
-  ready ??= initWasm().then(() => {
-    install();
-  });
+  ready ??= initWasm()
+    .then(() => {
+      install();
+    })
+    .catch((error: unknown) => {
+      ready = undefined;
+      throw error;
+    });
   return ready;
 }

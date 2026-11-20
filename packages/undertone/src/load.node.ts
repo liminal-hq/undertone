@@ -11,6 +11,7 @@ let loaded = false;
 /** Instantiates the module from disk. Safe to call again: only the first call does anything. */
 export function loadSync(): void {
   if (loaded) return;
-  loaded = true;
+  // Marked loaded only once it has: a read or compile that failed is tried again by the next call.
   initSync({ module: readFileSync(new URL('../wasm/undertone_wasm_bg.wasm', import.meta.url)) });
+  loaded = true;
 }
