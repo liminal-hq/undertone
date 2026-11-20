@@ -99,6 +99,16 @@ fn the_audio_callback_does_not_allocate() {
 
 	// Buffers made before counting starts, as a device would hand them over.
 	let mut buffer = vec![0.0_f32; 2 * 480];
+	// Wait, before counting, for the control thread's first rendered audio to reach the ring: on a slow machine the
+	// measured pulls below could otherwise all find it empty and prove nothing.
+	let started = std::time::Instant::now();
+	while started.elapsed() < std::time::Duration::from_secs(10) {
+		callback.fill(&mut buffer);
+		if buffer.iter().any(|sample| *sample != 0.0) {
+			break;
+		}
+		std::thread::sleep(std::time::Duration::from_millis(5));
+	}
 	let mut heard = false;
 	let mut calls = 0;
 	let ((), allocations, frees) = measure(|| {
