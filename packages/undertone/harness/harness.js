@@ -172,7 +172,6 @@ function startJank(ms) {
 async function start() {
   $('start').disabled = true;
   $('log').textContent = '';
-  const seconds = Number($('seconds').value);
   const channels = Number($('channels').value);
   const bpm = Number($('bpm').value);
   const rate = Number($('rate').value);
@@ -189,10 +188,9 @@ async function start() {
     output.onerror = (message) => log(`worklet: ${message}`);
     log(`timing: ${output.timing}${output.timingNote ? ` (${output.timingNote})` : ''}`);
     state.output = output;
-    const patterns = harnessPatterns(undertone);
-    const chosen = patterns[$('pattern').value];
-    const loop = output.loop(chosen, { cycles: 4, bpm });
-    await loop.ready;
+    state.patterns = harnessPatterns(undertone);
+    state.loop = output.loop(state.patterns[$('pattern').value], { cycles: 4, bpm });
+    await state.loop.ready;
     log('looping 4 cycles at ' + bpm + ' bpm');
     state.jank = startJank(Number($('jank').value));
     // The first seconds fill the caches and book the first reverb; the statistics restart after a short warm-up so a one-off
@@ -204,15 +202,18 @@ async function start() {
     );
     output.resetStats();
     const began = context.currentTime;
+    state.statsBegan = began;
     $('stop').disabled = false;
     $('copy').disabled = false;
+    state.live = true;
     let last;
     const finish = async () => {
       clearInterval(state.poll);
       if (state.jank !== undefined) clearInterval(state.jank);
-      loop.stop();
+      state.loop?.stop();
+      state.live = false;
       const stats = await output.stats();
-      const summary = summarise(stats, context, context.currentTime - began);
+      const summary = summarise(stats, context, context.currentTime - state.statsBegan);
       show(summary);
       window.undertoneHarness.result = summary;
       last = summary;
@@ -228,9 +229,11 @@ async function start() {
       state.poll = setInterval(async () => {
         try {
           const elapsed = context.currentTime - began;
+          // Read each time, so changing the duration while it runs moves the end.
+          const seconds = Number($('seconds').value);
           $('progress').value = Math.min(1, elapsed / seconds);
           const stats = await output.stats();
-          show(summarise(stats, context, elapsed));
+          show(summarise(stats, context, context.currentTime - state.statsBegan));
           if (elapsed >= seconds) resolve(await finish());
         } catch (error) {
           log(`stats: ${error.message}`);
@@ -248,6 +251,38 @@ async function start() {
     window.undertoneHarness.result = { error: String(error?.message ?? error) };
   }
 }
+
+/**
+ * Changes made while a run is going. The pattern and the tempo restart the loop on the same context (the passes already posted
+ * are cancelled, and the next pass starts a moment later), the jank restarts its timer, and the duration moves the end. The
+ * statistics (and the time they are measured over) start again at each change, so the numbers on screen are for the settings in force now. The channel count and
+ * the sample rate belong to the audio context, so they apply at the next Start.
+ */
+function changed(what) {
+  if (!state.live || !state.output) return;
+  try {
+    if (what === 'pattern' || what === 'bpm') {
+      const bpm = Number($('bpm').value);
+      state.loop?.stop();
+      state.loop = state.output.loop(state.patterns[$('pattern').value], { cycles: 4, bpm });
+      log(`${what} changed: looping ${$('pattern').value} at ${bpm} bpm`);
+    } else if (what === 'jank') {
+      if (state.jank !== undefined) clearInterval(state.jank);
+      state.jank = startJank(Number($('jank').value));
+      log(`jank changed: ${$('jank').value} ms every second`);
+    } else {
+      log(`seconds changed: ${$('seconds').value}`);
+      return;
+    }
+    state.output.resetStats();
+    // The numbers on screen are for the settings in force now, so their clock starts again too.
+    state.statsBegan = state.context.currentTime;
+  } catch (error) {
+    log(`change failed: ${error?.message ?? error}`);
+  }
+}
+for (const id of ['pattern', 'bpm', 'jank', 'seconds'])
+  $(id).addEventListener('change', () => changed(id));
 
 $('start').onclick = start;
 $('stop').onclick = () => state.finish?.();
