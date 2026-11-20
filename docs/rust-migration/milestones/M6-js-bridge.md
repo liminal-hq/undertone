@@ -14,7 +14,7 @@
 - **Owner:** A. **Size:** L. **Depends on:** RF-09, RF-10, RF-11, RF-13 (and grows as M3 to M5 land).
 - **Objective:** a `wasm-bindgen` crate exposing patterns as handles, controls, constructors, signals, scheduling as booking operations, and rendering, with no generics across the boundary.
 - **Steps:** (1) `crates/undertone-wasm` with `wasm-bindgen` pinned exactly (take the newest at the time and pin it), `weak-refs` on; (2) one exported function per bridge method, generated from the same control table as RF-14 where possible; (3) data types (`VoiceParams`, `ScoreEvent`, options) crossing as plain objects through `serde-wasm-bindgen`, with TypeScript declarations from `ts-rs` or `tsify` (D-11); (4) a `scripts/build-wasm.sh` that checks the `wasm-bindgen` CLI version against the pin, builds with the release profile from R4, runs `wasm-opt -Oz`, and writes into `packages/undertone/wasm/`; (5) size budgets (D-07) as a failing CI check; (6) **documentation:** rustdoc on the crate (it is `publish = false`, but `cargo doc` still covers it).
-- **Decision needed first:** D-06 (accept the bridge's breaks) before this package starts.
+- **Decisions:** D-06 is accepted as listed (D-40), the bridge job runs on `ci-rust` with installed tools (D-41), and the minimum runtimes are Node 22+, Bun 1.2+, current Deno (D-42).
 - **Acceptance:** the module builds in CI under budget; every exported function is reached by a test in RF-27.
 - **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** a list argument (`seq`, `cat`, `stack`, `timecat`, `arrange`, `choose`) must be built with borrowing `push` calls, never as an array of exported handles, because `wasm-bindgen` moves an exported struct out of a JavaScript array and nulls its JavaScript object (R5); `new Pattern(query, sample)` must carry its sampler (R5); the build runs `wasm-opt -Oz -all` (R4: the `binaryen` npm package works; D-22); budgets per D-07 (R4); `serde_json` never enters the control module (+16.3 KB), `serde-wasm-bindgen` stays (+7.2 KB).
 
@@ -67,6 +67,7 @@ The orchestrator assigns Sonnet agents. The four packages are sequential in the 
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                                                                                                                                                      |
+| 2026-11-19 | Started: D-06, D-22, and D-08 decided as D-40, D-41, and D-42 (the breaks accepted as listed; the bridge job on `ci-rust` with installed tools; Node 22+). Stack: RF-24 in two pull requests (the control bindings, then the rest of the Rust API), then RF-25, RF-26, and RF-27 |
