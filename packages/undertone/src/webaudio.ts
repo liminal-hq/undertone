@@ -8,8 +8,10 @@
 // made, in the same order, so the context numbers its nodes as 0.3 did. `run()` replays after every call into the engine, a
 // call that throws included (the nodes a failing voice made before the failure stay on the context, and a failed play's
 // rollback, D-38, is recorded too). A Web Audio call that throws does not stop its batch: the records that name what the context
-// failed to make are skipped, the rest are applied, and the first error is thrown after the batch. The replayer forgets what the
-// engine releases, so a long session stays bounded.
+// failed to make are skipped, the rest are applied, and the first error is thrown after the batch. The module has finished
+// booking before the replay starts, so for a `play()` or a loop's first window (`undo`) a batch whose replay throws is also
+// undone on the context: the sources it made are cut, so the call's failure leaves nothing sounding (D-38). The replayer
+// forgets what the engine releases, so a long session stays bounded.
 //
 // A context without one of Web Audio's optional members degrades as 0.3 did, here rather than in the engine: no
 // `createPeriodicWave` (a shaped wave plays as a sine, an autopan phase is dropped, each warned once), and a param without
@@ -148,7 +150,7 @@ export class Replayer {
    * applied (the starts, stops, releases, and a failed play's rollback among them, so nothing is left sounding or held), and the
    * first error is thrown once the batch has been replayed.
    */
-  replay(taken: unknown[]): void {
+  replay(taken: unknown[], options: { undo?: boolean } = {}): void {
     const ops = taken[0] as Float64Array;
     const data = taken[1] as Float32Array;
     const names = this.#names;
@@ -156,6 +158,9 @@ export class Replayer {
     let previous = '';
     let failure: { error: unknown } | undefined;
     const fresh: number[] = [];
+    // The sources this batch made, and which of them it started: what an undone batch has to cut.
+    const sources: number[] = [];
+    const started = new Set<number>();
     for (let at = 0; at < ops.length; at += WIDTH) {
       const op = ops[at];
       const a = ops[at + 1];
@@ -192,6 +197,7 @@ export class Replayer {
             ) as AnyNode;
             this.#nodes.set(a, node);
             this.#ids.set(node, a);
+            if (typeof node.start === 'function') sources.push(a);
             break;
           }
           case 'set':
@@ -276,6 +282,7 @@ export class Replayer {
             break;
           case 'start':
             (this.node<AnyNode>(a).start as (when: number) => void)(b);
+            started.add(a);
             break;
           case 'stop':
             (this.node<AnyNode>(a).stop as (when: number) => void)(hard ? Math.min(b, hard.at) : b);
@@ -336,7 +343,40 @@ export class Replayer {
     }
     // A wave of a voice's own that no node took (the voice's records ended before it was set) has no one to release it.
     for (const wave of fresh) if (!this.#waveUsers.has(wave)) this.#dropWave(wave);
-    if (failure) throw failure.error;
+    if (failure) {
+      if (options.undo) this.#undo(sources, started);
+      throw failure.error;
+    }
+  }
+
+  /**
+   * Cuts what a failed batch left sounding (a failed `play()` or first loop window, D-38 at the wrapper): every source the batch
+   * made is stopped at once when it was started (a source not started yet cannot be stopped), and disconnected from its chain,
+   * which silences the voice and cancels a start still ahead. The engine still counts the voices, so each source is remembered
+   * as dead, skipping the records that name it until the engine's own release for it arrives. Shared nodes (a bus, the master)
+   * stay: later voices use them.
+   */
+  #undo(sources: number[], started: Set<number>): void {
+    for (const id of sources) {
+      const node = this.#nodes.get(id);
+      if (node === undefined) continue; // released within the batch already
+      if (started.has(id)) {
+        try {
+          (node.stop as (when: number) => void)(0);
+        } catch {
+          // A source that cannot be stopped is still cut off below.
+        }
+      }
+      try {
+        node.disconnect();
+      } catch {
+        // Nothing more to cut.
+      }
+      this.#ids.delete(node);
+      this.#nodes.delete(id);
+      this.#deadNodes.add(id);
+      this.#releaseWaveOf(id);
+    }
   }
 
   /** Whether a record names something the context failed to make. */
@@ -533,9 +573,15 @@ export function backendOf(ctx: AudioContextLike): Backend {
 /**
  * Calls into a context's engine at the context's clock and replays what it recorded, also when the call throws. A replay that
  * throws (a context refusing a time, say) wins over the engine's own error, since 0.3 failed at that call first. Then the
- * pending samples the call's voices named are decoded on the context.
+ * pending samples the call's voices named are decoded on the context. With `undo`, a batch whose replay throws is also undone on
+ * the context (the sources it made are cut, `Replayer.replay`) before the first error is thrown: a failed `play()` or first loop
+ * window leaves nothing sounding (D-38), though the module had finished booking before the replay began.
  */
-export function run<T>(backend: Backend, call: (engine: WasmEngine) => T): T {
+export function run<T>(
+  backend: Backend,
+  call: (engine: WasmEngine) => T,
+  options: { undo?: boolean } = {}
+): T {
   const { ctx, engine } = backend;
   const channels = ctx.destination.channelCount ?? 2;
   if (channels !== backend.channels) {
@@ -547,7 +593,7 @@ export function run<T>(backend: Backend, call: (engine: WasmEngine) => T): T {
     return call(engine);
   } finally {
     try {
-      backend.replayer.replay(engine.take());
+      backend.replayer.replay(engine.take(), options);
     } finally {
       // The pending samples the call's voices named (they were skipped) start decoding now, as 0.3's lookup did.
       const keys = engine.takeRequestedSamples();

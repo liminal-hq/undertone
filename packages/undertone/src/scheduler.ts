@@ -101,14 +101,17 @@ export function playOnce(options: PlayOptions, call: PlayCall): PlaybackHandle {
     }
     tune(transport);
     const output = nodeId(backend, options.output);
-    const played = run(backend, (engine) =>
-      call(transport, engine, ctx.currentTime, {
-        bpm: options.bpm,
-        cps: options.cps,
-        when: options.when,
-        gated: options.gated,
-        output
-      })
+    const played = run(
+      backend,
+      (engine) =>
+        call(transport, engine, ctx.currentTime, {
+          bpm: options.bpm,
+          cps: options.cps,
+          when: options.when,
+          gated: options.gated,
+          output
+        }),
+      { undo: true }
     );
     return playbackHandle(backend, played);
   });
@@ -123,8 +126,11 @@ export function loopOn(options: LoopOptions, call: LoopCall): LoopHandle {
     const output = nodeId(backend, options.output);
     let loop: WasmLoop;
     try {
-      loop = run(backend, (engine) =>
-        call(transport, engine, ctx.currentTime, { bpm: options.bpm, cps: options.cps, output })
+      loop = run(
+        backend,
+        (engine) =>
+          call(transport, engine, ctx.currentTime, { bpm: options.bpm, cps: options.cps, output }),
+        { undo: true }
       );
     } catch (error) {
       transport.free();
