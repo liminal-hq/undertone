@@ -366,7 +366,7 @@ jobs:
         if: always()
         run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
 
-  # The WebAssembly bridge (RF-24, D-41): the shared ci-rust image plus the tools the job installs itself, each pinned and checked
+  # The WebAssembly bridge (RF-24, D-41), both modules (the main module and the lazily loaded render module): the shared ci-rust image plus the tools the job installs itself, each pinned and checked
   # against its SHA-256 (the GitHub release digests): the wasm32 target, the wasm-bindgen CLI that crates/undertone-wasm pins
   # (a prebuilt release binary; `cargo install` from source took 35 s with four jobs and a warm registry on a fast machine), and
   # Bun (ci-rust has no JavaScript runtime). wasm-opt comes from the binaryen npm package that scripts/wasm-opt/ locks. Switch to
@@ -401,10 +401,10 @@ jobs:
           install -m 755 /tmp/bun-linux-x64/bun /usr/local/bin/bun
           bun --version
       - name: Clippy for wasm32
-        run: cargo clippy -p undertone-wasm --target wasm32-unknown-unknown --locked -- -D warnings
-      - name: Build the module
+        run: cargo clippy -p undertone-wasm -p undertone-wasm-render --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: Build the two modules
         run: bash scripts/build-wasm.sh
-      - name: Check the size budget
+      - name: Check the size budgets
         run: bun scripts/check-wasm-size.ts
       - name: Smoke test
         run: bun crates/undertone-wasm/tests/js/smoke.ts
@@ -412,6 +412,12 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/layer1.ts
       - name: Corpus layer 2
         run: bun crates/undertone-wasm/tests/js/layer2.ts
+      - name: Corpus layer 3 (booked, replayed on the fake context)
+        run: bun crates/undertone-wasm/tests/js/layer3.ts
+      - name: Corpus layer 4 (the render module against Chromium's summaries)
+        run: bun crates/undertone-wasm/tests/js/layer4.ts
+      - name: WAV corpus (the render module)
+        run: bun crates/undertone-wasm/tests/js/wav.ts
       - name: Upload the module and its glue
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

@@ -1,0 +1,28 @@
+[package]
+name = "undertone-wasm-render"
+description = "The lazily loaded WebAssembly render module of Undertone: plain voices to samples, WAV bytes, or a recorded booking"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+# It ships inside the npm package (packages/undertone/wasm/render/), never on crates.io (D-10).
+publish = false
+
+[lib]
+# cdylib for the .wasm module; rlib so the native unit tests and `cargo check` on the host build it too.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+undertone = { path = "../undertone", version = "0.0.0" }
+# The same pins as crates/undertone-wasm (scripts/build-wasm.sh checks the CLI against that crate's pin).
+wasm-bindgen = "=0.2.125"
+js-sys = "=0.3.102"
+
+# As in the main module: numbers print and read through JavaScript's own `String(x)` and `Number(text)` in the
+# WebAssembly build only.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+undertone-pattern = { path = "../undertone-pattern", version = "0.0.0", default-features = false, features = ["std", "host-number-format"] }
+
+[lints]
+workspace = true
