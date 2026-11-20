@@ -36,7 +36,7 @@ pub const MAX_HELPER_PART: i128 = i64::MAX as i128;
 pub struct Encoded<'a> {
 	/// [`STRIDE`] numbers per hap.
 	pub times: Vec<f64>,
-	/// The value of each hap, by the index in slot 8.
+	/// The distinct values, by the index in slot 8: equal values among the last [`INTERN_WINDOW`] distinct ones are written once.
 	pub values: Vec<&'a Value>,
 	/// The exact `n/d` texts of fractions beyond the safe range, by the index after a `NaN` numerator.
 	pub big: Vec<String>,
@@ -79,10 +79,43 @@ pub fn encode(haps: &[Hap<Value>]) -> Encoded<'_> {
 			}
 			None => out.times.extend_from_slice(&[0.0; 4]),
 		}
-		out.times.push(out.values.len() as f64);
-		out.values.push(&hap.value);
+		let index = intern(&mut out.values, &hap.value);
+		out.times.push(index as f64);
 	}
 	out
+}
+
+/// How many of the most recent distinct values a hap's value is compared with before it is added as a new one.
+pub const INTERN_WINDOW: usize = 16;
+
+/// The index of `value` among the last [`INTERN_WINDOW`] distinct values, or a new index: equal values in one query cross once.
+fn intern<'a>(values: &mut Vec<&'a Value>, value: &'a Value) -> usize {
+	let start = values.len().saturating_sub(INTERN_WINDOW);
+	if let Some(offset) = values[start..].iter().rposition(|seen| same(seen, value)) {
+		return start + offset;
+	}
+	values.push(value);
+	values.len() - 1
+}
+
+/// Whether two values are the same JavaScript data: numbers compared by their bits, so `-0` is not `0` (and a `NaN` matches the same `NaN`).
+pub fn same(a: &Value, b: &Value) -> bool {
+	match (a, b) {
+		(Value::Num(x), Value::Num(y)) => x.to_bits() == y.to_bits(),
+		(Value::Str(x), Value::Str(y)) => x == y,
+		(Value::Bool(x), Value::Bool(y)) => x == y,
+		(Value::Undefined, Value::Undefined) => true,
+		(Value::List(x), Value::List(y)) => {
+			x.len() == y.len() && x.iter().zip(y).all(|(x, y)| same(x, y))
+		}
+		(Value::Map(x), Value::Map(y)) => {
+			x.len() == y.len()
+				&& x.iter()
+					.zip(y)
+					.all(|((kx, vx), (ky, vy))| kx == ky && same(vx, vy))
+		}
+		_ => false,
+	}
 }
 
 /// A fraction from two JavaScript numbers: both safe integers (|x| ≤ 2^53 − 1), the denominator not 0.
@@ -259,6 +292,57 @@ mod tests {
 		);
 		let values: Vec<Value> = encoded.values.iter().map(|v| (*v).clone()).collect();
 		assert_eq!(decode(&encoded.times, &values, &encoded.big).unwrap(), haps);
+	}
+
+	#[test]
+	fn equal_values_cross_once_but_minus_zero_is_not_zero() {
+		let map =
+			|pitch: &str| Value::Map([("pitch".to_string(), Value::Str(pitch.into()))].into());
+		let p = seq(vec![
+			pure(map("c3")),
+			pure(map("e3")),
+			pure(map("c3")),
+			pure(Value::Num(0.0)),
+			pure(Value::Num(-0.0)),
+			pure(Value::Num(f64::NAN)),
+			pure(Value::Num(f64::NAN)),
+		]);
+		let haps = p.query(span((0, 1), (2, 1)));
+		let encoded = encode(&haps);
+		// c3, e3, 0, -0, and NaN: five distinct values for fourteen haps.
+		assert_eq!(encoded.values.len(), 5);
+		let index_of = |wanted: &Value| -> Vec<f64> {
+			haps.iter()
+				.enumerate()
+				.filter(|(_, hap)| same(&hap.value, wanted))
+				.map(|(i, _)| encoded.times[i * STRIDE + 8])
+				.collect()
+		};
+		// Each value's haps share one index, and 0 and -0 do not share one.
+		for wanted in [
+			map("c3"),
+			Value::Num(0.0),
+			Value::Num(-0.0),
+			Value::Num(f64::NAN),
+		] {
+			let indices = index_of(&wanted);
+			assert!(indices.len() >= 2 && indices.iter().all(|i| *i == indices[0]));
+		}
+		assert_ne!(
+			index_of(&Value::Num(0.0))[0],
+			index_of(&Value::Num(-0.0))[0]
+		);
+		let values: Vec<Value> = encoded.values.iter().map(|v| (*v).clone()).collect();
+		let decoded = decode(&encoded.times, &values, &encoded.big).unwrap();
+		assert!(
+			decoded
+				.iter()
+				.zip(&haps)
+				.all(|(a, b)| same(&a.value, &b.value) && a.part == b.part)
+		);
+		assert!(same(&Value::Num(f64::NAN), &Value::Num(f64::NAN)));
+		assert!(!same(&Value::Num(0.0), &Value::Num(-0.0)));
+		assert!(!same(&Value::List(vec![]), &Value::Map(Default::default())));
 	}
 
 	#[test]

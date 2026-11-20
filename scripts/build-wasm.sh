@@ -10,8 +10,10 @@
 #   2. `cargo build --profile wasm --target wasm32-unknown-unknown -p undertone-wasm` (the root Cargo.toml's `wasm` profile);
 #   3. `wasm-bindgen --target web --weak-refs` into packages/undertone/wasm/ (the glue `undertone_wasm.js`, its `.d.ts`, and
 #      `undertone_wasm_bg.wasm`);
-#   4. `wasm-opt -Oz -all` in place, from the `binaryen` npm package pinned by scripts/wasm-opt/ (installed with its lockfile's
-#      integrity hash on first use; runs under Bun);
+#   4. `wasm-opt -Oz` in place, from the `binaryen` npm package pinned by scripts/wasm-opt/ (installed with its lockfile's
+#      integrity hash on first use; runs under Bun), with exactly the WebAssembly features rustc 1.98 emits for
+#      wasm32-unknown-unknown enabled (the list below). Not `-all` (R4's flag): binaryen 132's `-all` includes the compact
+#      import section, which Node 22 and Bun 1.4 refuse to compile ("unknown import kind 0x7f"); R4 never ran its module;
 #   5. the raw, gzip, and Brotli sizes (scripts/check-wasm-size.ts --report; the budget check itself is a separate CI step).
 #
 # Needs cargo with the wasm32-unknown-unknown target, the wasm-bindgen CLI, jq, and Bun. Respects CARGO_TARGET_DIR. Run from anywhere.
@@ -46,6 +48,10 @@ wasm-bindgen --target web --weak-refs --out-dir "${out}" --out-name undertone_wa
 if [[ ! -f "${tools}/node_modules/binaryen/bin/wasm-opt" ]]; then
 	bun install --frozen-lockfile --cwd "${tools}"
 fi
-bun "${tools}/node_modules/binaryen/bin/wasm-opt" -Oz -all "${out}/undertone_wasm_bg.wasm" -o "${out}/undertone_wasm_bg.wasm"
+features=(
+	--enable-bulk-memory --enable-bulk-memory-opt --enable-call-indirect-overlong --enable-multivalue
+	--enable-mutable-globals --enable-nontrapping-float-to-int --enable-reference-types --enable-sign-ext
+)
+bun "${tools}/node_modules/binaryen/bin/wasm-opt" -Oz "${features[@]}" "${out}/undertone_wasm_bg.wasm" -o "${out}/undertone_wasm_bg.wasm"
 
 bun scripts/check-wasm-size.ts --report "${out}/undertone_wasm_bg.wasm"

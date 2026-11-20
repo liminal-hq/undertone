@@ -21,11 +21,17 @@
 //!
 //! # Modules
 //!
+//! - [`pattern`]: the handle ([`WasmPattern`]), its queries, and the list builder ([`PatternList`]).
+//! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
 //! - [`convert`]: values and errors across the boundary.
 //! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
 
 pub mod convert;
 pub mod encode;
+pub mod foreign;
+pub mod pattern;
+
+pub use pattern::{PatternList, WasmPattern};
 
 use wasm_bindgen::prelude::*;
 
