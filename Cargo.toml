@@ -15,3 +15,14 @@ missing_docs = "warn"
 
 [profile.dev]
 debug = "line-tables-only"
+
+# The WebAssembly control module (`crates/undertone-wasm`, built by `scripts/build-wasm.sh` with `--profile wasm`):
+# spike R4's size profile. "z" was 5% smaller than "s" after Brotli (R4). The `release` profile the native crates
+# use is not changed by it.
+[profile.wasm]
+inherits = "release"
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

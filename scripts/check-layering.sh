@@ -10,6 +10,8 @@
 #   - undertone-sched depends on no workspace crate except undertone-pattern and undertone-engine.
 #   - undertone (the facade) depends on no workspace crate except undertone-pattern, undertone-engine, and
 #     undertone-sched; nothing below it may depend on it (the three rules above leave it out of their lists).
+#   - undertone-wasm (the WebAssembly bindings) depends on no workspace crate except undertone, the facade, and
+#     nothing depends on it (no rule lists it).
 #   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
 #   - Nothing under crates/*/src uses `unsafe` (a block, fn, impl, trait, or extern) or lifts the lint with
@@ -32,7 +34,8 @@ allowed_workspace_deps='{
   "undertone-pattern": [],
   "undertone-engine": ["undertone-pattern"],
   "undertone-sched": ["undertone-pattern", "undertone-engine"],
-  "undertone": ["undertone-pattern", "undertone-engine", "undertone-sched"]
+  "undertone": ["undertone-pattern", "undertone-engine", "undertone-sched"],
+  "undertone-wasm": ["undertone"]
 }'
 
 violations="$(
