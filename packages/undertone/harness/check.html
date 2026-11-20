@@ -1,0 +1,19 @@
+<!doctype html>
+<!--
+  The correctness check of the AudioWorklet backend, run by check.ts in headless Chromium: it renders a pattern through the worklet
+  on an OfflineAudioContext and compares the samples with the package's own offline render. A correctness test, not a performance
+  or listening result.
+
+  (c) Copyright 2026 Liminal HQ, Scott Morris
+  SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Undertone worklet check</title>
+  </head>
+  <body>
+    <pre id="out">running</pre>
+    <script type="module" src="./check.js"></script>
+  </body>
+</html>

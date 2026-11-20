@@ -1,0 +1,194 @@
+<!doctype html>
+<!--
+  The AudioWorklet backend's device harness: plays a pattern through the worklet and shows underruns, the 99th percentile of
+  `process`, and drift. See harness.js. Serve this package's directory (bun packages/undertone/harness/serve.ts) and open /harness/.
+
+  (c) Copyright 2026 Liminal HQ, Scott Morris
+  SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Undertone worklet harness</title>
+    <style>
+      :root {
+        --bg: #fafaf7;
+        --fg: #1d1d1b;
+        --muted: #6a6a64;
+        --line: #d8d8d0;
+        --ok: #1b7a3a;
+        --bad: #b3261e;
+        --card: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #161614;
+          --fg: #ecece6;
+          --muted: #9a9a92;
+          --line: #34342f;
+          --ok: #5bc47a;
+          --bad: #ff8a80;
+          --card: #1f1f1c;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          15px/1.45 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+      fieldset {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 0 0 12px;
+        background: var(--card);
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      select,
+      input,
+      button {
+        font: inherit;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--fg);
+      }
+      button {
+        cursor: pointer;
+        min-height: 40px;
+      }
+      button.primary {
+        background: var(--fg);
+        color: var(--bg);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line);
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        font-weight: 500;
+        color: var(--muted);
+        width: 55%;
+      }
+      td.ok {
+        color: var(--ok);
+      }
+      td.bad {
+        color: var(--bad);
+      }
+      progress {
+        width: 100%;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Undertone worklet harness</h1>
+      <p>
+        Plays a looping pattern through the AudioWorklet backend and measures it in the worklet.
+        Listen as well as read: nothing here judges the sound.
+      </p>
+      <fieldset>
+        <label>
+          Pattern
+          <select id="pattern">
+            <option value="representative" selected>
+              Representative (drums, bass, chords, lead)
+            </option>
+            <option value="heavy">Heavy (twice the voices, reverb and delay on most)</option>
+            <option value="light">Light (a bass and a hat)</option>
+          </select>
+        </label>
+        <label>
+          Seconds
+          <input id="seconds" type="number" min="5" max="3600" value="300" />
+        </label>
+        <label>
+          Channels
+          <select id="channels">
+            <option value="2" selected>2</option>
+            <option value="1">1</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+          </select>
+        </label>
+        <label>
+          Tempo (bpm)
+          <input id="bpm" type="number" min="30" max="300" value="110" />
+        </label>
+        <label>
+          Main thread jank
+          <select id="jank">
+            <option value="0" selected>none</option>
+            <option value="50">50 ms every second</option>
+            <option value="250">250 ms every second</option>
+          </select>
+        </label>
+        <label>
+          Sample rate (0 = device)
+          <input id="rate" type="number" min="0" max="192000" value="0" />
+        </label>
+      </fieldset>
+      <p>
+        <button id="start" class="primary">Start</button>
+        <button id="stop" disabled>Stop</button>
+        <button id="copy" disabled>Copy results</button>
+      </p>
+      <progress id="progress" value="0" max="1"></progress>
+      <table id="table">
+        <tbody></tbody>
+      </table>
+      <pre id="log"></pre>
+    </main>
+    <script type="module" src="./harness.js"></script>
+  </body>
+</html>

@@ -54,6 +54,9 @@ const OTHER_METHODS: &[&str] = &[
 	"voice",
 	"voicing",
 	"query",
+	// The AudioWorklet backend's output (`createWorkletOutput`), which the runtimes guide shows.
+	"close",
+	"stats",
 	// The master and orbit buses, and JavaScript built-ins the examples use.
 	"setDelay",
 	"setRoomSize",

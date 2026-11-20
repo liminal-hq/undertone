@@ -25,5 +25,27 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  prettierConfig
+  prettierConfig,
+  {
+    // The worklet harness pages are plain browser scripts (no bundler, no build), so they read the browser's globals.
+    files: ['packages/undertone/harness/*.js'],
+    languageOptions: {
+      globals: Object.fromEntries(
+        [
+          'window',
+          'document',
+          'navigator',
+          'location',
+          'performance',
+          'setTimeout',
+          'setInterval',
+          'clearInterval',
+          'URLSearchParams',
+          'AudioContext',
+          'OfflineAudioContext',
+          'AudioWorkletNode'
+        ].map((name) => [name, 'readonly'])
+      )
+    }
+  }
 );

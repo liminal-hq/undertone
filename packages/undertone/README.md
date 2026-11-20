@@ -28,6 +28,10 @@ The first two are separate loads of the module: a program uses one of them, not 
 
 Offline rendering is in a second module, `wasm/render/`, which loads the first time it is needed, so a program that only plays never downloads it. In a browser the first `renderToBuffer()`, `.render()`, or `score().render()` imports and fetches it; under Node, Bun, and Deno it is read from disk on first use. `encodeWav()` is TypeScript and does not need the render module, so it works on every runtime as soon as the main module has loaded (after `init()` with `./init`).
 
+### The AudioWorklet backend (opt-in)
+
+`@liminal-hq/undertone/worklet` exports `createWorkletOutput(context, options)`, which plays patterns in an `AudioWorklet` with the render module's engine instead of replaying them on the context. `output.play(pattern, { cycles, bpm })` plays a pass, `output.loop(pattern, { cycles, bpm })` repeats the first `cycles` cycles on the worklet's clock until `stop()`, `await output.stats()` reports underruns, the time of `process`, and drift, and `output.close()` frees it. The default backend is unchanged. What it needs (a secure context, the glue and module found by `new URL(…, import.meta.url)`, cross-origin isolation for the timing clock) and what was measured are in the guide's _Runtimes and loading_ page; `harness/` holds the page to run on a device.
+
 ### Vite 5, and bundler targets
 
 Top-level `await` needs a build target of ES2022 or later. **Vite 5's default build target does not allow it**, so a Vite 5 build (VitePress 1 included) fails with `Top-level await is not available in the configured target environment`. Set the target:
