@@ -31,6 +31,7 @@
 //! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
 //! - [`convert`]: values and errors across the boundary.
 //! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
+//! - [`score`]: `score(definition)` and the score handle's data (group 15; playing and rendering are part 2b).
 //! - [`warnings`]: the once-only warnings, printed with `console.warn`, and `resetWarnings`.
 
 pub mod build;
@@ -43,6 +44,7 @@ pub mod foreign;
 pub mod helpers;
 pub mod notes;
 pub mod pattern;
+pub mod score;
 pub mod warnings;
 
 pub use pattern::{PatternList, WasmPattern};
