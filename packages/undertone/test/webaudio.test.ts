@@ -9,6 +9,7 @@ import {
   Pattern,
   clearSamples,
   encodeWav,
+  loadSamples,
   note,
   playParams,
   registerSample,
@@ -177,6 +178,52 @@ describe('decoding a url or data sample when a voice first names it (as 0.3 did)
     playParams(ctx, [{ sampleName: 'hat' }]);
     expect(ctx.bufferSources).toHaveLength(1);
     expect(decode).toHaveBeenCalledTimes(1); // tom was never named, so never decoded
+  });
+
+  describe('on a second context that decodes the same source differently (another sample rate)', () => {
+    /** A context whose decodes give `length` frames at `rate`, as a decode resampled to the context's rate does. */
+    function resampling(rate: number, length: number) {
+      const ctx = new FakeAudioContext();
+      ctx.sampleRate = rate;
+      const decoded: { buffer?: ReturnType<FakeAudioContext['createBuffer']> } = {};
+      vi.spyOn(ctx, 'decodeAudioData').mockImplementation(async () => {
+        decoded.buffer = ctx.createBuffer(1, length, rate);
+        return decoded.buffer;
+      });
+      return { ctx, decoded };
+    }
+
+    it('plays the PCM the module holds, not the other context’s buffer that merely stands for it', async () => {
+      registerSample('hat', { data: new ArrayBuffer(8) });
+      const first = resampling(44100, 8);
+      await loadSamples(first.ctx, ['hat']);
+      const second = resampling(48000, 9);
+      await loadSamples(second.ctx, ['hat']);
+      expect(second.decoded.buffer).toBeDefined();
+
+      playParams(first.ctx, [{ sampleName: 'hat' }]);
+      expect(first.ctx.bufferSources[0].buffer).toBe(first.decoded.buffer); // its own decode, as before
+
+      playParams(second.ctx, [{ sampleName: 'hat' }]);
+      const played = second.ctx.bufferSources[0].buffer as { sampleRate: number } | null;
+      expect(played).not.toBe(second.decoded.buffer); // a 9-frame buffer at 48 kHz is not the 8 frames the module holds
+      expect(played?.sampleRate).toBe(44100);
+      expect(
+        (played as unknown as { getChannelData(c: number): Float32Array }).getChannelData(0)
+      ).toHaveLength(8);
+    });
+
+    it('does not take a buffer with the same frames at another rate for the module’s PCM', async () => {
+      registerSample('hat', { data: new ArrayBuffer(8) });
+      const first = resampling(44100, 8);
+      await loadSamples(first.ctx, ['hat']);
+      const second = resampling(48000, 8);
+      await loadSamples(second.ctx, ['hat']);
+      playParams(second.ctx, [{ sampleName: 'hat' }]);
+      const played = second.ctx.bufferSources[0].buffer as { sampleRate: number } | null;
+      expect(played).not.toBe(second.decoded.buffer);
+      expect(played?.sampleRate).toBe(44100);
+    });
   });
 
   it('decodes the banked key a voice resolves to', async () => {

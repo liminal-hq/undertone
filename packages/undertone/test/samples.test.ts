@@ -158,6 +158,42 @@ describe('loadSamples', () => {
   });
 });
 
+describe('registering a name again', () => {
+  const lengthOf = (buffer: AudioBufferLike | undefined) => buffer?.getChannelData(0).length;
+
+  it('decodes the new source, and never serves what was decoded for the old one', async () => {
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    const ctx = new FakeAudioContext();
+    await loadSamples(ctx, ['kick']);
+    expect(lengthOf(getSampleBuffer(ctx, 'kick'))).toBe(8);
+
+    registerSample('kick', { data: new ArrayBuffer(16) });
+    expect(getSampleBuffer(ctx, 'kick')).toBeUndefined(); // the old buffer is not served; the new source decodes
+    await loadSamples(ctx, ['kick']);
+    expect(lengthOf(getSampleBuffer(ctx, 'kick'))).toBe(16);
+  });
+
+  it('decodes the new source when it is registered while the old one is still decoding', async () => {
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    const ctx = new FakeAudioContext();
+    const old = loadSamples(ctx, ['kick']);
+    registerSample('kick', { data: new ArrayBuffer(16) });
+    await loadSamples(ctx, ['kick']);
+    await old;
+    expect(lengthOf(getSampleBuffer(ctx, 'kick'))).toBe(16);
+  });
+
+  it('decodes again after the registry was cleared and the name registered anew', async () => {
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    const ctx = new FakeAudioContext();
+    await loadSamples(ctx, ['kick']);
+    clearSamples();
+    registerSample('kick', { data: new ArrayBuffer(12) });
+    await loadSamples(ctx, ['kick']);
+    expect(lengthOf(getSampleBuffer(ctx, 'kick'))).toBe(12);
+  });
+});
+
 describe('clearSamples', () => {
   it('empties the registry so a previously-registered name is unregistered again', () => {
     registerSample('bd', FAKE_BUFFER);

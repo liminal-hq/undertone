@@ -35,7 +35,10 @@ interface GraphNames {
 /** A buffer of the host's own (a registered `AudioBuffer`, or one decoded on this context) and the PCM the engine was given for it. */
 export interface HostBuffer {
   buffer: AudioBufferLike;
+  /** The PCM read from this very buffer. */
   channels: readonly Float32Array[];
+  /** The buffer's own sample rate, when it says one: a buffer at another rate is not the buffer the records copy. */
+  sampleRate?: number;
 }
 
 const WIDTH = 6;
@@ -242,7 +245,7 @@ export class Replayer {
         case 'createBuffer':
           this.#buffers.set(
             a,
-            this.#hostBuffer(b, c, data, e) ?? this.#newBuffer(b, c, d, data, e)
+            this.#hostBuffer(b, c, d, data, e) ?? this.#newBuffer(b, c, d, data, e)
           );
           break;
         case 'createCurve':
@@ -306,12 +309,14 @@ export class Replayer {
   #hostBuffer(
     channels: number,
     length: number,
+    sampleRate: number,
     data: Float32Array,
     offset: number
   ): AudioBufferLike | undefined {
     for (const host of this.#hostBuffers()) {
       if (this.#claimed.has(host.buffer)) continue;
       if (host.channels.length !== channels || host.channels[0].length !== length) continue;
+      if (host.sampleRate !== undefined && host.sampleRate !== sampleRate) continue;
       let same = true;
       for (let channel = 0; channel < channels && same; channel += 1) {
         const pcm = host.channels[channel];

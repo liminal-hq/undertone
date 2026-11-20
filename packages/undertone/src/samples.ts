@@ -12,6 +12,12 @@
 // says which pending sample it named (`takeRequestedSamples`), and the Web Audio backend hands those keys here. One difference
 // from 0.3: the modules' registry is one per instance, not per context, so once a sample is decoded on any context every
 // context plays it (without decoding it again).
+//
+// What a context decoded (a promise in flight, a finished buffer) belongs to the registration it decoded, not to the name: it
+// is kept with its `Entry` and counts only while the registry still holds that very entry. Registering a name again, or
+// clearing the registry, therefore retires what was decoded for the old source (it is dropped when next looked up), and a
+// decode still in flight for it is not kept. A decoded buffer carries the PCM read from itself: another context's decode of the
+// same source may be resampled to its own rate, so no context's PCM stands in for another's.
 
 import { noteToFrequency } from './helpers.js';
 import type { SampleSource } from './engineTypes.js';
@@ -64,6 +70,16 @@ function normalizeSource(source: RegisteredSource): SampleSource {
   return normalized;
 }
 
+/** A host buffer with the PCM read from it (and its rate, when it says one). */
+function hostOf(buffer: AudioBufferLike, pcm: Pcm): HostBuffer {
+  const rate = (buffer as { sampleRate?: unknown }).sampleRate;
+  return {
+    buffer,
+    channels: pcm.channels,
+    ...(typeof rate === 'number' ? { sampleRate: rate } : {})
+  };
+}
+
 /** The PCM of a decoded buffer: one channel per `numberOfChannels` (one when the buffer does not say). */
 function pcmOf(buffer: AudioBufferLike): Pcm {
   const shaped = buffer as AudioBufferLike & { numberOfChannels?: number; sampleRate?: number };
@@ -75,8 +91,20 @@ function pcmOf(buffer: AudioBufferLike): Pcm {
 }
 
 const registry = new Map<string, Entry>();
-const decodedByContext = new WeakMap<AudioContextLike, Map<string, HostBuffer>>();
-const pendingByContext = new WeakMap<AudioContextLike, Map<string, Promise<AudioBufferLike>>>();
+/** What a context decoded for one registration. */
+interface Decoded {
+  entry: Entry;
+  host: HostBuffer;
+}
+
+/** A decode in flight on a context for one registration. */
+interface Pending {
+  entry: Entry;
+  promise: Promise<AudioBufferLike>;
+}
+
+const decodedByContext = new WeakMap<AudioContextLike, Map<string, Decoded>>();
+const pendingByContext = new WeakMap<AudioContextLike, Map<string, Pending>>();
 const warned = new Set<string>();
 let render: SampleSink | undefined;
 
@@ -84,9 +112,24 @@ setHostBuffers((ctx) => {
   const hosts: HostBuffer[] = [];
   for (const entry of registry.values()) if (entry.host) hosts.push(entry.host);
   const decoded = decodedByContext.get(ctx);
-  if (decoded) hosts.push(...decoded.values());
+  if (decoded) {
+    for (const key of [...decoded.keys()]) {
+      const found = liveDecoded(ctx, key);
+      if (found) hosts.push(found.host);
+    }
+  }
   return hosts;
 });
+
+/** What `ctx` decoded for the registration now under `key`; what it decoded for an earlier one is dropped. */
+function liveDecoded(ctx: AudioContextLike, key: string): Decoded | undefined {
+  const map = decodedByContext.get(ctx);
+  const found = map?.get(key);
+  if (found === undefined) return undefined;
+  if (registry.get(key) === found.entry) return found;
+  map?.delete(key);
+  return undefined;
+}
 
 function warnOnce(key: string, message: string): void {
   if (warned.has(key)) return;
@@ -116,7 +159,7 @@ export function registerSample(name: string, source: RegisteredSource): void {
   if (normalized.buffer) {
     const pcm = pcmOf(normalized.buffer);
     entry.pcm = pcm;
-    entry.host = { buffer: normalized.buffer, channels: pcm.channels };
+    entry.host = hostOf(normalized.buffer, pcm);
   }
   give(glue, name, entry);
   registry.set(name, entry);
@@ -171,12 +214,14 @@ function mapOf<V>(
   return map;
 }
 
-/** Keeps a buffer decoded on `ctx`, and hands its PCM to the modules the first time the sample has one. */
-function decoded(ctx: AudioContextLike, key: string, buffer: AudioBufferLike): void {
-  const entry = registry.get(key);
-  const pcm = entry?.pcm ?? pcmOf(buffer);
-  mapOf(decodedByContext, ctx).set(key, { buffer, channels: pcm.channels });
-  if (entry && !entry.pcm) {
+/**
+ * Keeps a buffer decoded on `ctx` for `entry`, with the PCM read from that buffer, and hands the PCM to the modules the first
+ * time the sample has one (the modules keep the first decode's: one registry per instance).
+ */
+function decoded(ctx: AudioContextLike, key: string, entry: Entry, buffer: AudioBufferLike): void {
+  const pcm = pcmOf(buffer);
+  mapOf(decodedByContext, ctx).set(key, { entry, host: hostOf(buffer, pcm) });
+  if (!entry.pcm) {
     entry.pcm = pcm;
     glue.loadSample(key, pcm);
     render?.loadSample(key, pcm);
@@ -185,30 +230,34 @@ function decoded(ctx: AudioContextLike, key: string, buffer: AudioBufferLike): v
 
 function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferLike> {
   const pendingForContext = mapOf(pendingByContext, ctx);
-  const existing = pendingForContext.get(key);
-  if (existing) return existing;
-
   const entry = registry.get(key);
   if (!entry) {
     return Promise.reject(
       new Error(`Sample "${key}" is not registered. Call registerSample() first.`)
     );
   }
+  // A decode in flight, or finished, for this very registration is joined; one for an earlier registration is not.
+  const existing = pendingForContext.get(key);
+  if (existing?.entry === entry) return existing.promise;
 
-  const promise = decodeEntry(ctx, key, entry.source).then(
-    (buffer) => {
-      // A sample registered again while this decode was in flight keeps its new source.
-      if (registry.get(key) === entry) decoded(ctx, key, buffer);
-      return buffer;
-    },
-    (error: unknown) => {
-      // A failure is not cached, so a later call retries (after a network blip, or a new registration).
-      pendingByContext.get(ctx)?.delete(key);
-      throw error;
-    }
-  );
-  pendingForContext.set(key, promise);
-  return promise;
+  const record: Pending = {
+    entry,
+    promise: decodeEntry(ctx, key, entry.source).then(
+      (buffer) => {
+        // A sample registered again while this decode was in flight keeps its new source.
+        if (registry.get(key) === entry) decoded(ctx, key, entry, buffer);
+        else if (pendingForContext.get(key) === record) pendingForContext.delete(key);
+        return buffer;
+      },
+      (error: unknown) => {
+        // A failure is not cached, so a later call retries (after a network blip, or a new registration).
+        if (pendingForContext.get(key) === record) pendingForContext.delete(key);
+        throw error;
+      }
+    )
+  };
+  pendingForContext.set(key, record);
+  return record.promise;
 }
 
 /**
@@ -265,8 +314,8 @@ export function getSampleBuffer(
   bank?: string
 ): AudioBufferLike | undefined {
   const key = resolveRegisteredKey(name, bank) ?? name;
-  const cached = decodedByContext.get(ctx)?.get(key);
-  if (cached) return cached.buffer;
+  const cached = liveDecoded(ctx, key);
+  if (cached) return cached.host.buffer;
 
   const entry = registry.get(key);
   if (!entry) {
@@ -277,7 +326,7 @@ export function getSampleBuffer(
     return undefined;
   }
   if (entry.host) {
-    mapOf(decodedByContext, ctx).set(key, entry.host);
+    mapOf(decodedByContext, ctx).set(key, { entry, host: entry.host });
     return entry.host.buffer;
   }
   ensureDecoded(ctx, key).catch(() => {
