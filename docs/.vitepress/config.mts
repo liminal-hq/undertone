@@ -85,6 +85,8 @@ export default withMermaid({
     }
   },
   themeConfig: {
+    // The app icon (the same file as the favicon), beside the site title in the header on every page, as on the Rust docs bar.
+    logo: { src: '/favicon.svg', alt: 'undertone' },
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'Recipes', link: '/recipes' },
