@@ -19,6 +19,7 @@ use wasm_bindgen::prelude::*;
 use crate::convert::{error, list_to_js, rust_error, to_js};
 use crate::encode::{self, fraction_from_parts, fraction_from_text};
 use crate::foreign::{Entry, guarded, leaf};
+use crate::warnings::queried;
 
 static LIVE: AtomicU32 = AtomicU32::new(0);
 
@@ -95,7 +96,7 @@ impl WasmPattern {
 	}
 
 	fn query_span(&self, span: Span) -> Result<Array, JsValue> {
-		let haps = guarded(|| self.0.try_query(span))?.map_err(rust_error)?;
+		let haps = guarded(|| queried(|| self.0.try_query(span)))?.map_err(rust_error)?;
 		Ok(encoded(&haps))
 	}
 
@@ -112,7 +113,7 @@ impl WasmPattern {
 	}
 
 	fn sample_fraction(&self, t: Fraction) -> Result<JsValue, JsValue> {
-		let value = guarded(|| self.0.sample_at(t))?;
+		let value = guarded(|| queried(|| self.0.sample_at(t)))?;
 		Ok(value.as_ref().map_or(JsValue::UNDEFINED, to_js))
 	}
 
