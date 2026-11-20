@@ -26,7 +26,7 @@ use undertone::pattern::{ForeignHost, ForeignId, Fraction, Hap, Pattern, Span, V
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, from_js, list_to_js};
+use crate::convert::{array_items, error, from_js, list_to_js};
 use crate::encode::{Part, callback_part, decode};
 
 /// What one foreign leaf calls.
@@ -154,16 +154,15 @@ fn read_haps(result: &JsValue) -> Result<Vec<Hap<Value>>, JsValue> {
 	if !Array::is_array(&values) {
 		return Err(shape());
 	}
-	let values = values
-		.unchecked_ref::<Array>()
+	let values = array_items(values.unchecked_ref(), "a JavaScript query's values")?
 		.iter()
-		.map(|value| from_js(&value))
+		.map(from_js)
 		.collect::<Result<Vec<_>, _>>()?;
 	let big = parts.get(2);
 	let big = if big.is_undefined() {
 		Vec::new()
 	} else if Array::is_array(&big) {
-		big.unchecked_ref::<Array>()
+		array_items(big.unchecked_ref(), "a JavaScript query's big times")?
 			.iter()
 			.map(|text| text.as_string().ok_or_else(shape))
 			.collect::<Result<Vec<_>, _>>()?

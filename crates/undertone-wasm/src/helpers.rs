@@ -17,7 +17,7 @@ use undertone::pattern::random::SeededRandom;
 use undertone::pattern::signal::{brand_by, by_name, choose, irand};
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, from_js, rust_error, string_of};
+use crate::convert::{array_items, error, from_js, rust_error, string_of};
 use crate::encode::{fraction_from_number, fraction_op};
 use crate::foreign::{Entry, leaf};
 use crate::pattern::{WasmPattern, wrap};
@@ -51,9 +51,9 @@ pub fn brand_by_js(p: f64) -> Result<WasmPattern, JsValue> {
 /// `choose(...values)`: one of the values at random. The values are plain values (an array is fine here: no handle is inside it).
 #[wasm_bindgen(js_name = choose)]
 pub fn choose_js(values: &Array) -> Result<WasmPattern, JsValue> {
-	let values = values
+	let values = array_items(values, "choose() values")?
 		.iter()
-		.map(|value| from_js(&value))
+		.map(from_js)
 		.collect::<Result<Vec<_>, _>>()?;
 	wrap(choose(values))
 }

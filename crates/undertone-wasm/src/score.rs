@@ -19,7 +19,7 @@ use undertone::engine::score::{
 };
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, from_js, rust_error, string_of, to_number as number};
+use crate::convert::{array_items, error, from_js, rust_error, string_of, to_number as number};
 use crate::pattern::WasmPattern;
 
 fn get(object: &JsValue, key: &str) -> JsValue {
@@ -34,11 +34,11 @@ fn optional(value: &JsValue) -> Option<f64> {
 	(!value.is_undefined()).then(|| number(value))
 }
 
-fn list(value: &JsValue) -> Vec<JsValue> {
+fn list(value: &JsValue, what: &str) -> Result<Vec<JsValue>, JsValue> {
 	if Array::is_array(value) {
-		value.unchecked_ref::<Array>().iter().collect()
+		array_items(value.unchecked_ref(), what)
 	} else {
-		Vec::new()
+		Ok(Vec::new())
 	}
 }
 
@@ -53,15 +53,19 @@ fn event(value: &JsValue) -> Result<ScoreEvent, JsValue> {
 		})
 	};
 	let pan_path = get(value, "panPath");
-	let pan_path = (!pan_path.is_undefined()).then(|| {
-		list(&pan_path)
-			.iter()
-			.map(|point| ScorePanPoint {
-				tick: number(&get(point, "tick")),
-				pan: number(&get(point, "pan")),
-			})
-			.collect()
-	});
+	let pan_path = if pan_path.is_undefined() {
+		None
+	} else {
+		Some(
+			list(&pan_path, "a score event's panPath")?
+				.iter()
+				.map(|point| ScorePanPoint {
+					tick: number(&get(point, "tick")),
+					pan: number(&get(point, "pan")),
+				})
+				.collect(),
+		)
+	};
 	let autopan = get(value, "autopan");
 	let autopan = (!autopan.is_undefined()).then(|| {
 		let shape = get(&autopan, "shape");
@@ -99,7 +103,7 @@ pub fn definition(value: &JsValue) -> Result<ScoreDefinition, JsValue> {
 		)));
 	}
 	let seam = get(value, "seam");
-	let events = list(&get(value, "events"))
+	let events = list(&get(value, "events"), "a score definition's events")?
 		.iter()
 		.map(event)
 		.collect::<Result<Vec<_>, _>>()?;

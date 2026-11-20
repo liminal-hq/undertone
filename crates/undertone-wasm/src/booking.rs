@@ -25,7 +25,7 @@ use undertone::engine::surround::create_mono_fold;
 use undertone::sched::PlaybackHandle;
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{from_js, rust_error};
+use crate::convert::{array_items, from_js, rust_error};
 use crate::options::{master_options, seed};
 use crate::record::{NAMES, RecordGraph};
 use crate::samples::with_registry;
@@ -232,9 +232,9 @@ impl WasmEngine {
 		when: Option<f64>,
 		output: Option<f64>,
 	) -> Result<WasmPlayback, JsValue> {
-		let voices = patches
+		let voices = array_items(&patches, "playParams() voices")?
 			.iter()
-			.map(|patch| voice(&patch))
+			.map(voice)
 			.collect::<Result<Vec<_>, _>>()?;
 		let output = self.output(output);
 		let when = when.unwrap_or_else(|| self.engine.graph().current_time());

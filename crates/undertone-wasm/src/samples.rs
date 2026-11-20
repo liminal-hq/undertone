@@ -22,7 +22,7 @@ use undertone::engine::samples::{SampleData, Samples};
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, rust_error, string_of};
+use crate::convert::{array_items, error, rust_error, string_of};
 
 thread_local! {
 	static REGISTRY: RefCell<Samples> = RefCell::new(Samples::new());
@@ -64,8 +64,7 @@ fn pcm(name: &str, value: &JsValue) -> Result<SampleData, JsValue> {
 			"Sample \"{name}\" needs {{ sampleRate, channels }} with one Float32Array per channel"
 		)));
 	}
-	let channels = channels
-		.unchecked_ref::<Array>()
+	let channels = array_items(channels.unchecked_ref(), "a sample's channels")?
 		.iter()
 		.map(|channel| match channel.dyn_ref::<Float32Array>() {
 			Some(samples) => Ok(samples.to_vec()),
@@ -97,7 +96,10 @@ pub fn register_sample(name: String, source: JsValue) -> Result<(), JsValue> {
 #[wasm_bindgen(js_name = registerSamples)]
 pub fn register_samples(names: Vec<String>, sources: Array) -> Result<(), JsValue> {
 	with_registry(|samples| {
-		for (name, source) in names.into_iter().zip(sources.iter()) {
+		for (name, source) in names
+			.into_iter()
+			.zip(array_items(&sources, "registerSamples() sources")?)
+		{
 			register(samples, name, &source)?;
 		}
 		Ok(())

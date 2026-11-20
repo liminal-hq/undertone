@@ -54,3 +54,23 @@ pub fn error(message: &str) -> JsValue {
 pub fn rust_error(err: impl core::fmt::Display) -> JsValue {
 	error(&err.to_string())
 }
+
+/// How many items a JavaScript array given to the module may hold, as in the main module's `convert.rs` (a sparse array's
+/// length is set by a number alone, so it is checked before anything is reserved or read).
+pub const MAX_ARRAY_LEN: u32 = 1 << 22;
+
+/// The most a vector reserves for an array before its items are read.
+const FIRST_RESERVE: usize = 1024;
+
+/// The items of `array` (a hole reads as `undefined`), or an `Error` when it is over [`MAX_ARRAY_LEN`]; `what` names it.
+pub fn array_items(array: &js_sys::Array, what: &str) -> Result<Vec<JsValue>, JsValue> {
+	let length = array.length();
+	if length > MAX_ARRAY_LEN {
+		return Err(error(&format!(
+			"{what} may be at most {MAX_ARRAY_LEN} items wide, got {length}"
+		)));
+	}
+	let mut items = Vec::with_capacity((length as usize).min(FIRST_RESERVE));
+	items.extend(array.iter());
+	Ok(items)
+}

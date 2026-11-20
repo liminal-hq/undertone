@@ -29,7 +29,9 @@ use undertone::pattern::instruments::{
 use undertone::pattern::{LayerMap, MapFn, Value, js, stack};
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, from_js, rust_error, string_of, to_js, to_number};
+use crate::convert::{
+	array_items, checked_length, error, from_js, rust_error, string_of, to_js, to_number,
+};
 use crate::pattern::WasmPattern;
 
 /// A list of strings as a JavaScript array.
@@ -67,18 +69,18 @@ pub fn surround_gains_js(angle: JsValue) -> Result<Array, JsValue> {
 
 /// `foldToStereo(gains)`: a channel-gain array folded to `[left, right]` (a missing or non-number gain counts as 0, as `?? 0` does for a missing one).
 #[wasm_bindgen(js_name = foldToStereo)]
-pub fn fold_to_stereo_js(gains: &Array) -> Array {
-	let gains: Vec<f64> = gains
+pub fn fold_to_stereo_js(gains: &Array) -> Result<Array, JsValue> {
+	let gains: Vec<f64> = array_items(gains, "foldToStereo() gains")?
 		.iter()
 		.map(|gain| {
 			if gain.is_undefined() || gain.is_null() {
 				0.0
 			} else {
-				to_number(&gain)
+				to_number(gain)
 			}
 		})
 		.collect();
-	numbers(&fold_to_stereo(&gains))
+	Ok(numbers(&fold_to_stereo(&gains)))
 }
 
 /// `CHANNEL_ORDER`: `["FL", "FR", "C", "LFE", "SL", "SR", "RL", "RR"]`. The wrapper freezes it once at load.
@@ -221,7 +223,8 @@ pub fn layer_js(
 	voices: &Array,
 	options: JsValue,
 ) -> Result<WasmPattern, JsValue> {
-	if voices.length() == 0 {
+	let count = checked_length(voices, "layer() voices")?;
+	if count == 0 {
 		return Err(error("layer() needs at least one voice"));
 	}
 	let stagger = field(&options, "stagger");
@@ -242,7 +245,7 @@ pub fn layer_js(
 	}
 	let levels = field(&options, "levels");
 	let pans = field(&options, "pans");
-	let mut layers = Vec::with_capacity(voices.length() as usize);
+	let mut layers = Vec::with_capacity(count);
 	for (index, voice) in voices.iter().enumerate() {
 		let at = index as u32;
 		layers.push(notes.pattern().fmap(MapFn::Layer(LayerMap {

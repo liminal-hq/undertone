@@ -185,3 +185,28 @@ describe('the engine helpers of ./testing', () => {
     expect(ctx.oscillators[0].started).toEqual([0.5]);
   });
 });
+
+describe('a pattern value that is far too wide', () => {
+  it('is refused with an ordinary error, not allocated: a sparse array of 2^32 - 1 holes costs nothing in JavaScript', () => {
+    // `new Array(0xffffffff)` has a length and no elements; the module must not reserve room for its length.
+    expect(() => pure(new Array(0xffffffff))).toThrow(/at most .* items wide/);
+  });
+
+  it('is refused inside a plain object too, and a modest wide array still crosses', () => {
+    expect(() => pure({ list: new Array(0xffffffff) })).toThrow(/at most .* items wide/);
+    const wide = Array.from({ length: 5000 }, (_, i) => i);
+    expect(cycle(pure(wide))[0].value).toEqual(wide);
+  });
+
+  it('is refused by every other entry that reads an array of the caller (layer, foldToStereo, pitchsteps, score)', () => {
+    const sparse = () => new Array(0xffffffff);
+    expect(() => foldToStereo(sparse())).toThrow(/at most .* items wide/);
+    expect(() => layer(note('c4'), sparse())).toThrow(/at most .* items wide/);
+    expect(() => note('c4').pitchsteps(sparse())).toThrow(/at most .* items wide/);
+    expect(() =>
+      score({ ticksPerSecond: 4, lengthTicks: 4, events: sparse() } as never)
+    ).toThrow(/at most .* items wide/);
+    // The instance is still alive after each refusal.
+    expect(cycle(pure(1))[0].value).toBe(1);
+  });
+});

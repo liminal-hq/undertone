@@ -24,6 +24,33 @@ use wasm_bindgen::prelude::*;
 /// How deep a value JavaScript gives may nest before it is refused (a cycle would otherwise recurse for ever).
 pub const MAX_VALUE_DEPTH: usize = 64;
 
+/// How many items a JavaScript array given to the module may hold (4,194,304). A sparse array's `length` is set by a
+/// number alone (`new Array(0xffffffff)` costs nothing in JavaScript), so a length is checked before anything is reserved or
+/// read; a wider array is an ordinary `Error`, not an allocation failure that stops the instance.
+pub const MAX_ARRAY_LEN: u32 = 1 << 22;
+
+/// The most a vector reserves for an array before its items are read (it grows from there as they come).
+const FIRST_RESERVE: usize = 1024;
+
+/// The length of `array`, or an `Error` when it is over [`MAX_ARRAY_LEN`]; `what` names the array in the message.
+pub fn checked_length(array: &Array, what: &str) -> Result<usize, JsValue> {
+	let length = array.length();
+	if length > MAX_ARRAY_LEN {
+		return Err(error(&format!(
+			"{what} may be at most {MAX_ARRAY_LEN} items wide, got {length}"
+		)));
+	}
+	Ok(length as usize)
+}
+
+/// The items of `array` (a hole reads as `undefined`), after its length is checked.
+pub fn array_items(array: &Array, what: &str) -> Result<Vec<JsValue>, JsValue> {
+	let length = checked_length(array, what)?;
+	let mut items = Vec::with_capacity(length.min(FIRST_RESERVE));
+	items.extend(array.iter());
+	Ok(items)
+}
+
 #[wasm_bindgen]
 extern "C" {
 	/// The global `String(value)`, which can throw (a `toString` that throws, or a symbol in some places).
@@ -127,7 +154,8 @@ fn from_js_at(value: &JsValue, depth: usize) -> Result<Value, JsValue> {
 	}
 	if Array::is_array(value) {
 		let array: &Array = value.unchecked_ref();
-		let mut items = Vec::with_capacity(array.length() as usize);
+		let length = checked_length(array, "a pattern value's array")?;
+		let mut items = Vec::with_capacity(length.min(FIRST_RESERVE));
 		for item in array.iter() {
 			items.push(from_js_at(&item, depth + 1)?);
 		}

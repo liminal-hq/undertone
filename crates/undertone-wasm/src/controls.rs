@@ -25,7 +25,7 @@ use undertone::pattern::controls::ArgKind;
 use undertone::pattern::{CONTROLS, Control, ControlInput, Value};
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, from_js, string_of};
+use crate::convert::{array_items, error, from_js, string_of};
 use crate::notes::parsed;
 use crate::pattern::{WasmPattern, wrap};
 
@@ -132,8 +132,12 @@ fn optional_number(value: &JsValue, message: &str) -> Result<Option<f64>, JsValu
 }
 
 /// The items of an array, or `None` when `value` is not one.
-fn items(value: &JsValue) -> Option<Vec<JsValue>> {
-	Array::is_array(value).then(|| value.unchecked_ref::<Array>().iter().collect())
+fn items(value: &JsValue, what: &str) -> Result<Option<Vec<JsValue>>, JsValue> {
+	if Array::is_array(value) {
+		array_items(value.unchecked_ref(), what).map(Some)
+	} else {
+		Ok(None)
+	}
 }
 
 /// A number of an array or object, `NaN` when it is not a number (every check the reference makes then fails).
@@ -191,7 +195,7 @@ impl WasmPattern {
 
 	/// `pitchsteps(semitones, rateHz?)`: an array of semitone offsets (an item that is not a number fails the finite check) and an optional rate.
 	pub fn pitchsteps(&self, semitones: JsValue, rate: JsValue) -> Result<WasmPattern, JsValue> {
-		let steps: Vec<f64> = items(&semitones)
+		let steps: Vec<f64> = items(&semitones, "pitchsteps() semitones")?
 			.unwrap_or_default()
 			.iter()
 			.map(number_or_nan)
@@ -205,7 +209,7 @@ impl WasmPattern {
 
 	/// `channels(gains)`: one to eight gains; an item that is not a number is reported with `String(item)`.
 	pub fn channels(&self, gains: JsValue) -> Result<WasmPattern, JsValue> {
-		let list = items(&gains).unwrap_or_default();
+		let list = items(&gains, "channels() gains")?.unwrap_or_default();
 		if (1..=8).contains(&list.len())
 			&& let Some(bad) = list.iter().find(|item| {
 				!item
@@ -224,7 +228,7 @@ impl WasmPattern {
 
 	/// `panpath(path, rateHz?)`: an array of pans (with an optional rate) or of `{ time, pan }` points (without one).
 	pub fn panpath(&self, path: JsValue, rate: JsValue) -> Result<WasmPattern, JsValue> {
-		let list = items(&path).unwrap_or_default();
+		let list = items(&path, "panpath() path")?.unwrap_or_default();
 		if list.iter().all(|item| item.as_f64().is_some()) {
 			let pans: Vec<f64> = list.iter().map(number_or_nan).collect();
 			if pans.is_empty() {
