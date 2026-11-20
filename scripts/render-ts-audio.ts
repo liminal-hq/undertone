@@ -71,6 +71,9 @@ async function loadEngine(): Promise<{ engine: RenderEngine; version: string }> 
   }
 }
 
+/** How many times a block is rendered before its failure fails the job (see the retry below). */
+const RENDER_ATTEMPTS = 3;
+
 async function main(): Promise<void> {
   const { out, only } = parseArgs(process.argv.slice(2));
   const manifest = JSON.parse(
@@ -100,12 +103,26 @@ async function main(): Promise<void> {
     if (!spec) throw new Error(`${name} is not in docs/audio/manifest.json`);
     const block = blockFor(name, spec.page);
     let files;
-    try {
-      files = await renderBlock(block.code, spec, engine);
-    } catch (error) {
-      throw new Error(`${spec.page}:${block.line} (audio=${name}): ${(error as Error).message}`, {
-        cause: error
-      });
+    for (let attempt = 1; ; attempt++) {
+      try {
+        files = await renderBlock(block.code, spec, engine);
+        break;
+      } catch (error) {
+        // node-web-audio-api is a native engine, and an offline render that suspends and resumes its context has failed
+        // once on a loaded CI runner ("Error in async function") and not again. A real bug fails the same way every time, so a
+        // bounded retry costs nothing and a block that keeps failing still fails the job, with the underlying error logged.
+        const cause = error as Error;
+        console.error(
+          `render-ts-audio: ${spec.page}:${block.line} (audio=${name}) attempt ${attempt} of ${RENDER_ATTEMPTS} failed: ${cause.message}${cause.stack ? `\n${cause.stack}` : ''}`
+        );
+        if (attempt >= RENDER_ATTEMPTS) {
+          throw new Error(
+            `${spec.page}:${block.line} (audio=${name}): ${cause.message} (failed ${RENDER_ATTEMPTS} times)`,
+            { cause: error }
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+      }
     }
     mkdirSync(join(out, name), { recursive: true });
     result[name] = [];
