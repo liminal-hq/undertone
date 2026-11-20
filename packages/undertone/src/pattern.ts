@@ -12,6 +12,13 @@ import type {
   ShapedWaveType,
   SoundType
 } from './types.js';
+import type {
+  LoopHandle,
+  LoopOptions,
+  PlayOptions,
+  PlaybackHandle
+} from './engineTypes.js';
+import { loopOn, playOnce } from './scheduler.js';
 import { glue } from './wasm.js';
 import type { WasmPattern } from './wasm.js';
 
@@ -340,6 +347,28 @@ export class Pattern<T> {
     fn: (pat: Pattern<ControlPatch>) => Pattern<ControlPatch>
   ): Pattern<ControlPatch> {
     return wrap(handleOf(this).jux(() => thunkResult(fn(this))));
+  }
+
+  /**
+   * Plays one cycle's worth of events as a one-shot. Envelopes are percussive
+   * by default (0.1.x SFX behaviour) — pass `{ gated: true }` to hold each
+   * event for its own share of the cycle instead, like loop(). Uses a
+   * lazily-created shared AudioContext when none is passed — call from a
+   * user gesture the first time (autoplay policy).
+   */
+  play(this: Pattern<ControlPatch>, options: PlayOptions = {}): PlaybackHandle {
+    const handle = handleOf(this);
+    return playOnce(options, (transport, engine, now, settings) =>
+      transport.play(engine, handle, now, settings)
+    );
+  }
+
+  /** Loops the pattern until stop() is called on the returned handle. */
+  loop(this: Pattern<ControlPatch>, options: LoopOptions = {}): LoopHandle {
+    const handle = handleOf(this);
+    return loopOn(options, (transport, engine, now, settings) =>
+      transport.loop(engine, handle, now, settings)
+    );
   }
 
   /**

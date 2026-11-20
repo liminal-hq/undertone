@@ -4,6 +4,24 @@
 // SPDX-License-Identifier: MIT
 
 export { drift } from './drift.js';
+export {
+  buildImpulseResponse,
+  createMasterBus,
+  createMonoFold,
+  enableMultichannel,
+  getOrbitBus,
+  playParams
+} from './engine.js';
+export {
+  clearSamples,
+  getSampleBaseNote,
+  getSampleBuffer,
+  isSampleRegistered,
+  loadSamples,
+  registerSample,
+  registerSamples
+} from './samples.js';
+export { resetTempo, setcpm } from './scheduler.js';
 export { fmPresets, fmVoice, layer } from './instruments.js';
 export { chord, n, note, s, sound } from './notes.js';
 export { resolveParams } from './params.js';

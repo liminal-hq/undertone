@@ -1,4 +1,4 @@
-// A tick-based score compiled to a looping pattern, from the module; playing and rendering wait for the engine exports
+// A tick-based score compiled to a looping pattern, from the module, with its own play, loop, and render
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -11,6 +11,7 @@ import type {
   RenderOptions
 } from './engineTypes.js';
 import { patternOfHandle } from './pattern.js';
+import { loopOn, playOnce } from './scheduler.js';
 import type { Pattern } from './pattern.js';
 import type { ControlPatch, RenderedAudioBufferLike } from './types.js';
 import { glue } from './wasm.js';
@@ -105,13 +106,6 @@ export interface Score {
   ): Promise<RenderedAudioBufferLike>;
 }
 
-/** What a score's playing methods say until the engine exports land (RF-24 part 2b, wrapped by RF-25c). */
-function notYet(method: string): never {
-  throw new Error(
-    `score().${method}() is not available until the engine exports land: this package has the score's pattern and tempo now, and plays them in the next part`
-  );
-}
-
 /**
  * Compiles explicitly timed events into a looping pattern. Pattern time stays
  * in exact fractions of the cue (`tick / lengthTicks`), so repeats land on the
@@ -124,14 +118,20 @@ export function score(definition: ScoreDefinition): Score {
   const pattern = patternOfHandle<ControlPatch>(handle.pattern());
   const cps = handle.cps;
   const seconds = handle.seconds;
-  // The pattern is its own handle; the score's is not needed until the engine exports play and render through it.
-  handle.free();
   return {
     pattern,
     cps,
     seconds,
-    loop: () => notYet('loop'),
-    play: () => notYet('play'),
-    render: () => notYet('render')
+    loop: (options = {}) =>
+      loopOn(options, (transport, engine, now, settings) =>
+        handle.loop(transport, engine, now, settings)
+      ),
+    play: (options = {}) =>
+      playOnce(options, (transport, engine, now, settings) =>
+        handle.play(transport, engine, now, settings)
+      ),
+    render: () => {
+      throw new Error('score().render() is not available until the render module loads (the next change)');
+    }
   };
 }

@@ -13,26 +13,7 @@
 +Pattern.[Symbol.dispose] # `using pattern = ...`
 +Fraction.fromText # the boundary's text form for times beyond 2^53
 
-# Pending: playback and rendering of a pattern (RF-26, RF-24 part 2b; wrapped by RF-25c)
-Pattern.loop
-Pattern.play
+# Pending: offline rendering and WAV, in the lazily loaded render module (RF-25c)
 Pattern.render
-
-# Pending: the engine, scheduler, render, WAV, samples, and the Web Audio helpers of part 2b (RF-25c). Their types are in already.
-buildImpulseResponse
-clearSamples
-createMasterBus
-createMonoFold
-enableMultichannel
 encodeWav
-getOrbitBus
-getSampleBaseNote
-getSampleBuffer
-isSampleRegistered
-loadSamples
-playParams
-registerSample
-registerSamples
 renderToBuffer
-resetTempo
-setcpm
