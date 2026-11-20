@@ -7,7 +7,7 @@
 //
 // The module defaults to packages/undertone/wasm/undertone_wasm_bg.wasm (what scripts/build-wasm.sh writes). The budget is D-07's:
 // the control module at most 150 KB after Brotli (KB is 1,000 bytes, as in R4), with a warning from 90% (135 KB). The check fails
-// over the limit; `--report` only prints. Brotli is quality 11 (Node's zlib, as the `brotli -q 11` tool R4 used); gzip is level 9.
+// over the limit; `--report` only prints (and writes no summary). Brotli is quality 11 (Node's zlib, as the `brotli -q 11` tool R4 used); gzip is level 9.
 // The glue JavaScript beside the module is reported for information and has no budget. With GITHUB_STEP_SUMMARY set, the figures
 // are appended to the job summary as a table.
 
@@ -66,7 +66,8 @@ if (glue) {
   console.log(`  glue:   ${gluePath} raw ${glue.raw}, Brotli 11 ${glue.brotli} (no budget)`);
 }
 
-const summary = process.env.GITHUB_STEP_SUMMARY;
+// The build's own `--report` run leaves the summary to the check step, so the table is written once.
+const summary = report ? undefined : process.env.GITHUB_STEP_SUMMARY;
 if (summary) {
   const rows = [
     '### WebAssembly size (D-07)',

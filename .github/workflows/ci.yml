@@ -366,6 +366,54 @@ jobs:
         if: always()
         run: echo "## Rust WebAssembly" >> "${GITHUB_STEP_SUMMARY}"
 
+  # The WebAssembly bridge (RF-24, D-41): the shared ci-rust image plus the tools the job installs itself, each pinned and checked
+  # against its SHA-256 (the GitHub release digests): the wasm32 target, the wasm-bindgen CLI that crates/undertone-wasm pins
+  # (a prebuilt release binary; `cargo install` from source took 35 s with four jobs and a warm registry on a fast machine), and
+  # Bun (ci-rust has no JavaScript runtime). wasm-opt comes from the binaryen npm package that scripts/wasm-opt/ locks. Switch to
+  # the lighter wasm tier of liminal-hq/.github issue #52 when it lands.
+  wasm-bridge:
+    name: WebAssembly bridge
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    env:
+      WASM_BINDGEN_VERSION: 0.2.125
+      WASM_BINDGEN_SHA256: 21d81ef7414a0a585861a60ea4ae2b7970eccaed09d4a4e05f8bc4b159827dea
+      BUN_VERSION: 1.4.4
+      BUN_SHA256: bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Install the wasm-bindgen CLI
+        run: |
+          name="wasm-bindgen-${WASM_BINDGEN_VERSION}-x86_64-unknown-linux-musl"
+          curl -fsSL -o "/tmp/${name}.tar.gz" "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/${WASM_BINDGEN_VERSION}/${name}.tar.gz"
+          echo "${WASM_BINDGEN_SHA256}  /tmp/${name}.tar.gz" | sha256sum -c -
+          tar -xzf "/tmp/${name}.tar.gz" -C /tmp
+          install -m 755 "/tmp/${name}/wasm-bindgen" /usr/local/bin/wasm-bindgen
+          wasm-bindgen --version
+      - name: Install Bun
+        run: |
+          curl -fsSL -o /tmp/bun-linux-x64.zip "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip"
+          echo "${BUN_SHA256}  /tmp/bun-linux-x64.zip" | sha256sum -c -
+          unzip -q /tmp/bun-linux-x64.zip -d /tmp
+          install -m 755 /tmp/bun-linux-x64/bun /usr/local/bin/bun
+          bun --version
+      - name: Clippy for wasm32
+        run: cargo clippy -p undertone-wasm --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: Build the module
+        run: bash scripts/build-wasm.sh
+      - name: Check the size budget
+        run: bun scripts/check-wasm-size.ts
+      - name: Smoke test
+        run: bun crates/undertone-wasm/tests/js/smoke.ts
+      - name: Corpus layer 1
+        run: bun crates/undertone-wasm/tests/js/layer1.ts
+      - name: Write summary
+        if: always()
+        run: echo "## WebAssembly bridge" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-layering:
     name: Rust crate layering
     runs-on: ubuntu-24.04
