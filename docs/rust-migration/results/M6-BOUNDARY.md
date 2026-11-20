@@ -211,6 +211,22 @@ The constructors that read text (`note`, `sound`, `s`, `n`, `chord`, and a contr
 - **Score:** `WasmScore` holds the compiled `Score`; add `play`, `loop` (`Score::schedule`), and `render` as its methods.
 - **Queries:** an export that queries a pattern (booking, rendering) must run inside `warnings::queried` and `foreign::guarded`, as `WasmPattern::query` does, so control warnings print and a foreign leaf's exception is rethrown.
 
+### What the wrapper (RF-25b) wraps now, and what RF-25c needs from part 2b
+
+The package wraps every part 2a export (`packages/undertone/src/`): the dispatchers by the table row's `arg` (`controls.ts`), the constructors (`notes.ts`), the instruments, channel helpers, and shaped waves (read once into live bindings by `install.ts`), `drift`, `score`, `resolveParams`, and `resetWarnings`. A pattern given to a list control or to `panslide`'s seconds is refused in the wrapper with `instanceof`, as section 6 says; `n(pattern)` is checked in Rust (`nPattern`). The 56 method declarations are hand-written in `pattern.ts` (an interface merged with the class) and the engine's option types in `engineTypes.ts` are copies of the reference's, so the API report compares them.
+
+What part 2b must export for the wrapper, by the names the wrapper will call:
+
+- **`WasmScore.play(ctx, options)`, `.loop(ctx, options)`, `.render(options)`.** The wrapper frees the score's handle now, after reading `pattern()`, `cps`, and `seconds`; it will keep it once these exist. `Score.play`, `.loop`, and `.render` throw `not available until the engine exports land` until then.
+- **`WasmPattern.play`, `.loop`, `.render`** (`Pattern.play`, `.loop`, `.render` are not on the class yet, so the API diff lists them as pending), with the options as plain objects, `loop` returning a handle with `stop(options)`, and `render` returning a promise of the rendered buffer (or a plain object the wrapper wraps).
+- **`playParams(ctx, voices, options)`** (voices as plain values, section 7), `setcpm`, `resetTempo`, `renderToBuffer`, and `encodeWav`.
+- **The sample registry** (`registerSample`, `registerSamples`, `loadSamples`, `clearSamples`, `getSampleBuffer`, `getSampleBaseNote`, `isSampleRegistered`) and the Web Audio helpers (`createMasterBus`, `createMonoFold`, `getOrbitBus`, `enableMultichannel`, `buildImpulseResponse`).
+- **`seedContext(ctx, seed)`**, for `./testing`, and `playVoice`/`playVoices` over `playParams`.
+- **Warnings** passed to `warnings::warn_once(key, message)`, so `resetWarnings` still clears them all (section 8).
+- **Queries** inside `warnings::queried` and `foreign::guarded` (section 10), or the control warnings of a booked pattern would not print.
+
+The 190 public tests of the ported files that book voices on the fake `AudioContext` (`autopan`, `controlSignals`, `fm`, `gate`, `panLaw`, `panPath`, `surround`, `tools`, `waves`, `pitchCurve`, and `effects`) are ported when these exports land.
+
 ## 11. Decisions for review
 
 - **`null` and non-plain objects cannot be a pattern's value** (section 3). The reference holds any JavaScript value (`pure(null)`, `pure(new Fraction(1, 2))`, a class instance from a leaf rule). Holding them would need an opaque value in the pattern crate (a `Value::Foreign(id)` resolved by the bridge, as the foreign leaves are), which changes `undertone-pattern`. The default taken here: refuse them with one clear message, and list it as a break under D-06 (it is not in B1 to B10). The suite and the corpus do not use such values.
