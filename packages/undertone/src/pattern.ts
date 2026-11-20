@@ -116,7 +116,7 @@ function readTimes(args: unknown[], count: number): Fraction[] {
 // --- Handles ---
 
 /** Set for the one constructor call that adopts a handle instead of building a foreign leaf. */
-let adopting: (() => WasmPattern) | undefined;
+let adopting: { handle?: WasmPattern; make?: () => WasmPattern } | undefined;
 
 /** The wasm handle behind a Pattern, throwing when it was freed. Set by the class's static block. */
 let handleOf: (pattern: Pattern<unknown>) => WasmPattern;
@@ -148,7 +148,8 @@ export class Pattern<T> {
    */
   constructor(query: (span: TimeSpan) => Hap<T>[], sample?: Sampler<T>) {
     if (adopting) {
-      this.#make = adopting;
+      this.#handle = adopting.handle;
+      this.#make = adopting.make;
       adopting = undefined;
       return;
     }
@@ -169,7 +170,7 @@ export class Pattern<T> {
   static {
     handleOf = (pattern) => pattern.#get();
     wrap = <U>(handle: WasmPattern | (() => WasmPattern)) => {
-      adopting = typeof handle === 'function' ? handle : () => handle;
+      adopting = typeof handle === 'function' ? { make: handle } : { handle };
       return new Pattern<U>(undefined as never);
     };
   }
