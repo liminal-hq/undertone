@@ -246,7 +246,8 @@ async function start() {
         JSON.stringify(last ?? window.undertoneHarness.result, null, 2)
       );
   } catch (error) {
-    log(`failed: ${error?.stack ?? error}`);
+    // Firefox's stack has no message in it, so the message goes first.
+    log(`failed: ${error?.message ?? error}\n${error?.stack ?? ''}`);
     $('start').disabled = false;
     window.undertoneHarness.result = { error: String(error?.message ?? error) };
   }
