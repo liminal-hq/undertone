@@ -93,6 +93,7 @@ jobs:
           path: |
             packages/undertone/wasm/undertone_wasm*
             packages/undertone/wasm/render/undertone_wasm_render*
+            packages/undertone/wasm/worklet/undertone_worklet*
           if-no-files-found: error
           retention-days: 1
 
