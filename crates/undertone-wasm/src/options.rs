@@ -75,6 +75,7 @@ pub fn render_options(value: &JsValue) -> RenderOptions {
 	let master = field(value, "master");
 	RenderOptions {
 		cycles: number(&field(value, "cycles")),
+		start_cycle: number(&field(value, "startCycle")),
 		seconds: number(&field(value, "seconds")),
 		bpm: number(&field(value, "bpm")),
 		cps: number(&field(value, "cps")),
