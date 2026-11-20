@@ -43,7 +43,12 @@ export default tseslint.config(
           'URLSearchParams',
           'AudioContext',
           'OfflineAudioContext',
-          'AudioWorkletNode'
+          'AudioWorkletNode',
+          'self',
+          'fetch',
+          'Worker',
+          'URL',
+          'Blob'
         ].map((name) => [name, 'readonly'])
       )
     }

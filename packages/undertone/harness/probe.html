@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Undertone speed probe</title>
+<style>
+  body {
+    font:
+      15px/1.4 system-ui,
+      sans-serif;
+    max-width: 46rem;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  button {
+    font: inherit;
+    padding: 0.4rem 0.9rem;
+  }
+  pre {
+    background: #1112;
+    padding: 0.8rem;
+    overflow: auto;
+  }
+</style>
+<h1>Undertone speed probe</h1>
+<p>
+  Times the same work three ways, to tell a slow JavaScript engine from slow WebAssembly: a tight
+  JavaScript loop on the page, the same loop in a worker, and an offline render of two seconds of
+  the Light pattern (WebAssembly) on the page. Run it in each browser and compare. It plays no sound
+  and takes a few seconds.
+</p>
+<p><button id="run">Run</button> <button id="copy" disabled>Copy results</button></p>
+<pre id="out">Press Run.</pre>
+<script type="module" src="./probe.js"></script>
