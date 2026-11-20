@@ -22,7 +22,7 @@ import {
 } from '@liminal-hq/undertone';
 import { resetWarnings } from '@liminal-hq/undertone/testing';
 import * as wasm from '@liminal-hq/undertone/wasm';
-import { backendOf } from '../dist/webaudio.js';
+import { Replayer, backendOf } from '../dist/webaudio.js';
 import { FakeAudioContext, recordedGraph } from '../../../src/test-utils/fakeAudioContext';
 
 afterEach(() => {
@@ -164,6 +164,86 @@ describe('a context without an optional member', () => {
       time: expect.closeTo(0.07, 12)
     });
     expect(ctx.oscillators[0].stopped.at(-1)).toBeCloseTo(0.07, 12);
+  });
+});
+
+describe('a Web Audio call that throws in the middle of a batch of records', () => {
+  const names = wasm.graphNames() as { ops: string[]; kinds: string[] };
+  /** Records `[op, a, b, c, d, e]` by name, as the module writes them. */
+  const records = (...rows: [string, ...number[]][]) =>
+    [
+      Float64Array.from(
+        rows.flatMap(([op, ...operands]) => [
+          names.ops.indexOf(op),
+          ...[...operands, 0, 0, 0, 0, 0].slice(0, 5)
+        ])
+      ),
+      new Float32Array()
+    ] as unknown[];
+  const kind = (name: string) => names.kinds.indexOf(name);
+
+  it('applies the records that do not depend on the failed one, and rethrows the first error afterwards', () => {
+    const ctx = new FakeAudioContext();
+    const replayer = new Replayer(ctx);
+    vi.spyOn(ctx, 'createGain').mockImplementation(() => {
+      throw new DOMException('no gain for you', 'InvalidStateError');
+    });
+    const batch = records(
+      ['create', 1, kind('Oscillator')],
+      ['create', 2, kind('Gain')], // fails: node 2 never exists
+      ['create', 3, kind('Oscillator')],
+      ['connect', 1, 2, -1], // names the dead node: skipped, not a second error
+      ['set', 2, 1, 0.5, 0], // a param of the dead node: skipped
+      ['start', 1, 0],
+      ['start', 3, 0],
+      ['stop', 1, 1],
+      ['stop', 3, 1],
+      ['release', 1],
+      ['release', 2],
+      ['release', 3]
+    );
+    expect(() => replayer.replay(batch)).toThrow('no gain for you');
+    expect(ctx.oscillators).toHaveLength(2);
+    expect(ctx.oscillators.map((osc) => osc.started)).toEqual([[0], [0]]); // the nodes that exist still start,
+    expect(ctx.oscillators.map((osc) => osc.stopped)).toEqual([[1], [1]]); // and are stopped
+    expect(replayer.held).toBe(1); // only the destination: every release was applied, the dead one included
+    // Later records naming the dead node are skipped until its release, which came in the batch: now it is unknown again.
+    expect(() => replayer.replay(records(['stop', 2, 2]))).toThrow('replay: no node 2');
+  });
+
+  it('keeps skipping the dead node in a later batch until the engine releases it', () => {
+    const ctx = new FakeAudioContext();
+    const replayer = new Replayer(ctx);
+    vi.spyOn(ctx, 'createGain').mockImplementationOnce(() => {
+      throw new Error('first failure');
+    });
+    expect(() =>
+      replayer.replay(records(['create', 1, kind('Oscillator')], ['create', 2, kind('Gain')]))
+    ).toThrow('first failure');
+    // A handle's stop, booked later, names the node that never was: nothing to do, and no error.
+    expect(() =>
+      replayer.replay(records(['stop', 1, 2], ['target', 2, 1, 0, 2, 0.1]))
+    ).not.toThrow();
+    replayer.replay(records(['release', 1], ['release', 2]));
+  });
+
+  it('reaches the end of a booking of several voices when one voice’s node fails, and reports that failure', () => {
+    const ctx = new FakeAudioContext();
+    let made = 0;
+    const createOscillator = ctx.createOscillator.bind(ctx);
+    vi.spyOn(ctx, 'createOscillator').mockImplementation(() => {
+      made += 1;
+      if (made === 2) throw new Error('the second oscillator failed');
+      return createOscillator();
+    });
+    expect(() => playParams(ctx, [{ pitch: 'a4' }, { pitch: 'b4' }, { pitch: 'c5' }])).toThrow(
+      'the second oscillator failed'
+    );
+    // The third voice was booked (and its oscillator started and stopped) although the second one failed.
+    expect(ctx.oscillators).toHaveLength(2);
+    expect(
+      ctx.oscillators.every((osc) => osc.started.length === 1 && osc.stopped.length === 1)
+    ).toBe(true);
   });
 });
 

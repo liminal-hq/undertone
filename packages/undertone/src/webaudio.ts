@@ -7,7 +7,9 @@
 // record of six numbers, `[op, a, b, c, d, e]`, which the `Replayer` below turns back into the one call the TypeScript engine
 // made, in the same order, so the context numbers its nodes as 0.3 did. `run()` replays after every call into the engine, a
 // call that throws included (the nodes a failing voice made before the failure stay on the context, and a failed play's
-// rollback, D-38, is recorded too). The replayer forgets what the engine releases, so a long session stays bounded.
+// rollback, D-38, is recorded too). A Web Audio call that throws does not stop its batch: the records that name what the context
+// failed to make are skipped, the rest are applied, and the first error is thrown after the batch. The replayer forgets what the
+// engine releases, so a long session stays bounded.
 //
 // A context without one of Web Audio's optional members degrades as 0.3 did, here rather than in the engine: no
 // `createPeriodicWave` (a shaped wave plays as a sine, an autopan phase is dropped, each warned once), and a param without
@@ -81,6 +83,13 @@ export class Replayer {
   /** How many live nodes use each owned wave, and which wave each such node uses. */
   readonly #waveUsers = new Map<number, number>();
   readonly #nodeWave = new Map<number, number>();
+  /**
+   * What the context failed to make (a `create` call that threw): the records that name it are skipped, since there is nothing
+   * to apply them to, until the engine's own release record for it arrives.
+   */
+  readonly #deadNodes = new Set<number>();
+  readonly #deadBuffers = new Set<number>();
+  readonly #deadWaves = new Set<number>();
   readonly #hostBuffers: () => readonly HostBuffer[];
   /** The host buffers standing in for a buffer of the records, so two samples with the same PCM keep a buffer each. */
   readonly #claimed = new Set<AudioBufferLike>();
@@ -133,13 +142,19 @@ export class Replayer {
     return this.node<AnyNode>(id)[this.#names.params[code]] as Param;
   }
 
-  /** Replays `[records, data]`, as `take()` returns them. */
+  /**
+   * Replays `[records, data]`, as `take()` returns them. The engine counts a batch as applied once it is taken, so a call that
+   * throws does not stop the batch: the records that name something the context failed to make are skipped, the rest are
+   * applied (the starts, stops, releases, and a failed play's rollback among them, so nothing is left sounding or held), and the
+   * first error is thrown once the batch has been replayed.
+   */
   replay(taken: unknown[]): void {
     const ops = taken[0] as Float64Array;
     const data = taken[1] as Float32Array;
     const names = this.#names;
     const ctx = this.#ctx as unknown as Record<string, (...args: unknown[]) => unknown>;
     let previous = '';
+    let failure: { error: unknown } | undefined;
     const fresh: number[] = [];
     for (let at = 0; at < ops.length; at += WIDTH) {
       const op = ops[at];
@@ -161,153 +176,189 @@ export class Replayer {
       ) {
         this.#hardStop = undefined;
       }
-      switch (name) {
-        case 'create': {
-          const kind = names.kinds[b];
-          // Only a merger and a delay take an argument, as the TypeScript engine calls them.
-          const node = (
-            kind === 'ChannelMerger' || kind === 'Delay'
-              ? ctx[this.#methods[b]].call(ctx, c)
-              : ctx[this.#methods[b]].call(ctx)
-          ) as AnyNode;
-          this.#nodes.set(a, node);
-          this.#ids.set(node, a);
-          break;
-        }
-        case 'set':
-        case 'linear':
-        case 'exponential':
-        case 'target': {
-          const param = this.#param(a, b);
-          if (hard && hard.param === param) break; // a hard stop books nothing on the gain
-          if (name === 'set') param.setValueAtTime(c, d);
-          else if (name === 'linear') param.linearRampToValueAtTime(c, d);
-          else if (name === 'exponential') param.exponentialRampToValueAtTime(c, d);
-          else if (param.setTargetAtTime) param.setTargetAtTime(c, d, e);
-          // No setTargetAtTime: the stop's fade becomes a straight ramp to the same end, as 0.3 booked it.
-          else param.linearRampToValueAtTime(c, d + e * STOP_FADE_TIME_CONSTANTS);
-          break;
-        }
-        case 'cancel': {
-          const param = this.#param(a, b);
-          if (param.cancelScheduledValues) param.cancelScheduledValues(c);
-          // A param that cannot cancel: 0.3 left its automation alone and stopped the sources at the stop itself.
-          else this.#hardStop = { param, at: c };
-          break;
-        }
-        case 'oscillatorType':
-          this.node<AnyNode>(a).type = names.oscillatorTypes[b];
-          break;
-        case 'periodicWave': {
-          const node = this.node<AnyNode>(a);
-          if (this.#owned.has(b) && !this.#nodeWave.has(a)) {
-            this.#nodeWave.set(a, b);
-            this.#waveUsers.set(b, (this.#waveUsers.get(b) ?? 0) + 1);
-          }
-          const missing = this.#missingWaves.get(b);
-          if (missing === undefined) {
-            (node.setPeriodicWave as (wave: unknown) => void)(this.#waves.get(b));
-          } else if (missing.autopan) {
-            warnOnce(
-              'autopan-no-periodic-wave',
-              'undertone: this audio context has no createPeriodicWave(), so autopan phases are ignored.'
-            );
-          } else {
-            node.type = 'sine';
-            warnOnce(
-              'no-periodic-wave',
-              `undertone: this audio context has no createPeriodicWave(), so "${shapeOf(missing.real)}" falls back to a sine.`
-            );
-          }
-          break;
-        }
-        case 'filterType':
-          this.node<AnyNode>(a).type = names.filterTypes[b];
-          break;
-        case 'buffer':
-          this.node<AnyNode>(a).buffer = b < 0 ? null : this.#buffers.get(b);
-          break;
-        case 'loop':
-          this.node<AnyNode>(a).loop = b !== 0;
-          break;
-        case 'curve':
-          this.node<AnyNode>(a).curve = b < 0 ? null : this.#buffers.get(b);
-          break;
-        case 'oversample':
-          this.node<AnyNode>(a).oversample = names.oversample[b];
-          break;
-        case 'channelCount':
-          this.node<AnyNode>(a).channelCount = b;
-          break;
-        case 'channelCountMode':
-          this.node<AnyNode>(a).channelCountMode = names.channelCountModes[b];
-          break;
-        case 'channelInterpretation':
-          this.node<AnyNode>(a).channelInterpretation = names.channelInterpretations[b];
-          break;
-        case 'connect': {
-          const target = c < 0 ? this.node(b) : this.#param(b, c);
-          if (d === 0 && e === 0) this.node<AnyNode>(a).connect(target);
-          else this.node<AnyNode>(a).connect(target, d, e);
-          break;
-        }
-        case 'disconnect':
-          this.node<AnyNode>(a).disconnect();
-          break;
-        case 'start':
-          (this.node<AnyNode>(a).start as (when: number) => void)(b);
-          break;
-        case 'stop':
-          (this.node<AnyNode>(a).stop as (when: number) => void)(hard ? Math.min(b, hard.at) : b);
-          break;
-        case 'createBuffer':
-          this.#buffers.set(
-            a,
-            this.#hostBuffer(b, c, d, data, e) ?? this.#newBuffer(b, c, d, data, e)
-          );
-          break;
-        case 'createCurve':
-          this.#buffers.set(a, data.slice(c, c + b));
-          break;
-        case 'createWave': {
-          const real = data.slice(c, c + b);
-          if (!isSharedWave(real, data.subarray(c + b, c + 2 * b))) {
-            this.#owned.add(a);
-            fresh.push(a);
-          }
-          if (typeof ctx.createPeriodicWave !== 'function') {
-            // An autopan LFO is given its oscillator type just before its wave; a shaped wave is not.
-            this.#missingWaves.set(a, { autopan: previous === 'oscillatorType', real });
+      if (this.#skips(name, a, b)) {
+        previous = name;
+        continue;
+      }
+      try {
+        switch (name) {
+          case 'create': {
+            const kind = names.kinds[b];
+            // Only a merger and a delay take an argument, as the TypeScript engine calls them.
+            const node = (
+              kind === 'ChannelMerger' || kind === 'Delay'
+                ? ctx[this.#methods[b]].call(ctx, c)
+                : ctx[this.#methods[b]].call(ctx)
+            ) as AnyNode;
+            this.#nodes.set(a, node);
+            this.#ids.set(node, a);
             break;
           }
-          const imag = data.slice(c + b, c + 2 * b);
-          // The TypeScript engine passes no constraints unless normalisation is off.
-          this.#waves.set(
-            a,
-            d === 0
-              ? ctx.createPeriodicWave.call(ctx, real, imag)
-              : ctx.createPeriodicWave.call(ctx, real, imag, { disableNormalization: true })
-          );
-          break;
+          case 'set':
+          case 'linear':
+          case 'exponential':
+          case 'target': {
+            const param = this.#param(a, b);
+            if (hard && hard.param === param) break; // a hard stop books nothing on the gain
+            if (name === 'set') param.setValueAtTime(c, d);
+            else if (name === 'linear') param.linearRampToValueAtTime(c, d);
+            else if (name === 'exponential') param.exponentialRampToValueAtTime(c, d);
+            else if (param.setTargetAtTime) param.setTargetAtTime(c, d, e);
+            // No setTargetAtTime: the stop's fade becomes a straight ramp to the same end, as 0.3 booked it.
+            else param.linearRampToValueAtTime(c, d + e * STOP_FADE_TIME_CONSTANTS);
+            break;
+          }
+          case 'cancel': {
+            const param = this.#param(a, b);
+            if (param.cancelScheduledValues) param.cancelScheduledValues(c);
+            // A param that cannot cancel: 0.3 left its automation alone and stopped the sources at the stop itself.
+            else this.#hardStop = { param, at: c };
+            break;
+          }
+          case 'oscillatorType':
+            this.node<AnyNode>(a).type = names.oscillatorTypes[b];
+            break;
+          case 'periodicWave': {
+            const node = this.node<AnyNode>(a);
+            if (this.#owned.has(b) && !this.#nodeWave.has(a)) {
+              this.#nodeWave.set(a, b);
+              this.#waveUsers.set(b, (this.#waveUsers.get(b) ?? 0) + 1);
+            }
+            const missing = this.#missingWaves.get(b);
+            if (missing === undefined) {
+              (node.setPeriodicWave as (wave: unknown) => void)(this.#waves.get(b));
+            } else if (missing.autopan) {
+              warnOnce(
+                'autopan-no-periodic-wave',
+                'undertone: this audio context has no createPeriodicWave(), so autopan phases are ignored.'
+              );
+            } else {
+              node.type = 'sine';
+              warnOnce(
+                'no-periodic-wave',
+                `undertone: this audio context has no createPeriodicWave(), so "${shapeOf(missing.real)}" falls back to a sine.`
+              );
+            }
+            break;
+          }
+          case 'filterType':
+            this.node<AnyNode>(a).type = names.filterTypes[b];
+            break;
+          case 'buffer':
+            this.node<AnyNode>(a).buffer = b < 0 ? null : this.#buffers.get(b);
+            break;
+          case 'loop':
+            this.node<AnyNode>(a).loop = b !== 0;
+            break;
+          case 'curve':
+            this.node<AnyNode>(a).curve = b < 0 ? null : this.#buffers.get(b);
+            break;
+          case 'oversample':
+            this.node<AnyNode>(a).oversample = names.oversample[b];
+            break;
+          case 'channelCount':
+            this.node<AnyNode>(a).channelCount = b;
+            break;
+          case 'channelCountMode':
+            this.node<AnyNode>(a).channelCountMode = names.channelCountModes[b];
+            break;
+          case 'channelInterpretation':
+            this.node<AnyNode>(a).channelInterpretation = names.channelInterpretations[b];
+            break;
+          case 'connect': {
+            const target = c < 0 ? this.node(b) : this.#param(b, c);
+            if (d === 0 && e === 0) this.node<AnyNode>(a).connect(target);
+            else this.node<AnyNode>(a).connect(target, d, e);
+            break;
+          }
+          case 'disconnect':
+            this.node<AnyNode>(a).disconnect();
+            break;
+          case 'start':
+            (this.node<AnyNode>(a).start as (when: number) => void)(b);
+            break;
+          case 'stop':
+            (this.node<AnyNode>(a).stop as (when: number) => void)(hard ? Math.min(b, hard.at) : b);
+            break;
+          case 'createBuffer':
+            this.#buffers.set(
+              a,
+              this.#hostBuffer(b, c, d, data, e) ?? this.#newBuffer(b, c, d, data, e)
+            );
+            break;
+          case 'createCurve':
+            this.#buffers.set(a, data.slice(c, c + b));
+            break;
+          case 'createWave': {
+            const real = data.slice(c, c + b);
+            if (!isSharedWave(real, data.subarray(c + b, c + 2 * b))) {
+              this.#owned.add(a);
+              fresh.push(a);
+            }
+            if (typeof ctx.createPeriodicWave !== 'function') {
+              // An autopan LFO is given its oscillator type just before its wave; a shaped wave is not.
+              this.#missingWaves.set(a, { autopan: previous === 'oscillatorType', real });
+              break;
+            }
+            const imag = data.slice(c + b, c + 2 * b);
+            // The TypeScript engine passes no constraints unless normalisation is off.
+            this.#waves.set(
+              a,
+              d === 0
+                ? ctx.createPeriodicWave.call(ctx, real, imag)
+                : ctx.createPeriodicWave.call(ctx, real, imag, { disableNormalization: true })
+            );
+            break;
+          }
+          case 'release': {
+            const node = this.#nodes.get(a);
+            if (node !== undefined) this.#ids.delete(node);
+            this.#nodes.delete(a);
+            this.#deadNodes.delete(a);
+            this.#releaseWaveOf(a);
+            break;
+          }
+          case 'releaseBuffer':
+            this.#claimed.delete(this.#buffers.get(a) as AudioBufferLike);
+            this.#buffers.delete(a);
+            this.#deadBuffers.delete(a);
+            break;
+          default:
+            throw new Error(`replay: unknown op ${op}`);
         }
-        case 'release': {
-          const node = this.#nodes.get(a);
-          if (node !== undefined) this.#ids.delete(node);
-          this.#nodes.delete(a);
-          this.#releaseWaveOf(a);
-          break;
-        }
-        case 'releaseBuffer':
-          this.#claimed.delete(this.#buffers.get(a) as AudioBufferLike);
-          this.#buffers.delete(a);
-          break;
-        default:
-          throw new Error(`replay: unknown op ${op}`);
+      } catch (error) {
+        failure ??= { error };
+        if (name === 'create') this.#deadNodes.add(a);
+        else if (name === 'createBuffer' || name === 'createCurve') this.#deadBuffers.add(a);
+        else if (name === 'createWave') this.#deadWaves.add(a);
       }
       previous = name;
     }
     // A wave of a voice's own that no node took (the voice's records ended before it was set) has no one to release it.
     for (const wave of fresh) if (!this.#waveUsers.has(wave)) this.#dropWave(wave);
+    if (failure) throw failure.error;
+  }
+
+  /** Whether a record names something the context failed to make. */
+  #skips(name: string, a: number, b: number): boolean {
+    switch (name) {
+      case 'create':
+      case 'createBuffer':
+      case 'createCurve':
+      case 'createWave':
+      case 'release':
+      case 'releaseBuffer':
+        return false;
+      case 'connect':
+        return this.#deadNodes.has(a) || this.#deadNodes.has(b);
+      case 'periodicWave':
+        return this.#deadNodes.has(a) || this.#deadWaves.has(b);
+      case 'buffer':
+      case 'curve':
+        return this.#deadNodes.has(a) || (b >= 0 && this.#deadBuffers.has(b));
+      default:
+        return this.#deadNodes.has(a);
+    }
   }
 
   /** Lets go of the wave a released node used, once no other node uses it. */
@@ -325,6 +376,7 @@ export class Replayer {
     this.#missingWaves.delete(wave);
     this.#owned.delete(wave);
     this.#waveUsers.delete(wave);
+    this.#deadWaves.delete(wave);
   }
 
   /** A new buffer on the context, filled from the side data. */
