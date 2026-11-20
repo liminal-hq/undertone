@@ -240,6 +240,8 @@ jobs:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
       - uses: actions/checkout@v7
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Write summary
@@ -256,6 +258,8 @@ jobs:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
       - uses: actions/checkout@v7
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
       - name: Run tests
         run: cargo nextest run --workspace --locked --profile ci
       - name: Run tests with the C library maths
@@ -282,6 +286,8 @@ jobs:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
       - uses: actions/checkout@v7
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
       - name: Doc tests
         run: cargo test --doc --workspace --locked
       - name: Build API docs
@@ -330,6 +336,8 @@ jobs:
       image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
     steps:
       - uses: actions/checkout@v7
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
       - name: Run tests
         run: cargo nextest run --workspace --locked
       - name: Run tests with the C library maths
@@ -341,6 +349,40 @@ jobs:
       - name: Write summary
         if: always()
         run: echo "## Rust tests (ARM64)" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The native output (RF-28, D-49), on x86-64 and ARM64: the crate on its own, with the default `cpal` feature (which needs the ALSA
+  # development files, installed where missing) and with it off (the `Sink` seam alone, which a host with its own audio callback uses).
+  # No sound card is expected in the container: the device tests say so and pass. The ten-minute underrun soak runs by hand
+  # (`cargo run -p undertone-native --example play -- --soak-seconds 600 --busy-threads N`), not here. FreeBSD is not built: cpal's
+  # output paths there are unverified (an open question on the pull request).
+  rust-native:
+    name: Rust native output (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86-64
+            runner: ubuntu-24.04
+          - arch: ARM64
+            runner: ubuntu-24.04-arm
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the ALSA development files where they are missing
+        run: bash scripts/install-native-prereqs.sh
+      - name: Clippy, with cpal and without
+        run: |
+          cargo clippy -p undertone-native --all-targets --locked -- -D warnings
+          cargo clippy -p undertone-native --all-targets --no-default-features --locked -- -D warnings
+      - name: Tests, with cpal and without
+        run: |
+          cargo nextest run -p undertone-native --locked
+          cargo nextest run -p undertone-native --no-default-features --locked
+      - name: Write summary
+        if: always()
+        run: echo "## Rust native output (${{ matrix.arch }})" >> "${GITHUB_STEP_SUMMARY}"
 
   rust-freebsd:
     name: Rust FreeBSD build
