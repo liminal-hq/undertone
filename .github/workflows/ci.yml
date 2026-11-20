@@ -511,6 +511,82 @@ jobs:
         if: always()
         run: echo "## Bridge package" >> "${GITHUB_STEP_SUMMARY}"
 
+  # Rendering with no browser (RF-30): the `undertone-render` command line built natively and for wasm32-wasip1, run under wasmtime, and
+  # the two renders compared byte for byte (scripts/check-wasi-render.sh). The native WAV files are uploaded as the reference for the
+  # next job. wasmtime is a prebuilt release checked against its SHA-256 (the GitHub release digest); ci-rust has no wasm32 target.
+  rust-wasi-render:
+    name: Render under WASI
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-rust@sha256:0ef31efa5876407765cd5572a23323932183a5357eaac92eee67d79657d45c02
+    env:
+      WASMTIME_VERSION: 51.0.0
+      WASMTIME_SHA256: a18020674fac4107f329bc9ed720ea9c88e4b30a61e8a527787bcce051123d32
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the WASI target
+        run: rustup target add wasm32-wasip1
+      - name: Install wasmtime
+        run: |
+          name="wasmtime-v${WASMTIME_VERSION}-x86_64-linux"
+          curl -fsSL -o "/tmp/${name}.tar.xz" "https://github.com/bytecodealliance/wasmtime/releases/download/v${WASMTIME_VERSION}/${name}.tar.xz"
+          echo "${WASMTIME_SHA256}  /tmp/${name}.tar.xz" | sha256sum -c -
+          tar -xJf "/tmp/${name}.tar.xz" -C /tmp
+          install -m 755 "/tmp/${name}/wasmtime" /usr/local/bin/wasmtime
+          wasmtime --version
+      - name: Render natively and under wasmtime, and compare the bytes
+        run: bash scripts/check-wasi-render.sh target/render-reference
+      - name: Upload the native renders
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: render-reference
+          path: target/render-reference/*.wav
+          if-no-files-found: error
+          retention-days: 1
+      - name: Write summary
+        if: always()
+        run: echo "## Render under WASI" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The same renders through the package in Node and Bun (what ci-web has) and Deno (a prebuilt release checked against its SHA-256), with
+  # no Web Audio, compared with the native files byte for byte (scripts/check-package-render.sh). All three runtimes are required here.
+  # ci-web carries Node 24, so Node 22 (the package's floor) is not run in CI.
+  render-without-browser:
+    name: Render without a browser
+    needs: [wasm-bridge, rust-wasi-render]
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    env:
+      DENO_VERSION: 2.9.8
+      DENO_SHA256: e890975bc2549807bbcc0b584ffafda72cc7c93349dd99c80483dd784f6c4609
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Install Deno
+        run: |
+          curl -fsSL -o /tmp/deno.zip "https://github.com/denoland/deno/releases/download/v${DENO_VERSION}/deno-x86_64-unknown-linux-gnu.zip"
+          echo "${DENO_SHA256}  /tmp/deno.zip" | sha256sum -c -
+          unzip -q /tmp/deno.zip -d /tmp
+          install -m 755 /tmp/deno /usr/local/bin/deno
+          deno --version
+      - name: Download the module and its glue
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wasm-module
+          path: packages/undertone/wasm
+      - name: Download the native renders
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: render-reference
+          path: target/render-reference
+      - name: Build the package
+        run: bun run --cwd packages/undertone build
+      - name: Render in Node, Bun, and Deno and compare with the native files
+        run: REQUIRE_RUNTIMES="node bun deno" bash scripts/check-package-render.sh target/render-reference
+      - name: Write summary
+        if: always()
+        run: echo "## Render without a browser" >> "${GITHUB_STEP_SUMMARY}"
+
   rust-layering:
     name: Rust crate layering
     runs-on: ubuntu-24.04

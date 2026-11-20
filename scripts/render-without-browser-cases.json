@@ -1,0 +1,61 @@
+[
+  {
+    "name": "melody",
+    "kind": "note",
+    "pattern": "c3 [e3 g3] <b3 a3> ~",
+    "wave": "triangle",
+    "seconds": 1.5,
+    "bpm": 240,
+    "rate": 22050,
+    "channels": 2,
+    "bitDepth": 16,
+    "seed": "level-1"
+  },
+  {
+    "name": "noise",
+    "kind": "sound",
+    "pattern": "white*4 pink(3,8)",
+    "seconds": 0.75,
+    "bpm": 240,
+    "rate": 22050,
+    "channels": 2,
+    "bitDepth": 16,
+    "seed": "level-1"
+  },
+  {
+    "name": "mono24",
+    "kind": "note",
+    "pattern": "c4 e4 g4",
+    "wave": "square",
+    "seconds": 1,
+    "bpm": 180,
+    "rate": 16000,
+    "channels": 1,
+    "bitDepth": 24,
+    "seed": "level-2"
+  },
+  {
+    "name": "float32",
+    "kind": "note",
+    "pattern": "c2 [g2 c3]",
+    "wave": "sawtooth",
+    "seconds": 1,
+    "bpm": 180,
+    "rate": 16000,
+    "channels": 2,
+    "bitDepth": 32,
+    "seed": "level-3"
+  },
+  {
+    "name": "surround",
+    "kind": "note",
+    "pattern": "c4*4",
+    "wave": "triangle",
+    "seconds": 0.5,
+    "bpm": 240,
+    "rate": 16000,
+    "channels": 6,
+    "bitDepth": 24,
+    "seed": "level-4"
+  }
+]

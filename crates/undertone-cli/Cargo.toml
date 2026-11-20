@@ -1,0 +1,20 @@
+[package]
+name = "undertone-cli"
+description = "A small command line that renders a pattern to a WAV file with no browser and no audio device, native or under WASI"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+# A tool of this repository (RF-30), not a library to depend on.
+publish = false
+
+[[bin]]
+name = "undertone-render"
+path = "src/main.rs"
+
+[dependencies]
+undertone = { path = "../undertone", version = "0.0.0" }
+
+[lints]
+workspace = true
