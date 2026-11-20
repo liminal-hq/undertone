@@ -288,32 +288,125 @@ describe('play and loop', () => {
     expect(port.ofType('play')[0].message.frame).toBe(120000);
   });
 
-  it('repeats a loop on the worklet clock: the period is the pass in frames, at the tempo asked for', async () => {
-    const { output, port } = await ready();
-    await output.loop(note('c4 e4'), { cycles: 2, bpm: 120 }).ready;
-    await output.loop(note('c4'), { cps: 0.5 }).ready;
+  /** The frames of the passes posted to a port, in the order posted. */
+  const framesOf = (port: FakePort) => port.ofType('play').map((entry) => entry.message.frame);
+
+  it('posts a loop as passes one pass-length apart, at the tempo asked for, and no period (the worklet does not repeat it)', async () => {
+    const start = Math.round(1.15 * 48000);
+    // The lead is 4 s past the clock (1 s): passes starting before 5 s are posted at once.
+    const cps = await ready();
+    await cps.output.loop(note('c4'), { cps: 0.5 }).ready;
+    expect(framesOf(cps.port)).toEqual([start, start + 96000]);
+    expect(cps.port.ofType('play').every((entry) => entry.message.period === undefined)).toBe(true);
+    const bpm = await ready();
+    await bpm.output.loop(note('c4'), { bpm: 240 }).ready;
+    expect(framesOf(bpm.port)).toEqual([0, 1, 2, 3].map((k) => start + k * 48000));
     setcpm(30);
-    await output.loop(note('c4')).ready;
+    const cpm = await ready();
+    await cpm.output.loop(note('c4')).ready;
     resetTempo();
-    await output.loop(note('c4')).ready;
-    const periods = port.ofType('play').map((entry) => entry.message.period);
-    // 120 bpm is a 2 s cycle: two cycles of 96,000 frames each; cps 0.5 is 96,000; setcpm(30) is 2 s a cycle; the default is 2 s.
-    expect(periods).toEqual([192000, 96000, 96000, 96000]);
+    expect(framesOf(cpm.port)).toEqual([start, start + 96000]);
+    const wide = await ready();
+    await wide.output.loop(note('c4 e4'), { cycles: 2, bpm: 120 }).ready;
+    // A pass of 4 s (192,000 frames): the next one starts at 5.15 s, past the lead.
+    expect(framesOf(wide.port)).toEqual([start]);
   });
 
-  it('stops a loop with a cancel for its token, and does not post a pass that was stopped first', async () => {
+  it('goes on from cycle to cycle: each pass holds the next cycles of the pattern, as the Web Audio loop() does', async () => {
     const { output, port } = await ready();
-    const first = output.loop(note('c4'));
+    await output.loop(note('<c3 e3 g3>').sound('triangle'), { bpm: 240 }).ready;
+    const names = port.ofType('play').map((entry) => {
+      const strings = entry.message.strings as string[];
+      return ['c3', 'e3', 'g3'].find((pitch) => strings.includes(pitch));
+    });
+    // Four passes fit in the lead: cycles 0, 1, 2, 3 of an alternating pattern.
+    expect(names).toEqual(['c3', 'e3', 'g3', 'c3']);
+    // A pass counts its voices' times from its own start, so the first voice of every pass is at 0.
+    for (const entry of port.ofType('play')) {
+      expect((entry.message.numbers as Float64Array)[1]).toBe(0);
+    }
+  });
+
+  it('keeps posting passes as the context clock moves, and stops posting when it is stopped', async () => {
+    vi.useFakeTimers();
+    try {
+      const { output, port, context } = await ready();
+      const loop = output.loop(note('<c3 e3 g3>'), { bpm: 240 });
+      await loop.ready;
+      expect(port.ofType('play')).toHaveLength(4);
+      // Nothing is due until the clock has moved.
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(port.ofType('play')).toHaveLength(4);
+      context.currentTime = 3;
+      await vi.advanceTimersByTimeAsync(100);
+      const frames = framesOf(port);
+      expect(frames).toHaveLength(6);
+      // The frames come from the pass number, not from adding rounded frames: exactly one pass apart.
+      expect(frames.map((frame, k) => frame - Math.round(1.15 * 48000) - k * 48000)).toEqual([
+        0, 0, 0, 0, 0, 0
+      ]);
+      const strings = (k: number) => port.ofType('play')[k].message.strings as string[];
+      expect(strings(4)).toContain('e3');
+      expect(strings(5)).toContain('g3');
+      const tokens = port.ofType('play').map((entry) => entry.message.token);
+      expect(new Set(tokens).size).toBe(6);
+      loop.stop();
+      // Passes that have played out (the first ended at 2.15 s, before the clock at 3 s) are not cancelled; the others are.
+      const cancelled = port.ofType('cancel').map((entry) => entry.message.token);
+      expect(cancelled).toEqual(tokens.slice(1));
+      context.currentTime = 20;
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(port.ofType('play')).toHaveLength(6);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ends a loop whose later pass cannot be collected, and says so', async () => {
+    vi.useFakeTimers();
+    try {
+      const { output, port, context } = await ready();
+      let queries = 0;
+      const pattern = {
+        query(span: Parameters<ReturnType<typeof note>['query']>[0]) {
+          queries += 1;
+          if (queries > 4) throw new Error('the pattern gave out');
+          return note('c4').query(span);
+        }
+      };
+      const messages: string[] = [];
+      output.onerror = (message) => void messages.push(message);
+      const loop = output.loop(pattern, { bpm: 240 });
+      await loop.ready;
+      expect(port.ofType('play')).toHaveLength(4);
+      context.currentTime = 3;
+      await vi.advanceTimersByTimeAsync(100);
+      expect(messages).toEqual(['the pattern gave out']);
+      context.currentTime = 30;
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(port.ofType('play')).toHaveLength(4);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stops a loop with a cancel for each of its tokens, and does not post a pass that was stopped first', async () => {
+    const { output, port } = await ready();
+    const first = output.loop(note('c4'), { cps: 0.5 });
     await first.ready;
-    const token = port.ofType('play')[0].message.token;
+    const tokens = port.ofType('play').map((entry) => entry.message.token);
     first.stop();
-    expect(port.ofType('cancel')[0].message).toEqual({ type: 'cancel', token });
+    expect(port.ofType('cancel').map((entry) => entry.message)).toEqual(
+      tokens.map((token) => ({ type: 'cancel', token }))
+    );
     // A pass with nothing to wait for is posted at once, so a stop is a cancel behind it, in that order.
     const second = output.play(note('c4'));
     second.stop();
     await second.ready;
     expect(port.sent.map((entry) => entry.message.type)).toEqual([
       'play',
+      'play',
+      'cancel',
       'cancel',
       'play',
       'cancel'
@@ -610,6 +703,72 @@ describe('the processor in a worklet-like scope', () => {
     expect(stats.budgetMs as number).toBeCloseTo(16, 5);
     send({ type: 'close' });
     expect(processor.process([], [out])).toBe(false);
+  });
+
+  it('plays a later pass of a loop as the next cycles of the pattern: pass 2 is not pass 1, and each is that cycle rendered offline', async () => {
+    const sampleRate = 8000;
+    const pattern = note('<c3 e3 g3>').sound('triangle').decay(0.05);
+    const { options, nodes } = fakeOptions();
+    const context = fakeContext({ sampleRate, currentTime: 0 });
+    const output = await createWorkletOutput(context, { ...options, seed: 'p' });
+    // 240 bpm is a second a cycle, 8,000 frames; four passes fit in the main thread's lead.
+    await output.loop(pattern, { bpm: 240, when: 0 }).ready;
+    const passes = nodes[0].port.ofType('play').map((entry) => entry.message);
+    expect(passes.map((pass) => pass.frame)).toEqual([0, 8000, 16000, 24000]);
+
+    const frames = 8000;
+    /** One posted pass through a processor of its own, from frame 0: the first `frames` samples, left channel. */
+    const heard = (pass: Record<string, unknown>): Float32Array => {
+      const { Processor, context: scopeContext, sandbox } = workletScope();
+      sandbox.sampleRate = sampleRate;
+      const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;
+      const processor = new Processor({
+        processorOptions: {
+          module: new module.Module(wasmBytes),
+          options: { sampleRate, channels: 2, seed: 'p' }
+        }
+      });
+      processor.port.onmessage?.({
+        data: {
+          ...pass,
+          numbers: inRealm(scopeContext, pass.numbers as Float64Array),
+          strings: pass.strings,
+          frame: 0
+        }
+      });
+      const out = [
+        inRealm(scopeContext, new Float32Array(128)),
+        inRealm(scopeContext, new Float32Array(128))
+      ];
+      const left = new Float32Array(Math.ceil(frames / 128) * 128);
+      for (let block = 0; block < left.length / 128; block += 1) {
+        sandbox.currentFrame = block * 128;
+        processor.process([], [out]);
+        left.set(out[0], block * 128);
+      }
+      return left.subarray(0, frames);
+    };
+    const offline = async (name: string) =>
+      (
+        await renderToBuffer(note(name).sound('triangle').decay(0.05), {
+          sampleRate,
+          bpm: 240,
+          seed: 'p'
+        })
+      ).getChannelData(0);
+    const worst = (a: Float32Array, b: Float32Array): number =>
+      a.reduce((most, sample, i) => Math.max(most, Math.abs(sample - b[i])), 0);
+
+    const [first, second, third] = [heard(passes[0]), heard(passes[1]), heard(passes[2])];
+    expect(first.some((sample) => Math.abs(sample) > 0.01)).toBe(true);
+    // The pass after is another note, not the first one again.
+    expect(worst(first, second)).toBeGreaterThan(0.01);
+    expect(worst(second, third)).toBeGreaterThan(0.01);
+    expect(worst(first, await offline('c3'))).toBeLessThan(1e-6);
+    expect(worst(second, await offline('e3'))).toBeLessThan(1e-6);
+    expect(worst(third, await offline('g3'))).toBeLessThan(1e-6);
+    // And the fourth is cycle 3 of a three-cycle alternation: the first again.
+    expect(worst(heard(passes[3]), first)).toBe(0);
   });
 
   it('counts a block the host skipped as drift, books later passes for the host clock, and reports a late pass', async () => {

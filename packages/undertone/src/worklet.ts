@@ -8,7 +8,9 @@
 // `WorkletEngine`, and `output.play(pattern)` / `output.loop(pattern)` collect the pattern's voices here, on the main thread
 // (`collectVoices`, exactly as `renderToBuffer` does: foreign leaves, the tempo, `setcpm()`, and sample decoding all stay on
 // this side, D-48), and post them with the frame they start at. The worklet books them as its clock reaches them and renders each
-// block with the offline render's own maths. A loop repeats on the worklet's clock, so it keeps time when the main thread is busy.
+// block with the offline render's own maths. A loop goes on from cycle to cycle, as
+// the Web Audio `loop()` does: the main thread collects each pass (`startCycle`, cycles N to N+cycles) and posts it a few seconds
+// before it is due, and the worklet's clock keeps every pass sample-accurate. The main thread may stall for that lead without a gap.
 //
 // How it loads (D-47): the main thread compiles the worklet module once and posts the `WebAssembly.Module` in `processorOptions`;
 // the worklet instantiates it synchronously (`initSync`). The module added to the worklet is made at run time, as a blob, from
@@ -110,7 +112,7 @@ export interface WorkletOutputOptions {
 
 /** What `play` and `loop` accept. */
 export interface WorkletPlayOptions {
-  /** Whole cycles to play (a loop repeats these). Default 1. */
+  /** Whole cycles to play (a loop plays this many at a time, one pass after another). Default 1. */
   cycles?: number;
   /** Tempo in beats per minute, four beats to a cycle. */
   bpm?: number;
@@ -195,7 +197,7 @@ export interface WorkletOutput {
   readonly crossOriginIsolated: boolean;
   /** Plays `cycles` cycles of the pattern once. */
   play(pattern: PlayablePattern, options?: WorkletPlayOptions): WorkletPlayback;
-  /** Repeats the pattern's first `cycles` cycles until stopped. */
+  /** Plays the pattern `cycles` cycles at a time, going on from cycle to cycle (cycles 0 to N, then N to 2N, ...) until stopped. */
   loop(pattern: PlayablePattern, options?: WorkletPlayOptions): WorkletPlayback;
   /** The worklet's statistics. */
   stats(): Promise<WorkletStats>;
@@ -208,6 +210,12 @@ export interface WorkletOutput {
 }
 
 const DEFAULT_LEAD = 0.15;
+/** How far past the context's clock a loop keeps passes posted, in seconds: how long the main thread may stall without a gap. */
+const LOOP_LOOKAHEAD = 4;
+/** How often a loop looks whether another pass is due, in milliseconds. */
+const LOOP_POLL_MS = 100;
+/** The most passes one look posts, so a very short pass cannot hold the main thread. */
+const LOOP_PASSES_PER_TICK = 16;
 const DEFAULT_TIMEOUT = 5000;
 
 /** The module the worklet loads: the shim, the glue, then the processor. */
@@ -503,17 +511,15 @@ export async function createWorkletOutput(
   if (connectTo !== false) node.connect(connectTo);
 
   let tokens = 0;
-  const start = (
+  /** Collects the pass that holds cycles `startCycle` on (as many as `cycles`), here and now: errors are the caller's. */
+  const collect = (
     pattern: PlayablePattern,
     playOptions: WorkletPlayOptions,
-    repeat: boolean
-  ): WorkletPlayback => {
-    if (closed) throw new Error('this output is closed');
-    const cycles = playOptions.cycles ?? 1;
-    // Collected here, synchronously, as `renderToBuffer` collects: a bad option, a pattern that throws, or a JavaScript leaf is
-    // reported to the caller of play() and loop() at once.
+    startCycle: number
+  ) => {
     const voices: WasmVoices = glue.collectVoices(handleOf(pattern), {
-      cycles,
+      cycles: playOptions.cycles ?? 1,
+      startCycle: startCycle > 0 ? startCycle : undefined,
       bpm: playOptions.bpm,
       cps: playOptions.cps,
       sampleRate: context.sampleRate,
@@ -526,29 +532,41 @@ export async function createWorkletOutput(
     const [numbers, strings] = voices.encoded() as [Float64Array, string[]];
     const count = voices.length;
     voices.free();
-    const period = repeat ? cycles * cycleSeconds(playOptions) * context.sampleRate : undefined;
+    return { numbers, strings, count };
+  };
+  type Collected = ReturnType<typeof collect>;
+
+  /** The samples a pass names that have not been decoded: the worklet cannot decode, and its registry is fed by the link above. */
+  const undecoded = (data: Collected): string[] => pendingKeysIn(data.strings);
+  const decode = (keys: string[]): Promise<void> =>
+    loadSamples(context as unknown as AudioContextLike, keys);
+
+  /** Posts one pass of voices to the worklet to start at `frame`. */
+  const postPass = (data: Collected, token: number, frame: number): void => {
+    main.passes += 1;
+    main.voices += data.count;
+    post({ type: 'play', token, numbers: data.numbers, strings: data.strings, frame }, [
+      data.numbers.buffer
+    ]);
+  };
+
+  // `play`: one pass, collected here, synchronously, as `renderToBuffer` collects: a bad option, a pattern that throws, or a
+  // JavaScript leaf is reported to the caller of play() and loop() at once.
+  const startOnce = (
+    pattern: PlayablePattern,
+    playOptions: WorkletPlayOptions
+  ): WorkletPlayback => {
+    if (closed) throw new Error('this output is closed');
+    const data = collect(pattern, playOptions, 0);
     const token = (tokens += 1);
     let stopped = false;
     const posted = (async () => {
-      // A sample the voices name that has not been decoded is decoded first (the worklet cannot decode); its PCM reaches the
-      // worklet's registry through the sample link above, before the voices do.
-      const pending = pendingKeysIn(strings);
-      if (pending.length > 0) await loadSamples(context as unknown as AudioContextLike, pending);
+      // Nothing to wait for means no await: the pass is posted before play() returns, and a stop() is a cancel behind it.
+      const pending = undecoded(data);
+      if (pending.length > 0) await decode(pending);
       if (stopped || closed) return;
       const when = playOptions.when ?? context.currentTime + leadTime;
-      main.passes += 1;
-      main.voices += count;
-      post(
-        {
-          type: 'play',
-          token,
-          numbers,
-          strings,
-          frame: Math.round(when * context.sampleRate),
-          period
-        },
-        [numbers.buffer]
-      );
+      postPass(data, token, Math.round(when * context.sampleRate));
     })();
     posted.catch((error: unknown) => {
       output.onerror?.(error instanceof Error ? error.message : String(error));
@@ -558,6 +576,80 @@ export async function createWorkletOutput(
       stop() {
         stopped = true;
         post({ type: 'cancel', token });
+      }
+    };
+  };
+
+  // `loop`: the pattern goes on from cycle to cycle, as the Web Audio `loop()` does. Pass k holds cycles k*cycles to
+  // (k+1)*cycles, collected here with `startCycle` (so a pattern that changes from cycle to cycle, `<c3 e3 g3>`, keeps
+  // changing), and posted to start at the frame the passes before it add up to: that frame is worked out from the pass number,
+  // so the rounding never builds up. The worklet plays what it was given, so the main thread keeps it supplied: it posts passes
+  // until they reach `LOOP_LOOKAHEAD` seconds past the context's clock, and looks again every `LOOP_POLL_MS`.
+  const startLoop = (
+    pattern: PlayablePattern,
+    playOptions: WorkletPlayOptions
+  ): WorkletPlayback => {
+    if (closed) throw new Error('this output is closed');
+    const cycles = playOptions.cycles ?? 1;
+    const passFrames = cycles * cycleSeconds(playOptions) * context.sampleRate;
+    const first = collect(pattern, playOptions, 0);
+    // The tokens of the passes posted that may not have played out yet, so that stop() can cancel what is still waiting.
+    const live: { token: number; end: number }[] = [{ token: (tokens += 1), end: Infinity }];
+    let stopped = false;
+    let base: number | undefined;
+    let nextPass = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let settle: { resolve(): void; reject(error: Error): void } | undefined;
+    const ready = new Promise<void>((resolve, reject) => {
+      settle = { resolve, reject };
+    });
+    const halted = () => stopped || closed;
+    const tick = async (): Promise<void> => {
+      timer = undefined;
+      let made = 0;
+      while (!halted() && made < LOOP_PASSES_PER_TICK) {
+        const reach = (context.currentTime + LOOP_LOOKAHEAD) * context.sampleRate;
+        if (base !== undefined && base + nextPass * passFrames >= reach) break;
+        const pass = nextPass;
+        nextPass += 1;
+        made += 1;
+        const data = pass === 0 ? first : collect(pattern, playOptions, pass * cycles);
+        const pending = undecoded(data);
+        if (pending.length > 0) await decode(pending);
+        if (halted()) break;
+        base ??= (playOptions.when ?? context.currentTime + leadTime) * context.sampleRate;
+        const start = base + pass * passFrames;
+        const entry = pass === 0 ? live[0] : { token: (tokens += 1), end: 0 };
+        if (pass !== 0) live.push(entry);
+        entry.end = start + passFrames;
+        postPass(data, entry.token, Math.round(start));
+        if (pass === 0) settle?.resolve();
+      }
+      // What has played out needs no cancel.
+      const now = context.currentTime * context.sampleRate;
+      for (let i = live.length - 1; i >= 0; i -= 1) if (live[i].end < now) live.splice(i, 1);
+      if (!halted()) timer = setTimeout(poll, LOOP_POLL_MS);
+    };
+    const poll = (): void => {
+      tick().catch((error: unknown) => {
+        // A pass that cannot be collected or decoded ends the loop: what was posted plays out.
+        stopped = true;
+        const failure = error instanceof Error ? error : new Error(String(error));
+        output.onerror?.(failure.message);
+        settle?.reject(failure);
+      });
+    };
+    ready.catch(() => undefined);
+    poll();
+    return {
+      ready,
+      stop() {
+        if (stopped) return;
+        stopped = true;
+        if (timer !== undefined) clearTimeout(timer);
+        timer = undefined;
+        for (const { token } of live) post({ type: 'cancel', token });
+        settle?.resolve();
       }
     };
   };
@@ -574,8 +666,8 @@ export async function createWorkletOutput(
     },
     crossOriginIsolated:
       (globalThis as { crossOriginIsolated?: boolean }).crossOriginIsolated === true,
-    play: (pattern, playOptions = {}) => start(pattern, playOptions, false),
-    loop: (pattern, playOptions = {}) => start(pattern, playOptions, true),
+    play: (pattern, playOptions = {}) => startOnce(pattern, playOptions),
+    loop: (pattern, playOptions = {}) => startLoop(pattern, playOptions),
     stats() {
       const id = (nextId += 1);
       return new Promise<WorkletStats>((resolve, reject) => {
