@@ -18,5 +18,9 @@ undertone = { path = "../undertone", version = "0.0.0" }
 rtrb = "0.3"
 cpal = { version = "0.17", optional = true }
 
-[lints]
-workspace = true
+# This table mirrors `[workspace.lints]` with one difference: `unsafe_code` is `deny`, not `forbid`, so that
+# `tests/allocation.rs` (and only that file) can opt in to the `unsafe` a counting global allocator needs, the same
+# arrangement as `undertone-sched`. Nothing under `src/` may use `unsafe`: `scripts/check-layering.sh` (run in CI) fails on it.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"

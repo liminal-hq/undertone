@@ -79,7 +79,6 @@ impl OutputOptions {
 /// A [`Player`] playing through a [`Sink`]. See the [module documentation](self).
 ///
 /// Dropping an output closes it. [`close`](Output::close) does the same on request and is idempotent.
-#[derive(Debug)]
 pub struct Output<S: Sink> {
 	sink: S,
 	player: Arc<Mutex<Player>>,
@@ -88,6 +87,16 @@ pub struct Output<S: Sink> {
 	health: StreamHealth,
 	errors: Arc<Mutex<Option<undertone::Error>>>,
 	open: bool,
+}
+
+impl<S: Sink> std::fmt::Debug for Output<S> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("Output")
+			.field("format", &self.sink.format())
+			.field("open", &self.open)
+			.field("health", &self.health)
+			.finish_non_exhaustive()
+	}
 }
 
 fn lock(player: &Mutex<Player>) -> MutexGuard<'_, Player> {
@@ -182,9 +191,9 @@ impl<S: Sink> Output<S> {
 	/// the sink fails to start, the control thread is stopped again before the error is returned.
 	pub fn open(sink: S, player: Player, options: &OutputOptions) -> Result<Output<S>> {
 		let format = sink.format();
-		check_format(format, &player, options)?;
-		// A player that is already shut down cannot render.
+		// A player that is already shut down cannot render (and reports no sample rate), so ask it first.
 		player.engine()?;
+		check_format(format, &player, options)?;
 		let frames = (options.buffer_seconds * f64::from(format.sample_rate)).ceil() as usize;
 		let (producer, callback) = ring(format, frames.max(2 * options.block_frames));
 		let health = callback.health();
@@ -214,7 +223,9 @@ impl<S: Sink> Output<S> {
 					}
 				}
 			})
-			.map_err(|error| NativeError::Stream(format!("the control thread did not start: {error}")))?;
+			.map_err(|error| {
+				NativeError::Stream(format!("the control thread did not start: {error}"))
+			})?;
 		let mut output = Output {
 			sink,
 			player,
@@ -303,7 +314,8 @@ fn check_format(format: StreamFormat, player: &Player, options: &OutputOptions) 
 			format.sample_rate
 		)));
 	}
-	if options.block_frames == 0 || !(options.buffer_seconds.is_finite() && options.buffer_seconds > 0.0)
+	if options.block_frames == 0
+		|| !(options.buffer_seconds.is_finite() && options.buffer_seconds > 0.0)
 	{
 		return Err(NativeError::Format(
 			"block_frames must be positive and buffer_seconds positive and finite".into(),
