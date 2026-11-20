@@ -575,6 +575,95 @@ function inRealm<T extends Float64Array | Float32Array>(context: vm.Context, arr
   return new Type(array);
 }
 
+describe('the spin clock', () => {
+  /** Runs the clock worker's source, as a worker would, with a clock that says `now` milliseconds, and returns what it stored. */
+  const runWorker = (source: string, now: number) => {
+    const stored: number[] = [];
+    const stop = new Error('stop spinning');
+    const sandbox: Record<string, unknown> = {
+      Int32Array,
+      performance: { now: () => now },
+      Atomics: {
+        store: (_view: Int32Array, _index: number, value: number) => {
+          stored.push(value);
+          throw stop;
+        }
+      }
+    };
+    const context = vm.createContext(sandbox);
+    vm.runInContext(source, context);
+    const onmessage = sandbox.onmessage as (event: { data: SharedArrayBuffer }) => void;
+    expect(() => onmessage({ data: new SharedArrayBuffer(8) })).toThrow(stop);
+    return stored;
+  };
+
+  it('is the worker’s own time in microseconds, so it has no rate to drift, and is told to the processor as 1,000 ticks a millisecond', async () => {
+    const sources: string[] = [];
+    const real = URL.createObjectURL.bind(URL);
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      void (blob as Blob).text().then((text) => sources.push(text));
+      return real(blob as Blob);
+    });
+    let counter: Int32Array | undefined;
+    class FakeWorker {
+      constructor(readonly url: string) {}
+      postMessage(buffer: SharedArrayBuffer): void {
+        counter = new Int32Array(buffer);
+        // What the worker's loop would do: the time in microseconds, moving on.
+        let tick = 1000;
+        const timer = setInterval(() => counter && (counter[0] = tick += 500), 5);
+        timer.unref();
+      }
+      terminate(): void {
+        counter = undefined;
+      }
+    }
+    vi.stubGlobal('crossOriginIsolated', true);
+    vi.stubGlobal('Worker', FakeWorker);
+    try {
+      const { options, nodes } = fakeOptions({
+        createNode: (_context, name, nodeOptions) => {
+          const node = new FakeNode(name, nodeOptions);
+          nodes.push(node);
+          queueMicrotask(() => node.port.receive({ type: 'ready', timing: 'none' }));
+          return node;
+        }
+      });
+      const output = await createWorkletOutput(fakeContext(), { ...options, clock: 'spin' });
+      expect(output.timing).toBe('spin-counter');
+      const clock = nodes[0].port.ofType('clock')[0].message;
+      expect(clock.ticksPerMs).toBe(1000);
+      expect(clock.buffer).toBeInstanceOf(SharedArrayBuffer);
+      output.close();
+      const worker = sources.find((text) => text.includes('Atomics.store'));
+      expect(worker).toBeDefined();
+      // 12.345 ms is 12,345 microseconds, whatever the compiler does to the loop; and a time past 2^31 microseconds wraps.
+      expect(runWorker(worker as string, 12.345)).toEqual([12345]);
+      expect(runWorker(worker as string, 2_147_484)).toEqual([2_147_484_000 - 2 ** 32]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('says why when the page is not cross-origin isolated, and keeps timing at none', async () => {
+    vi.stubGlobal('crossOriginIsolated', false);
+    try {
+      const { options } = fakeOptions({
+        createNode: (_context, name, nodeOptions) => {
+          const node = new FakeNode(name, nodeOptions);
+          queueMicrotask(() => node.port.receive({ type: 'ready', timing: 'none' }));
+          return node;
+        }
+      });
+      const output = await createWorkletOutput(fakeContext(), { ...options, clock: 'spin' });
+      expect(output.timing).toBe('none');
+      expect(output.timingNote).toMatch(/cross-origin isolated/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
 describe('the worklet shim', () => {
   it('gives a scope with no TextDecoder or TextEncoder what the glue uses', () => {
     const sandbox: Record<string, unknown> = {};
