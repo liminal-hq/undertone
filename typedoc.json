@@ -1,7 +1,8 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "@liminal-hq/undertone",
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["packages/undertone/src/api.ts"],
+  "tsconfig": "packages/undertone/tsconfig.json",
   "out": "docs/api",
   "docsRoot": "docs",
   "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
@@ -19,6 +20,8 @@
     "OscillatorNodeLike",
     "StereoPannerNodeLike",
     "RegisteredSource",
-    "AudioParamLike"
+    "AudioParamLike",
+    "RandomSource",
+    "RenderablePattern"
   ]
 }
