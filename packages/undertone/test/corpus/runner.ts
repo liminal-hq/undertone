@@ -6,8 +6,9 @@
 // The logic is that of crates/undertone-wasm/tests/js/layer1.ts and layer2.ts, which drive the module's exports through a test
 // stand-in for the wrapper (harness.ts). Here `lib` is the package itself (`@liminal-hq/undertone`, plus `resetWarnings` from
 // its `./testing` entry), so what runs is the code a user imports: the Pattern class, the generated control methods, the
-// constants, and the wrapper's refusals. The onset collection of layer 2 (`collectOnsets`, a few lines of the reference's
-// scheduler) is still a JavaScript stand-in, resolved by the package's `resolveParams`, until the scheduler exports land.
+// constants, and the wrapper's refusals. The onset collection the recorder writes beside a booking (`collectOnsets`, a few
+// lines of the reference's scheduler, which the package does not export) is a JavaScript stand-in, resolved by the package's
+// `resolveParams`. Layers 3 and 4 and the WAV corpus are in engine.ts.
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -33,9 +34,10 @@ export const root = fileURLToPath(new URL('../../../../', import.meta.url));
 /** The package as the recorder's `lib`: every public name, plus the testing entry's `resetWarnings`. */
 export const lib = { ...pkg, resetWarnings };
 
-/** `collectOnsets` of the reference's scheduler, over the package's `resolveParams`. */
-const scheduler = {
-  cycleSecondsFor: (_bpm: number | undefined, cps: number) => 1 / cps,
+/** `collectOnsets` and `cycleSecondsFor` of the reference's scheduler (no `setcpm()` tempo), over the package's `resolveParams`. */
+export const scheduler = {
+  cycleSecondsFor: (bpm: number | undefined, cps?: number) =>
+    cps !== undefined ? 1 / cps : 240 / (bpm ?? 120),
   collectOnsets(
     pattern: pkg.Pattern<Record<string, unknown>>,
     span: pkg.TimeSpan,

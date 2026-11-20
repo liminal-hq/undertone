@@ -27,6 +27,7 @@ import { build } from '../../../../conformance/recorder/programs';
 import { messageOf } from '../../../../conformance/recorder/format';
 import type { Json } from '../../../../conformance/recorder/format';
 import type { Reference } from '../../../../conformance/recorder/reference';
+import { compare, decodeJson } from './graphCompare.ts';
 import { lib, scheduler, wasm, Pattern } from './harness.ts';
 import { render } from './render.ts';
 import { Replayer } from './replay.ts';
@@ -35,28 +36,10 @@ import type { GraphNames } from './replay.ts';
 const root = fileURLToPath(new URL('../../../../', import.meta.url));
 const wasmRef = { root, lib, scheduler } as unknown as Reference;
 const names = wasm.graphNames() as GraphNames;
-const FLOOR = 1e-15;
 /** `UNDERTONE_NEGATIVE_CONTROL=1` moves every booked `setValueAtTime` value, so nearly every case must fail. */
 const PERTURB = process.env.UNDERTONE_NEGATIVE_CONTROL === '1';
 
 type Case = Record<string, Json> & { id: string };
-
-/** A recorded value back as a JavaScript value: `{ $num }` numbers and `{ $undefined }`. */
-export function decodeJson(value: Json): unknown {
-  if (Array.isArray(value)) return value.map(decodeJson);
-  if (value && typeof value === 'object') {
-    const object = value as Record<string, Json>;
-    if ('$num' in object) {
-      const text = object.$num as string;
-      return text === '-0' ? -0 : Number(text);
-    }
-    if ('$undefined' in object) return undefined;
-    return Object.fromEntries(
-      Object.entries(object).map(([key, field]) => [key, decodeJson(field)])
-    );
-  }
-  return value;
-}
 
 /** One score line, `v<k> @<seconds> <patch json>`. */
 function parseLine(line: string): { at: number; patch: unknown } {
@@ -79,81 +62,6 @@ function pcm(sample: Sample) {
     channels: sample.channels.map((channel) => Float32Array.from(channel)),
     ...(sample.baseNote === undefined ? {} : { baseNote: sample.baseNote })
   };
-}
-
-const numberOf = (value: Json): number | undefined => {
-  if (typeof value === 'number') return value;
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const keys = Object.keys(value);
-    if (keys.length === 1 && keys[0] === '$num') return decodeJson(value) as number;
-  }
-  return undefined;
-};
-
-/** The Rust runner's comparator: `undefined` when equal, `'floor'` when equal only through the floor, else the difference. */
-export function compare(expected: Json, actual: Json, path: string): string | undefined | 'floor' {
-  if (path.includes('.waves[') && (path.includes('.real[') || path.includes('.imag['))) {
-    const e = numberOf(expected);
-    const a = numberOf(actual);
-    if (e !== undefined && a !== undefined) {
-      if (Object.is(e, a)) return undefined;
-      return Math.abs(e - a) <= FLOOR ? 'floor' : `${path}: recorded ${e}, wasm ${a}`;
-    }
-  }
-  if (typeof expected === 'string' && typeof actual === 'string') {
-    if (expected === actual) return undefined;
-    if (path.includes('.nodes[') && path.includes('.params.gain[')) {
-      const e = expected.split(' ');
-      const a = actual.split(' ');
-      const ok =
-        e.length === a.length &&
-        e.length > 2 &&
-        e.every((token, index) => index === 1 || token === a[index]) &&
-        e[1] !== '-0' &&
-        a[1] !== '-0' &&
-        Math.abs(Number(e[1]) - Number(a[1])) <= FLOOR;
-      if (ok) return 'floor';
-    }
-    return `${path}: recorded ${JSON.stringify(expected)}, wasm ${JSON.stringify(actual)}`;
-  }
-  if (Array.isArray(expected) && Array.isArray(actual)) {
-    if (expected.length !== actual.length) {
-      return `${path}: ${expected.length} recorded, ${actual.length} from wasm`;
-    }
-    let floor = false;
-    for (let i = 0; i < expected.length; i += 1) {
-      const diff = compare(expected[i], actual[i], `${path}[${i}]`);
-      if (diff === 'floor') floor = true;
-      else if (diff) return diff;
-    }
-    return floor ? 'floor' : undefined;
-  }
-  if (
-    expected &&
-    actual &&
-    typeof expected === 'object' &&
-    typeof actual === 'object' &&
-    !Array.isArray(expected) &&
-    !Array.isArray(actual)
-  ) {
-    const ek = Object.keys(expected).sort();
-    const ak = Object.keys(actual).sort();
-    if (ek.join() !== ak.join()) return `${path}: keys ${ek} recorded, ${ak} from wasm`;
-    let floor = false;
-    for (const key of ek) {
-      const diff = compare(
-        (expected as Record<string, Json>)[key],
-        (actual as Record<string, Json>)[key],
-        `${path}.${key}`
-      );
-      if (diff === 'floor') floor = true;
-      else if (diff) return diff;
-    }
-    return floor ? 'floor' : undefined;
-  }
-  return JSON.stringify(expected) === JSON.stringify(actual)
-    ? undefined
-    : `${path}: recorded ${JSON.stringify(expected)}, wasm ${JSON.stringify(actual)}`;
 }
 
 type Booked = { graph: Json } | { error: string };

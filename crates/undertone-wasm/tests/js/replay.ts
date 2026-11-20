@@ -3,8 +3,9 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-// This is NOT the bridge's Web Audio backend (RF-26 writes packages/undertone/src/webaudio.ts). It is the smallest replayer that
-// proves the record format (docs/rust-migration/results/M6-BOUNDARY.md, section 12): every record of `[op, a, b, c, d, e]` becomes
+// The bridge's Web Audio backend, packages/undertone/src/webaudio.ts, was promoted from this file (it adds the host's own sample
+// buffers, releases, and the fallbacks of a context without an optional member). This one stays for the runners here, which drive
+// the raw modules without the package's build: the smallest replayer that proves the record format (docs/rust-migration/results/M6-BOUNDARY.md, section 12): every record of `[op, a, b, c, d, e]` becomes
 // the one call the TypeScript engine makes, in the same order, on any AudioContextLike (here the repository's fake context, which
 // conformance/recorder/graph.ts describes). The names behind the numbers come from the module (`graphNames()`), not from a table here.
 
