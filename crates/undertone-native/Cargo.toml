@@ -1,0 +1,22 @@
+[package]
+name = "undertone-native"
+description = "Play an Undertone Player through the system audio device, with a seam for a host's own audio callback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["cpal"]
+# The `cpal` stream: lists and opens system output devices. Build with `--no-default-features` for the `Sink` seam
+# alone, which needs no system audio library (a host supplies its own callback).
+cpal = ["dep:cpal"]
+
+[dependencies]
+undertone = { path = "../undertone", version = "0.0.0" }
+rtrb = "0.3"
+cpal = { version = "0.17", optional = true }
+
+[lints]
+workspace = true
