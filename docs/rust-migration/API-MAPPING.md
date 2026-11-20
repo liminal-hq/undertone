@@ -179,6 +179,10 @@ The `undertone` crate (`crates/undertone`) is the Rust API a user depends on. It
 
 **Findings.** (1) A render with more than two channels folds a surround placement to stereo when the master bus is on, because a voice reads the channel count of the node it plays into and the bus's input is a two-channel gain node; the TypeScript does the same, so the render keeps the behaviour and `MasterSetting::Off` is the route for a surround render (the stereo and surround example says so). (2) `Pattern<f64>` signals from the pattern crate cannot go into `n_pattern`, which takes `Pattern<Value>`; the facade's `signals` functions return `Pattern<Value>`, which works for both a control and `n()`. (3) The guide snippets with no Rust equivalent are listed in the M5 status log: browser-only (`AudioContext`, `ctx`, the autoplay gesture, `loadSamples(ctx)` decoding, `URL.createObjectURL`), and the `.loop()` handle's `stop()` is `Player::stop_loop`.
 
+## Status of the bridge (RF-24)
+
+**Part 1:** `crates/undertone-wasm` exports groups 1 (exact fraction helpers; the `Fraction` class stays JavaScript), 2, 3, 4, 5, 6, 9, 16, and 18, and the controls table for RF-25 to generate group 10's methods from; [results/M6-BOUNDARY.md](results/M6-BOUNDARY.md) lists every export by group and the rules they follow (handles, `PatternList`, thunks for `every` and `jux`, foreign leaves for `new Pattern(query)`, `fmap(fn)`, and `signal(fn)`, the flat hap encoding, values, errors, panics, typings). Through the exports, corpus layer 1's `core`, `mini`, `combinators`, `signals`, and `random` groups give 652 of 670 cases equal and 18 that need part 2 (`note`, and `s()` for the `drum` leaf rule). Not yet exported (part 2): groups 7, 8, 10 to 15, 17, and 19 to 26.
+
 ## Other names
 
 | JavaScript                                                                                                                       | Rust                                                                                                                          |
