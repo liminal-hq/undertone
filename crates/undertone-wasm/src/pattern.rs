@@ -127,11 +127,6 @@ impl WasmPattern {
 	pub fn clone(&self) -> WasmPattern {
 		WasmPattern::new(self.0.clone())
 	}
-
-	/// The tree as an s-expression, for diagnostics (`(fast 2 (pure 1))`).
-	pub fn describe(&self) -> String {
-		self.0.describe()
-	}
 }
 
 /// `new Pattern(query, sampler?)` with JavaScript functions: a foreign leaf. `query(beginN, beginD, endN, endD)` returns `[Float64Array, values, big?]` in the flat encoding; `sample(n, d)` returns the value at an instant or `undefined`. A time beyond the safe range reaches either as `NaN` and its text.
