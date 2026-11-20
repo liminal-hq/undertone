@@ -412,9 +412,45 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/layer1.ts
       - name: Corpus layer 2
         run: bun crates/undertone-wasm/tests/js/layer2.ts
+      - name: Upload the module and its glue
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wasm-module
+          path: packages/undertone/wasm/undertone_wasm*
+          if-no-files-found: error
+          retention-days: 1
       - name: Write summary
         if: always()
         run: echo "## WebAssembly bridge" >> "${GITHUB_STEP_SUMMARY}"
+
+  # The bridge package (RF-25): the TypeScript over the module the wasm-bridge job built (ci-rust has no Node; ci-web has no
+  # wasm32 target). Builds the package, runs its tests, compares its exports with the 0.4.0 API report (conformance/api/
+  # package-pending.txt lists what part 2 still owes), and loads the packed tarball in Node, Bun, and Vite 5 (scripts/check-package-loading.sh).
+  bridge-package:
+    name: Bridge package
+    needs: [wasm-bridge]
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/liminal-hq/ci-web@sha256:43db6bd804c801fda46586e6978407240dc5dd3509f85482a29d71ab87e49b5d
+    steps:
+      - uses: actions/checkout@v7
+      - run: bun install --frozen-lockfile
+      - name: Download the module and its glue
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: wasm-module
+          path: packages/undertone/wasm
+      - name: Build the package
+        run: bun run --cwd packages/undertone build
+      - name: Package tests
+        run: bun run package:test
+      - name: Compare the exports with the API report
+        run: bun run package:api
+      - name: Check loading from the packed tarball
+        run: bash scripts/check-package-loading.sh
+      - name: Write summary
+        if: always()
+        run: echo "## Bridge package" >> "${GITHUB_STEP_SUMMARY}"
 
   rust-layering:
     name: Rust crate layering
