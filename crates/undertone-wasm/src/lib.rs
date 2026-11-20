@@ -23,6 +23,7 @@
 //!
 //! - [`pattern`]: the handle ([`WasmPattern`]), its queries, and the list builder ([`PatternList`]).
 //! - [`build`]: the constructors and transforms (groups 3 to 6, and the numeric methods of group 18).
+//! - [`notes`]: `note`, `sound`, `s`, `n`, `chord`, and the methods `.scale`, `.voicing`, `.sound`, `.s`, `.bank` (groups 7 and 8).
 //! - [`helpers`]: signals, seeded random numbers, pitch helpers, and the exact fraction helpers (groups 18, 16, 9, 1).
 //! - [`controls`]: the controls table as plain data, and its TypeScript declaration from `ts-rs`.
 //! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
@@ -36,6 +37,7 @@ pub mod convert;
 pub mod encode;
 pub mod foreign;
 pub mod helpers;
+pub mod notes;
 pub mod pattern;
 pub mod warnings;
 
