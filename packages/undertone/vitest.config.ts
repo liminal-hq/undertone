@@ -14,6 +14,7 @@ export default defineConfig({
     alias: [
       { find: /^@liminal-hq\/undertone\/init$/, replacement: dist('init.node.js') },
       { find: /^@liminal-hq\/undertone\/testing$/, replacement: dist('testing.js') },
+      { find: /^@liminal-hq\/undertone\/worklet$/, replacement: dist('worklet.js') },
       {
         find: /^@liminal-hq\/undertone\/wasm$/,
         replacement: fileURLToPath(new URL('./wasm/undertone_wasm.js', import.meta.url))
