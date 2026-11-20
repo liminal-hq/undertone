@@ -22,6 +22,7 @@ Node 22 or later, Bun 1.2 or later, current Deno, and browsers with WebAssembly,
 | `@liminal-hq/undertone/init`    | Imports without instantiating anything. Call `await init()` once before using the API; calling it again returns the same promise.                          | Your build target or loader cannot take top-level `await`. |
 | `@liminal-hq/undertone/testing` | `resetWarnings`, `seedContext`, `playVoice`, and `playVoices`, for tests of code that uses Undertone.                                                      | In test files.                                             |
 | `@liminal-hq/undertone/wasm`    | The raw `wasm-bindgen` glue of the main module.                                                                                                            | Tools that load WebAssembly themselves.                    |
+| `@liminal-hq/undertone/worklet` | `createWorkletOutput(context)`: plays patterns in an `AudioWorklet` instead of replaying them on the context. Opt-in; see below.                           | You want the sound made off the main thread.               |
 
 `.` and `./init` are two separate loads of the module, each with its own memory and its own once-only warnings: a program uses one of them, not both.
 
@@ -38,7 +39,7 @@ note('c3 e3 g3').play();
 The package ships two WebAssembly modules:
 
 - **The main module** (`wasm/undertone_wasm_bg.wasm`, about 147 KB after Brotli) holds patterns, controls, chords, instruments, scores, and the engine and scheduler that `play()` and `loop()` book with. It loads with the entry.
-- **The render module** (`wasm/render/undertone_wasm_render_bg.wasm`, about 97 KB after Brotli) holds offline rendering. It loads the first time it is needed, so a game that only plays sounds never downloads it. WAV encoding (`encodeWav()`) is TypeScript in the package and does not need the render module, so it works as soon as the main module has loaded.
+- **The render module** (`wasm/render/undertone_wasm_render_bg.wasm`, about 100 KB after Brotli) holds offline rendering and the engine the worklet backend runs. It loads the first time it is needed, so a game that only plays sounds never downloads it. WAV encoding (`encodeWav()`) is TypeScript in the package and does not need the render module, so it works as soon as the main module has loaded.
 
 How the render module loads depends on the runtime:
 
@@ -78,6 +79,75 @@ export default { build: { target: 'esnext' } };
 (`['chrome89', 'firefox89', 'safari15']` also works.) The repository's `bun run package:load` builds both cases with Vite 5 and runs the bundles, a render included.
 
 A bundler that tree-shakes by `sideEffects` keeps the entries' initialisation: the package lists its entry files (and the render module's glue) in `sideEffects`.
+
+## The AudioWorklet backend (opt-in)
+
+The default backend replays what the engine books onto your `AudioContext`, and the browser makes the sound. The `./worklet` entry is a second, separate way to play: the sound is made by Undertone's own renderer inside an `AudioWorklet`, with the same maths as `renderToBuffer`. It is off unless you ask for it, and nothing about `play()` and `loop()` changes (D-09).
+
+```ts
+import { note, stack, sound } from '@liminal-hq/undertone';
+import { createWorkletOutput } from '@liminal-hq/undertone/worklet';
+
+const context = new AudioContext();
+const output = await createWorkletOutput(context, { channels: 2, seed: 'song' });
+
+const song = stack(note('c2 g1').sound('sawtooth').lpf(500), sound('white*4').decay(0.03));
+const loop = output.loop(song, { cycles: 4, bpm: 110 });
+
+// later
+loop.stop();
+console.log(await output.stats());
+output.close();
+```
+
+### What runs where
+
+- **On the main thread:** patterns, JavaScript leaves, the tempo (`setcpm()`), and decoding samples. `output.play(pattern)` and `output.loop(pattern)` collect the voices the pattern gives, exactly as `renderToBuffer` does, so a pattern with a JavaScript leaf plays (the leaf is queried on the main thread, once per pass, never in the worklet). Bad options and a pattern that throws are reported to the caller at once.
+- **In the worklet:** the render module's `WorkletEngine`. It receives the voices as plain numbers (a `Float64Array` and the strings they index) with the frame they start at, books each voice as the clock comes within 100 ms of it, and renders every 128-frame block. It never queries a pattern.
+- **A loop repeats on the worklet's clock**, so it keeps time when the main thread is busy; the main thread posted the pass once. The cost is that a loop repeats the first `cycles` cycles it was given (`cycles: 4` repeats cycles 0 to 3): it does not go on to cycle 4, 5, and so on as the Web Audio backend's `loop()` does. A pattern that changes from cycle to cycle (`<a b>`) repeats over the cycles you ask for.
+- **`stop()`** stops a loop from booking more. What the worklet booked already, up to about 100 ms ahead, plays out, and so do the releases of notes already sounding.
+
+### Loading, and what a bundler must do
+
+The main thread compiles the render module once and posts the `WebAssembly.Module` to the worklet, which instantiates it synchronously (D-47). The module added to the worklet is made at run time, as a `blob:` URL, from three pieces: a small `TextDecoder` and `TextEncoder` shim (the worklet scope has neither), the render module's glue text, and the processor. The glue and the module are found next to the package's own files with `new URL('…', import.meta.url)`, which Vite and webpack copy as assets, so a bundler that supports that needs nothing more. Where it does not, or the page's policy refuses `blob:` URLs, give them yourself:
+
+| Option                  | What it is                                                                                                |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `wasm`                  | The render module: a compiled `WebAssembly.Module`, its bytes, a `Response`, or a URL.                    |
+| `glueUrl` or `glueText` | The render module's glue (`@liminal-hq/undertone/wasm/render/undertone_wasm_render.js`) as a URL or text. |
+| `moduleUrl`             | A module you host (build it with `workletModuleSource(glueText)` and serve it), instead of a blob.        |
+
+An `AudioWorklet` needs a secure context (https or `localhost`). A browser that cannot send a compiled module to a worklet gets the module's bytes, and the processor compiles them.
+
+### Cross-origin isolation, and the message port
+
+Voices travel over the processor's `MessagePort`, which is always available; the numbers are transferred, not copied. A ring over a `SharedArrayBuffer` for cross-origin isolated pages was not built: the port's cost is what the harness measures first (see below). `output.crossOriginIsolated` says whether the page is isolated.
+
+### Samples
+
+The worklet keeps its own sample registry, fed from the package's: every sample registered, decoded, or cleared on the main thread is sent over as PCM (copied, once). A pass that names a sample that has not been decoded waits until it has (`playback.ready` resolves when the pass has been posted); preload with `loadSamples(context)` to avoid the wait. Decoding itself stays on the main thread, because a worklet cannot decode audio.
+
+### Statistics
+
+`await output.stats()` answers from the worklet: `blocks`, the time of each `process` call as `processMs` (`mean`, `p50`, `p99`, `p999`, `max`, in milliseconds, against `budgetMs`, which is 128 frames at the sample rate), `overruns` (blocks that took longer than the budget), `skippedBlocks` (blocks the host never asked for), `driftFrames` (how far the engine's clock has fallen behind the host's, zero when none was skipped), `lateStarts` (passes that arrived after their start frame), `liveNodes`, and the errors the worklet reported. `output.onerror` receives them as they happen. A voice that fails to book is skipped and the sound goes on.
+
+::: warning Chromium's worklet scope has no `performance.now()`
+A headless Chromium check found that `AudioWorkletGlobalScope` has no `performance`, so the processor cannot time itself the way the acceptance names. `createWorkletOutput(context, { clock: 'spin' })` works around it: a worker on the page counts in a `SharedArrayBuffer`, the processor reads the counter around each `process` call, and the page measures the counter's speed against `performance.now()`. It needs a cross-origin isolated page (`Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`) and spends a core's worth of the device while it runs, which a small phone may feel. Without it `output.timing` is `'none'` and the statistics have no times (the counts of skipped blocks and drift still work). `output.timing` and `output.timingNote` say what you got. Other browsers' worklet scopes were not checked.
+:::
+
+### Booking allocates
+
+Booking a voice builds nodes and, for a reverb, an impulse response, so it allocates inside the worklet. That is accepted for this opt-in backend (D-34 stands); the queue books a few voices a block, not a pass at once, and the statistics' `queueMs` and `processMs` show what it costs.
+
+### The harness, and what was measured
+
+`packages/undertone/harness/` holds a page for the acceptance checks of RF-29: a pattern looped for five minutes (representative, heavy, or light), with underruns, the 99th percentile of `process` against its budget, and drift shown and marked against the three limits (no underrun, p99 at most 40% of the budget, drift of zero frames). Build the package, run `bun packages/undertone/harness/serve.ts`, and open the page it prints; on a phone, `adb reverse tcp:8080 tcp:8080` and open `localhost:8080/harness/`. `check.ts` in the same folder opens the worklet in headless Chromium (through Playwright's core library, which is not a dependency) and compares what it renders with `renderToBuffer`.
+
+What has been run, and what has not:
+
+- **Headless Chromium 156 on a Linux desktop, offline context:** a worklet pass of the representative pattern, stereo and mono, equals the offline render to within 1.8e-7 (a few ulps; the light pattern is bit for bit equal). This shows the worklet loads (the shim, the glue, and the module in a real `AudioWorkletGlobalScope`), books, and renders. It is a correctness check, not a performance or listening result.
+- **Not run:** the phone, the Steam Deck, and throttled Chromium (the person's, N-3 in `HANDOFFS.md`); a five-minute run on any machine; Firefox and Safari; and anything with a real audio device. Nothing was listened to.
+- **A smoke observation, not a result:** one 20-second real-time run of the harness in headless Chromium with no audio device, on a 16-thread desktop, with the spin clock's worker running, timed the representative pattern at a mean of 0.62 ms and a 99th percentile of 1.09 ms for a block budget of 2.67 ms (41%), with no overruns and no drift. The module was the size-optimised build the package ships (`opt-level = "z"`, `wasm-opt -Oz`). The same run with a speed-optimised build of the render module (`opt-level = 3`, `wasm-opt -O3`, 117.7 KB after Brotli against 100.1 KB) gave a mean of 0.11 ms and a 99th percentile of 0.24 ms (9%). If a device run of the shipped module misses the 40% limit, the render module built for speed is the first thing to try, and its size fits the 120 KB budget.
 
 ## Memory: `free()` on patterns
 
