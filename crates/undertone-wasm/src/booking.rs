@@ -159,7 +159,7 @@ fn voice(patch: &JsValue) -> Result<undertone::engine::params::VoiceParams, JsVa
 impl WasmEngine {
 	/// An engine for a context of `sampleRate` hertz whose destination has `channels` channels now and up to
 	/// `maxChannels` (`ctx.destination.channelCount`, `.maxChannelCount`). Noise and reverb are seeded with `0` until
-	/// [`WasmEngine::seed`] says otherwise (the reference uses `Math.random` on a context nobody seeded; Rust has no
+	/// [`WasmEngine::seed_js`] (`seed` in JavaScript) says otherwise (the reference uses `Math.random` on a context nobody seeded; Rust has no
 	/// ambient source).
 	#[wasm_bindgen(constructor)]
 	pub fn new(sample_rate: f64, channels: u32, max_channels: u32) -> Result<WasmEngine, JsValue> {

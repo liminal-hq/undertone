@@ -15,7 +15,7 @@
 //!
 //! `scripts/build-wasm.sh` builds the module with the `wasm` profile (`opt-level = "z"`, fat LTO, one codegen unit,
 //! `panic = "abort"`), runs `wasm-bindgen --target web --weak-refs` into `packages/undertone/wasm/`, and runs
-//! `wasm-opt -Oz -all`. On the host the crate builds too (`cargo check -p undertone-wasm`), so its pure-Rust parts are
+//! `wasm-opt -Oz`. On the host the crate builds too (`cargo check -p undertone-wasm`), so its pure-Rust parts are
 //! unit-tested with the rest of the workspace; anything that calls JavaScript runs only in a JavaScript runtime
 //! (`crates/undertone-wasm/tests/js/`).
 //!
@@ -31,8 +31,19 @@
 //! - [`foreign`]: the JavaScript functions behind foreign leaves (`new Pattern(query)`, `fmap(fn)`, `signal(fn)`).
 //! - [`convert`]: values and errors across the boundary.
 //! - [`encode`]: the flat hap encoding and the checked fraction conversions (plain Rust).
-//! - [`score`]: `score(definition)` and the score handle's data (group 15; playing and rendering are part 2b).
+//! - [`score`]: `score(definition)` and the score handle's data (group 15; its `play`, `loop`, and `collectVoices` are in
+//!   [`transport`] and [`voices`]).
 //! - [`warnings`]: the once-only warnings, printed with `console.warn`, and `resetWarnings`.
+//! - [`record`]: the recorder, `RecordGraph`: the engine's Web Audio calls as fixed-width numeric records for the wrapper to replay.
+//! - [`booking`]: the engine, `WasmEngine` (one per audio context: voices, the master bus, orbit buses, multichannel, the mono fold)
+//!   and `WasmPlayback`.
+//! - [`transport`]: the scheduler, `WasmTransport` (`play`, `loop`, `tick`, tempo), ticked by the wrapper's timer.
+//! - [`samples`]: the sample registry, one per instance, filled with PCM the host decoded.
+//! - [`voices`]: the first half of a render, `collectVoices`: the voices as plain data for the render module.
+//! - [`flat`]: the flat encoding those voices cross in (shared with the render module).
+//! - [`options`]: the option bags read from JavaScript (shared with the render module).
+//!
+//! The render module (`crates/undertone-wasm-render`) is the second, lazily loaded module: rendering and WAV.
 
 pub mod booking;
 pub mod build;
