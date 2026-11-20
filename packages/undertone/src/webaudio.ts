@@ -91,7 +91,8 @@ export class Replayer {
    */
   readonly #deadNodes = new Set<number>();
   readonly #deadBuffers = new Set<number>();
-  readonly #deadWaves = new Set<number>();
+  /** A wave the context failed to make keeps its coefficients: the engine caches shaped waves, so a later voice names it again. */
+  readonly #deadWaves = new Map<number, { real: Float32Array; imag: Float32Array; raw: boolean }>();
   readonly #hostBuffers: () => readonly HostBuffer[];
   /** The host buffers standing in for a buffer of the records, so two samples with the same PCM keep a buffer each. */
   readonly #claimed = new Set<AudioBufferLike>();
@@ -231,6 +232,12 @@ export class Replayer {
               this.#waveUsers.set(b, (this.#waveUsers.get(b) ?? 0) + 1);
             }
             const missing = this.#missingWaves.get(b);
+            const dead = this.#deadWaves.get(b);
+            if (dead !== undefined) {
+              // A transient failure must not cost every later voice its wave: the next use makes it again.
+              this.#waves.set(b, this.#makeWave(dead.real, dead.imag, dead.raw));
+              this.#deadWaves.delete(b);
+            }
             if (missing === undefined) {
               (node.setPeriodicWave as (wave: unknown) => void)(this.#waves.get(b));
             } else if (missing.autopan) {
@@ -308,13 +315,12 @@ export class Replayer {
               break;
             }
             const imag = data.slice(c + b, c + 2 * b);
-            // The TypeScript engine passes no constraints unless normalisation is off.
-            this.#waves.set(
-              a,
-              d === 0
-                ? ctx.createPeriodicWave.call(ctx, real, imag)
-                : ctx.createPeriodicWave.call(ctx, real, imag, { disableNormalization: true })
-            );
+            try {
+              this.#waves.set(a, this.#makeWave(real, imag, d !== 0));
+            } catch (error) {
+              this.#deadWaves.set(a, { real, imag, raw: d !== 0 });
+              throw error;
+            }
             break;
           }
           case 'release': {
@@ -337,7 +343,6 @@ export class Replayer {
         failure ??= { error };
         if (name === 'create') this.#deadNodes.add(a);
         else if (name === 'createBuffer' || name === 'createCurve') this.#deadBuffers.add(a);
-        else if (name === 'createWave') this.#deadWaves.add(a);
       }
       previous = name;
     }
@@ -379,6 +384,14 @@ export class Replayer {
     }
   }
 
+  /** A periodic wave on the context; the TypeScript engine passes no constraints unless normalisation is off. */
+  #makeWave(real: Float32Array, imag: Float32Array, raw: boolean): unknown {
+    const ctx = this.#ctx as unknown as Record<string, (...args: unknown[]) => unknown>;
+    return raw
+      ? ctx.createPeriodicWave.call(ctx, real, imag, { disableNormalization: true })
+      : ctx.createPeriodicWave.call(ctx, real, imag);
+  }
+
   /** Whether a record names something the context failed to make. */
   #skips(name: string, a: number, b: number): boolean {
     switch (name) {
@@ -392,7 +405,7 @@ export class Replayer {
       case 'connect':
         return this.#deadNodes.has(a) || this.#deadNodes.has(b);
       case 'periodicWave':
-        return this.#deadNodes.has(a) || this.#deadWaves.has(b);
+        return this.#deadNodes.has(a);
       case 'buffer':
       case 'curve':
         return this.#deadNodes.has(a) || (b >= 0 && this.#deadBuffers.has(b));

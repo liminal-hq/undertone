@@ -247,6 +247,31 @@ describe('a Web Audio call that throws in the middle of a batch of records', () 
   });
 });
 
+describe('a periodic wave the context failed to make', () => {
+  it('is made again for a later voice that names it, once the context recovers', () => {
+    const ctx = new FakeAudioContext();
+    const createPeriodicWave = ctx.createPeriodicWave.bind(ctx);
+    let calls = 0;
+    vi.spyOn(ctx, 'createPeriodicWave').mockImplementation((real, imag, constraints) => {
+      calls += 1;
+      if (calls <= 2) throw new Error('transient wave failure'); // the wave's own creation, and the retry at its first use
+      return createPeriodicWave(real, imag, constraints);
+    });
+    expect(() => playParams(ctx, [{ pitch: 'a4', soundType: 'pulsesine' }], { when: 0 })).toThrow(
+      'transient wave failure'
+    );
+    expect(ctx.periodicWaves).toHaveLength(0);
+    // The module caches the shaped wave, so this voice names the same wave and makes no new one itself.
+    playParams(ctx, [{ pitch: 'b4', soundType: 'pulsesine' }], { when: 1 });
+    expect(ctx.periodicWaves).toHaveLength(1);
+    expect(ctx.oscillators.at(-1)?.periodicWave).toBe(ctx.periodicWaves[0]);
+    // Made once: a third voice shares it.
+    playParams(ctx, [{ pitch: 'c5', soundType: 'pulsesine' }], { when: 2 });
+    expect(ctx.periodicWaves).toHaveLength(1);
+    expect(ctx.oscillators.at(-1)?.periodicWave).toBe(ctx.periodicWaves[0]);
+  });
+});
+
 describe('samples in both modules', () => {
   it('renders a registered buffer in the render module, registered before it loaded or after', async () => {
     const data = new Float32Array(400).fill(0.5);
