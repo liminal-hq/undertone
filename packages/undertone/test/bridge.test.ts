@@ -203,9 +203,9 @@ describe('a pattern value that is far too wide', () => {
     expect(() => foldToStereo(sparse())).toThrow(/at most .* items wide/);
     expect(() => layer(note('c4'), sparse())).toThrow(/at most .* items wide/);
     expect(() => note('c4').pitchsteps(sparse())).toThrow(/at most .* items wide/);
-    expect(() =>
-      score({ ticksPerSecond: 4, lengthTicks: 4, events: sparse() } as never)
-    ).toThrow(/at most .* items wide/);
+    expect(() => score({ ticksPerSecond: 4, lengthTicks: 4, events: sparse() } as never)).toThrow(
+      /at most .* items wide/
+    );
     // The instance is still alive after each refusal.
     expect(cycle(pure(1))[0].value).toBe(1);
   });
