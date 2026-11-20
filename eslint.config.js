@@ -17,6 +17,8 @@ export default tseslint.config(
       'test-results/**',
       // The wasm-bindgen glue scripts/build-wasm.sh writes (generated, gitignored).
       'packages/undertone/wasm/**',
+      // The TypeScript declarations ts-rs writes (generated, checked by a Rust test).
+      'crates/undertone-wasm/bindings/**',
       // Throwaway spike code (docs/rust-migration/milestones/M2-spikes.md) is not linted; Prettier still checks it.
       'spikes/**'
     ]
