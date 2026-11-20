@@ -334,7 +334,7 @@ pub struct LayerOptions {
 
 /// Plays one pattern of notes on several voices at once: the usual way to get a thicker sound from a small synth. Each entry of `voices` is a plain patch (an [`fm_voice`] result, a preset, or any map of fields); the layers are stacked, with an optional start stagger, level balance, and pans.
 ///
-/// Stagger adds to any `nudge` already on the notes and levels multiply their `velocity`, so layering composes with [`drift`](crate::drift::drift) and with scored accents; a layer `pans` entry replaces the notes' pan. A layer voice also keeps any control the notes carry that its own patch does not set (a waveform or filter from the incoming pattern, say), so set those in the voice patch.
+/// Stagger adds to any `nudge` already on the notes and levels multiply their `velocity`, so layering composes with `drift` and with scored accents; a layer `pans` entry replaces the notes' pan. A layer voice also keeps any control the notes carry that its own patch does not set (a waveform or filter from the incoming pattern, say), so set those in the voice patch.
 ///
 /// # Errors
 ///

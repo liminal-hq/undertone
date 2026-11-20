@@ -429,7 +429,7 @@ impl Scope {
 	}
 }
 
-/// The Web Audio calls the engine makes, as a trait. See the [module documentation](self) for the idea.
+/// The Web Audio calls the engine makes, as a trait. See the module documentation for the idea.
 ///
 /// Methods that act on a node of one kind (`set_oscillator_type` on an oscillator, `start` on an oscillator or
 /// a buffer source) panic in [`LogGraph`] when given another kind, since that is a mistake in the booking

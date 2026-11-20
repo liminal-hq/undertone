@@ -22,7 +22,7 @@
 //! audio callback, and they are in this order:
 //!
 //! 1. Keep the clock the transport reads in step with the graph the engine books on. With a
-//!    [`RenderGraph`](undertone_engine::render_graph::RenderGraph) the graph's clock is the frames it has
+//!    `RenderGraph` of the engine crate the graph's clock is the frames it has
 //!    produced, so a [`Clock`] over a frame counter that the callback bumps by the block size agrees with it.
 //! 2. Call [`Transport::tick`] when the tick interval has passed, then render the block.
 //!
@@ -401,7 +401,7 @@ fn count_onsets(
 
 static NEXT_TRANSPORT_ID: AtomicU64 = AtomicU64::new(1);
 
-/// Plays and loops patterns against a [`Clock`]. See the [module documentation](self).
+/// Plays and loops patterns against a [`Clock`]. See the module documentation.
 ///
 /// The transport owns the clock, the tempo, the running loops, and the statistics. It does not own the
 /// [`Engine`]: every call that books takes it, so the host decides where the engine lives (and who else may
@@ -573,7 +573,7 @@ impl<C: Clock> Transport<C> {
 	/// # Errors
 	///
 	/// An invalid tempo fails with the reference's message (`bpm must be positive, got 0`, `Pass either bpm or
-	/// cps, not both`). Then as [`book_cycles`](crate::book_cycles). A call that fails **rolls back**: voices
+	/// cps, not both`). Then as `book_cycles`. A call that fails **rolls back**: voices
 	/// booked before the failing one are cut at once (with the 5 ms cut-group fade), nothing is counted in
 	/// [`Stats`], and no handle is lost, because none is returned. The reference's `play()` throws part-way
 	/// and leaves the earlier voices sounding; this is deliberately better (D-38).

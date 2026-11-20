@@ -202,7 +202,7 @@ const STOP_FADE_TIME_CONSTANTS: f64 = 5.0; // setTargetAtTime reaches ~99% of th
 
 /// Books voices on a [`Graph`].
 ///
-/// See the [module documentation](self) for what a voice is made of and what the engine keeps between voices.
+/// See the module documentation for what a voice is made of and what the engine keeps between voices.
 pub struct Engine<G: Graph> {
 	pub(crate) graph: G,
 	pub(crate) output: NodeId,

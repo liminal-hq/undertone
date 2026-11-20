@@ -7,6 +7,7 @@
 #   scripts/check-rust-docs.sh --names FILE... only the inline names, over the given files (used by scripts/check-rust-docs.test.sh)
 #   scripts/check-rust-docs.sh --audio FILE... only the RustAudio check, over the given files (used by scripts/check-rust-docs.test.sh)
 #   scripts/check-rust-docs.sh --site-bar      only the site bar check, over the rustdoc directory (used by scripts/check-rust-docs.test.sh)
+#   scripts/check-rust-docs.sh --links         only the unresolved link check, over the rustdoc directory (used by scripts/check-rust-docs.test.sh)
 #
 # The rustdoc directory is $RUSTDOC_DIR, default docs/public/rust (where CI downloads the rustdoc artifact, the contents of target/doc).
 # Locally, build it with `scripts/build-rust-docs.sh` and run `RUSTDOC_DIR=target/doc scripts/check-rust-docs.sh`. When the directory
@@ -31,6 +32,9 @@
 #   6. the rustdoc index the site's nav links to (undertone/index.html) exists;
 #   7. every rustdoc page sampled (each crate's index, one item page, one source page, and help.html) holds the site bar, an element with
 #      the attribute data-site-bar, which scripts/build-rust-docs.sh adds with --html-before-content. A build without its flags fails here.
+#   8. no link in a rustdoc page is a Rust path rustdoc could not turn into a URL: an href of `self`, `crate::...`, `super::...`, or
+#      `undertone_*::...`. A link written as [text](path) in a doc comment whose target is in another crate, or that a re-export carries
+#      into another crate's page, comes out as that literal path, a dead link on the site.
 # A failure names the page and the anchor or file it looked for.
 #
 # It does not type-check prose, check what a method takes or returns, or read the code blocks, which are the example files that
@@ -206,9 +210,27 @@ check_site_bar() {
   return 0
 }
 
+# check_links: no rustdoc page links to a bare Rust path (rustdoc leaves one in the href when it cannot make a URL from it).
+check_links() {
+  local f hrefs count=0
+  while IFS= read -r f; do
+    hrefs=$(grep -oE 'href="(self|(crate|super|undertone[a-z_]*)::[^"]*)"' "$f" | sort -u | head -n 3 | tr '\n' ' ')
+    note "$f: a link that is a Rust path, not a URL: $hrefs(write the name as inline code, or link a name that resolves in this crate)"
+    count=$((count + 1))
+  done < <(grep -rlE --include='*.html' --exclude-dir=static.files --exclude-dir=src 'href="(self|(crate|super|undertone[a-z_]*)::[^"]*)"' "$rd" 2>/dev/null | sort || true)
+  [ "$count" -eq 0 ] && echo "check-rust-docs: no rustdoc page links to a bare Rust path"
+  return 0
+}
+
 if [ "${1:-}" = "--site-bar" ]; then
   [ -d "$rd" ] || { echo "check-rust-docs: no rustdoc at $rd (set RUSTDOC_DIR)" >&2; exit 2; }
   check_site_bar
+  exit "$fail"
+fi
+
+if [ "${1:-}" = "--links" ]; then
+  [ -d "$rd" ] || { echo "check-rust-docs: no rustdoc at $rd (set RUSTDOC_DIR)" >&2; exit 2; }
+  check_links
   exit "$fail"
 fi
 
@@ -251,6 +273,7 @@ done
 if [ -f "$rd/undertone/index.html" ]; then
   check_names "${pages[@]}"
   check_site_bar
+  check_links
 elif [ -d "$rd" ]; then
   note "$rd exists but has no undertone/index.html"
 elif [ -n "${CI:-}" ]; then

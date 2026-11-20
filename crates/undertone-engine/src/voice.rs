@@ -195,7 +195,7 @@ impl<G: Graph> Engine<G> {
 	/// # Errors
 	///
 	/// A pitch that is not a note name or not a finite frequency above zero fails with the reference's
-	/// message. A room size whose reverb would be longer than 60 seconds ([`MAX_BUFFER_SECONDS`](crate::noise::MAX_BUFFER_SECONDS),
+	/// message. A room size whose reverb would be longer than 60 seconds (`MAX_BUFFER_SECONDS`,
 	/// a deliberate bound the TypeScript does not have; its `createBuffer` throws a `RangeError` for what
 	/// it cannot allocate), or that is infinite or not a number, fails with a message naming the room, and
 	/// so does a noise buffer of such a length. Nodes made before the failure stay on the graph, as they do

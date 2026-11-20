@@ -152,7 +152,7 @@ impl PlayerOptions {
 	}
 }
 
-/// An owned engine, transport, and clock. See the [module documentation](self).
+/// An owned engine, transport, and clock. See the module documentation.
 ///
 /// `G` is the graph the engine books on and `C` the clock the transport reads. The defaults, a
 /// [`RenderGraph`] and a [`ManualClock`], are the offline player [`Player::new`] makes.

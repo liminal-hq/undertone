@@ -9,7 +9,7 @@
 //!
 //! The parser takes the **leaf rule**: what each word becomes. It is called once per word while parsing and is not stored, so the tree it builds holds plain values. Errors carry the reference's message, with the position counted in UTF-16 code units as JavaScript counts it.
 //!
-//! **Characters outside the Basic Multilingual Plane.** The reference's tokenizer walks UTF-16 code units, so for an emoji it reports the position of the high surrogate and quotes that lone half in the message. A Rust `String` cannot hold a lone surrogate, so [`Error::message`](crate::Error::message) shows it as U+FFFD (the replacement character); the position is exact. The corpus runner reads the recorded message the same way (a lone half becomes U+FFFD) before it compares.
+//! **Characters outside the Basic Multilingual Plane.** The reference's tokenizer walks UTF-16 code units, so for an emoji it reports the position of the high surrogate and quotes that lone half in the message. A Rust `String` cannot hold a lone surrogate, so `Error::message` shows it as U+FFFD (the replacement character); the position is exact. The corpus runner reads the recorded message the same way (a lone half becomes U+FFFD) before it compares.
 
 use crate::error::{Error, Result};
 use crate::js;

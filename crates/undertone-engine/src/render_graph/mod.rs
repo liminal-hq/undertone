@@ -305,7 +305,7 @@ struct Wave {
 	tables: Option<WaveTables>,
 }
 
-/// A [`Graph`] that renders what the engine books to samples. See the [module documentation](self).
+/// A [`Graph`] that renders what the engine books to samples. See the module documentation.
 #[derive(Debug, Clone)]
 pub struct RenderGraph {
 	sample_rate: f64,

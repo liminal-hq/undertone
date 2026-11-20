@@ -132,7 +132,7 @@ impl RenderOptions {
 		self
 	}
 
-	/// The engine's options, for a host that plans the render itself ([`RenderPlan::new`](undertone_engine::render::RenderPlan::new)).
+	/// The engine's options, for a host that plans the render itself (`RenderPlan::new` in the engine crate).
 	pub fn engine_options(&self) -> &EngineRenderOptions {
 		&self.options
 	}
