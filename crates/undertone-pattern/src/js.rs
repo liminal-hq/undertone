@@ -280,6 +280,7 @@ pub fn string_to_number(text: &str) -> f64 {
 }
 
 /// Whether `text` is an unsigned decimal literal: digits with an optional fraction, or a fraction alone, then an optional exponent.
+#[cfg(not(feature = "host-number-format"))]
 fn is_decimal_literal(text: &str) -> bool {
 	let bytes = text.as_bytes();
 	let mut i = 0;

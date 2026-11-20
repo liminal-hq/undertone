@@ -44,6 +44,7 @@ pub mod foreign;
 pub mod helpers;
 pub mod notes;
 pub mod pattern;
+pub mod record;
 pub mod score;
 pub mod warnings;
 
