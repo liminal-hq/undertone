@@ -827,6 +827,83 @@ describe('the processor in a worklet-like scope', () => {
     expect(processor.process([], [out])).toBe(true);
   });
 
+  /** A processor with the given clock, and what is needed to drive it a block at a time. */
+  const drivable = (clock: () => number = () => 0) => {
+    const { Processor, context: scopeContext, sandbox, posted } = workletScope({ clock });
+    const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;
+    const processor = new Processor({
+      processorOptions: {
+        module: new module.Module(wasmBytes),
+        options: { sampleRate: 48000, channels: 2 }
+      }
+    });
+    const out = [
+      inRealm(scopeContext, new Float32Array(128)),
+      inRealm(scopeContext, new Float32Array(128))
+    ];
+    const send = (data: unknown) => processor.port.onmessage?.({ data });
+    const block = (frame: number) => {
+      sandbox.currentFrame = frame;
+      return processor.process([], [out]);
+    };
+    const stats = (id: number): Record<string, unknown> => {
+      send({ type: 'stats', id });
+      return posted.find((m) => m.type === 'stats' && m.id === id) as Record<string, unknown>;
+    };
+    return { scopeContext, posted, send, block, stats };
+  };
+
+  it('does not count the quanta Chromium skips between its first two blocks as drift, nor book a waiting pass before them', () => {
+    // Chromium's first `process` call comes at the host frame it comes at, and its second eight quanta (1,024 frames, one device
+    // callback under the playback latency hint) later: nothing was playing, so there was nothing to be late.
+    const { scopeContext, posted, send, block, stats } = drivable();
+    block(1024);
+    // A pass that arrives between the two blocks waits for the second: it is booked for the clock that block shows.
+    send({
+      type: 'play',
+      token: 1,
+      numbers: inRealm(scopeContext, new Float64Array([0])),
+      strings: [],
+      frame: 2300
+    });
+    expect(posted.find((message) => message.type === 'queued')).toBeUndefined();
+    block(1024 + 9 * 128);
+    expect(posted.find((message) => message.type === 'queued')).toMatchObject({
+      token: 1,
+      late: false
+    });
+    expect(stats(1)).toMatchObject({
+      blocks: 2,
+      skippedBlocks: 0,
+      driftFrames: 0,
+      maxDriftFrames: 0,
+      lateStarts: 0
+    });
+    // From then on a skipped block is drift.
+    block(1024 + 10 * 128);
+    block(1024 + 12 * 128);
+    expect(stats(2)).toMatchObject({ skippedBlocks: 1, driftFrames: 128, maxDriftFrames: 128 });
+  });
+
+  it('starts drift again from zero when the statistics are reset, and counts only what happens after', () => {
+    const { send, block, stats } = drivable();
+    block(0);
+    block(128);
+    block(128 * 2);
+    block(128 * 10); // seven quanta never came, during the first seconds
+    expect(stats(1)).toMatchObject({ skippedBlocks: 7, driftFrames: 896, maxDriftFrames: 896 });
+    send({ type: 'reset-stats' });
+    block(128 * 11);
+    expect(stats(2)).toMatchObject({
+      blocks: 1,
+      skippedBlocks: 0,
+      driftFrames: 0,
+      maxDriftFrames: 0
+    });
+    block(128 * 13);
+    expect(stats(3)).toMatchObject({ skippedBlocks: 1, driftFrames: 128, maxDriftFrames: 128 });
+  });
+
   it('times process with a spun counter when the scope has no performance, as Chromium has none', () => {
     const { Processor, context: scopeContext, sandbox, posted } = workletScope();
     const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;
