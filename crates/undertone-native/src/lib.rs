@@ -30,8 +30,8 @@
 //! They cannot say how it sounds on a speaker: that has to be listened to on a real device.
 
 mod error;
-mod output;
-mod sink;
+pub mod output;
+pub mod sink;
 
 #[cfg(feature = "cpal")]
 mod device;
