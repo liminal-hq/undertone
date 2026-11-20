@@ -382,6 +382,13 @@ export function setHostBuffers(source: (ctx: AudioContextLike) => readonly HostB
   hostBuffersOf = source;
 }
 
+let requestSamples: (ctx: AudioContextLike, keys: string[]) => void = () => undefined;
+
+/** Sets what decodes the pending samples a context's voices named (samples.ts). */
+export function setSampleRequests(request: (ctx: AudioContextLike, keys: string[]) => void): void {
+  requestSamples = request;
+}
+
 /** A replayer for a context the engine does not own (a render's offline context), with the host's sample buffers. */
 export function replayerFor(ctx: AudioContextLike): Replayer {
   return new Replayer(ctx, () => hostBuffersOf(ctx));
@@ -410,7 +417,8 @@ export function backendOf(ctx: AudioContextLike): Backend {
 
 /**
  * Calls into a context's engine at the context's clock and replays what it recorded, also when the call throws. A replay that
- * throws (a context refusing a time, say) wins over the engine's own error, since 0.3 failed at that call first.
+ * throws (a context refusing a time, say) wins over the engine's own error, since 0.3 failed at that call first. Then the
+ * pending samples the call's voices named are decoded on the context.
  */
 export function run<T>(backend: Backend, call: (engine: WasmEngine) => T): T {
   const { ctx, engine } = backend;
@@ -423,7 +431,13 @@ export function run<T>(backend: Backend, call: (engine: WasmEngine) => T): T {
   try {
     return call(engine);
   } finally {
-    backend.replayer.replay(engine.take());
+    try {
+      backend.replayer.replay(engine.take());
+    } finally {
+      // The pending samples the call's voices named (they were skipped) start decoding now, as 0.3's lookup did.
+      const keys = engine.takeRequestedSamples();
+      if (keys.length > 0) requestSamples(ctx, keys);
+    }
   }
 }
 

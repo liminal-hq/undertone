@@ -8,14 +8,15 @@
 // books from, and to the render module's once it is loaded (it is a second instance with its own registry). A url or data
 // source counts as registered in both before it is decoded; its voices are skipped until its PCM arrives.
 //
-// One difference from 0.3: the modules' registry is one per instance, not per context, so once a sample is decoded on any
-// context every context plays it, and a url or data sample is decoded on a context the first time that context plays anything
-// (0.3 decoded it when a voice first named it).
+// A url or data sample is decoded on a context when a voice first names it there, as in 0.3: the engine skips the voice and
+// says which pending sample it named (`takeRequestedSamples`), and the Web Audio backend hands those keys here. One difference
+// from 0.3: the modules' registry is one per instance, not per context, so once a sample is decoded on any context every
+// context plays it (without decoding it again).
 
 import { noteToFrequency } from './helpers.js';
 import type { SampleSource } from './engineTypes.js';
 import type { AudioBufferLike, AudioContextLike } from './types.js';
-import { setHostBuffers } from './webaudio.js';
+import { setHostBuffers, setSampleRequests } from './webaudio.js';
 import type { HostBuffer } from './webaudio.js';
 import { glue } from './wasm.js';
 
@@ -221,16 +222,16 @@ export async function loadSamples(ctx: AudioContextLike, names?: string[]): Prom
   await Promise.all(targets.map((name) => ensureDecoded(ctx, name)));
 }
 
-/** Starts decoding, on `ctx`, every url or data sample no module has PCM for yet (a context's first booking). */
-export function decodePending(ctx: AudioContextLike): void {
-  for (const [key, entry] of registry) {
-    if (!entry.pcm && !pendingByContext.get(ctx)?.has(key)) {
-      ensureDecoded(ctx, key).catch(() => {
-        warnOnce(key, `undertone: sample "${key}" failed to load — voice skipped.`);
-      });
-    }
+/** Starts (or joins) decoding, on `ctx`, the pending samples a booking's voices named, as 0.3's lookup did for each. */
+function decodeRequested(ctx: AudioContextLike, keys: string[]): void {
+  for (const key of keys) {
+    ensureDecoded(ctx, key).catch(() => {
+      warnOnce(key, `undertone: sample "${key}" failed to load — voice skipped.`);
+    });
   }
 }
+
+setSampleRequests(decodeRequested);
 
 /** The registered keys whose PCM no module has yet and which the strings of a render name (the render decodes them first). */
 export function pendingKeysIn(strings: readonly string[]): string[] {

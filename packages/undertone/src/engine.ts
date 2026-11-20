@@ -21,7 +21,6 @@ import type {
   VoiceParams,
   WaveShaperNodeLike
 } from './types.js';
-import { decodePending } from './samples.js';
 import { warnOnce } from './warn.js';
 import { backendOf, nodeId, run } from './webaudio.js';
 import type { Backend } from './webaudio.js';
@@ -38,11 +37,9 @@ export function playbackHandle(backend: Backend, playback: WasmPlayback): Playba
   };
 }
 
-/** Books on a context: decodes what the context has not yet (samples.ts), then calls into its engine. */
+/** Books on a context: calls into its engine (the backend decodes the pending samples the voices named, samples.ts). */
 export function book<T>(ctx: AudioContextLike, call: (backend: Backend) => T): T {
-  const backend = backendOf(ctx);
-  decodePending(ctx);
-  return call(backend);
+  return call(backendOf(ctx));
 }
 
 /**
