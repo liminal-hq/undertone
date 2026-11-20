@@ -16,16 +16,18 @@ use undertone::engine::wav::{BitDepth, WavOptions, encode_wav as encode};
 use undertone::engine::window::{BookingWindow, PendingVoice};
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{error, rust_error};
+use crate::convert::{channel_items, error, rust_error, string_items};
 use crate::options::{field, flag, number, render_options, seed};
 use crate::record::RecordGraph;
 use crate::samples::with_registry;
 
 fn plan_and_voices(
 	numbers: &Float64Array,
-	strings: Vec<String>,
+	strings: &JsValue,
 	options: &JsValue,
 ) -> Result<(RenderPlan, Vec<PendingVoice>), JsValue> {
+	// The strings are read as a plain value (not `Vec<String>`), so a sparse array of 2^32 - 1 holes meets the cap, not the glue.
+	let strings = string_items(strings, "the voices' strings")?;
 	let plan = RenderPlan::new(&render_options(options)).map_err(rust_error)?;
 	let values = crate::flat::decode(&numbers.to_vec(), &strings).map_err(|m| error(&m))?;
 	Ok((plan, pending_voices(values)))
@@ -61,10 +63,10 @@ fn print_warnings<G: undertone::engine::graph::Graph>(engine: &Engine<G>, from: 
 #[wasm_bindgen(js_name = renderVoices)]
 pub fn render_voices(
 	numbers: &Float64Array,
-	strings: Vec<String>,
+	strings: JsValue,
 	options: JsValue,
 ) -> Result<Object, JsValue> {
-	let (plan, voices) = plan_and_voices(numbers, strings, &options)?;
+	let (plan, voices) = plan_and_voices(numbers, &strings, &options)?;
 	let samples = with_registry(|samples| samples.clone());
 	let rendered = undertone::render_voices(&plan, samples, voices).map_err(rust_error)?;
 	let out = Object::new();
@@ -103,10 +105,10 @@ impl WasmContextRender {
 	#[wasm_bindgen(constructor)]
 	pub fn new(
 		numbers: &Float64Array,
-		strings: Vec<String>,
+		strings: JsValue,
 		options: JsValue,
 	) -> Result<WasmContextRender, JsValue> {
-		let (plan, voices) = plan_and_voices(numbers, strings, &options)?;
+		let (plan, voices) = plan_and_voices(numbers, &strings, &options)?;
 		let graph = RecordGraph::new(plan.sample_rate, plan.channels, plan.channels);
 		let mut engine = Engine::new(graph, plan.output_setup()).map_err(rust_error)?;
 		let windows = with_registry(|samples| {
@@ -188,9 +190,9 @@ impl WasmContextRender {
 
 	/// The rendered channels as the render returns them: unchanged, or for `wrap` with a tail folded onto the start and
 	/// held to the master `ceiling`.
-	pub fn finish(&self, channels: Vec<Float32Array>) -> Array {
-		let rendered: Vec<Vec<f32>> = channels.iter().map(Float32Array::to_vec).collect();
-		channels_out(&self.plan.finish(rendered))
+	pub fn finish(&self, channels: JsValue) -> Result<Array, JsValue> {
+		let rendered = channel_items(&channels, "finish() channels")?;
+		Ok(channels_out(&self.plan.finish(rendered)))
 	}
 }
 
@@ -199,7 +201,7 @@ impl WasmContextRender {
 #[wasm_bindgen(js_name = encodeWav)]
 pub fn encode_wav(
 	sample_rate: f64,
-	channels: Vec<Float32Array>,
+	channels: JsValue,
 	options: JsValue,
 ) -> Result<Uint8Array, JsValue> {
 	let bit_depth = match number(&field(&options, "bitDepth")) {
@@ -221,7 +223,7 @@ pub fn encode_wav(
 		seed: (!seed_value.is_undefined()).then(|| seed(&seed_value)),
 		channel_mask: number(&field(&options, "channelMask")).map(|mask| mask as u32),
 	};
-	let channels: Vec<Vec<f32>> = channels.iter().map(Float32Array::to_vec).collect();
+	let channels = channel_items(&channels, "encodeWav() channels")?;
 	encode(sample_rate, &channels, &options)
 		.map(|bytes| Uint8Array::from(bytes.as_slice()))
 		.map_err(rust_error)

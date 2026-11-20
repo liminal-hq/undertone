@@ -74,3 +74,35 @@ pub fn array_items(array: &js_sys::Array, what: &str) -> Result<Vec<JsValue>, Js
 	items.extend(array.iter());
 	Ok(items)
 }
+
+/// The items of a list the caller gave, as a plain value: a parameter typed `Vec<String>` or `Vec<Float32Array>` is read by the
+/// generated glue, which gives `length * 4` bytes and walks every item before Rust runs, so a sparse array with a huge
+/// length would stop the instance before [`MAX_ARRAY_LEN`] could be checked. An export takes a `JsValue` and reads it here.
+pub fn list_items(value: &JsValue, what: &str) -> Result<Vec<JsValue>, JsValue> {
+	if !js_sys::Array::is_array(value) {
+		return Err(error(&format!("{what} must be an array")));
+	}
+	array_items(value.unchecked_ref(), what)
+}
+
+/// The strings of a list the caller gave (see [`list_items`]); an item that is not a string is an `Error`.
+pub fn string_items(value: &JsValue, what: &str) -> Result<Vec<String>, JsValue> {
+	list_items(value, what)?
+		.iter()
+		.map(|item| {
+			item.as_string()
+				.ok_or_else(|| error(&format!("{what} must be strings")))
+		})
+		.collect()
+}
+
+/// The channels of a list the caller gave (see [`list_items`]), each copied out of its `Float32Array`.
+pub fn channel_items(value: &JsValue, what: &str) -> Result<Vec<Vec<f32>>, JsValue> {
+	list_items(value, what)?
+		.iter()
+		.map(|item| match item.dyn_ref::<js_sys::Float32Array>() {
+			Some(channel) => Ok(channel.to_vec()),
+			None => Err(error(&format!("{what} must be Float32Arrays"))),
+		})
+		.collect()
+}

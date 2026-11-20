@@ -51,6 +51,27 @@ pub fn array_items(array: &Array, what: &str) -> Result<Vec<JsValue>, JsValue> {
 	Ok(items)
 }
 
+/// The items of a list the caller gave, as a plain value: a parameter typed `Vec<String>` or `Vec<JsValue>` is read by the
+/// generated glue, which gives `length * 4` bytes and walks every item before Rust runs, so a sparse array with a huge
+/// length would stop the instance before [`MAX_ARRAY_LEN`] could be checked. An export takes a `JsValue` and reads it here.
+pub fn list_items(value: &JsValue, what: &str) -> Result<Vec<JsValue>, JsValue> {
+	if !Array::is_array(value) {
+		return Err(error(&format!("{what} must be an array")));
+	}
+	array_items(value.unchecked_ref(), what)
+}
+
+/// The strings of a list the caller gave (see [`list_items`]); an item that is not a string is an `Error`.
+pub fn string_items(value: &JsValue, what: &str) -> Result<Vec<String>, JsValue> {
+	list_items(value, what)?
+		.iter()
+		.map(|item| {
+			item.as_string()
+				.ok_or_else(|| error(&format!("{what} must be strings")))
+		})
+		.collect()
+}
+
 #[wasm_bindgen]
 extern "C" {
 	/// The global `String(value)`, which can throw (a `toString` that throws, or a symbol in some places).

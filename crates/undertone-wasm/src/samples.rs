@@ -22,7 +22,7 @@ use undertone::engine::samples::{SampleData, Samples};
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
-use crate::convert::{array_items, error, rust_error, string_of};
+use crate::convert::{array_items, error, list_items, rust_error, string_items, string_of};
 
 thread_local! {
 	static REGISTRY: RefCell<Samples> = RefCell::new(Samples::new());
@@ -94,12 +94,12 @@ pub fn register_sample(name: String, source: JsValue) -> Result<(), JsValue> {
 
 /// `registerSamples(names, sources)`: registers each in order; the first that fails stops, the ones before it stay.
 #[wasm_bindgen(js_name = registerSamples)]
-pub fn register_samples(names: Vec<String>, sources: Array) -> Result<(), JsValue> {
+pub fn register_samples(names: JsValue, sources: JsValue) -> Result<(), JsValue> {
+	// Both are read as plain values (not `Vec<String>`), so a sparse array of 2^32 - 1 holes meets the cap, not the glue.
+	let names = string_items(&names, "registerSamples() names")?;
+	let sources = list_items(&sources, "registerSamples() sources")?;
 	with_registry(|samples| {
-		for (name, source) in names
-			.into_iter()
-			.zip(array_items(&sources, "registerSamples() sources")?)
-		{
+		for (name, source) in names.into_iter().zip(sources) {
 			register(samples, name, &source)?;
 		}
 		Ok(())
