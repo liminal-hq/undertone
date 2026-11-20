@@ -212,9 +212,13 @@ function ensureDecoded(ctx: AudioContextLike, key: string): Promise<AudioBufferL
   };
   const promise: Promise<AudioBufferLike> = decodeEntry(ctx, key, entry.source).then(
     (buffer) => {
-      // A sample registered again while this decode was in flight keeps its new source.
-      if (registry.get(key) === entry) decoded(ctx, key, entry, buffer);
-      settle();
+      try {
+        // A sample registered again while this decode was in flight keeps its new source.
+        if (registry.get(key) === entry) decoded(ctx, key, entry, buffer);
+      } finally {
+        // Nothing is cached but the buffer itself: a failure reading it is a failure to decode, and the next call retries.
+        settle();
+      }
       return buffer;
     },
     (error: unknown) => {

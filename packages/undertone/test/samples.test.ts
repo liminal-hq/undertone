@@ -248,4 +248,40 @@ describe('what a context keeps of a decoded sample', () => {
     expect(seen.deref()).toBeUndefined();
     expect(ctx.currentTime).toBe(0);
   });
+
+  it('retries a decode whose buffer could not be read, as it does a failed decode', async () => {
+    const ctx = new FakeAudioContext();
+    const buffer = { getChannelData: vi.fn(() => new Float32Array(4)) };
+    buffer.getChannelData.mockImplementationOnce(() => {
+      throw new Error('transient read failure');
+    });
+    const decode = vi
+      .spyOn(ctx, 'decodeAudioData')
+      .mockImplementation(() => Promise.resolve(buffer as never));
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    await expect(loadSamples(ctx, ['kick'])).rejects.toThrow('transient read failure');
+    await loadSamples(ctx, ['kick']); // the failure was not cached
+    expect(decode).toHaveBeenCalledTimes(2);
+    expect(getSampleBuffer(ctx, 'kick')).toBe(buffer);
+  });
+
+  it('warns once for a voice whose decoded buffer cannot be read', async () => {
+    const ctx = new FakeAudioContext();
+    vi.spyOn(ctx, 'decodeAudioData').mockImplementation(() =>
+      Promise.resolve({
+        getChannelData: () => {
+          throw new Error('always failing');
+        }
+      } as never)
+    );
+    registerSample('kick', { data: new ArrayBuffer(8) });
+    expect(getSampleBuffer(ctx, 'kick')).toBeUndefined();
+    await new Promise((done) => setTimeout(done, 0));
+    expect(getSampleBuffer(ctx, 'kick')).toBeUndefined(); // retried, fails again
+    await new Promise((done) => setTimeout(done, 0));
+    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(console.warn).toHaveBeenCalledWith(
+      'undertone: sample "kick" failed to load — voice skipped.'
+    );
+  });
 });
