@@ -8,11 +8,18 @@
   SPDX-License-Identifier: MIT
 -->
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { initComposer } from '../playground/composer';
+import { onBeforeUnmount, onMounted } from 'vue';
 
-onMounted(() => {
-  initComposer();
+let unmounted = false;
+
+onBeforeUnmount(() => {
+  unmounted = true;
+});
+
+onMounted(async () => {
+  // Loaded on this page only: the composer carries CodeMirror, which no other page should have to fetch.
+  const { initComposer } = await import('../playground/composer');
+  if (!unmounted) initComposer();
 });
 </script>
 

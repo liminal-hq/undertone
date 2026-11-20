@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
+import type { LiveEditor } from '../live/liveEditor';
 import { runSnippet } from '../live/runSnippet';
 import { wrapFragment } from '../live/fragment';
 import type { ExampleKind } from '../live/fragment';
@@ -32,21 +33,45 @@ const status = ref('Ready.');
 const error = ref('');
 const output = ref<string[]>([]);
 const playing = ref(false);
-// Escape leaves the editor's Tab handling, so a keyboard user is never trapped in the text area.
-const tabMovesFocus = ref(false);
-const area = ref<HTMLTextAreaElement | null>(null);
+const host = ref<HTMLElement | null>(null);
 
 let run: SnippetRun | undefined;
+let editor: LiveEditor | undefined;
+let unmounted = false;
 const self: ActiveRun = { stop };
 
-const rows = computed(() => Math.max(3, source.value.split('\n').length));
 const edited = computed(() => source.value !== props.code);
 
-onMounted(() => {
-  mounted.value = true;
+onMounted(async () => {
+  // The editor (CodeMirror) is fetched only now, in a browser, on a page that has a live example. Until it
+  // is ready the reader keeps the ordinary highlighted block, and if it fails to load they keep it for good.
+  try {
+    const { createLiveEditor } = await import('../live/liveEditor');
+    if (unmounted) return;
+    mounted.value = true;
+    await nextTick();
+    if (unmounted || !host.value) return;
+    editor = createLiveEditor({
+      parent: host.value,
+      doc: source.value,
+      kind: props.kind,
+      label: 'Editable example code',
+      describedBy: hintId,
+      onChange: (text) => {
+        source.value = text;
+      },
+      onPlay: play
+    });
+  } catch (caught) {
+    mounted.value = false;
+    console.error('The live example editor could not load.', caught);
+  }
 });
 
 onBeforeUnmount(() => {
+  unmounted = true;
+  editor?.destroy();
+  editor = undefined;
   stop();
 });
 
@@ -92,32 +117,10 @@ function play(): void {
 function reset(): void {
   stop();
   source.value = props.code;
+  editor?.setText(props.code);
   error.value = '';
   output.value = [];
   status.value = 'Reset to the original code.';
-}
-
-function onKeydown(event: KeyboardEvent): void {
-  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-    event.preventDefault();
-    play();
-    return;
-  }
-  if (event.key === 'Escape') {
-    tabMovesFocus.value = true;
-    return;
-  }
-  if (event.key === 'Tab' && !event.shiftKey && !tabMovesFocus.value) {
-    event.preventDefault();
-    const el = event.target as HTMLTextAreaElement;
-    const start = el.selectionStart;
-    source.value = source.value.slice(0, start) + '  ' + source.value.slice(el.selectionEnd);
-    void nextTick(() => {
-      area.value?.setSelectionRange(start + 2, start + 2);
-    });
-    return;
-  }
-  if (event.key !== 'Tab') tabMovesFocus.value = false;
 }
 </script>
 
@@ -125,18 +128,7 @@ function onKeydown(event: KeyboardEvent): void {
   <div v-if="!mounted"><slot /></div>
   <div v-else class="live-example">
     <p class="live-label">{{ labels[kind] }}</p>
-    <textarea
-      ref="area"
-      v-model="source"
-      class="live-editor"
-      :rows="rows"
-      spellcheck="false"
-      autocapitalize="off"
-      autocomplete="off"
-      aria-label="Editable example code"
-      :aria-describedby="hintId"
-      @keydown="onKeydown"
-    ></textarea>
+    <div ref="host" class="live-editor"></div>
     <div class="live-bar">
       <button type="button" class="live-button live-play" @click="play">Play</button>
       <button type="button" class="live-button" :disabled="!playing" @click="stop">Stop</button>
@@ -172,24 +164,7 @@ function onKeydown(event: KeyboardEvent): void {
 
 .live-editor {
   display: block;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 12px 16px;
-  border: 0;
-  resize: vertical;
-  background: transparent;
-  color: var(--vp-c-text-1);
-  font-family: var(--vp-font-family-mono);
-  font-size: var(--vp-code-font-size);
-  line-height: var(--vp-code-line-height);
-  tab-size: 2;
-  white-space: pre;
-  overflow-x: auto;
-}
-
-.live-editor:focus-visible {
-  outline: 2px solid var(--vp-c-brand-1);
-  outline-offset: -2px;
+  min-height: 3em;
 }
 
 .live-bar {
