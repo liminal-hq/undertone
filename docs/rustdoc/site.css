@@ -137,7 +137,11 @@ pre,
   font-family: var(--font-family-code);
 }
 
-/* The bar */
+/*
+ * The bar. It matches the site's own header (VitePress's nav and liminalhq.ca): the wordmark at the left of a centred container, the
+ * links at its right, so the bar lines up with them on a wide screen. The bar itself is full width (its background and border run
+ * edge to edge); `.usb-inner` is the container.
+ */
 .undertone-site-bar {
   position: fixed;
   top: 0;
@@ -146,16 +150,23 @@ pre,
   z-index: 1000;
   box-sizing: border-box;
   height: var(--site-bar-height);
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 0 16px;
   background: var(--usb-bg);
   color: var(--usb-text);
   border-bottom: 1px solid var(--usb-border);
   font-family: var(--font-family);
   font-size: 14px;
   line-height: 1;
+}
+
+.usb-inner {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 32px;
 }
 
 .undertone-site-bar a {
@@ -197,7 +208,7 @@ pre,
   align-items: center;
   gap: 4px;
   min-width: 0;
-  margin: 0;
+  margin: 0 0 0 auto;
   padding: 0;
   list-style: none;
   overflow-x: auto;
@@ -223,7 +234,6 @@ pre,
 
 .usb-pill {
   flex: none;
-  margin-left: auto;
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--usb-pill-bg);
@@ -283,9 +293,12 @@ body.rustdoc {
   }
 
   .undertone-site-bar {
+    font-size: 13px;
+  }
+
+  .usb-inner {
     gap: 8px;
     padding: 0 10px;
-    font-size: 13px;
   }
 
   .usb-links {
