@@ -4,7 +4,14 @@
 // SPDX-License-Identifier: MIT
 
 import { Fraction } from './fraction.js';
-import type { ControlPatch } from './types.js';
+import type {
+  ControlInput,
+  ControlPatch,
+  OscType,
+  PanPoint,
+  ShapedWaveType,
+  SoundType
+} from './types.js';
 import { glue } from './wasm.js';
 import type { WasmPattern } from './wasm.js';
 
@@ -136,6 +143,8 @@ let wrap: <T>(handle: WasmPattern | (() => WasmPattern)) => Pattern<T>;
  * A continuous pattern (a signal: `sine`, `rand`, ...) also carries a point
  * sampler, its exact value at one instant; see `sampleAt()`.
  */
+// The control methods are declared in the interface below, which merges with this class.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class Pattern<T> {
   #handle: WasmPattern | undefined;
   #make: (() => WasmPattern) | undefined;
@@ -351,6 +360,343 @@ export class Pattern<T> {
   [Symbol.dispose](): void {
     this.free();
   }
+}
+
+/**
+ * The control methods of a pattern of voice parameters (`.gain()`, `.lpf()`, `.pan()`, ...). They are declared here, by hand,
+ * as 0.4.0 declares them, and installed on the prototype from the module's control table when an entry loads it
+ * (controlsWiring.ts); a test checks that every row of the table has a declaration.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface Pattern<T> {
+  /**
+   * Applies a whole instrument at once: merges a plain `ControlPatch` (such as
+   * one from fmVoice() or fmPresets, or loaded from saved data) into every
+   * event. Fields the patch sets overwrite the events', so call it before the
+   * per-note controls you want to win — `note('e5 g5').voice(bell).gain(0.2)`.
+   */
+  voice(this: Pattern<ControlPatch>, patch: ControlPatch): Pattern<ControlPatch>;
+
+  /**
+   * Sets/overrides the oscillator waveform or noise type across all events,
+   * clearing any sample name set by .s() — sampleName otherwise takes
+   * precedence over soundType in the engine, so without this a prior .s()
+   * would keep playing its sample silently through a later .sound() call.
+   */
+  sound(this: Pattern<ControlPatch>, type: SoundType): Pattern<ControlPatch>;
+
+  /**
+   * Sets the voice to a synth SoundType or a registered sample name — a synth
+   * type behaves exactly like sound(); anything else becomes a sample name
+   * (see samples.ts's registerSample()), clearing any previous sample name or
+   * synth type respectively so the two never both apply at once.
+   */
+  s(this: Pattern<ControlPatch>, name: SoundType | string): Pattern<ControlPatch>;
+
+  /** Bank prefix for sample lookup — tried as `${name}_${sampleName}` before falling back to bare `sampleName`. */
+  bank(this: Pattern<ControlPatch>, name: string): Pattern<ControlPatch>;
+
+  /**
+   * Resolves scale-degree events from n() into real pitches: `spec` is a scale
+   * string like `"D5:minor"`. Events without a `degree` (already pitched via
+   * note(), or unpitched noise from sound()) pass through unchanged.
+   */
+  scale(this: Pattern<ControlPatch>, spec: string): Pattern<ControlPatch>;
+
+  /**
+   * Expands chord-symbol events from chord() into simultaneous note events —
+   * one chord onset becomes N notes sharing the same whole/part, exactly the
+   * shape stack()ed chords already produce downstream (the scheduler/engine
+   * need no changes at all to play them). Events without a `chord` (already
+   * pitched via note()/n()) pass through unchanged.
+   */
+  voicing(
+    this: Pattern<ControlPatch>,
+    options?: { anchor?: string | number }
+  ): Pattern<ControlPatch>;
+
+  /** Amplitude envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  attack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Amplitude envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  decay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Fraction (0-1) of gain the decay stage settles to before release.
+   * Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  sustain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /** Amplitude envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  release(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Peak amplitude (0-1). Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  gain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Base lowpass cutoff in Hz. Creates a filter stage; omit entirely to skip
+   * filtering. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  lpf(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch>;
+
+  /** Hz the filter envelope adds on top of lpf() at its peak. Accepts a number, a mini-notation string or a pattern. */
+  lpenv(this: Pattern<ControlPatch>, hzAmount: ControlInput): Pattern<ControlPatch>;
+
+  /** Filter envelope attack time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpa(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Filter envelope decay time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpd(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Fraction (0-1) between lpf() and its envelope peak the decay stage settles
+   * to. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  lps(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /** Filter envelope release time, in seconds. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset). */
+  lpr(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Pitch glide (portamento): starts an octave above the target note and
+   * slides down. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  slide(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * FM modulation index (Strudel's `fm`): the modulator swings the carrier's
+   * frequency by index × the modulator's frequency, so the sound is equally
+   * bright at every pitch. 0 turns it off. Synth voices only. Accepts a
+   * number, a mini-notation string or a pattern.
+   */
+  fm(this: Pattern<ControlPatch>, index: ControlInput): Pattern<ControlPatch>;
+
+  /** Alias of fm() under Strudel's `fmi` name. */
+  fmi(this: Pattern<ControlPatch>, index: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * FM harmonicity (Strudel's `fmh`): the modulator's frequency as a multiple of
+   * the carrier's. Whole numbers give harmonic tones; fractions such as 3.5 or
+   * 2.76 give bells and metal. Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  fmh(this: Pattern<ControlPatch>, ratio: ControlInput): Pattern<ControlPatch>;
+
+  /** Seconds for the FM depth to reach the full index. Accepts a number, a mini-notation string or a pattern. */
+  fmattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Seconds for the FM depth to fall to fmsustain() × the index (toward silence when fmsustain() is unset). Accepts a number, a mini-notation string or a pattern. */
+  fmdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Fraction (0-1) of the index the FM depth settles to (default 1, or 0 when only fmdecay() is set). Accepts a number, a mini-notation string or a pattern. */
+  fmsustain(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /** Seconds for the FM depth to fall to 0 after the gate closes. Accepts a number, a mini-notation string or a pattern. */
+  fmrelease(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Ramp shape of the FM depth envelope: 'exp' (default, as in Strudel) or 'lin'. Not patternable. */
+  fmenv(this: Pattern<ControlPatch>, curve: 'lin' | 'exp'): Pattern<ControlPatch>;
+
+  /** The modulator's waveform: sine (default), triangle, square, sawtooth, or a shaped wave (halfsine, abssine, pulsesine). Not patternable. */
+  fmwave(this: Pattern<ControlPatch>, type: OscType | ShapedWaveType): Pattern<ControlPatch>;
+
+  /**
+   * Pitch envelope depth in semitones (Strudel's `penv`): each note starts that
+   * far from its pitch (negative = below) and returns to it over pdecay().
+   * Rising and falling sweeps alike. Synth voices only. Accepts a
+   * number, a mini-notation string or a pattern.
+   */
+  penv(this: Pattern<ControlPatch>, semitones: ControlInput): Pattern<ControlPatch>;
+
+  /** Seconds the pitch envelope takes to reach its offset (default 0: it starts there). Accepts a number, a mini-notation string or a pattern. */
+  pattack(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Seconds the pitch envelope takes to return to the note (default 0.1). Accepts a number, a mini-notation string or a pattern. */
+  pdecay(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * A frame-stepped pitch curve: semitone offsets from each note, one per frame
+   * at `rateHz` (default 140, the frame rate of classic AdLib effects), holding
+   * the last offset. Falling and rising sweeps, wobbles and trills are all
+   * just arrays of numbers. Plain data, not patternable. Overrides penv()
+   * and slide().
+   */
+  pitchsteps(
+    this: Pattern<ControlPatch>,
+    semitones: readonly number[],
+    rateHz?: number
+  ): Pattern<ControlPatch>;
+
+  /**
+   * Explicit gate length in seconds: the envelopes hold at their sustain level
+   * for this long, then release — independent of the event's length in the
+   * pattern, and also in a one-shot play(). Needs a sustain above 0 to hold.
+   * Accepts a number, a mini-notation string or a pattern (a signal is read at each onset).
+   */
+  duration(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Gate length as a fraction of each event's own length (`.legato(0.5)` holds
+   * half of it, `.legato(1)` all of it). Gates even in a one-shot play(), and
+   * is overridden by an explicit duration(). Accepts a mini-notation string to
+   * pattern it.
+   */
+  legato(this: Pattern<ControlPatch>, fraction: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Note strength: multiplies the peak amplitude only, so one instrument keeps
+   * its timbre from a ghost note (0.3) to an accent (1). Accepts a
+   * number, a mini-notation string or a pattern.
+   */
+  velocity(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Cut group (Strudel/Tidal `cut`): a new event in the same group stops the
+   * previous one with a very short fade — a closed hi-hat choking an open one,
+   * or a monophonic line retriggering. The same number on different patterns
+   * shares one group. Not patternable, like orbit().
+   */
+  cut(this: Pattern<ControlPatch>, group: number): Pattern<ControlPatch>;
+
+  /**
+   * Start-time offset in seconds applied to every event when played. Accepts a
+   * number, a mini-notation string or a pattern.
+   */
+  nudge(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Delays every event by `seconds` — an alias of nudge() under Strudel's name. */
+  late(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Moves every event `seconds` earlier — the negative of late()/nudge(). */
+  early(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Stereo position, -1 (hard left) to 1 (hard right). Accepts a mini-notation
+   * string to pattern it; every literal in the string is range-checked.
+   */
+  pan(this: Pattern<ControlPatch>, position: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Pan slide (the pan's own slide()): each note starts at pan `from` and
+   * moves linearly to its pan (the centre without one) over `seconds`, or over
+   * the note's attack when omitted. Accepts a number, a mini-notation string or a pattern for `from` (clamped to -1 to 1);
+   * `seconds` is scalar. A panpath() takes precedence.
+   */
+  panslide(
+    this: Pattern<ControlPatch>,
+    from: ControlInput,
+    seconds?: number
+  ): Pattern<ControlPatch>;
+
+  /**
+   * Autopan: an LFO at `hz` swings each note's pan either side of its pan()
+   * (or its panpath() or panslide()), from the onset through the release, as
+   * a real oscillator on the panner, not booked points. Shape it with
+   * autopandepth(), autopanshape() and autopanphase(). Accepts a
+   * number, a mini-notation string or a pattern.
+   */
+  autopan(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch>;
+
+  /** How far autopan() swings either side of the pan, 0 to 1 (default 1). Accepts a number, a mini-notation string or a pattern. */
+  autopandepth(this: Pattern<ControlPatch>, depth: ControlInput): Pattern<ControlPatch>;
+
+  /** The autopan() LFO's wave: 'sine' (default), 'triangle' or 'square'. Not patternable. */
+  autopanshape(
+    this: Pattern<ControlPatch>,
+    shape: 'sine' | 'triangle' | 'square'
+  ): Pattern<ControlPatch>;
+
+  /**
+   * Where in its cycle autopan() starts, 0 to 1 of a cycle (default 0: a sine
+   * or triangle starts at the pan moving right, a square on the right; 0.5
+   * starts the other way). Accepts a number, a mini-notation string or a
+   * pattern, so a note's LFO can start where the last one left off:
+   * `.autopanphase(saw.fast(hz * secondsPerCycle))`, which is the phase of an LFO running
+   * under the whole loop (a cycle is 240 / bpm seconds). A pattern's values are clamped to 0 to 1.
+   */
+  autopanphase(this: Pattern<ControlPatch>, phase: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Pan automation inside each note, as plain data. Give an array of pans for
+   * a frame-stepped path, one per frame at `rateHz` (default 140, the frame
+   * rate of classic AdLib effects), jumping from frame to frame and holding
+   * the last; or give `{ time, pan }` points in seconds from the onset, which
+   * ramp linearly (two points at one time make a jump). Either way it becomes
+   * the voice's `panPath`, replacing pan(). Pans are -1 to 1. Not patternable.
+   */
+  panpath(
+    this: Pattern<ControlPatch>,
+    path: readonly number[] | readonly PanPoint[],
+    rateHz?: number
+  ): Pattern<ControlPatch>;
+
+  /**
+   * Pan law: each side's level at the centre in dB, from -6 to 0. The default,
+   * -3, is the stereo panner's equal-power law; 0 keeps the louder side full
+   * like a balance control, and -6 dips the centre further. Shapes only voices
+   * that are panned (pan() or a panPath). Scalar only, like orbit().
+   */
+  panlaw(this: Pattern<ControlPatch>, db: number): Pattern<ControlPatch>;
+
+  /**
+   * Static highpass cutoff in Hz, in series after lpf(). Creates a filter
+   * stage; omit entirely to skip it. Accepts a number, a mini-notation string or a pattern.
+   */
+  hpf(this: Pattern<ControlPatch>, hz: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * LFO rate in Hz driving a 4-stage allpass phaser. Creates the phaser stage;
+   * omit entirely to skip it. Accepts a number, a mini-notation string or a pattern.
+   */
+  phaser(this: Pattern<ControlPatch>, rateHz: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Reverb send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a number, a mini-notation string or a pattern.
+   */
+  room(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Reverb decay character for the orbit's shared bus, roughly 1 (short) to
+   * 10 (long) — see effects.ts's getOrbitBus(). Accepts a mini-notation
+   * string.
+   */
+  roomsize(this: Pattern<ControlPatch>, size: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Delay send level (0-1) to this voice's orbit bus (see orbit()). No send
+   * at all when omitted. Accepts a number, a mini-notation string or a pattern.
+   */
+  delay(this: Pattern<ControlPatch>, level: ControlInput): Pattern<ControlPatch>;
+
+  /** Delay time in seconds for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
+  delaytime(this: Pattern<ControlPatch>, seconds: ControlInput): Pattern<ControlPatch>;
+
+  /** Feedback (0-1) for the orbit's shared delay bus. Accepts a number, a mini-notation string or a pattern. */
+  delayfeedback(this: Pattern<ControlPatch>, amount: ControlInput): Pattern<ControlPatch>;
+
+  /**
+   * Which shared effects bus (see effects.ts's getOrbitBus()) this voice's
+   * room()/delay() sends target. Default 0. Every voice sending to the same
+   * orbit shares one reverb and one delay line, so give a voice its own orbit
+   * number when it needs a distinct room size or delay time from its
+   * neighbours. Scalar only — not a mini-notation-patterned control.
+   */
+  orbit(this: Pattern<ControlPatch>, n: number): Pattern<ControlPatch>;
+
+  /**
+   * Multichannel (up to 7.1) placement: per-speaker output gains in the order
+   * FL, FR, C, LFE, SL, SR, RL, RR (1-8 entries). Takes precedence over
+   * pan(). On destinations that can't address that many speakers (or without
+   * enableMultichannel()), the voice folds down to stereo automatically.
+   */
+  channels(this: Pattern<ControlPatch>, gains: number[]): Pattern<ControlPatch>;
+
+  /**
+   * Places the voice at an angle on the 7.1 speaker ring: 0° front-centre,
+   * ±30° front, ±90° sides, ±150° rears, ±180° dead-behind — equal-power
+   * panned between the two nearest speakers. Sugar for channels(surroundGains(angle)).
+   */
+  surround(this: Pattern<ControlPatch>, angleDegrees: number): Pattern<ControlPatch>;
 }
 
 /**

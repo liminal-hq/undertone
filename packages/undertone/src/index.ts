@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 import init from '../wasm/undertone_wasm.js';
-import { installControls } from './controlsWiring.js';
+import { install } from './install.js';
 
 export * from './api.js';
 
 await init();
-installControls();
+install();

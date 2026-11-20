@@ -1,4 +1,4 @@
-// Types of the pattern and voice surface, copied from the reference's types.ts (the Web Audio types arrive with the engine)
+// Types of the voice surface and the minimal Web Audio surface, copied from the reference (the engine bindings will use them)
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -17,6 +17,24 @@ export type OscType = 'sine' | 'triangle' | 'square' | 'sawtooth';
 export type ShapedWaveType = 'halfsine' | 'abssine' | 'pulsesine';
 export type NoiseType = 'white' | 'pink' | 'brown';
 export type SoundType = OscType | ShapedWaveType | NoiseType;
+
+/** Runtime companion to SoundType, for code that needs to check membership (s()/.s()/.bank()). */
+export const SOUND_TYPES: readonly SoundType[] = [
+  'sine',
+  'triangle',
+  'square',
+  'sawtooth',
+  'halfsine',
+  'abssine',
+  'pulsesine',
+  'white',
+  'pink',
+  'brown'
+];
+
+export function isSoundType(word: string): word is SoundType {
+  return (SOUND_TYPES as readonly string[]).includes(word);
+}
 
 /** One point of a voice's `panPath`: a stereo position at a time inside the note. */
 export interface PanPoint {
@@ -203,3 +221,152 @@ export type ControlPatch = Partial<VoiceParams> & {
   degree?: number;
   chord?: string;
 };
+
+/**
+ * The minimal Web Audio surface engine.ts depends on. A real AudioContext/OscillatorNode/etc.
+ * satisfies these structurally, so playVoice() works unchanged in a browser; tests pass a
+ * hand-written fake instead (Web Audio doesn't exist outside a browser/jsdom-with-polyfill).
+ */
+export interface AudioParamLike {
+  value: number;
+  setValueAtTime(value: number, startTime: number): unknown;
+  linearRampToValueAtTime(value: number, endTime: number): unknown;
+  exponentialRampToValueAtTime(value: number, endTime: number): unknown;
+  /** Optional: used by playback handles to cancel automation when a voice is stopped early. A hard cut is used when absent. */
+  cancelScheduledValues?(cancelTime: number): unknown;
+  /** Optional: used by playback handles for a smooth fade-out when a voice is stopped early. */
+  setTargetAtTime?(target: number, startTime: number, timeConstant: number): unknown;
+}
+
+export interface AudioNodeLike {
+  /** A destination may be another node (audio-rate signal) or a param (e.g. the phaser LFO -> each stage's frequency). */
+  connect(destination: AudioNodeLike | AudioParamLike, output?: number, input?: number): void;
+  /** Optional: a real AudioNode has it; the engine never needs it, but consumers' output nodes may use it. */
+  disconnect?(): void;
+  /** Optional channel configuration, set by createMonoFold(); a real AudioNode has these. */
+  channelCount?: number;
+  channelCountMode?: string;
+  channelInterpretation?: string;
+}
+
+/**
+ * The destination surface the engine reads (and enableMultichannel() writes).
+ * All members are optional because fakes and exotic contexts may not have
+ * them; a plain stereo destination is assumed when absent.
+ */
+export interface AudioDestinationNodeLike extends AudioNodeLike {
+  maxChannelCount?: number;
+  channelCount?: number;
+  channelInterpretation?: string;
+}
+
+export interface OscillatorNodeLike extends AudioNodeLike {
+  /** Loosely typed (not OscType) so a real OscillatorNode — whose `type` also allows "custom" — still satisfies this structurally. */
+  type: string;
+  frequency: AudioParamLike;
+  /** Optional: only needed for shaped waveforms. Setting a wave makes a real OscillatorNode's `type` "custom". */
+  setPeriodicWave?(wave: PeriodicWaveLike): void;
+  start(when?: number): void;
+  stop(when?: number): void;
+}
+
+/** Opaque handle to a custom waveform; a real PeriodicWave satisfies it. */
+export type PeriodicWaveLike = object;
+
+export interface GainNodeLike extends AudioNodeLike {
+  gain: AudioParamLike;
+}
+
+export interface BiquadFilterNodeLike extends AudioNodeLike {
+  type: string;
+  frequency: AudioParamLike;
+  Q: AudioParamLike;
+}
+
+export interface DynamicsCompressorNodeLike extends AudioNodeLike {
+  threshold: AudioParamLike;
+  knee: AudioParamLike;
+  ratio: AudioParamLike;
+  attack: AudioParamLike;
+  release: AudioParamLike;
+}
+
+/** A wave shaper: maps each sample through `curve`, the master bus's ceiling clip. */
+export interface WaveShaperNodeLike extends AudioNodeLike {
+  curve: Float32Array | null;
+  oversample: 'none' | '2x' | '4x';
+}
+
+export interface StereoPannerNodeLike extends AudioNodeLike {
+  pan: AudioParamLike;
+}
+
+/** A channel merger has no extra members the engine needs — inputs are addressed via connect(). */
+export type ChannelMergerNodeLike = AudioNodeLike;
+
+export interface ConvolverNodeLike extends AudioNodeLike {
+  buffer: AudioBufferLike | null;
+}
+
+export interface DelayNodeLike extends AudioNodeLike {
+  delayTime: AudioParamLike;
+}
+
+export interface AudioBufferLike {
+  getChannelData(channel: number): Float32Array;
+}
+
+export interface AudioBufferSourceNodeLike extends AudioNodeLike {
+  buffer: AudioBufferLike | null;
+  loop: boolean;
+  playbackRate: AudioParamLike;
+  start(when?: number): void;
+  stop(when?: number): void;
+}
+
+export interface AudioContextLike {
+  currentTime: number;
+  sampleRate: number;
+  destination: AudioDestinationNodeLike;
+  createOscillator(): OscillatorNodeLike;
+  createGain(): GainNodeLike;
+  createBiquadFilter(): BiquadFilterNodeLike;
+  createStereoPanner(): StereoPannerNodeLike;
+  createChannelMerger(numberOfInputs: number): ChannelMergerNodeLike;
+  createBufferSource(): AudioBufferSourceNodeLike;
+  createBuffer(numChannels: number, length: number, sampleRate: number): AudioBufferLike;
+  createConvolver(): ConvolverNodeLike;
+  createDelay(maxDelayTime?: number): DelayNodeLike;
+  /** Optional: needed for createMasterBus()'s limiter; without it the bus is gain only. */
+  createDynamicsCompressor?(): DynamicsCompressorNodeLike;
+  /** Optional: needed for createMasterBus()'s `ceiling`; without it the bus has no ceiling. */
+  createWaveShaper?(): WaveShaperNodeLike;
+  /** Optional: needed for shaped waveforms (halfsine, abssine, pulsesine); without it they fall back to a sine. */
+  createPeriodicWave?(
+    real: Float32Array,
+    imag: Float32Array,
+    constraints?: { disableNormalization?: boolean }
+  ): PeriodicWaveLike;
+  /** Decodes encoded audio data (e.g. fetched via samples.ts's registerSample({url})). */
+  decodeAudioData(data: ArrayBuffer): Promise<AudioBufferLike>;
+}
+
+export interface RenderedAudioBufferLike extends AudioBufferLike {
+  readonly numberOfChannels: number;
+  readonly length: number;
+  readonly sampleRate: number;
+}
+
+export interface OfflineAudioContextLike extends AudioContextLike {
+  readonly length: number;
+  startRendering(): Promise<RenderedAudioBufferLike>;
+  /**
+   * Pauses rendering at `suspendTime` (seconds, quantized to a render quantum)
+   * and resolves once it has paused, so more nodes can be booked before
+   * `resume()`. Optional: a render that asks for a `bookingWindow` on a
+   * context without it books everything up front instead.
+   */
+  suspend?(suspendTime: number): Promise<void>;
+  /** Continues a render paused by `suspend()`. */
+  resume?(): Promise<void>;
+}

@@ -1,4 +1,4 @@
-// Tests of the control generator against a fake backend and the real control table, until the module exports its dispatcher
+// Tests of the control generator against a fake backend and the real control table, and of the real wiring
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -7,10 +7,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import '@liminal-hq/undertone'; // loads the module
 import * as wasm from '@liminal-hq/undertone/wasm';
-import { installControlMethods, controlNames } from '../dist/controls.js';
+import { OWN_METHODS, installControlMethods, controlNames } from '../dist/controls.js';
 import type { ControlBackend } from '../dist/controls.js';
 import type { ControlRow } from '../dist/controlTypes.js';
-import { installControls, wasmControlBackend } from '../dist/controlsWiring.js';
+import { installControls } from '../dist/controlsWiring.js';
+import { Pattern, note } from '@liminal-hq/undertone';
 
 const table = wasm.controlTable() as ControlRow[];
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -20,19 +21,24 @@ class Fake {
   constructor(readonly handle: string) {}
 }
 const calls: string[] = [];
+const record =
+  (kind: string) =>
+  (receiver: string, ...args: unknown[]) => {
+    calls.push(`${kind} ${receiver} ${args.map((arg) => JSON.stringify(arg)).join(' ')}`.trim());
+    return `${receiver}.${kind}`;
+  };
 const backend: ControlBackend<string> = {
-  control: (receiver, name, input, time) => {
-    calls.push(`control ${receiver} ${name} ${JSON.stringify(input)} ${time ?? '-'}`);
-    return `${receiver}.${name}`;
-  },
-  controlPattern: (receiver, name, input, time) => {
-    calls.push(`controlPattern ${receiver} ${name} ${input} ${time ?? '-'}`);
-    return `${receiver}.${name}`;
-  },
-  controlValue: (receiver, name, ...args) => {
-    calls.push(`controlValue ${receiver} ${name} ${JSON.stringify(args)}`);
-    return `${receiver}.${name}`;
-  }
+  control: record('control'),
+  controlPattern: record('controlPattern'),
+  panslide: record('panslide'),
+  panslidePattern: record('panslidePattern'),
+  pitchsteps: record('pitchsteps'),
+  channels: record('channels'),
+  panpath: record('panpath'),
+  text: record('text'),
+  voice: record('voice'),
+  scale: record('scale'),
+  voicing: record('voicing')
 };
 const host = {
   isPattern: (value: unknown): value is Fake => value instanceof Fake,
@@ -48,7 +54,11 @@ describe('the control table', () => {
 
   it('is covered by the hand-written declarations', () => {
     const declared = new Set(
-      [...read('../src/controlMethods.ts').matchAll(/^ {2,4}([a-z0-9]+)[(<]/gm)].map((m) => m[1])
+      [
+        ...read('../src/pattern.ts').matchAll(
+          /^ {2}([a-z0-9]+)\(\n? *this: Pattern<ControlPatch>/gm
+        )
+      ].map((m) => m[1])
     );
     expect(declared.size).toBeGreaterThan(50);
     expect(controlNames(table).filter((name) => !declared.has(name))).toEqual([]);
@@ -73,10 +83,10 @@ describe('installControlMethods', () => {
   const target = (handle = 'p') =>
     new Target(handle) as unknown as Record<string, (...a: unknown[]) => Fake>;
 
-  it('installs one non-enumerable method per row', () => {
-    for (const row of table) {
-      expect(typeof Target.prototype[row.jsName as keyof Target]).toBe('function');
-      expect(Object.keys(Target.prototype)).not.toContain(row.jsName);
+  it('installs one non-enumerable method per row, and the three hand-written ones', () => {
+    for (const name of [...controlNames(table), ...OWN_METHODS]) {
+      expect(typeof Target.prototype[name as keyof Target]).toBe('function');
+      expect(Object.keys(Target.prototype)).not.toContain(name);
     }
   });
 
@@ -86,32 +96,51 @@ describe('installControlMethods', () => {
     target().gain('0.2 0.4');
     target().lpf(new Fake('sig'));
     expect(gained).toBeInstanceOf(Fake);
-    expect(gained.handle).toBe('p.gain');
+    expect(gained.handle).toBe('p.control');
     expect(calls).toEqual([
-      'control p gain 0.5 -',
-      'control p gain "0.2 0.4" -',
-      'controlPattern p lpf sig -'
+      'control p "gain" 0.5',
+      'control p "gain" "0.2 0.4"',
+      'controlPattern p "lpf" "sig"'
     ]);
   });
 
-  it('passes the extra seconds of a patternable control with a time', () => {
+  it('sends panslide its seconds, and refuses a pattern for them', () => {
     calls.length = 0;
     target().panslide(-1, 0.3);
-    expect(calls).toEqual(['control p panslide -1 0.3']);
+    target().panslide(new Fake('from'), 0.3);
+    expect(calls).toEqual(['panslide p -1 0.3', 'panslidePattern p "from" 0.3']);
+    expect(() => target().panslide(0, new Fake('s'))).toThrow(
+      'panslide() takes a plain value, not a pattern; it cannot change from event to event'
+    );
   });
 
-  it('sends the other kinds their arguments as given', () => {
+  it('sends the plain-value and list controls their arguments as given, and refuses a pattern in a list', () => {
     calls.length = 0;
     target().cut(2);
     target().channels([1, 0]);
     target().panpath([0, 1], 4);
+    target().pitchsteps([0, 7], 100);
     target().sound('sine');
+    target().voice({ pitch: 1 });
+    target().scale('C4:major');
+    target().voicing({ anchor: 'c4' });
+    target().voicing();
     expect(calls).toEqual([
-      'controlValue p cut [2]',
-      'controlValue p channels [[1,0]]',
-      'controlValue p panpath [[0,1],4]',
-      'controlValue p sound ["sine"]'
+      'control p "cut" 2',
+      'channels p [1,0]',
+      'panpath p [0,1] 4',
+      'pitchsteps p [0,7] 100',
+      'text p "sound" "sine"',
+      'voice p {"pitch":1}',
+      'scale p "C4:major"',
+      'voicing p "c4"',
+      'voicing p'
     ]);
+    for (const name of ['channels', 'panpath', 'pitchsteps']) {
+      expect(() => target()[name](new Fake('x'))).toThrow(
+        `${name}() takes a plain value, not a pattern; it cannot change from event to event`
+      );
+    }
   });
 
   it('refuses a row that would replace an existing method', () => {
@@ -127,9 +156,11 @@ describe('installControlMethods', () => {
 });
 
 describe('the real wiring', () => {
-  it('waits for the module to export its dispatcher (RF-24 part 2)', () => {
-    // When part 2 lands this flips: the backend exists and installControls() installs the methods on Pattern.
-    const present = wasmControlBackend() !== undefined;
-    expect(installControls()).toBe(present);
+  it('has installed every method on Pattern, and installing again changes nothing', () => {
+    for (const name of [...controlNames(table), ...OWN_METHODS]) {
+      expect(typeof Pattern.prototype[name as keyof Pattern<unknown>]).toBe('function');
+    }
+    installControls();
+    expect(note('c3').gain(0.5)).toBeInstanceOf(Pattern);
   });
 });

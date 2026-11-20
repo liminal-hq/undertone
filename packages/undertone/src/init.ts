@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import initWasm from '../wasm/undertone_wasm.js';
-import { installControls } from './controlsWiring.js';
+import { install } from './install.js';
 
 export * from './api.js';
 
@@ -13,7 +13,7 @@ let ready: Promise<void> | undefined;
 /** Instantiates the module once; every call returns the same promise. */
 export function init(): Promise<void> {
   ready ??= initWasm().then(() => {
-    installControls();
+    install();
   });
   return ready;
 }

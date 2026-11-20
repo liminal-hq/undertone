@@ -1,4 +1,4 @@
-// Wires the control generator to the real pattern class and, when the module has it, the module's control dispatcher
+// Wires the control generator to the real pattern class and the module's dispatchers
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -10,42 +10,42 @@ import { Pattern, handleOfPattern, patternOfHandle } from './pattern.js';
 import { glue } from './wasm.js';
 import type { WasmPattern } from './wasm.js';
 
-/** The dispatcher methods RF-24 part 2 adds to `WasmPattern` (the shape the boundary document describes). */
-interface ControlGlue {
-  control(name: string, input: number | string, time?: number): WasmPattern;
-  controlPattern(name: string, input: WasmPattern, time?: number): WasmPattern;
-  controlValue(name: string, ...args: unknown[]): WasmPattern;
-}
-
-/** The backend over the module's dispatcher, or undefined while the module does not export one (RF-24 part 1). */
-export function wasmControlBackend(): ControlBackend<WasmPattern> | undefined {
-  const proto = glue.WasmPattern.prototype as unknown as Partial<ControlGlue>;
-  if (typeof proto.control !== 'function' || typeof proto.controlPattern !== 'function') {
-    return undefined;
-  }
-  const on = (receiver: WasmPattern) => receiver as unknown as ControlGlue;
+/** The backend over the module's dispatchers (`.control`, `.controlPattern`, `.panslide`, ... of `WasmPattern`). */
+export function wasmControlBackend(): ControlBackend<WasmPattern> {
   return {
-    control: (receiver, name, input, time) => on(receiver).control(name, input, time),
-    controlPattern: (receiver, name, input, time) => on(receiver).controlPattern(name, input, time),
-    controlValue: (receiver, name, ...args) => on(receiver).controlValue(name, ...args)
+    control: (receiver, name, input) => receiver.control(name, input),
+    controlPattern: (receiver, name, input) => receiver.controlPattern(name, input),
+    panslide: (receiver, from, seconds) => receiver.panslide(from, seconds),
+    panslidePattern: (receiver, from, seconds) => receiver.panslidePattern(from, seconds),
+    pitchsteps: (receiver, semitones, rate) => receiver.pitchsteps(semitones, rate),
+    channels: (receiver, gains) => receiver.channels(gains),
+    panpath: (receiver, path, rate) => receiver.panpath(path, rate),
+    text: (receiver, name, value) =>
+      name === 'sound'
+        ? receiver.sound(value)
+        : name === 's'
+          ? receiver.s(value)
+          : receiver.bank(value),
+    voice: (receiver, patch) => receiver.voice(patch),
+    scale: (receiver, spec) => receiver.scale(spec),
+    voicing: (receiver, anchor) => receiver.voicing(anchor)
   };
 }
 
 let installed = false;
 
-/**
- * Installs the control methods on `Pattern.prototype` once the module is loaded. Returns whether the methods exist: false
- * until the module exports its dispatcher.
- */
-export function installControls(): boolean {
-  if (installed) return true;
-  const backend = wasmControlBackend();
-  if (!backend) return false;
-  installControlMethods(Pattern.prototype, glue.controlTable() as ControlRow[], backend, {
-    isPattern: (value): value is Pattern<unknown> => value instanceof Pattern,
-    handleOf: handleOfPattern,
-    wrap: (handle) => patternOfHandle(handle)
-  });
+/** Installs the control methods on `Pattern.prototype` once the module is loaded. Safe to call again. */
+export function installControls(): void {
+  if (installed) return;
+  installControlMethods(
+    Pattern.prototype,
+    glue.controlTable() as ControlRow[],
+    wasmControlBackend(),
+    {
+      isPattern: (value): value is Pattern<unknown> => value instanceof Pattern,
+      handleOf: handleOfPattern,
+      wrap: (handle) => patternOfHandle(handle)
+    }
+  );
   installed = true;
-  return true;
 }
