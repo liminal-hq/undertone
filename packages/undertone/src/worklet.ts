@@ -4,15 +4,15 @@
 // SPDX-License-Identifier: MIT
 
 // The default backend replays the engine's records on the caller's Web Audio context (D-09) and is untouched. This entry is a
-// second, separate way to play: `createWorkletOutput(context)` adds an `AudioWorkletProcessor` that holds the render module's
+// second, separate way to play: `createWorkletOutput(context)` adds an `AudioWorkletProcessor` that holds the worklet module's
 // `WorkletEngine`, and `output.play(pattern)` / `output.loop(pattern)` collect the pattern's voices here, on the main thread
 // (`collectVoices`, exactly as `renderToBuffer` does: foreign leaves, the tempo, `setcpm()`, and sample decoding all stay on
 // this side, D-48), and post them with the frame they start at. The worklet books them as its clock reaches them and renders each
 // block with the offline render's own maths. A loop repeats on the worklet's clock, so it keeps time when the main thread is busy.
 //
-// How it loads (D-47): the main thread compiles the render module once and posts the `WebAssembly.Module` in `processorOptions`;
+// How it loads (D-47): the main thread compiles the worklet module once and posts the `WebAssembly.Module` in `processorOptions`;
 // the worklet instantiates it synchronously (`initSync`). The module added to the worklet is made at run time, as a blob, from
-// the `TextDecoder`/`TextEncoder` shim (the worklet scope has neither), the render module's glue text, and the processor
+// the `TextDecoder`/`TextEncoder` shim (the worklet scope has neither), the worklet module's glue text, and the processor
 // (workletShim.ts, workletProcessor.ts), so nothing here depends on a bundler; the glue and the module are found with
 // `new URL(..., import.meta.url)`, which bundlers copy as assets, and each can be given as an option instead.
 //
@@ -63,7 +63,7 @@ export interface WorkletContextLike {
   decodeAudioData?(data: ArrayBuffer): Promise<unknown>;
 }
 
-/** Where the render module (or the glue) comes from, when it is not next to this file. */
+/** Where the worklet module (or the glue) comes from, when it is not next to this file. */
 export type WorkletSource = WebAssembly.Module | BufferSource | Response | string | URL;
 
 /** The valid output channel counts: the render's (1, 2, 4, 6, 8). */
@@ -83,11 +83,11 @@ export interface WorkletOutputOptions {
   connect?: unknown;
   /** How far ahead of now a pass starts when `when` is not given, in seconds. Default 0.15. */
   leadTime?: number;
-  /** The render module (`undertone_wasm_render_bg.wasm`): a compiled module, its bytes, a `Response`, or a URL. Default: next to this file. */
+  /** The worklet module (`undertone_worklet_bg.wasm`): a compiled module, its bytes, a `Response`, or a URL. Default: next to this file. */
   wasm?: WorkletSource;
-  /** Where to fetch the render module's glue (`undertone_wasm_render.js`) from. Default: next to this file. */
+  /** Where to fetch the worklet module's glue (`undertone_worklet.js`) from. Default: next to this file. */
   glueUrl?: string | URL;
-  /** The render module's glue as text, when you have it already (nothing is fetched). */
+  /** The worklet module's glue as text, when you have it already (nothing is fetched). */
   glueText?: string;
   /** A module you host yourself (made with `workletModuleSource`), for a page whose policy refuses `blob:` URLs. Skips the blob. */
   moduleUrl?: string | URL;
@@ -213,7 +213,7 @@ const DEFAULT_TIMEOUT = 5000;
 /** The module the worklet loads: the shim, the glue, then the processor. */
 export function workletModuleSource(glueText: string): string {
   return [
-    '// Undertone worklet backend: a TextDecoder/TextEncoder shim, the render module glue, and the processor.',
+    '// Undertone worklet backend: a TextDecoder/TextEncoder shim, the worklet module glue, and the processor.',
     workletShimSource,
     glueText,
     workletProcessorSource
@@ -239,12 +239,12 @@ async function readBytes(source: WebAssembly.Module | BufferSource | Response | 
   return source;
 }
 
-/** The URL of the render module's glue and module, next to this file (a bundler copies each as an asset). */
+/** The URL of the worklet module's glue and module, next to this file (a bundler copies each as an asset). */
 function defaultGlueUrl(): URL {
-  return new URL('../wasm/render/undertone_wasm_render.js', import.meta.url);
+  return new URL('../wasm/worklet/undertone_worklet.js', import.meta.url);
 }
 function defaultWasmUrl(): URL {
-  return new URL('../wasm/render/undertone_wasm_render_bg.wasm', import.meta.url);
+  return new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.meta.url);
 }
 
 /** Adds the processor to the context's worklet once. */
@@ -363,7 +363,7 @@ function isCloneError(error: unknown): boolean {
  *
  * Opt-in: the package's default is the Web Audio backend. Call it after the package has loaded (`import '@liminal-hq/undertone'`,
  * or `await init()` from `./init`). It adds the processor to the context's worklet (once per context), starts it, and resolves
- * when the processor has instantiated the render module and said it is ready.
+ * when the processor has instantiated the worklet module and said it is ready.
  */
 export async function createWorkletOutput(
   context: WorkletContextLike,
@@ -392,7 +392,7 @@ export async function createWorkletOutput(
   if (options.seed !== undefined) engineOptions.seed = options.seed;
   if (options.master !== undefined) engineOptions.master = options.master;
 
-  // The render module, compiled once on this thread; its bytes are kept to post when the worklet cannot take a module.
+  // The worklet module, compiled once on this thread; its bytes are kept to post when the worklet cannot take a module.
   const [adding, source] = await Promise.all([
     addProcessor(context, options),
     readBytes(options.wasm ?? defaultWasmUrl())

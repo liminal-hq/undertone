@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 // The main-thread side runs against a fake context, node, and message port. The processor runs for real: the module the package
-// builds for the worklet (shim, the render module's glue, processor) is evaluated in a bare `vm` context that has no `TextDecoder`,
+// builds for the worklet (shim, the worklet module's glue, processor) is evaluated in a bare `vm` context that has no `TextDecoder`,
 // `TextEncoder`, `fetch`, `URL`, or `import.meta`, as the worklet scope has none, with a stand-in `AudioWorkletProcessor`.
 // That proves the shim is present and enough, that the glue never reaches for the page's globals, and that what the processor
 // renders equals what `renderToBuffer` renders. A headless browser run (harness/check.ts) does the same in a real worklet.
@@ -33,8 +33,8 @@ import {
 import { workletProcessorName, workletProcessorSource } from '../dist/workletProcessor.js';
 import { workletShimSource } from '../dist/workletShim.js';
 
-const wasmPath = new URL('../wasm/render/undertone_wasm_render_bg.wasm', import.meta.url);
-const gluePath = new URL('../wasm/render/undertone_wasm_render.js', import.meta.url);
+const wasmPath = new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.meta.url);
+const gluePath = new URL('../wasm/worklet/undertone_worklet.js', import.meta.url);
 const wasmBytes = readFileSync(wasmPath);
 const glueText = readFileSync(gluePath, 'utf8');
 
@@ -135,7 +135,7 @@ function fakeOptions(extra: Partial<WorkletOutputOptions> = {}) {
 }
 
 describe('createWorkletOutput', () => {
-  it('adds the module once per context, from a blob made at run time, and posts the compiled render module', async () => {
+  it('adds the module once per context, from a blob made at run time, and posts the compiled worklet module', async () => {
     const context = fakeContext();
     const urls: string[] = [];
     const create = URL.createObjectURL.bind(URL);
@@ -440,7 +440,7 @@ interface Processor {
 }
 
 /**
- * A worklet-like scope: the shim, the render module's glue (made evaluable outside a module), and the processor, run in a `vm`
+ * A worklet-like scope: the shim, the worklet module's glue (made evaluable outside a module), and the processor, run in a `vm`
  * context with none of `TextDecoder`, `TextEncoder`, `fetch`, `URL`, or `performance` unless `clock` is given.
  */
 function workletScope(options: { clock?: () => number; glue?: string } = {}) {
