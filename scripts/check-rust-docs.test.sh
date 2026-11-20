@@ -110,5 +110,23 @@ status=0
 out=$(RUSTDOC_DIR="$bar" bash "$script" --site-bar 2>&1) || status=$?
 if [ "$status" -ne 0 ] && grep -q 'player.rs.html' <<<"$out"; then pass "a source page without the site bar fails"; else bad "a source page without the site bar was accepted (status $status): $out"; fi
 
+# Unresolved links: an href that is a Rust path (`self`, `crate::...`, `undertone_*::...`) fails and names the page and the path.
+links="$work/links"
+mkdir -p "$links"/{undertone/player,undertone_engine}
+echo '<body><a href="../undertone_engine/index.html">engine</a> <a href="https://example.com/a::b">x</a></body>' >"$links/undertone/index.html"
+status=0
+out=$(RUSTDOC_DIR="$links" bash "$script" --links 2>&1) || status=$?
+if [ "$status" -eq 0 ]; then pass "pages whose links are all URLs are accepted"; else bad "pages with only URL links were refused: $out"; fi
+echo '<body><a href="self">module documentation</a></body>' >"$links/undertone/player/struct.Player.html"
+status=0
+out=$(RUSTDOC_DIR="$links" bash "$script" --links 2>&1) || status=$?
+if [ "$status" -ne 0 ] && grep -q 'struct.Player.html' <<<"$out" && grep -q 'href="self"' <<<"$out" && ! grep -q 'undertone/index.html' <<<"$out"; then
+  pass "a link to self fails and names the page"
+else bad "a link to self was accepted or reported wrongly (status $status): $out"; fi
+echo '<body><a href="undertone_engine::render::RenderPlan::new">x</a></body>' >"$links/undertone_engine/index.html"
+status=0
+out=$(RUSTDOC_DIR="$links" bash "$script" --links 2>&1) || status=$?
+if [ "$status" -ne 0 ] && grep -q 'undertone_engine/index.html' <<<"$out" && grep -q 'RenderPlan::new' <<<"$out"; then pass "a link that is a crate path fails and names the path"; else bad "a crate path link was accepted (status $status): $out"; fi
+
 [ "$failures" -eq 0 ] && echo "check-rust-docs.test: all passed"
 exit "$failures"

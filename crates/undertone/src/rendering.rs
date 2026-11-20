@@ -148,7 +148,7 @@ impl RenderedAudio {
 /// # Errors
 ///
 /// An option the reference rejects fails with its message, in its order (see
-/// [`RenderPlan::new`](undertone_engine::render::RenderPlan::new)); a pattern that fails when queried, a voice
+/// `RenderPlan::new` in the engine crate); a pattern that fails when queried, a voice
 /// that fails to book, and a render over the engine's bounds (1,048,576 cycles, 268,435,456 frames) fail the
 /// same way. A render of more than [`MAX_RENDER_SAMPLES`] (2^28) samples in all channels, or one the machine
 /// cannot hold, returns an error before it renders anything (decision D-37); the reference would run out of

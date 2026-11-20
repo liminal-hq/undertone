@@ -9,7 +9,7 @@
 //! In the TypeScript these are values exported from the package (`import { sine2 } from '@liminal-hq/undertone'`).
 //! In Rust a pattern is built by a call, so each is a function returning a fresh [`Pattern<Value>`](Pattern)
 //! (building one costs a node and queries nothing). They are thin wrappers over the pattern crate's
-//! [`periodic`](undertone_pattern::signal::periodic), [`rand`](undertone_pattern::signal::rand), and friends,
+//! `periodic`, `rand`, and friends,
 //! fixed to [`Value`] numbers: a control takes one as it takes a number or a string, and `n()` takes one that
 //! has events (`n_pattern(&saw().range(0.0, 8.0).segment(8.0)?)`). For a pattern of plain `f64`s, use the
 //! pattern crate's generic functions (`periodic::<f64>(Shape::Sine, false)`).

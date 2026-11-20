@@ -8,7 +8,7 @@
 //!
 //! It reads no clock and starts no timer. A caller gives the window (seconds since the pattern started), where
 //! the pattern started on the graph's clock, and the tempo; the [`Transport`](crate::Transport) is one caller,
-//! a test is another. It is the step the reference's `loop()` takes at each tick ([`schedule_span`](undertone_engine::render::schedule_span) over the
+//! a test is another. It is the step the reference's `loop()` takes at each tick (`schedule_span` in the engine crate, over the
 //! window between what is booked and the look-ahead), with the window's edges placed the way the reference
 //! places them: on a grid of [`WINDOW_GRID`] steps a cycle, so the fractions stay small however long the
 //! pattern has been playing. Event times are exact rationals, so an onset falls in exactly one half-open window

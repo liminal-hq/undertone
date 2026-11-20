@@ -11,7 +11,7 @@
 //! browser worklet, and a test.
 //!
 //! - [`booking`]: [`book_window`], the pure part. Find every voice that starts in `[t0, t1)` of a pattern at a
-//!   tempo and book it on an [`Engine`](undertone_engine::engine::Engine). Booking a window equals booking its
+//!   tempo and book it on an `Engine` of the engine crate. Booking a window equals booking its
 //!   halves, and no voice at a boundary is booked twice (property-tested).
 //! - [`clock`]: the [`Clock`] trait (`now`, frames played, output latency) and the deterministic
 //!   [`ManualClock`].

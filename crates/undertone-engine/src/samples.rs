@@ -147,7 +147,7 @@ struct Entry {
 	base_note: Option<Pitch>,
 }
 
-/// The sample registry. See the [module documentation](self).
+/// The sample registry. See the module documentation.
 #[derive(Debug, Clone, Default)]
 pub struct Samples {
 	entries: HashMap<String, Entry>,
