@@ -272,6 +272,54 @@ describe('a periodic wave the context failed to make', () => {
   });
 });
 
+describe('a shared node the context failed to make', () => {
+  const delayed = { delayLevel: 0.5, delayTime: 0.2 };
+
+  it('is made again, and wired, for the next voice that names it (a transient createDelay failure)', () => {
+    const ctx = new FakeAudioContext();
+    const createDelay = ctx.createDelay.bind(ctx);
+    vi.spyOn(ctx, 'createDelay').mockImplementationOnce(() => {
+      throw new Error('transient delay failure');
+    });
+    expect(() => playParams(ctx, [{ pitch: 'a4', ...delayed }], { when: 0 })).toThrow(
+      'transient delay failure'
+    );
+    expect(ctx.delays).toHaveLength(0);
+    vi.mocked(ctx.createDelay).mockImplementation(createDelay);
+    playParams(ctx, [{ pitch: 'b4', ...delayed }], { when: 1 });
+    expect(ctx.delays).toHaveLength(1);
+    expect(ctx.delays[0].connectedTo.length).toBeGreaterThan(0);
+    // The bus is made once: a third voice shares it.
+    playParams(ctx, [{ pitch: 'c5', ...delayed }], { when: 2 });
+    expect(ctx.delays).toHaveLength(1);
+  });
+
+  it('is made again for a convolver, and for the gain at the head of a bus, that failed once', () => {
+    // The third gain of a play with a room is the bus's input (the voice's own and the master's come first).
+    for (const [method, failing] of [
+      ['createConvolver', 1],
+      ['createGain', 3]
+    ] as const) {
+      const ctx = new FakeAudioContext();
+      const original = ctx[method].bind(ctx) as () => unknown;
+      let calls = 0;
+      vi.spyOn(ctx, method).mockImplementation((() => {
+        calls += 1;
+        if (calls === failing) throw new Error(`transient ${method} failure`);
+        return original();
+      }) as never);
+      const room = { roomLevel: 0.4 };
+      expect(() => playParams(ctx, [{ pitch: 'a4', ...room }], { when: 0 })).toThrow(
+        `transient ${method} failure`
+      );
+      playParams(ctx, [{ pitch: 'b4', ...room }], { when: 1 });
+      expect(ctx.convolvers).toHaveLength(1);
+      const fed = ctx.gains.some((gain) => gain.connectedTo.includes(ctx.convolvers[0]));
+      expect(fed).toBe(true);
+    }
+  });
+});
+
 describe('undoing a failed play when the source cannot be cut', () => {
   it('keeps the source known so a later stop record still reaches it, and rethrows the first error', () => {
     const ctx = new FakeAudioContext();

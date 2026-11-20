@@ -66,6 +66,9 @@ let createMethods: string[] | undefined;
 /** Seconds of the stop fade per time constant of `setTargetAtTime`, as the engine books it (five time constants). */
 const STOP_FADE_TIME_CONSTANTS = 5;
 
+/** The kinds of node only the engine's shared buses and master make (a voice's own nodes are of other kinds). */
+const SHARED_KINDS = new Set(['Delay', 'Convolver', 'WaveShaper', 'DynamicsCompressor']);
+
 /** Replays records on one context; holds the nodes, buffers, and waves the records name until the engine releases them. */
 export class Replayer {
   readonly #ctx: AudioContextLike;
@@ -91,6 +94,15 @@ export class Replayer {
    */
   readonly #deadNodes = new Set<number>();
   readonly #deadBuffers = new Set<number>();
+  /**
+   * The records a failed `create` could not apply, by node: the create itself and what the batch then did to the node. The
+   * engine keeps a shared node (an orbit bus's delay or reverb, the master bus) and names it again, so the next batch that
+   * connects something to it makes it again and applies these; a voice's own nodes are never connected to later, so their
+   * records wait for the engine's release. Only the failing batch's records are kept (`batch`), so the list stays bounded.
+   */
+  readonly #parked = new Map<number, { batch: number; rows: number[][]; shared: boolean }>();
+  #batch = 0;
+  #reviving = false;
   /** A wave the context failed to make keeps its coefficients: the engine caches shaped waves, so a later voice names it again. */
   readonly #deadWaves = new Map<number, { real: Float32Array; imag: Float32Array; raw: boolean }>();
   readonly #hostBuffers: () => readonly HostBuffer[];
@@ -158,6 +170,7 @@ export class Replayer {
     const ctx = this.#ctx as unknown as Record<string, (...args: unknown[]) => unknown>;
     let previous = '';
     let failure: { error: unknown } | undefined;
+    const batch = (this.#batch += 1);
     const fresh: number[] = [];
     // The sources this batch made, and which of them it started: what an undone batch has to cut.
     const sources: number[] = [];
@@ -182,7 +195,17 @@ export class Replayer {
       ) {
         this.#hardStop = undefined;
       }
+      if (name === 'connect') {
+        for (const id of this.#revivable(a, b, batch)) {
+          try {
+            this.#revive(id);
+          } catch (error) {
+            failure ??= { error };
+          }
+        }
+      }
       if (this.#skips(name, a, b)) {
+        this.#park(name, a, b, [op, a, b, c, d, e], batch);
         previous = name;
         continue;
       }
@@ -328,6 +351,7 @@ export class Replayer {
             if (node !== undefined) this.#ids.delete(node);
             this.#nodes.delete(a);
             this.#deadNodes.delete(a);
+            this.#parked.delete(a);
             this.#releaseWaveOf(a);
             break;
           }
@@ -341,8 +365,14 @@ export class Replayer {
         }
       } catch (error) {
         failure ??= { error };
-        if (name === 'create') this.#deadNodes.add(a);
-        else if (name === 'createBuffer' || name === 'createCurve') this.#deadBuffers.add(a);
+        if (name === 'create') {
+          this.#deadNodes.add(a);
+          this.#parked.set(a, {
+            batch,
+            rows: [[op, a, b, c, d, e]],
+            shared: SHARED_KINDS.has(names.kinds[b])
+          });
+        } else if (name === 'createBuffer' || name === 'createCurve') this.#deadBuffers.add(a);
       }
       previous = name;
     }
@@ -386,6 +416,57 @@ export class Replayer {
       this.#nodes.delete(id);
       this.#deadNodes.add(id);
       this.#releaseWaveOf(id);
+    }
+  }
+
+  /** Keeps a record a dead node could not take, for the node's retry (see `#parked`). */
+  #park(name: string, a: number, b: number, row: number[], batch: number): void {
+    const ids = name === 'connect' ? [a, b] : [a];
+    for (const id of ids) {
+      const parked = this.#parked.get(id);
+      if (parked === undefined || !this.#deadNodes.has(id)) continue;
+      if (parked.batch === batch || this.#reviving) parked.rows.push(row);
+    }
+  }
+
+  /**
+   * The dead nodes a `connect` of a later batch brings back: one it names (a voice connecting into a bus's input), and a
+   * delay, convolver, wave shaper or compressor the node it names is wired to in the records parked for it (a bus's inner
+   * nodes, which no voice names itself; only the engine's shared nodes are of these kinds, a voice's are not).
+   */
+  #revivable(a: number, b: number, batch: number): number[] {
+    const ids: number[] = [];
+    for (const [id, parked] of this.#parked) {
+      if (parked.batch === batch || !this.#deadNodes.has(id)) continue;
+      if (id === a || id === b) ids.push(id);
+      else if (
+        parked.shared &&
+        parked.rows.some((row) => this.#wires(row, a) || this.#wires(row, b))
+      )
+        ids.push(id);
+    }
+    return ids;
+  }
+
+  /** Whether a parked `connect` record has `node` at its other end. */
+  #wires(row: number[], node: number): boolean {
+    return this.#names.ops[row[0]] === 'connect' && (row[1] === node || row[2] === node);
+  }
+
+  /** Makes a shared node again after a failed create and applies the records parked for it. */
+  #revive(id: number): void {
+    const parked = this.#parked.get(id);
+    if (parked === undefined) return;
+    this.#parked.delete(id);
+    this.#deadNodes.delete(id);
+    const ops = new Float64Array(parked.rows.length * WIDTH);
+    parked.rows.forEach((row, i) => ops.set(row, i * WIDTH));
+    const was = this.#reviving;
+    this.#reviving = true;
+    try {
+      this.replay([ops, new Float32Array(0)]);
+    } finally {
+      this.#reviving = was;
     }
   }
 
