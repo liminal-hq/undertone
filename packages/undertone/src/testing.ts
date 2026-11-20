@@ -1,13 +1,25 @@
-// The testing entry (D-28): helpers for tests of code that uses Undertone; scaffolded until the engine exports land
+// The testing entry (D-28): helpers for tests of code that uses Undertone; `resetWarnings` is live; the engine helpers wait for the engine exports
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-// What each helper needs from the module is listed in docs/rust-migration/results/M6-BOUNDARY.md, section 8. This entry is
-// not part of the API report (D-28). Nothing here needs the module to be loaded.
+import { glue } from './wasm.js';
 
-/** Clears the once-only set of warnings the package has given, so a test sees a warning again. No warning exists yet. */
-export function resetWarnings(): void {}
+// What each helper needs from the module is listed in docs/rust-migration/results/M6-BOUNDARY.md, section 8. This entry is
+// not part of the API report (D-28).
+
+/**
+ * Clears the once-only set of warnings the package has given, so a test sees a warning again. The module prints each warning
+ * itself with `console.warn` (so `vi.spyOn(console, 'warn')` sees it) and keeps the set; this calls its `resetWarnings`.
+ * Before the module is loaded no warning can have been given, so it does nothing then.
+ */
+export function resetWarnings(): void {
+  try {
+    glue.resetWarnings();
+  } catch {
+    // The module is not instantiated yet (the `./init` entry, before `await init()`): there is nothing to clear.
+  }
+}
 
 const pending = (name: string, needs: string): never => {
   throw new Error(`${name}() is not available yet: it needs ${needs} (RF-24 part 2, then RF-26)`);
