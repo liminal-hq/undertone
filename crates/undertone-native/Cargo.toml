@@ -13,6 +13,11 @@ default = ["cpal"]
 # alone, which needs no system audio library (a host supplies its own callback).
 cpal = ["dep:cpal"]
 
+# The example opens a system device, so it needs the `cpal` feature.
+[[example]]
+name = "play"
+required-features = ["cpal"]
+
 [dependencies]
 undertone = { path = "../undertone", version = "0.0.0" }
 rtrb = "0.3"
