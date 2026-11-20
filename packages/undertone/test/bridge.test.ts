@@ -1,4 +1,4 @@
-// Tests of what the wrapper adds around part 2a's exports: the live constants, scores, warnings, and the refusals only it can make
+// Tests of what the wrapper adds around the module's exports: the live constants, scores, warnings, and the refusals only it can make
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
@@ -26,6 +26,7 @@ import {
 } from '@liminal-hq/undertone';
 import { playVoice, resetWarnings } from '@liminal-hq/undertone/testing';
 import * as wasm from '@liminal-hq/undertone/wasm';
+import { FakeAudioContext } from '../../../src/test-utils/fakeAudioContext';
 
 const cycle = (pattern: Pattern<unknown>) =>
   pattern.query({ begin: new Fraction(0), end: new Fraction(1) });
@@ -85,11 +86,19 @@ describe('score', () => {
     expect(cycle(compiled.pattern)).toHaveLength(1);
   });
 
-  it('says plainly that play, loop, and render wait for the engine exports', () => {
+  it('plays, loops, and renders at its own tempo', async () => {
     const compiled = score(definition);
-    for (const method of ['play', 'loop', 'render'] as const) {
-      expect(() => compiled[method]()).toThrow(/not available until the engine exports land/);
-    }
+    const ctx = new FakeAudioContext();
+    const played = compiled.play({ ctx });
+    expect(played.startTime).toBe(0);
+    expect(ctx.oscillators).toHaveLength(1);
+    const timer = { setInterval: () => 1, clearInterval: () => undefined };
+    compiled.loop({ ctx, timer }).stop();
+    expect(ctx.oscillators.length).toBeGreaterThan(1);
+    expect(() => compiled.play({ ctx, bpm: 120 } as never)).toThrow(/bpm or cps/);
+    const rendered = await compiled.render({ sampleRate: 8000, master: false });
+    expect(rendered.length).toBe(16000);
+    expect(rendered.getChannelData(0).some((x) => x !== 0)).toBe(true);
   });
 
   it('refuses a bad definition with the reference messages', () => {
@@ -169,7 +178,10 @@ describe('warnings', () => {
 });
 
 describe('the engine helpers of ./testing', () => {
-  it('still say what they wait for', () => {
-    expect(() => playVoice({}, {})).toThrow(/not available yet/);
+  it('play resolved voices on a context, as the reference playVoice and playVoices did', () => {
+    const ctx = new FakeAudioContext();
+    const handle = playVoice(ctx, resolveParams({ pitch: 'a4' }) as never, 0.5);
+    expect(handle.startTime).toBe(0.5);
+    expect(ctx.oscillators[0].started).toEqual([0.5]);
   });
 });

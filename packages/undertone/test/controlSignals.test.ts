@@ -5,32 +5,34 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  note,
-  Fraction,
-  Pattern,
   arrange,
   cat,
+  Fraction,
   hasOnset,
-  pure,
-  seq,
-  stack,
-  timecat,
   mini,
+  note,
+  Pattern,
+  pure,
   rand,
   saw,
   saw2,
+  seq,
   signal,
   sine,
   sine2,
-  type ControlPatch
+  stack,
+  timecat
 } from '@liminal-hq/undertone';
+import type { ControlPatch, TimerLike } from '@liminal-hq/undertone';
 import { resetWarnings } from '@liminal-hq/undertone/testing';
+import { FakeAudioContext, recordedGraph } from '../../../src/test-utils/fakeAudioContext';
 
 type Control = (
   pat: Pattern<ControlPatch>,
   input: number | string | Pattern<number>
 ) => Pattern<ControlPatch>;
 
+/** Every control that takes a number, a string or a pattern, with a value each accepts. */
 const PATTERNABLE: [string, Control, number][] = [
   ['attack', (p, x) => p.attack(x), 0.01],
   ['decay', (p, x) => p.decay(x), 0.2],
@@ -76,6 +78,7 @@ const PATTERNABLE: [string, Control, number][] = [
 
 const sin2 = (t: number) => Math.sin(2 * Math.PI * t);
 
+/** A control's values at the onsets of the first cycle, in time order. */
 function onsets(pat: Pattern<ControlPatch>, cycle = 0): ControlPatch[] {
   return pat
     .query({ begin: new Fraction(cycle), end: new Fraction(cycle + 1) })
@@ -84,11 +87,45 @@ function onsets(pat: Pattern<ControlPatch>, cycle = 0): ControlPatch[] {
     .map((hap) => hap.value);
 }
 
+function graphOf(pat: Pattern<ControlPatch>) {
+  const ctx = new FakeAudioContext();
+  pat.play({ ctx, when: 0, bpm: 240 });
+  const graph = recordedGraph(ctx);
+  // A reverb's impulse response is fresh noise for every context, so it is not compared.
+  graph.convolver = graph.convolver.map((node) => ({ ...(node as object), buffers: [] }));
+  return graph;
+}
+
+class FakeTimer implements TimerLike {
+  callback: (() => void) | undefined;
+  setInterval(callback: () => void): unknown {
+    this.callback = callback;
+    return 'handle';
+  }
+  clearInterval(): void {}
+}
+
 beforeEach(() => {
   resetWarnings();
 });
 
 describe('every patternable control', () => {
+  it.each(PATTERNABLE)(
+    '%s: a number, its string and pure(number) give the same events and the same graph',
+    (_name, apply, x) => {
+      const base = note('c4*4 e4');
+      const fromNumber = apply(base, x);
+      const fromString = apply(base, String(x));
+      const fromPure = apply(base, pure(x));
+      const query = { begin: new Fraction(0), end: new Fraction(2) };
+
+      expect(fromPure.query(query)).toEqual(fromNumber.query(query));
+      expect(fromString.query(query)).toEqual(fromNumber.query(query));
+      expect(graphOf(fromPure)).toEqual(graphOf(fromNumber));
+      expect(graphOf(fromString)).toEqual(graphOf(fromNumber));
+    }
+  );
+
   it.each(PATTERNABLE)('%s: a signal sets the control on every event', (_name, apply, x) => {
     const events = onsets(
       apply(
@@ -103,6 +140,21 @@ describe('every patternable control', () => {
 });
 
 describe('a signal as a control value', () => {
+  it('books the sine at each onset on the panner', () => {
+    const ctx = new FakeAudioContext();
+
+    note('c4*4').pan(sine2).play({ ctx, when: 0, bpm: 240 });
+
+    const calls = ctx.panners.map((panner) => panner.pan.calls);
+    expect(calls).toHaveLength(4);
+    const expected = [0, 1, 0, -1];
+    calls.forEach((list, index) => {
+      expect(list).toHaveLength(1);
+      expect(list[0].method).toBe('setValueAtTime');
+      expect(list[0].value).toBeCloseTo(expected[index], 9);
+    });
+  });
+
   it('reads the whole of a signal at an onset, not the part of a fragment of it', () => {
     const query = { begin: new Fraction(1, 8), end: new Fraction(3, 8) };
 
@@ -114,6 +166,7 @@ describe('a signal as a control value', () => {
     expect(values[0]).toBeCloseTo(0, 9); // the event begun at 0, cut by the query
     expect(values[1]).toBeCloseTo(1, 9); // the event begun at ¼
   });
+
   it('never changes the structure: the events are the left side’s', () => {
     const plain = note('c4(3,8)').query({ begin: new Fraction(0), end: new Fraction(2) });
     const panned = note('c4(3,8)')
@@ -123,6 +176,34 @@ describe('a signal as a control value', () => {
     expect(panned.map(({ whole, part }) => ({ whole, part }))).toEqual(
       plain.map(({ whole, part }) => ({ whole, part }))
     );
+  });
+
+  it('books identical pans however the loop cuts time into windows', () => {
+    const run = (stepSeconds: number) => {
+      const ctx = new FakeAudioContext();
+      const timer = new FakeTimer();
+      note('c4*8').pan(sine2.slow(3)).lpf(saw.range(200, 2000)).loop({
+        ctx,
+        timer,
+        bpm: 240
+      });
+      for (let i = 0; i < 80; i += 1) {
+        ctx.currentTime += stepSeconds;
+        timer.callback?.();
+      }
+      return ctx.oscillators.map((osc, index) => ({
+        start: osc.started[0],
+        pan: ctx.panners[index].pan.calls,
+        cutoff: ctx.filters[index].frequency.calls
+      }));
+    };
+
+    const fine = run(0.05);
+    const coarse = run(0.31);
+    const shared = Math.min(fine.length, coarse.length);
+
+    expect(shared).toBeGreaterThan(8);
+    expect(fine.slice(0, shared)).toEqual(coarse.slice(0, shared));
   });
 });
 
@@ -134,23 +215,27 @@ describe('signals as control values under the combinators', () => {
     slowed.forEach((value, i) => expect(value.pan).toBeCloseTo(sin2(i / 4 / 4), 9));
     fasted.forEach((value, i) => expect(value.pan).toBeCloseTo(sin2((i / 4) * 2), 9));
   });
+
   it('rev mirrors each cycle', () => {
     const pans = onsets(note('c4*4').pan(sine2.rev())).map((value) => value.pan);
 
     [1, 0.75, 0.5, 0.25].forEach((t, i) => expect(pans[i]).toBeCloseTo(sin2(t), 9));
   });
+
   it('every picks the transformed signal on cycle 0 and the plain one after', () => {
     const pat = note('c4*4').pan(sine2.every(2, (p) => p.mul(0)));
 
     expect(onsets(pat, 0).every((v) => v.pan === 0)).toBe(true); // -0 counts
     onsets(pat, 1).forEach((value, i) => expect(value.pan).toBeCloseTo(sin2(i / 4), 9));
   });
+
   it('cat plays one signal per cycle, each in its own cycles', () => {
     const pat = note('c4*4').pan(cat(sine2, saw2));
 
     onsets(pat, 0).forEach((value, i) => expect(value.pan).toBeCloseTo(sin2(i / 4), 9));
     expect(onsets(pat, 1).map((v) => v.pan)).toEqual([-1, -0.5, 0, 0.5]);
   });
+
   it('seq squeezes each signal into its half of the cycle', () => {
     const pans = onsets(note('c4*4').pan(seq(saw2, sine2))).map((v) => v.pan);
 
@@ -159,6 +244,7 @@ describe('signals as control values under the combinators', () => {
     expect(pans[2]).toBeCloseTo(sin2(0), 9);
     expect(pans[3]).toBeCloseTo(sin2(0.5), 9);
   });
+
   it('euclid on a signal is a structure: only the pulses get a value', () => {
     const events = onsets(note('c4*8').pan(sine2.euclid(3, 8)));
 
@@ -167,6 +253,7 @@ describe('signals as control values under the combinators', () => {
     expect(events[3].pan).toBeCloseTo(sin2(3 / 8), 9);
     expect(events[6].pan).toBeCloseTo(sin2(6 / 8), 9);
   });
+
   it('jux gives the transformed side a signal-driven filter', () => {
     const haps = note('c4*4')
       .jux((p) => p.lpf(sine.range(200, 2000)))
@@ -214,6 +301,8 @@ describe('mixed continuous and discrete compositions', () => {
     ]
   ];
   const quarterNote = () => note('c4*8');
+
+  /** The pan at every onset in cycles 0-3, read through the given query windows. */
   const read = (pat: Pattern<number>, windows: number): (number | undefined)[] => {
     const control = quarterNote().pan(pat);
     const values: [number, number | undefined][] = [];
@@ -226,6 +315,7 @@ describe('mixed continuous and discrete compositions', () => {
     }
     return values.sort((a, b) => a[0] - b[0]).map(([, v]) => v);
   };
+
   it.each(mixed)('%s: one window and many small windows give the same values', (_n, make) => {
     const whole = read(make(), 1);
     expect(whole).toHaveLength(32);
@@ -233,11 +323,13 @@ describe('mixed continuous and discrete compositions', () => {
       expect(read(make(), windows)).toEqual(whole);
     }
   });
+
   it('cat(saw2, pure) keeps the saw moving through its cycle', () => {
     expect(onsets(note('c4*4').pan(cat(saw2, pure(0)))).map((v) => v.pan)).toEqual([
       -1, -0.5, 0, 0.5
     ]);
   });
+
   it('a rest in a discrete child leaves the key unset', () => {
     const pans = onsets(note('c4*4').pan(cat(mini<number>('~ 0.5', Number), saw2)), 0);
     expect(pans.map((v) => v.pan)).toEqual([undefined, undefined, 0.5, 0.5]);
@@ -247,9 +339,85 @@ describe('mixed continuous and discrete compositions', () => {
 describe('a bad time from a signal', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   const bad = (value: number) => signal(() => value);
+
   beforeEach(() => {
     warn.mockClear();
   });
+
+  /** Every duration control, set on a voice that uses its envelope (the filter and FM ones need a filter or FM to book anything). */
+  const TIMES: [
+    string,
+    string,
+    (p: Pattern<ControlPatch>, x: Pattern<number>) => Pattern<ControlPatch>
+  ][] = [
+    ['attack', 'attack', (p, x) => p.attack(x)],
+    ['decay', 'decay', (p, x) => p.decay(x)],
+    ['release', 'release', (p, x) => p.release(x)],
+    ['lpa', 'lpa', (p, x) => p.lpf(500).lpenv(2000).lpa(x)],
+    ['lpd', 'lpd', (p, x) => p.lpf(500).lpenv(2000).lpd(x)],
+    ['lpr', 'lpr', (p, x) => p.lpf(500).lpenv(2000).lpr(x)],
+    ['slide', 'slide', (p, x) => p.slide(x)],
+    ['fmattack', 'fmattack', (p, x) => p.fm(2).fmattack(x)],
+    ['fmdecay', 'fmdecay', (p, x) => p.fm(2).fmdecay(x)],
+    ['fmrelease', 'fmrelease', (p, x) => p.fm(2).fmrelease(x)],
+    ['pattack', 'pattack', (p, x) => p.penv(7).pattack(x)],
+    ['pdecay', 'pdecay', (p, x) => p.penv(7).pdecay(x)],
+    ['delaytime', 'delaytime', (p, x) => p.delay(0.3).delaytime(x)]
+  ];
+
+  const run = (pat: Pattern<ControlPatch>) => {
+    const ctx = new FakeAudioContext({ strictTimes: true });
+    const timer = new FakeTimer();
+    pat.loop({ ctx, timer, bpm: 120 });
+    for (let i = 0; i < 12; i += 1) {
+      ctx.currentTime += 0.1;
+      timer.callback?.();
+    }
+    return ctx;
+  };
+
+  it('the strict fake rejects a negative automation time, as Web Audio does', () => {
+    const ctx = new FakeAudioContext({ strictTimes: true });
+    expect(() => ctx.createGain().gain.setValueAtTime(1, -0.9)).toThrow(RangeError);
+    expect(() => ctx.createOscillator().start(-1)).toThrow(RangeError);
+    expect(() => new FakeAudioContext().createGain().gain.setValueAtTime(1, -0.9)).not.toThrow();
+  });
+
+  it.each(TIMES)(
+    '%s: a negative value leaves it unset, warns once and books the voice',
+    (_n, name, apply) => {
+      const ctx = run(apply(note('c4*2'), bad(-1)));
+
+      expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith(
+        `undertone: ${name}() got -1 from a pattern; it needs 0 or more, so it is left unset.`
+      );
+    }
+  );
+
+  it.each(TIMES)('%s: zero is a valid time and warns of nothing', (_n, _name, apply) => {
+    const ctx = run(apply(note('c4*2'), bad(0)));
+
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('a loop tick with a bad signal still books the other events', () => {
+    const ctx = run(stack(note('c4*2').attack(bad(-1)).decay(bad(-2)), note('e4*2').pan(0.5)));
+
+    // Two bad-signal notes and two good ones every cycle; the cycle is 2 s at 120 BPM.
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(4);
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves a very large time alone: it is a long envelope, and nothing throws', () => {
+    const ctx = run(note('c4*2').attack(bad(1e300)).decay(bad(1e300)).release(bad(1e300)));
+
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(2);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it('keeps nudge, late and early signed: they move an event by design', () => {
     expect(onsets(note('c4').nudge(bad(-0.05)))[0].nudgeTime).toBe(-0.05);
     expect(onsets(note('c4').late(bad(-0.05)))[0].nudgeTime).toBe(-0.05);
@@ -261,6 +429,7 @@ describe('a bad time from a signal', () => {
 describe('a random signal across cycles', () => {
   const velocities = (pat: Pattern<ControlPatch>, cycle: number) =>
     onsets(pat, cycle).map((v) => v.velocity);
+
   it('gives the same sequence every time it is played, but each cycle reads its own times', () => {
     const make = () => note('c4*8').velocity(rand.seed(7).range(0.3, 1));
 
@@ -268,6 +437,7 @@ describe('a random signal across cycles', () => {
     expect(velocities(make(), 1)).toEqual(velocities(make(), 1));
     expect(velocities(make(), 1)).not.toEqual(velocities(make(), 0));
   });
+
   it('arrange([1, signal]) repeats the first cycle on every cycle', () => {
     const repeated = note('c4*8').velocity(arrange([1, rand.seed(7).range(0.3, 1)]));
     const first = velocities(note('c4*8').velocity(rand.seed(7).range(0.3, 1)), 0);
@@ -298,6 +468,7 @@ describe('carrying an autopan phase from note to note', () => {
     expect(phases).toEqual(running);
     expect(phases).toEqual([0, 0.5, 0, 0.5, 0]);
   });
+
   it('saw.slow(4) does not: it steps a quarter turn a cycle whatever the LFO rate', () => {
     const phases = [0, 1, 2, 3].map(
       (cycle) =>
@@ -309,9 +480,11 @@ describe('carrying an autopan phase from note to note', () => {
 
 describe('what a pattern may give a control', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
   beforeEach(() => {
     warn.mockClear();
   });
+
   it('clamps pan to -1..1 and warns once', () => {
     const events = onsets(note('c4*4').pan(signal(() => 1.4)));
 
@@ -319,6 +492,7 @@ describe('what a pattern may give a control', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith('undertone: pan() got 1.4 from a pattern; clamped to 1.');
   });
+
   it('clamps the low side, the start of panslide and autopandepth', () => {
     expect(onsets(note('c4').pan(signal(() => -3)))[0].pan).toBe(-1);
     expect(onsets(note('c4').panslide(signal(() => 2)))[0].panSlideFrom).toBe(1);
@@ -327,6 +501,7 @@ describe('what a pattern may give a control', () => {
     expect(onsets(note('c4').autopanphase(signal(() => 2)))[0].autopanPhase).toBe(1);
     expect(warn).toHaveBeenCalledTimes(4); // autopandepth warns once for both sides
   });
+
   it('warns once per control, however many events or queries', () => {
     const pat = note('c4*8').pan(signal(() => 5));
 
@@ -335,6 +510,7 @@ describe('what a pattern may give a control', () => {
 
     expect(warn).toHaveBeenCalledTimes(1);
   });
+
   it.each([
     ['autopan', (x: Pattern<number>) => note('c4').autopan(x), 'autopan', 0],
     ['autopan', (x: Pattern<number>) => note('c4').autopan(x), 'autopan', -2],
@@ -352,6 +528,7 @@ describe('what a pattern may give a control', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(String(warn.mock.calls[0][0])).toContain(`undertone: ${name}() got ${value}`);
   });
+
   it.each([NaN, Infinity, -Infinity])('leaves the key unset for %d and warns', (value) => {
     const [event] = onsets(
       note('c4')
@@ -363,6 +540,7 @@ describe('what a pattern may give a control', () => {
     expect(event).not.toHaveProperty('filterCutoff');
     expect(warn).toHaveBeenCalledTimes(2);
   });
+
   it('treats undefined and a rest like a rest: unset, with no warning', () => {
     const undef = onsets(note('c4').pan(signal(() => undefined as unknown as number)))[0];
     const rest = onsets(note('c4 c4').pan(seq(pure(0.5), note('~').fmap(() => 0) as never)));
@@ -372,17 +550,20 @@ describe('what a pattern may give a control', () => {
     expect(rest[1]).not.toHaveProperty('pan');
     expect(warn).not.toHaveBeenCalled();
   });
+
   it('sanitises a pattern without a sampler the same way', () => {
     const events = onsets(note('c4*2').pan(pure(3)));
 
     expect(events.map((v) => v.pan)).toEqual([1, 1]);
     expect(warn).toHaveBeenCalledTimes(1);
   });
+
   it('keeps the eager checks on a literal: a bad number or string still throws', () => {
     expect(() => note('c4').pan(2)).toThrow('pan() position must be between -1 and 1, got 2');
     expect(() => note('c4').pan('<-.6 1.2>')).toThrow('got 1.2');
     expect(() => note('c4').autopanphase(2)).toThrow('autopanphase() must be between 0 and 1');
   });
+
   it('leaves an earlier value in place where a pattern gives none', () => {
     const [event] = onsets(
       note('c4')
@@ -396,6 +577,7 @@ describe('what a pattern may give a control', () => {
 
 describe('controls that stay scalar', () => {
   const pattern = sine as unknown as never;
+
   it.each([
     ['fmenv', (p: Pattern<ControlPatch>) => p.fmenv(pattern)],
     ['fmwave', (p: Pattern<ControlPatch>) => p.fmwave(pattern)],
