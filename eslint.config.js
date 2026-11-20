@@ -15,6 +15,8 @@ export default tseslint.config(
       'docs/public/ts-audio/**',
       'target/**',
       'test-results/**',
+      // The wasm-bindgen glue scripts/build-wasm.sh writes (generated, gitignored).
+      'packages/undertone/wasm/**',
       // Throwaway spike code (docs/rust-migration/milestones/M2-spikes.md) is not linted; Prettier still checks it.
       'spikes/**'
     ]

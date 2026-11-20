@@ -1,0 +1,8 @@
+{
+  "name": "undertone-wasm-opt",
+  "private": true,
+  "description": "Pins the binaryen npm package that scripts/build-wasm.sh runs wasm-opt from (R4, D-41); not part of the published package",
+  "dependencies": {
+    "binaryen": "132.0.0"
+  }
+}
