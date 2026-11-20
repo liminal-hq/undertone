@@ -19,8 +19,8 @@ Undertone produces sound without Web Audio: natively in real time, in a browser 
 ### RF-29. The worklet backend (`undertone-worklet`)
 
 - **Owner:** A builds; P runs the device checks. **Size:** L. **Depends on:** RF-22, RF-25.
-- **Objective:** an opt-in browser backend: `undertone-worklet` (raw C ABI, no `wasm-bindgen` glue, since the worklet scope lacks `TextDecoder`) inside an `AudioWorkletProcessor`; booking on a worker or the main thread; the main thread compiles the module and posts the `WebAssembly.Module` in `processorOptions`; a ring over `SharedArrayBuffer` when cross-origin isolated, `MessagePort` otherwise.
-- **Steps:** (1) the raw-ABI crate over the engine; (2) the processor and the bridge's backend switch in `packages/undertone`; (3) a harness page that reports underruns, the 99th percentile of `process`, and drift; (4) **documentation:** a worklet section in `docs/guide/runtimes.md` (opt-in, cross-origin isolation, the foreign-leaf restriction), and the measured numbers.
+- **Objective:** an opt-in browser backend: the render module (`crates/undertone-wasm-render`, D-47) inside an `AudioWorkletProcessor`, with a small `TextDecoder` shim because the worklet scope lacks one; booking on the main thread or a worker, the worklet playing booked records only (D-48); the main thread compiles the module and posts the `WebAssembly.Module` in `processorOptions`; a ring over `SharedArrayBuffer` when cross-origin isolated, `MessagePort` otherwise.
+- **Steps:** (1) the `TextDecoder` shim and the record ring; (2) the processor and the bridge's backend switch in `packages/undertone`; (3) a harness page that reports underruns, the 99th percentile of `process`, and drift; (4) **documentation:** a worklet section in `docs/guide/runtimes.md` (opt-in, cross-origin isolation, the foreign-leaf restriction), and the measured numbers.
 - **Acceptance (formerly spike R6):** on a mid-range phone, a Steam Deck, and Chromium throttled six times (the person runs them with the harness page), no underrun over five minutes, the 99th percentile of `process` at most 40% of the 128-frame budget, drift zero against frames. If not met, the backend still ships as opt-in with the numbers documented, and Web Audio stays the default (D-09).
 - **Risks:** the device checks need the person's time (batched into one request); a pattern with a foreign leaf cannot run in the worklet (refused with a diagnostic).
 - **From M2 ([DESIGN-ADJUSTMENTS.md](../results/DESIGN-ADJUSTMENTS.md)):** decide whether the worklet queries patterns or only plays booked voices before RF-24 fixes the combined budget: the pattern core is about 65 KB of the measured worklet (R4), so the answer moves the combined limit by about 70 KB (D-07).
@@ -59,6 +59,7 @@ The orchestrator assigns Sonnet agents. RF-28 can run while M6 is in review; RF-
 
 ## Status log
 
-| Date       | Entry       |
-| ---------- | ----------- |
-| 2026-11-18 | Not started |
+| Date       | Entry                                                                                                                                                                                                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Not started                                                                                                                                                                                                                                                                                    |
+| 2026-11-20 | M6 landed. Planning: D-47 (the worklet reuses the render module with a `TextDecoder` shim, no raw-ABI crate), D-48 (the worklet plays booked records only), D-49 (the native job installs libasound until the shared image has it). RF-28 starts first; RF-29 and RF-30 follow it in the stack |
