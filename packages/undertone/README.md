@@ -30,7 +30,7 @@ Offline rendering is in a second module, `wasm/render/`, which loads the first t
 
 ### The AudioWorklet backend (opt-in)
 
-`@liminal-hq/undertone/worklet` exports `createWorkletOutput(context, options)`, which plays patterns in an `AudioWorklet` with the render module's engine instead of replaying them on the context. `output.play(pattern, { cycles, bpm })` plays a pass, `output.loop(pattern, { cycles, bpm })` repeats the first `cycles` cycles on the worklet's clock until `stop()`, `await output.stats()` reports underruns, the time of `process`, and drift, and `output.close()` frees it. The default backend is unchanged. What it needs (a secure context, the glue and module found by `new URL(…, import.meta.url)`, cross-origin isolation for the timing clock) and what was measured are in the guide's _Runtimes and loading_ page; `harness/` holds the page to run on a device.
+`@liminal-hq/undertone/worklet` exports `createWorkletOutput(context, options)`, which plays patterns in an `AudioWorklet` with the engine of the worklet module (`wasm/worklet/`, the render crate built for speed) instead of replaying them on the context. `output.play(pattern, { cycles, bpm })` plays a pass, `output.loop(pattern, { cycles, bpm })` plays `cycles` cycles at a time, going on from cycle to cycle as `loop()` does, until `stop()`, `await output.stats()` reports underruns, the time of `process`, and drift, and `output.close()` frees it. The default backend is unchanged. What it needs (a secure context, the glue and module found by `new URL(…, import.meta.url)`, cross-origin isolation for the timing clock) and what was measured are in the guide's _Runtimes and loading_ page; `harness/` holds the page to run on a device.
 
 ### Vite 5, and bundler targets
 
