@@ -28,7 +28,7 @@ other_checks = true
 "Rust FreeBSD build" = "cargo check --locked --target x86_64-unknown-freebsd -p undertone-pattern -p undertone-engine"
 "Rust WebAssembly build" = "cargo build --locked --target wasm32-unknown-unknown -p undertone-pattern -p undertone-engine"
 "Rust crate layering" = "scripts/check-layering.sh"
-"WebAssembly bridge" = "cargo clippy -p undertone-wasm --target wasm32-unknown-unknown --locked -- -D warnings && bash scripts/build-wasm.sh && bun scripts/check-wasm-size.ts && bun crates/undertone-wasm/tests/js/smoke.ts && bun crates/undertone-wasm/tests/js/layer1.ts"
+"WebAssembly bridge" = "scripts/check-wasm-bridge.sh"
 
 [[suite]]
 name = "Rust tests"
