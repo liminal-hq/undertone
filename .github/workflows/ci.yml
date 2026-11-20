@@ -468,6 +468,8 @@ jobs:
         run: bun crates/undertone-wasm/tests/js/layer4.ts
       - name: WAV corpus (the render module)
         run: bun crates/undertone-wasm/tests/js/wav.ts
+      - name: Worklet engine (the render module's streaming export against its offline render)
+        run: bun crates/undertone-wasm/tests/js/worklet.ts
       - name: Upload the two modules and their glue
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
