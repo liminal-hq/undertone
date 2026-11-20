@@ -73,6 +73,14 @@ export class Replayer {
   readonly #waves = new Map<number, unknown>();
   /** Waves the context could not make: whether each was an autopan LFO's (else a shaped wave's), and its real part. */
   readonly #missingWaves = new Map<number, { autopan: boolean; real: Float32Array }>();
+  /**
+   * The waves one voice made for itself (an autopan LFO's phase), not the shaped waves the engine keeps and shares: released
+   * with the node that uses them. A wave of the engine's own cache must stay, since a later voice names it again.
+   */
+  readonly #owned = new Set<number>();
+  /** How many live nodes use each owned wave, and which wave each such node uses. */
+  readonly #waveUsers = new Map<number, number>();
+  readonly #nodeWave = new Map<number, number>();
   readonly #hostBuffers: () => readonly HostBuffer[];
   /** The host buffers standing in for a buffer of the records, so two samples with the same PCM keep a buffer each. */
   readonly #claimed = new Set<AudioBufferLike>();
@@ -91,6 +99,11 @@ export class Replayer {
   /** How many nodes and buffers the replayer still holds (a long session keeps this bounded). */
   get held(): number {
     return this.#nodes.size + this.#buffers.size;
+  }
+
+  /** How many periodic waves the replayer still holds, those the context could not make included. */
+  get waves(): number {
+    return this.#waves.size + this.#missingWaves.size;
   }
 
   /** The node behind a number. */
@@ -127,6 +140,7 @@ export class Replayer {
     const names = this.#names;
     const ctx = this.#ctx as unknown as Record<string, (...args: unknown[]) => unknown>;
     let previous = '';
+    const fresh: number[] = [];
     for (let at = 0; at < ops.length; at += WIDTH) {
       const op = ops[at];
       const a = ops[at + 1];
@@ -186,6 +200,10 @@ export class Replayer {
           break;
         case 'periodicWave': {
           const node = this.node<AnyNode>(a);
+          if (this.#owned.has(b) && !this.#nodeWave.has(a)) {
+            this.#nodeWave.set(a, b);
+            this.#waveUsers.set(b, (this.#waveUsers.get(b) ?? 0) + 1);
+          }
           const missing = this.#missingWaves.get(b);
           if (missing === undefined) {
             (node.setPeriodicWave as (wave: unknown) => void)(this.#waves.get(b));
@@ -253,6 +271,10 @@ export class Replayer {
           break;
         case 'createWave': {
           const real = data.slice(c, c + b);
+          if (!isSharedWave(real, data.subarray(c + b, c + 2 * b))) {
+            this.#owned.add(a);
+            fresh.push(a);
+          }
           if (typeof ctx.createPeriodicWave !== 'function') {
             // An autopan LFO is given its oscillator type just before its wave; a shaped wave is not.
             this.#missingWaves.set(a, { autopan: previous === 'oscillatorType', real });
@@ -272,6 +294,7 @@ export class Replayer {
           const node = this.#nodes.get(a);
           if (node !== undefined) this.#ids.delete(node);
           this.#nodes.delete(a);
+          this.#releaseWaveOf(a);
           break;
         }
         case 'releaseBuffer':
@@ -283,6 +306,25 @@ export class Replayer {
       }
       previous = name;
     }
+    // A wave of a voice's own that no node took (the voice's records ended before it was set) has no one to release it.
+    for (const wave of fresh) if (!this.#waveUsers.has(wave)) this.#dropWave(wave);
+  }
+
+  /** Lets go of the wave a released node used, once no other node uses it. */
+  #releaseWaveOf(node: number): void {
+    const wave = this.#nodeWave.get(node);
+    if (wave === undefined) return;
+    this.#nodeWave.delete(node);
+    const users = (this.#waveUsers.get(wave) ?? 1) - 1;
+    if (users > 0) this.#waveUsers.set(wave, users);
+    else this.#dropWave(wave);
+  }
+
+  #dropWave(wave: number): void {
+    this.#waves.delete(wave);
+    this.#missingWaves.delete(wave);
+    this.#owned.delete(wave);
+    this.#waveUsers.delete(wave);
   }
 
   /** A new buffer on the context, filled from the side data. */
@@ -340,11 +382,20 @@ export class Replayer {
   }
 }
 
-/** The shaped waves' real parts, read once from a throwaway engine, to name the wave a context could not make. */
-let shapes: { type: string; real: Float32Array }[] | undefined;
+/** The shaped waves' coefficients, read once from a throwaway engine, to name the wave a context could not make. */
+let shapes: { type: string; real: Float32Array; imag: Float32Array }[] | undefined;
 
-function shapeOf(real: Float32Array): string {
-  shapes ??= (glue.shapedWaveTypes() as string[]).map((type) => {
+/** Whether a wave's coefficients are one of the engine's shaped waves, which it makes once and shares between voices. */
+function isSharedWave(real: Float32Array, imag: Float32Array): boolean {
+  return loadShapes().some((shape) => same(shape.real, real) && same(shape.imag, imag));
+}
+
+function same(x: Float32Array, y: Float32Array): boolean {
+  return x.length === y.length && x.every((value, i) => value === y[i]);
+}
+
+function loadShapes(): NonNullable<typeof shapes> {
+  return (shapes ??= (glue.shapedWaveTypes() as string[]).map((type) => {
     const engine = new glue.WasmEngine(44100, 2, 2);
     try {
       engine.playVoice({ soundType: type }, 0, undefined).free();
@@ -352,17 +403,24 @@ function shapeOf(real: Float32Array): string {
       const createWave = (graphNames as GraphNames).ops.indexOf('createWave');
       for (let at = 0; at < ops.length; at += WIDTH) {
         if (ops[at] === createWave) {
-          return { type, real: data.slice(ops[at + 3], ops[at + 3] + ops[at + 2]) };
+          const start = ops[at + 3];
+          const count = ops[at + 2];
+          return {
+            type,
+            real: data.slice(start, start + count),
+            imag: data.slice(start + count, start + 2 * count)
+          };
         }
       }
-      return { type, real: new Float32Array() };
+      return { type, real: new Float32Array(), imag: new Float32Array() };
     } finally {
       engine.free();
     }
-  });
-  const found = shapes.find(
-    (shape) => shape.real.length === real.length && shape.real.every((x, i) => x === real[i])
-  );
+  }));
+}
+
+function shapeOf(real: Float32Array): string {
+  const found = loadShapes().find((shape) => same(shape.real, real));
   return found?.type ?? 'a shaped wave';
 }
 

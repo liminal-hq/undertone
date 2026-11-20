@@ -22,6 +22,7 @@ import {
 } from '@liminal-hq/undertone';
 import { resetWarnings } from '@liminal-hq/undertone/testing';
 import * as wasm from '@liminal-hq/undertone/wasm';
+import { backendOf } from '../dist/webaudio.js';
 import { FakeAudioContext, recordedGraph } from '../../../src/test-utils/fakeAudioContext';
 
 afterEach(() => {
@@ -88,6 +89,31 @@ describe('the replay', () => {
     looping.stop();
     expect(ctx.oscillators.length + ctx.bufferSources.length).toBeGreaterThan(6000);
     expect(wasm.memoryBytes() - before).toBeLessThan(8 * 1024 * 1024);
+  });
+
+  it('keeps the replayer bounded over a long run of autopanned voices: their periodic waves are released with them', () => {
+    const ctx = new FakeAudioContext();
+    for (let step = 0; step < 300; step += 1) {
+      ctx.currentTime = step * 2;
+      playParams(ctx, [
+        { pitch: 'a4', autopan: 2, autopanPhase: 0.25, attack: 0.01, release: 0.1 }
+      ]);
+    }
+    const { replayer } = backendOf(ctx);
+    expect(ctx.oscillators.length).toBeGreaterThanOrEqual(600); // a voice and its LFO each
+    expect(replayer.held).toBeLessThan(40);
+    expect(replayer.waves).toBeLessThan(5);
+  });
+
+  it('keeps the replayer bounded for autopan waves a context cannot make, and keeps the shaped waves it shares', () => {
+    const ctx = new FakeAudioContext({ noPeriodicWave: true } as never);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (let step = 0; step < 100; step += 1) {
+      ctx.currentTime = step * 2;
+      playParams(ctx, [{ pitch: 'a4', autopan: 2, autopanPhase: 0.25, release: 0.1 }]);
+      playParams(ctx, [{ pitch: 'a4', soundType: 'halfsine' }]);
+    }
+    expect(backendOf(ctx).replayer.waves).toBeLessThan(8);
   });
 
   it('tells a running loop a setcpm() change at its next window', () => {
