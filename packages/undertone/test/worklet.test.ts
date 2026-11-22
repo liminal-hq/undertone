@@ -9,6 +9,8 @@
 // That proves the shim is present and enough, that the glue never reaches for the page's globals, and that what the processor
 // renders equals what `renderToBuffer` renders. A headless browser run (harness/check.ts) does the same in a real worklet.
 
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -20,16 +22,20 @@ import {
   resetTempo,
   s,
   setcpm,
-  sound
+  sound,
+  stack
 } from '@liminal-hq/undertone';
 import { resetWarnings } from '@liminal-hq/undertone/testing';
 import {
   createWorkletOutput,
+  simdProbe,
+  supportsSimd,
   workletModuleSource,
   type WorkletContextLike,
   type WorkletNodeLike,
   type WorkletOutputOptions
 } from '@liminal-hq/undertone/worklet';
+import { harnessPatterns } from '../harness/patterns.js';
 import { workletProcessorName, workletProcessorSource } from '../dist/workletProcessor.js';
 import { workletShimSource } from '../dist/workletShim.js';
 
@@ -37,6 +43,13 @@ const wasmPath = new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.met
 const gluePath = new URL('../wasm/worklet/undertone_worklet.js', import.meta.url);
 const wasmBytes = readFileSync(wasmPath);
 const glueText = readFileSync(gluePath, 'utf8');
+const simdWasmBytes = readFileSync(
+  new URL('../wasm/worklet/undertone_worklet_simd_bg.wasm', import.meta.url)
+);
+const simdGlueText = readFileSync(
+  new URL('../wasm/worklet/undertone_worklet_simd.js', import.meta.url),
+  'utf8'
+);
 
 afterEach(() => {
   clearSamples();
@@ -1099,5 +1112,195 @@ describe('the processor in a worklet-like scope', () => {
     expect(posted.find((message) => message.type === 'error')?.message).toBe(
       'unknown message type nonsense'
     );
+  });
+});
+
+describe('the SIMD and baseline worklet builds (D-52)', () => {
+  /** A context and the default-module options with the fetches replaced by the files on disk. */
+  function defaults(extra: Partial<WorkletOutputOptions> = {}) {
+    const urls: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: URL | string) => {
+        const name = String(url);
+        urls.push(name.slice(name.lastIndexOf('/') + 1));
+        const simd = name.includes('_simd');
+        const body = name.endsWith('.wasm')
+          ? simd
+            ? simdWasmBytes
+            : wasmBytes
+          : simd
+            ? simdGlueText
+            : glueText;
+        const data = name.endsWith('.wasm') ? new Uint8Array(body as Buffer) : (body as string);
+        return Promise.resolve(new Response(data));
+      })
+    );
+    const made = fakeOptions(extra);
+    // Not `glueText` or `wasm`: the output must find its own files.
+    delete made.options.glueText;
+    delete made.options.wasm;
+    return { ...made, urls };
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('accepts the probe where the runtime has SIMD, and rejects a module the runtime cannot validate', () => {
+    // Node 22 and Bun both implement SIMD; the probe is the module wasm-feature-detect uses.
+    expect(WebAssembly.validate(simdProbe)).toBe(true);
+    expect(supportsSimd()).toBe(true);
+    vi.spyOn(WebAssembly, 'validate').mockReturnValue(false);
+    expect(supportsSimd()).toBe(false);
+    vi.spyOn(WebAssembly, 'validate').mockImplementation(() => {
+      throw new Error('no');
+    });
+    expect(supportsSimd()).toBe(false);
+  });
+
+  it('loads the SIMD build when SIMD is available, and the baseline build when it is not', async () => {
+    const simd = defaults({ detectSimd: () => true });
+    const output = await createWorkletOutput(fakeContext(), simd.options);
+    expect(output.module).toBe('simd');
+    expect(simd.urls).toEqual(['undertone_worklet_simd.js', 'undertone_worklet_simd_bg.wasm']);
+
+    const baseline = defaults({ detectSimd: () => false });
+    const second = await createWorkletOutput(fakeContext(), baseline.options);
+    expect(second.module).toBe('baseline');
+    expect(baseline.urls).toEqual(['undertone_worklet.js', 'undertone_worklet_bg.wasm']);
+  });
+
+  it('asks the runtime by default, and `simd` forces either build without asking', async () => {
+    const asked = defaults();
+    expect((await createWorkletOutput(fakeContext(), asked.options)).module).toBe('simd');
+
+    const check = vi.fn(() => true);
+    const off = defaults({ simd: false, detectSimd: check });
+    expect((await createWorkletOutput(fakeContext(), off.options)).module).toBe('baseline');
+    expect(off.urls).toEqual(['undertone_worklet.js', 'undertone_worklet_bg.wasm']);
+    const on = defaults({ simd: true, detectSimd: () => false });
+    expect((await createWorkletOutput(fakeContext(), on.options)).module).toBe('simd');
+    expect(check).not.toHaveBeenCalled();
+  });
+
+  it('leaves a supplied module, glue, or hosted module alone and reports it as custom', async () => {
+    const given = fakeOptions({ detectSimd: () => true });
+    expect((await createWorkletOutput(fakeContext(), given.options)).module).toBe('custom');
+    for (const extra of [
+      { glueUrl: 'https://example.test/glue.js' },
+      { moduleUrl: 'https://example.test/worklet.js' }
+    ]) {
+      const only = defaults({ detectSimd: () => true, simd: true, ...extra });
+      const output = await createWorkletOutput(fakeContext(), only.options);
+      expect(output.module).toBe('custom');
+      // The module that was not supplied is the baseline one, which is what these options always got.
+      expect(only.urls).toContain('undertone_worklet_bg.wasm');
+    }
+  });
+
+  it('keeps one build per context: a later output follows the first, and a forced other build is refused', async () => {
+    const context = fakeContext();
+    const first = defaults({ detectSimd: () => false });
+    expect((await createWorkletOutput(context, first.options)).module).toBe('baseline');
+    // The probe now says yes, but this worklet has the baseline glue, so the output follows it.
+    const later = defaults({ detectSimd: () => true });
+    expect((await createWorkletOutput(context, later.options)).module).toBe('baseline');
+    expect(later.urls).toEqual(['undertone_worklet_bg.wasm']);
+    const forced = defaults({ simd: true });
+    await expect(createWorkletOutput(context, forced.options)).rejects.toThrow(
+      /one build for good/
+    );
+  });
+
+  it('contains vector instructions in the SIMD build and none in the baseline build', async () => {
+    const dis = new URL(
+      '../../../scripts/wasm-opt/node_modules/binaryen/bin/wasm-dis',
+      import.meta.url
+    );
+    const count = (file: URL) => {
+      const result = spawnSync('bun', [dis.pathname, '--enable-simd', file.pathname, '-o', '-'], {
+        encoding: 'utf8',
+        maxBuffer: 1 << 28
+      });
+      expect(result.status).toBe(0);
+      return (result.stdout.match(/\b(?:f64x2|v128)\./g) ?? []).length;
+    };
+    expect(
+      count(new URL('../wasm/worklet/undertone_worklet_simd_bg.wasm', import.meta.url))
+    ).toBeGreaterThan(0);
+    expect(count(new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.meta.url))).toBe(0);
+  });
+
+  it('renders the same samples through both builds, hash for hash', async () => {
+    const sampleRate = 8000;
+    const patterns = harnessPatterns({ note, sound, stack }) as Record<
+      string,
+      ReturnType<typeof note>
+    >;
+    const cases: Record<string, ReturnType<typeof note>> = {
+      'chords with room': note('<[c4,eb4,g4,bb4] [ab3,c4,eb4,g4]>')
+        .sound('triangle')
+        .attack(0.02)
+        .release(0.5)
+        .gain(0.35)
+        .room(0.5),
+      'lead fm with room': note('g4 bb4 d5 c5')
+        .sound('sine')
+        .fm(2)
+        .fmh(2)
+        .decay(0.2)
+        .gain(0.3)
+        .room(0.3),
+      representative: patterns.representative,
+      heavy: patterns.heavy
+    };
+    const hashOf = (glue: string, wasm: Buffer, pass: Record<string, unknown>): string => {
+      const { Processor, context: scopeContext, sandbox } = workletScope({ glue });
+      sandbox.sampleRate = sampleRate;
+      const module = vm.runInContext('WebAssembly', scopeContext) as typeof WebAssembly;
+      const processor = new Processor({
+        processorOptions: {
+          module: new module.Module(wasm),
+          options: { sampleRate, channels: 2, seed: 'identical' }
+        }
+      });
+      processor.port.onmessage?.({
+        data: {
+          ...pass,
+          numbers: inRealm(scopeContext, pass.numbers as Float64Array),
+          strings: pass.strings,
+          frame: 0
+        }
+      });
+      const hash = createHash('sha256');
+      const out = [
+        inRealm(scopeContext, new Float32Array(128)),
+        inRealm(scopeContext, new Float32Array(128))
+      ];
+      let loud = false;
+      for (let block = 0; block < 240; block += 1) {
+        sandbox.currentFrame = block * 128;
+        processor.process([], [out]);
+        for (const channel of out) {
+          hash.update(new Uint8Array(channel.buffer, channel.byteOffset, channel.byteLength));
+          loud ||= channel.some((sample) => Math.abs(sample) > 0.01);
+        }
+      }
+      expect(loud).toBe(true);
+      return hash.digest('hex');
+    };
+    for (const [name, pattern] of Object.entries(cases)) {
+      const { options, nodes } = fakeOptions();
+      const output = await createWorkletOutput(fakeContext({ sampleRate }), {
+        ...options,
+        seed: 'identical'
+      });
+      await output.play(pattern, { when: 0, bpm: 240 }).ready;
+      const pass = nodes[0].port.ofType('play')[0].message;
+      expect(hashOf(simdGlueText, simdWasmBytes, pass), name).toBe(
+        hashOf(glueText, wasmBytes, pass)
+      );
+    }
   });
 });
