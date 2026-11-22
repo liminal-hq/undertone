@@ -1,13 +1,13 @@
-// Holds the three WebAssembly modules to their size budgets and reports raw, gzip, and Brotli sizes
+// Holds the four WebAssembly modules to their size budgets and reports raw, gzip, and Brotli sizes
 //
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
 // Usage: bun scripts/check-wasm-size.ts [--report] [module.wasm ...]
 //
-// The modules default to the three scripts/build-wasm.sh writes: the main module (packages/undertone/wasm/undertone_wasm_bg.wasm), the
+// The modules default to the four scripts/build-wasm.sh writes: the main module (packages/undertone/wasm/undertone_wasm_bg.wasm), the
 // lazily loaded render module (packages/undertone/wasm/render/undertone_wasm_render_bg.wasm), and the worklet's speed-optimised
-// build of the render crate (packages/undertone/wasm/worklet/undertone_worklet_bg.wasm, also 120 KB). Each has its own budget after Brotli 11
+// build of the render crate (packages/undertone/wasm/worklet/undertone_worklet_bg.wasm, also 120 KB), and its SIMD build (undertone_worklet_simd_bg.wasm, D-52, also 120 KB). Each has its own budget after Brotli 11
 // (KB is 1,000 bytes, as in R4), with a warning from 90%: the main module D-07's 150 KB; the render module 120 KB, the ceiling the
 // person set for it in D-43 (the warning from 90% is 108 KB). The check fails when a module is over its budget; `--report` only
 // prints (and writes no summary). gzip -9 is reported beside Brotli, with a warning line (no failure) over a gzip figure 1.2 times the
@@ -29,7 +29,9 @@ const BUDGETS: Record<string, Budget> = {
   'undertone_wasm_render_bg.wasm': { label: 'render module', limit: 120_000 },
   // The worklet's speed-optimised build of the render crate (opt-level 3, wasm-opt -O3). It has the render module's 120 KB ceiling,
   // and it measures about 117 KB, so the warning from 90% (108 KB) is expected and accepted; the check still fails over 120 KB.
-  'undertone_worklet_bg.wasm': { label: 'worklet module', limit: 120_000 }
+  'undertone_worklet_bg.wasm': { label: 'worklet module', limit: 120_000 },
+  // The same build with simd128 (D-52), which `./worklet` loads where the browser validates SIMD; the same 120 KB ceiling.
+  'undertone_worklet_simd_bg.wasm': { label: 'worklet SIMD module', limit: 120_000 }
 };
 const WARN = 0.9;
 const GZIP_RATIO = 1.2;
@@ -43,7 +45,8 @@ const paths =
     : [
         'packages/undertone/wasm/undertone_wasm_bg.wasm',
         'packages/undertone/wasm/render/undertone_wasm_render_bg.wasm',
-        'packages/undertone/wasm/worklet/undertone_worklet_bg.wasm'
+        'packages/undertone/wasm/worklet/undertone_worklet_bg.wasm',
+        'packages/undertone/wasm/worklet/undertone_worklet_simd_bg.wasm'
       ];
 
 interface Sizes {
