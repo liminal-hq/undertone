@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Undertone worklet experiments</title>
+<style>
+  body {
+    font:
+      15px/1.4 system-ui,
+      sans-serif;
+    max-width: 58rem;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  button,
+  input,
+  select {
+    font: inherit;
+    padding: 0.4rem 0.8rem;
+  }
+  label {
+    display: block;
+    margin: 0.4rem 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    border-bottom: 1px solid #8884;
+    padding: 0.3rem 0.5rem;
+    text-align: right;
+  }
+  th:first-child,
+  td:first-child,
+  th:nth-child(2),
+  td:nth-child(2) {
+    text-align: left;
+  }
+  .good {
+    color: #0a7d32;
+  }
+  .bad {
+    color: #c0262d;
+  }
+  pre {
+    background: #1112;
+    padding: 0.8rem;
+    overflow: auto;
+    max-height: 12rem;
+  }
+  details {
+    margin: 0.6rem 0;
+  }
+</style>
+<h1>Undertone worklet experiments</h1>
+<p>
+  Each experiment plays the reverb steps of the profile ladder (chords with reverb, lead with
+  reverb), in the AudioWorklet backend, and times a block, then the page puts each beside the
+  control run nearest to it. The numbers are sent to the machine that served this page. Keep this
+  window in front and leave the device alone while it runs.
+</p>
+<label>Name for this device and browser <input id="label" size="30" /></label>
+<label
+  >Seconds per step (after 2 s of warm-up that is not counted)
+  <input id="seconds" type="number" value="6" min="3" max="60"
+/></label>
+<p>
+  <button id="runModules">Run the module variants</button>
+  <button id="runContext">Run the context experiments</button>
+  <button id="copy" disabled>Copy results</button>
+  <span id="status"></span>
+</p>
+<details id="variantsBox">
+  <summary>Module variants found: <span id="variantCount">none yet</span></summary>
+  <ul id="variantList"></ul>
+</details>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Group</th>
+      <th>Experiment</th>
+      <th>step</th>
+      <th>mean ms</th>
+      <th>p99 ms</th>
+      <th>over budget</th>
+      <th>vs control</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<pre id="log"></pre>
+<script type="module" src="./experiments.js"></script>

@@ -48,7 +48,9 @@ export default tseslint.config(
           'fetch',
           'Worker',
           'URL',
-          'Blob'
+          'Blob',
+          'WebAssembly',
+          'PerformanceObserver'
         ].map((name) => [name, 'readonly'])
       )
     }
