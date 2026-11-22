@@ -1,0 +1,136 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Undertone head to head</title>
+<style>
+  body {
+    font:
+      15px/1.4 system-ui,
+      sans-serif;
+    max-width: 62rem;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  button,
+  input {
+    font: inherit;
+    padding: 0.4rem 0.8rem;
+  }
+  label {
+    display: block;
+    margin: 0.4rem 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    border-bottom: 1px solid #8884;
+    padding: 0.3rem 0.5rem;
+    text-align: right;
+  }
+  th:first-child,
+  td:first-child,
+  th:nth-child(2),
+  td:nth-child(2) {
+    text-align: left;
+  }
+  .good {
+    color: #0a7d32;
+  }
+  .bad {
+    color: #c0262d;
+  }
+  .warn {
+    color: #c0262d;
+    font-weight: 600;
+  }
+  pre {
+    background: #1112;
+    padding: 0.8rem;
+    overflow: auto;
+    max-height: 12rem;
+  }
+</style>
+<h1>Undertone head to head</h1>
+<p>
+  Is the Rust and WebAssembly engine faster than the TypeScript reference engine at the same work,
+  on this device and browser? Each song is rendered offline by both engines (one discarded warm-up
+  render, then three timed renders, alternating TypeScript and WebAssembly so thermal drift shows),
+  and the table gives the milliseconds of each run, the median, the speed as a multiple of real time
+  (audio seconds over wall seconds) and the ratio of the WebAssembly median to the TypeScript one
+  (below 1 means WebAssembly is faster). Peak and RMS are shown so you can see that the two engines
+  made the same audio.
+</p>
+<p>
+  What is and is not comparable: the TypeScript engine builds Web Audio nodes (oscillators, filters,
+  a ConvolverNode) and the browser renders them in its own native code; the WebAssembly engine does
+  its own DSP in a WebAssembly module on the page. The offline numbers compare the two as renderers
+  of the same song, which is fair, but they do not compare how the work is done: the native reverb,
+  for instance, may use a different algorithm and a different cost. The peaks agree to about a
+  thousandth where Web Audio allows, and the audio is not identical sample for sample.
+</p>
+<p>
+  The real-time mode plays each song for a while with each engine and records how the page's main
+  thread behaves: the jitter of a 1 ms timer (browsers clamp it, so read it as relative) and the
+  long tasks (over 50 ms) where the browser reports them. The TypeScript engine's audio work runs
+  inside the browser's audio engine, where this page cannot time it, so that mode shows only how
+  much the engine disturbs the main thread; the WebAssembly engine's audio work runs in the audio
+  worklet, also off the main thread. Sound plays in that mode.
+</p>
+<p id="reference" class="warn"></p>
+<label>Name for this device and browser <input id="label" size="40" /></label>
+<label
+  >Seconds of audio per render
+  <input id="seconds" type="number" value="16" min="2" max="60" />
+  (at 110 beats a minute a cycle is about 2.2 s, so 16 s is about 7 cycles)</label
+>
+<label
+  >Seconds per song in the real-time mode
+  <input id="rtSeconds" type="number" value="10" min="3" max="60" />
+</label>
+<label
+  ><input id="realtime" type="checkbox" checked /> Also run the real-time main-thread mode</label
+>
+<p>
+  <button id="run">Run the head to head</button>
+  <button id="copy" disabled>Copy results</button>
+  <span id="status"></span>
+</p>
+<h2>Offline render</h2>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Song</th>
+      <th>Render ms per run</th>
+      <th>Median ms</th>
+      <th>x real time</th>
+      <th>Peak</th>
+      <th>RMS</th>
+      <th>WebAssembly / TypeScript</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<h2>Real time, main thread</h2>
+<table id="rtTable">
+  <thead>
+    <tr>
+      <th>Engine</th>
+      <th>Song</th>
+      <th>Timer ticks</th>
+      <th>Mean gap ms</th>
+      <th>p99 gap ms</th>
+      <th>Max gap ms</th>
+      <th>Long tasks</th>
+      <th>Longest task ms</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<pre id="log"></pre>
+<script type="module" src="./headtohead.js"></script>
