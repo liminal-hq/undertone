@@ -14,6 +14,8 @@
 #     on no workspace crate except undertone, the facade, and undertone-pattern (directly only to turn on its
 #     `host-number-format` feature in the WebAssembly build); nothing depends on either (no rule lists them), and the
 #     render module does not depend on the main module (they share source files with `#[path]`, not a crate).
+#   - undertone-native (the native output, on `cpal`) depends on no workspace crate except undertone, the facade; nothing depends on
+#     it, so the pure crates never gain an audio-system dependency.
 #   - A crate may list itself as a dev-dependency (to turn on its own features in tests).
 #   - No crate depends on a git source or a path outside this workspace.
 #   - Nothing under crates/*/src uses `unsafe` (a block, fn, impl, trait, or extern) or lifts the lint with
@@ -38,7 +40,8 @@ allowed_workspace_deps='{
   "undertone-sched": ["undertone-pattern", "undertone-engine"],
   "undertone": ["undertone-pattern", "undertone-engine", "undertone-sched"],
   "undertone-wasm": ["undertone", "undertone-pattern"],
-  "undertone-wasm-render": ["undertone", "undertone-pattern"]
+  "undertone-wasm-render": ["undertone", "undertone-pattern"],
+  "undertone-native": ["undertone"]
 }'
 
 violations="$(

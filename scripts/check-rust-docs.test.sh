@@ -86,6 +86,12 @@ if [ "$status" -ne 0 ] && grep -q 'found 0' <<<"$out"; then pass "a page with no
 audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="signals" />' '<RustAudio example="signals" />'
 audio_check
 if [ "$status" -ne 0 ] && grep -q 'found 2' <<<"$out"; then pass "a page with two RustAudio tags fails"; else bad "two RustAudio tags were accepted (status $status): $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<!-- rust-audio: none, it plays on a device -->'
+audio_check
+if [ "$status" -eq 0 ]; then pass "a page marked rust-audio: none needs no player"; else bad "a page marked rust-audio: none was refused: $out"; fi
+audio_page '<<< @/../crates/undertone/examples/signals.rs' '<!-- rust-audio: none -->' '<RustAudio example="signals" />'
+audio_check
+if [ "$status" -ne 0 ] && grep -q 'rust-audio: none' <<<"$out"; then pass "a page marked rust-audio: none with a player fails"; else bad "a marked page with a player was accepted (status $status): $out"; fi
 audio_page '<<< @/../crates/undertone/examples/signals.rs' '<RustAudio example="fm_synthesis" />'
 audio_check
 if [ "$status" -ne 0 ] && grep -q 'fm_synthesis' <<<"$out"; then pass "a RustAudio for an example the page does not import fails"; else bad "a mismatched RustAudio was accepted (status $status): $out"; fi
