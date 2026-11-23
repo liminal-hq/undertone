@@ -1,5 +1,7 @@
 # M7: Outputs
 
+**Status:** built and held unmerged until the person's go, with the device checks (the native soak, the worklet harness on three devices) still to run. The exit notes are [results/M7-NOTES.md](../results/M7-NOTES.md).
+
 ## Objective
 
 Undertone produces sound without Web Audio: natively in real time, in a browser `AudioWorklet` (opt-in), and in a no-browser render through WASI, Node, Bun, and Deno.
