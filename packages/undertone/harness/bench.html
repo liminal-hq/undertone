@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Undertone worklet bench</title>
+<style>
+  body {
+    font:
+      15px/1.4 system-ui,
+      sans-serif;
+    max-width: 58rem;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  button,
+  input {
+    font: inherit;
+    padding: 0.4rem 0.8rem;
+  }
+  label {
+    display: block;
+    margin: 0.4rem 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+  th,
+  td {
+    border-bottom: 1px solid #8884;
+    padding: 0.3rem 0.5rem;
+    text-align: right;
+  }
+  th:first-child,
+  td:first-child,
+  th:nth-child(2),
+  td:nth-child(2) {
+    text-align: left;
+  }
+  .good {
+    color: #0a7d32;
+  }
+  .bad {
+    color: #c0262d;
+  }
+  pre {
+    background: #1112;
+    padding: 0.8rem;
+    overflow: auto;
+    max-height: 12rem;
+  }
+</style>
+<h1>Undertone worklet bench</h1>
+<p>
+  The paths we would ship, on the real song patterns (representative and heavy), each for 20 s by
+  default with 2 s of warm-up not counted: the current module; the SIMD module with 8-bin blocks;
+  SIMD at a 32 kHz context; SIMD with a smaller reverb room (room size 2). The current and SIMD runs
+  repeat at the end to show drift. Sound plays; listen for stutter. Keep this window in front and
+  leave the device alone.
+</p>
+<p id="simd"></p>
+<label>Name for this device and browser <input id="label" size="30" /></label>
+<label>Seconds per run <input id="seconds" type="number" value="20" min="5" max="60" /></label>
+<p>
+  <button id="run">Run the bench</button>
+  <button id="copy" disabled>Copy results</button>
+  <span id="status"></span>
+</p>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Path</th>
+      <th>Song</th>
+      <th>mean ms</th>
+      <th>p99 ms</th>
+      <th>over budget</th>
+      <th>vs current</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<pre id="log"></pre>
+<script type="module" src="./bench.js"></script>

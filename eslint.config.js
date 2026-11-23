@@ -20,7 +20,9 @@ export default tseslint.config(
       // The TypeScript declarations ts-rs writes (generated, checked by a Rust test).
       'crates/undertone-wasm/bindings/**',
       // Throwaway spike code (docs/rust-migration/milestones/M2-spikes.md) is not linted; Prettier still checks it.
-      'spikes/**'
+      'spikes/**',
+      // The built reference engine that scripts/harness-reference.sh copies next to the harness pages (git-ignored).
+      'packages/undertone/harness/reference/**'
     ]
   },
   js.configs.recommended,
@@ -48,7 +50,9 @@ export default tseslint.config(
           'fetch',
           'Worker',
           'URL',
-          'Blob'
+          'Blob',
+          'WebAssembly',
+          'PerformanceObserver'
         ].map((name) => [name, 'readonly'])
       )
     }
