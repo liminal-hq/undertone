@@ -58,12 +58,22 @@
 <h1>Undertone head to head</h1>
 <p>
   Is the Rust and WebAssembly engine faster than the TypeScript reference engine at the same work,
-  on this device and browser? Each song is rendered offline by both engines (one discarded warm-up
-  render, then three timed renders, alternating TypeScript and WebAssembly so thermal drift shows),
-  and the table gives the milliseconds of each run, the median, the speed as a multiple of real time
-  (audio seconds over wall seconds) and the ratio of the WebAssembly median to the TypeScript one
-  (below 1 means WebAssembly is faster). Peak and RMS are shown so you can see that the two engines
-  made the same audio.
+  on this device and browser? Each song is rendered offline by four engines (one discarded warm-up
+  render, then three timed renders, alternating TypeScript, WebAssembly size build, WebAssembly
+  speed build and WebAssembly speed build with SIMD so thermal drift shows), and the table gives the
+  milliseconds of each run, the median, the speed as a multiple of real time (audio seconds over
+  wall seconds) and the ratio of each median to the TypeScript one (below 1 means faster than
+  TypeScript). Peak and RMS are shown so you can see that the engines made the same audio.
+</p>
+<p>
+  The three WebAssembly rows run the same Rust crate built three ways. The size build is the render
+  module the package's <code>renderToBuffer</code> loads (optimised for small downloads, opt-level
+  z). The speed build is the module the audio worklet plays live (opt-level 3), and the SIMD build
+  is that module with WebAssembly SIMD (opt-level 3 and simd128); this page loads their glue and
+  module itself and calls the same <code>renderVoices</code> entry the render module has, with the
+  same pattern, seed, tempo, length and sample rate. The last column checks each speed or SIMD
+  render sample for sample against the size build's: they should be identical. The SIMD row is
+  skipped, with a note, where the browser rejects SIMD.
 </p>
 <p>
   What is and is not comparable: the TypeScript engine builds Web Audio nodes (oscillators, filters,
@@ -82,6 +92,7 @@
   worklet, also off the main thread. Sound plays in that mode.
 </p>
 <p id="reference" class="warn"></p>
+<p id="skipped" class="warn"></p>
 <label>Name for this device and browser <input id="label" size="40" /></label>
 <label
   >Seconds of audio per render
@@ -111,7 +122,8 @@
       <th>x real time</th>
       <th>Peak</th>
       <th>RMS</th>
-      <th>WebAssembly / TypeScript</th>
+      <th>Ratio to TypeScript</th>
+      <th>Samples versus the size build</th>
     </tr>
   </thead>
   <tbody></tbody>

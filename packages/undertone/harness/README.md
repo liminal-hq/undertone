@@ -17,7 +17,7 @@ Browser pages for measuring the package's AudioWorklet backend and the engines b
 - `profile.html`: a ladder of small patterns (nothing, dry voices, reverb, delay) timed through the worklet, so the differences between steps show a device's hot spots.
 - `experiments.html`: the reverb steps of the ladder under different worklet module builds and context settings, each beside a control run. Needs the variant builds (see below).
 - `bench.html`: the paths we would ship (current module, SIMD, a 32 kHz context, a smaller reverb room) on the representative and heavy songs, repeated at the end to show drift. Needs the variant builds.
-- `headtohead.html`: the TypeScript reference engine against the Rust and WebAssembly engine on the same songs, by offline render speed, plus main-thread jitter in real time. Needs the reference build (see below).
+- `headtohead.html`: the TypeScript reference engine against the Rust and WebAssembly engine on the same songs, by offline render speed, plus main-thread jitter in real time. The WebAssembly engine has three rows per song, one crate built three ways: the size build (the render module `renderToBuffer` loads), the speed build and the SIMD speed build (the worklet modules, whose glue and module the page loads itself and calls `renderVoices` on with the same inputs). It checks the speed and SIMD renders sample for sample against the size build's, and skips the SIMD row, with a note, where `WebAssembly.validate` rejects SIMD. Needs the reference build (see below) and the worklet builds in `wasm/worklet/`.
 
 `patterns.js` holds the three songs (light, representative, heavy) as a function of an engine's `note`, `sound` and `stack`; `harness.js` and `summary.js` are shared code.
 
