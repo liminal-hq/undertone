@@ -3,7 +3,7 @@
 // (c) Copyright 2026 Liminal HQ, Scott Morris
 // SPDX-License-Identifier: MIT
 
-// The render module's glue (wasm-bindgen `--target web`) makes a `TextDecoder` and a `TextEncoder` when it is evaluated, and the
+// The worklet module's glue (wasm-bindgen `--target web`) makes a `TextDecoder` and a `TextEncoder` when it is evaluated, and the
 // worklet global scope has no such classes (D-47). The shim gives it just what the glue uses, for UTF-8: a decoder that reads a
 // byte view (and, with `fatal`, throws a `TypeError` on a malformed sequence), and an encoder with `encode` and `encodeInto`. It
 // touches nothing else, and never `fetch`, `URL`, or `import.meta.url`.

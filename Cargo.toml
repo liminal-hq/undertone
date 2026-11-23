@@ -26,3 +26,10 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+
+# The worklet's build of the same render crate (`scripts/build-wasm.sh` builds it into `packages/undertone/wasm/worklet/`):
+# the `wasm` profile with speed instead of size, because `process` has 2.9 ms to render 128 frames and the size build measured
+# 41% of that on a desktop against the 40% limit, where this one measured 9% (M7-outputs.md). Only `undertone-wasm-render` is built with it.
+[profile.wasm-fast]
+inherits = "wasm"
+opt-level = 3

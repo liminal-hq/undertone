@@ -25,7 +25,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 package="${root}/packages/undertone"
 vite_version="5.4.21"
 
-for need in dist/index.js dist/index.node.js wasm/undertone_wasm_bg.wasm wasm/render/undertone_wasm_render_bg.wasm; do
+for need in dist/index.js dist/index.node.js wasm/undertone_wasm_bg.wasm wasm/render/undertone_wasm_render_bg.wasm wasm/worklet/undertone_worklet_bg.wasm; do
 	if [[ ! -f "${package}/${need}" ]]; then
 		echo "check-package-loading: ${need} is missing; run 'bun run package:build' first" >&2
 		exit 1
@@ -44,7 +44,7 @@ echo "== 1. the tarball"
 (cd "${package}" && npm pack --silent --pack-destination "${work}" >/dev/null)
 tarball="$(ls "${work}"/*.tgz)"
 listing="$(tar -tzf "${tarball}")"
-for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/dist/worklet.js package/dist/workletProcessor.js package/dist/workletShim.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/wasm/render/undertone_wasm_render.js package/wasm/render/undertone_wasm_render_bg.wasm package/README.md; do
+for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/dist/worklet.js package/dist/workletProcessor.js package/dist/workletShim.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/wasm/render/undertone_wasm_render.js package/wasm/render/undertone_wasm_render_bg.wasm package/wasm/worklet/undertone_worklet.js package/wasm/worklet/undertone_worklet_bg.wasm package/README.md; do
 	grep -qx "${want}" <<<"${listing}" || fail "the tarball lacks ${want}"
 done
 if grep -E '^package/(src|test)/|\.test\.' <<<"${listing}" >/dev/null; then fail "the tarball holds sources or tests"; fi
@@ -180,8 +180,8 @@ globalThis.worklet = createWorkletOutput;
 document.body.textContent = typeof createWorkletOutput;
 JS
 build page-worklet --outDir ../out-worklet --emptyOutDir --base ./ --target esnext >/dev/null || fail "the ./worklet build failed"
-[[ "$(ls "${app}"/out-worklet/assets/*.wasm 2>/dev/null | wc -l)" -ge 1 ]] || fail "the ./worklet build does not hold the render module as an asset"
-ls "${app}"/out-worklet/assets/ | grep -q '^undertone_wasm_render-.*\.js$' || fail "the ./worklet build does not hold the render module's glue as an asset"
-echo "ok   ./worklet: built, with the render module and its glue as assets"
+ls "${app}"/out-worklet/assets/ | grep -q '^undertone_worklet_bg-.*\.wasm$' || fail "the ./worklet build does not hold the worklet module as an asset"
+ls "${app}"/out-worklet/assets/ | grep -q '^undertone_worklet-.*\.js$' || fail "the ./worklet build does not hold the worklet module's glue as an asset"
+echo "ok   ./worklet: built, with the worklet module (the speed-optimised build) and its glue as assets"
 
 echo "check-package-loading: all checks passed"

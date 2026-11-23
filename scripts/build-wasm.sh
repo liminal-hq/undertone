@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the two WebAssembly modules into packages/undertone/wasm/ (main) and wasm/render/ (render): cargo, wasm-bindgen, wasm-opt, sizes
+# Builds the WebAssembly modules into packages/undertone/wasm/ (main), wasm/render/ (render), and wasm/worklet/ (the worklet's build of the render crate): cargo, wasm-bindgen, wasm-opt, sizes
 #
 # (c) Copyright 2026 Liminal HQ, Scott Morris
 # SPDX-License-Identifier: MIT OR Apache-2.0
@@ -16,7 +16,12 @@
 #      integrity hash on first use; runs under Bun), with exactly the WebAssembly features rustc 1.98 emits for
 #      wasm32-unknown-unknown enabled (the list below). Not `-all` (R4's flag): binaryen 132's `-all` includes the compact
 #      import section, which Node 22 and Bun 1.4 refuse to compile ("unknown import kind 0x7f"); R4 never ran its module;
-#   5. the raw, gzip, and Brotli sizes of both (scripts/check-wasm-size.ts --report; the budget check itself is a separate CI step).
+#   5. the worklet's module (RF-29): the same crate as the render module, no source fork, built a second time with
+#      `--profile wasm-fast` (opt-level 3) and `wasm-opt -O3`, and written as `worklet/undertone_worklet.js` and
+#      `worklet/undertone_worklet_bg.wasm` (wasm-bindgen's `--out-name`), so it cannot be mistaken for the render module. The
+#      `./worklet` entry loads this one, since `process` has 2.9 ms to render a block; the size-optimised render module stays
+#      for offline rendering;
+#   6. the raw, gzip, and Brotli sizes of all three (scripts/check-wasm-size.ts --report; the budget check itself is a separate CI step).
 #
 # Needs cargo with the wasm32-unknown-unknown target, the wasm-bindgen CLI, jq, and Bun. Respects CARGO_TARGET_DIR. Run from anywhere.
 
@@ -48,6 +53,7 @@ fi
 
 target_dir="$(cargo metadata --format-version 1 --no-deps --locked | jq -r .target_directory)"
 cargo build --locked --target wasm32-unknown-unknown --profile wasm -p undertone-wasm -p undertone-wasm-render
+cargo build --locked --target wasm32-unknown-unknown --profile wasm-fast -p undertone-wasm-render
 
 if [[ ! -f "${tools}/node_modules/binaryen/bin/wasm-opt" ]]; then
 	bun install --frozen-lockfile --cwd "${tools}"
@@ -57,13 +63,16 @@ features=(
 	--enable-mutable-globals --enable-nontrapping-float-to-int --enable-reference-types --enable-sign-ext
 )
 
-# <crate's library name> <output directory>
-for module in "undertone_wasm ${out}" "undertone_wasm_render ${out}/render"; do
-	read -r name dir <<<"${module}"
+# <crate's library name> <cargo profile directory> <output directory> <output name> <wasm-opt level>
+for module in \
+	"undertone_wasm wasm ${out} undertone_wasm -Oz" \
+	"undertone_wasm_render wasm ${out}/render undertone_wasm_render -Oz" \
+	"undertone_wasm_render wasm-fast ${out}/worklet undertone_worklet -O3"; do
+	read -r lib profile dir name level <<<"${module}"
 	mkdir -p "${dir}"
 	rm -f "${dir}/${name}".js "${dir}/${name}".d.ts "${dir}/${name}"_bg.wasm "${dir}/${name}"_bg.wasm.d.ts
-	wasm-bindgen --target web --weak-refs --out-dir "${dir}" --out-name "${name}" "${target_dir}/wasm32-unknown-unknown/wasm/${name}.wasm"
-	bun "${tools}/node_modules/binaryen/bin/wasm-opt" -Oz "${features[@]}" "${dir}/${name}_bg.wasm" -o "${dir}/${name}_bg.wasm"
+	wasm-bindgen --target web --weak-refs --out-dir "${dir}" --out-name "${name}" "${target_dir}/wasm32-unknown-unknown/${profile}/${lib}.wasm"
+	bun "${tools}/node_modules/binaryen/bin/wasm-opt" "${level}" "${features[@]}" "${dir}/${name}_bg.wasm" -o "${dir}/${name}_bg.wasm"
 done
 
 bun scripts/check-wasm-size.ts --report

@@ -260,6 +260,7 @@ fn render_options(render: &Value) -> RenderOptions {
 	let flag = |key: &str| render.get(key).and_then(Value::as_bool);
 	RenderOptions {
 		cycles: number_option(render, "cycles"),
+		start_cycle: None,
 		seconds: number_option(render, "seconds"),
 		bpm: number_option(render, "bpm"),
 		cps: number_option(render, "cps"),
