@@ -36,11 +36,103 @@ const GAIN_CALIBRATION_DB: f64 = -58.0;
 const CALIBRATION_RATE: f64 = 44_100.0;
 const MIN_POWER: f64 = 0.000_125;
 
-/// The spectra of the partitions of one response channel.
+/// Bins that one step of the multiply-add handles together, each with its own accumulator held in registers
+/// while every live partition goes by. A power of two that divides [`QUANTUM`].
+const BLOCK: usize = 8;
+
+/// The bins that fill whole blocks: `0..QUANTUM`. The one bin left of the `BINS` (the Nyquist bin) is a block
+/// of its own, one bin wide.
+const BULK: usize = QUANTUM;
+
+const _: () = assert!(BULK.is_multiple_of(BLOCK) && BINS == BULK + 1);
+
+/// The spectra of the partitions of one response channel, in the layout the multiply-add reads.
+///
+/// Both this and the input history are stored bin-major, in blocks: the first `BULK * partitions` values hold
+/// the blocks of [`BLOCK`] bins in turn, and within a block the partitions (slots) follow one another with
+/// their `BLOCK` bins side by side, so the loop over partitions for a block of bins reads one run of memory.
+/// The last `partitions` values are the Nyquist bin, one per partition. The arithmetic and its order are what
+/// the partition-major layout had; only where the numbers sit has changed.
 #[derive(Debug, Clone)]
 struct Spectra {
 	re: Vec<f64>,
 	im: Vec<f64>,
+}
+
+/// Stores the `BINS` values of `spectrum` as partition (or slot) `slot` of `partitions` in `store`'s layout.
+fn scatter(store: &mut [f64], partitions: usize, slot: usize, spectrum: &[f64]) {
+	let (bulk, nyquist) = store.split_at_mut(BULK * partitions);
+	for (block, bins) in spectrum[..BULK].as_chunks::<BLOCK>().0.iter().enumerate() {
+		let at = block * BLOCK * partitions + slot * BLOCK;
+		bulk[at..at + BLOCK].copy_from_slice(bins);
+	}
+	nyquist[slot] = spectrum[BULK];
+}
+
+/// A run of consecutive live partitions: partition `first` pairs with slot `slot`, `first + 1` with `slot - 1`,
+/// and so on for `len` partitions (the history is read newest first, and a run never wraps).
+#[derive(Debug, Clone, Copy)]
+struct Run {
+	first: usize,
+	slot: usize,
+	len: usize,
+}
+
+/// The runs of live partitions, in partition order, for a history whose newest slot is `newest`. Partition `p`
+/// pairs with slot `(newest + partitions - p) % partitions`; the partitions whose slot is not live are left
+/// out, which is the skip of silent history.
+fn live_runs(live: &[bool], newest: usize, runs: &mut Vec<Run>) {
+	runs.clear();
+	let partitions = live.len();
+	for p in 0..partitions {
+		let slot = if p <= newest {
+			newest - p
+		} else {
+			newest + partitions - p
+		};
+		if !live[slot] {
+			continue;
+		}
+		match runs.last_mut() {
+			Some(run) if run.first + run.len == p && run.slot + 1 == slot + run.len => run.len += 1,
+			_ => runs.push(Run {
+				first: p,
+				slot,
+				len: 1,
+			}),
+		}
+	}
+}
+
+/// Adds the products of `W` bins over every run into `acc_re` and `acc_im`, partition by partition in order:
+/// `acc += hr * xr - hi * xi` and `acc += hr * xi + hi * xr`, each product rounded on its own (nothing is
+/// fused), exactly the operations and the order of the one-bin-at-a-time loop. `h_*` and `x_*` are the
+/// response's and the history's values for this block of bins, `W` per partition (or slot).
+#[inline(always)]
+fn accumulate<const W: usize>(
+	acc_re: &mut [f64; W],
+	acc_im: &mut [f64; W],
+	h_re: &[f64],
+	h_im: &[f64],
+	x_re: &[f64],
+	x_im: &[f64],
+	runs: &[Run],
+) {
+	for run in runs {
+		let h = run.first * W..(run.first + run.len) * W;
+		let x = (run.slot + 1 - run.len) * W..(run.slot + 1) * W;
+		let (h_re, _) = h_re[h.clone()].as_chunks::<W>();
+		let (h_im, _) = h_im[h].as_chunks::<W>();
+		let (x_re, _) = x_re[x.clone()].as_chunks::<W>();
+		let (x_im, _) = x_im[x].as_chunks::<W>();
+		let slots = x_re.iter().rev().zip(x_im.iter().rev());
+		for ((hr, hi), (xr, xi)) in h_re.iter().zip(h_im).zip(slots) {
+			for j in 0..W {
+				acc_re[j] += hr[j] * xr[j] - hi[j] * xi[j];
+				acc_im[j] += hr[j] * xi[j] + hi[j] * xr[j];
+			}
+		}
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +151,8 @@ pub(crate) struct Convolver {
 	history_im: Vec<Vec<f64>>,
 	/// Whether each slot of the history holds a nonzero spectrum.
 	live: Vec<Vec<bool>>,
+	/// Per input channel: the runs of live slots, found once a quantum and shared by every output.
+	runs: Vec<Vec<Run>>,
 	previous: Vec<Vec<f64>>,
 	newest: usize,
 	/// Quanta since the last sound went in.
@@ -132,6 +226,7 @@ impl Convolver {
 			history_re: Vec::new(),
 			history_im: Vec::new(),
 			live: Vec::new(),
+			runs: Vec::new(),
 			previous: Vec::new(),
 			newest: 0,
 			quiet: usize::MAX / 2,
@@ -166,6 +261,7 @@ impl Convolver {
 		self.history_re.clear();
 		self.history_im.clear();
 		self.live.clear();
+		self.runs.clear();
 		self.previous.clear();
 		self.quiet = usize::MAX / 2;
 		let Some(channels) = channels else {
@@ -193,8 +289,8 @@ impl Convolver {
 					*slot = f64::from(*sample) * scale;
 				}
 				self.fft.forward(&mut self.scratch_re, &mut self.scratch_im);
-				re[p * BINS..(p + 1) * BINS].copy_from_slice(&self.scratch_re[..BINS]);
-				im[p * BINS..(p + 1) * BINS].copy_from_slice(&self.scratch_im[..BINS]);
+				scatter(&mut re, partitions, p, &self.scratch_re[..BINS]);
+				scatter(&mut im, partitions, p, &self.scratch_im[..BINS]);
 			}
 			spectra.push(Spectra { re, im });
 		}
@@ -215,6 +311,10 @@ impl Convolver {
 			self.history_re = vec![vec![0.0; size]; channels];
 			self.history_im = vec![vec![0.0; size]; channels];
 			self.live = vec![vec![false; response.partitions]; channels];
+			// A run holds at least one partition, so there are never more runs than partitions: a quantum never allocates.
+			self.runs = (0..channels)
+				.map(|_| Vec::with_capacity(response.partitions))
+				.collect();
 			self.previous = vec![vec![0.0; QUANTUM]; channels];
 			self.newest = 0;
 			self.quiet = usize::MAX / 2;
@@ -289,47 +389,76 @@ impl Convolver {
 			self.live[channel][self.newest] = live;
 			if live {
 				self.fft.forward(&mut self.scratch_re, &mut self.scratch_im);
-				let base = self.newest * BINS;
-				self.history_re[channel][base..base + BINS]
-					.copy_from_slice(&self.scratch_re[..BINS]);
-				self.history_im[channel][base..base + BINS]
-					.copy_from_slice(&self.scratch_im[..BINS]);
+				scatter(
+					&mut self.history_re[channel],
+					partitions,
+					self.newest,
+					&self.scratch_re[..BINS],
+				);
+				scatter(
+					&mut self.history_im[channel],
+					partitions,
+					self.newest,
+					&self.scratch_im[..BINS],
+				);
 			}
 			for (slot, sample) in self.previous[channel].iter_mut().zip(block) {
 				*slot = if silent { 0.0 } else { f64::from(*sample) };
 			}
+			live_runs(&self.live[channel], self.newest, &mut self.runs[channel]);
 		}
 		let outputs = self.output_channels(input_channels);
 		for output in 0..outputs {
-			self.acc_re.fill(0.0);
-			self.acc_im.fill(0.0);
+			// The (input channel, response channel) pairs that sum into this output, in order, and whether any
+			// of them has a live slot.
+			let mut pairs = [(0, 0); 2];
+			let mut count = 0;
 			let mut any = false;
 			for (channel, kernel) in self.pairs(input_channels, output).into_iter().flatten() {
-				let spectra = &response.spectra[kernel];
-				for p in 0..partitions {
-					let slot = (self.newest + partitions - p) % partitions;
-					if !self.live[channel][slot] {
-						continue;
-					}
-					any = true;
-					let x = slot * BINS;
-					let h = p * BINS;
-					let (xr, xi) = (
-						&self.history_re[channel][x..x + BINS],
-						&self.history_im[channel][x..x + BINS],
-					);
-					let (hr, hi) = (&spectra.re[h..h + BINS], &spectra.im[h..h + BINS]);
-					for k in 0..BINS {
-						self.acc_re[k] += hr[k] * xr[k] - hi[k] * xi[k];
-						self.acc_im[k] += hr[k] * xi[k] + hi[k] * xr[k];
-					}
-				}
+				any |= !self.runs[channel].is_empty();
+				pairs[count] = (channel, kernel);
+				count += 1;
 			}
 			let target = &mut out[output * QUANTUM..(output + 1) * QUANTUM];
 			if !any {
 				target.fill(0.0);
 				continue;
 			}
+			// Each block of bins keeps its accumulators in registers across every partition of every pair,
+			// adding the products in the order of the partitions, as the bin-by-bin loop did.
+			for block in 0..BULK / BLOCK {
+				let (mut re, mut im) = ([0.0; BLOCK], [0.0; BLOCK]);
+				let at = block * BLOCK * partitions..(block + 1) * BLOCK * partitions;
+				for &(channel, kernel) in &pairs[..count] {
+					let spectra = &response.spectra[kernel];
+					accumulate::<BLOCK>(
+						&mut re,
+						&mut im,
+						&spectra.re[at.clone()],
+						&spectra.im[at.clone()],
+						&self.history_re[channel][at.clone()],
+						&self.history_im[channel][at.clone()],
+						&self.runs[channel],
+					);
+				}
+				self.acc_re[block * BLOCK..(block + 1) * BLOCK].copy_from_slice(&re);
+				self.acc_im[block * BLOCK..(block + 1) * BLOCK].copy_from_slice(&im);
+			}
+			let (mut re, mut im) = ([0.0; 1], [0.0; 1]);
+			for &(channel, kernel) in &pairs[..count] {
+				let spectra = &response.spectra[kernel];
+				accumulate::<1>(
+					&mut re,
+					&mut im,
+					&spectra.re[BULK * partitions..],
+					&spectra.im[BULK * partitions..],
+					&self.history_re[channel][BULK * partitions..],
+					&self.history_im[channel][BULK * partitions..],
+					&self.runs[channel],
+				);
+			}
+			self.acc_re[BULK] = re[0];
+			self.acc_im[BULK] = im[0];
 			// Rebuild the full spectrum of a real signal and take the second half of the inverse.
 			self.scratch_re[..BINS].copy_from_slice(&self.acc_re);
 			self.scratch_im[..BINS].copy_from_slice(&self.acc_im);
@@ -474,5 +603,368 @@ mod tests {
 		let data = vec![0.5_f32; 1_000];
 		let resampled = resample(&data, 1.0, 100_000.0);
 		assert_eq!(resampled.len(), MAX_RESPONSE_FRAMES);
+	}
+
+	/// The multiply-add as it was before the bins were regrouped: partition-major spectra, one pass over every
+	/// bin per live partition, read-modify-write of the accumulators. It is the specification the faster loop
+	/// must match to the last bit (floating-point addition is not associative, so the order is the contract).
+	mod reference {
+		use super::super::*;
+
+		pub(super) struct Reference {
+			fft: Fft,
+			response: Option<ReferenceResponse>,
+			history_re: Vec<Vec<f64>>,
+			history_im: Vec<Vec<f64>>,
+			live: Vec<Vec<bool>>,
+			previous: Vec<Vec<f64>>,
+			newest: usize,
+			pub(super) quiet: usize,
+			scratch_re: Vec<f64>,
+			scratch_im: Vec<f64>,
+			acc_re: Vec<f64>,
+			acc_im: Vec<f64>,
+		}
+
+		struct ReferenceResponse {
+			re: Vec<Vec<f64>>,
+			im: Vec<Vec<f64>>,
+			partitions: usize,
+		}
+
+		impl Reference {
+			pub(super) fn new() -> Self {
+				Self {
+					fft: Fft::new(FFT_SIZE),
+					response: None,
+					history_re: Vec::new(),
+					history_im: Vec::new(),
+					live: Vec::new(),
+					previous: Vec::new(),
+					newest: 0,
+					quiet: usize::MAX / 2,
+					scratch_re: vec![0.0; FFT_SIZE],
+					scratch_im: vec![0.0; FFT_SIZE],
+					acc_re: vec![0.0; BINS],
+					acc_im: vec![0.0; BINS],
+				}
+			}
+
+			fn response_channels(&self) -> usize {
+				self.response.as_ref().map_or(0, |r| r.re.len())
+			}
+
+			pub(super) fn output_channels(&self, input_channels: usize) -> usize {
+				match self.response_channels() {
+					0 | 1 => input_channels,
+					_ => 2,
+				}
+			}
+
+			pub(super) fn set_response(
+				&mut self,
+				channels: &[Vec<f32>],
+				sample_rate: f64,
+				context_rate: f64,
+			) {
+				self.response = None;
+				self.history_re.clear();
+				self.history_im.clear();
+				self.live.clear();
+				self.previous.clear();
+				self.quiet = usize::MAX / 2;
+				let scale = normalisation(channels, sample_rate);
+				let resampled: Vec<Vec<f32>> = channels
+					.iter()
+					.map(|c| resample(c, sample_rate, context_rate))
+					.collect();
+				let partitions = resampled[0].len().div_ceil(QUANTUM);
+				let (mut all_re, mut all_im) = (Vec::new(), Vec::new());
+				for channel in &resampled {
+					let mut re = vec![0.0; partitions * BINS];
+					let mut im = vec![0.0; partitions * BINS];
+					for p in 0..partitions {
+						self.scratch_re.fill(0.0);
+						self.scratch_im.fill(0.0);
+						let part = &channel[p * QUANTUM..((p + 1) * QUANTUM).min(channel.len())];
+						for (slot, sample) in self.scratch_re.iter_mut().zip(part) {
+							*slot = f64::from(*sample) * scale;
+						}
+						self.fft.forward(&mut self.scratch_re, &mut self.scratch_im);
+						re[p * BINS..(p + 1) * BINS].copy_from_slice(&self.scratch_re[..BINS]);
+						im[p * BINS..(p + 1) * BINS].copy_from_slice(&self.scratch_im[..BINS]);
+					}
+					all_re.push(re);
+					all_im.push(im);
+				}
+				self.response = Some(ReferenceResponse {
+					re: all_re,
+					im: all_im,
+					partitions,
+				});
+				self.newest = 0;
+			}
+
+			pub(super) fn resize(&mut self, channels: usize) {
+				let Some(response) = &self.response else {
+					return;
+				};
+				if self.history_re.len() != channels {
+					let size = response.partitions * BINS;
+					self.history_re = vec![vec![0.0; size]; channels];
+					self.history_im = vec![vec![0.0; size]; channels];
+					self.live = vec![vec![false; response.partitions]; channels];
+					self.previous = vec![vec![0.0; QUANTUM]; channels];
+					self.newest = 0;
+					self.quiet = usize::MAX / 2;
+				}
+			}
+
+			fn pairs(&self, input_channels: usize, output: usize) -> [Option<(usize, usize)>; 2] {
+				match self.response_channels() {
+					1 => [Some((output, 0)), None],
+					2 => [
+						Some((if input_channels == 2 { output } else { 0 }, output)),
+						None,
+					],
+					_ => {
+						let right = if input_channels == 2 { 1 } else { 0 };
+						[Some((0, output)), Some((right, output + 2))]
+					}
+				}
+			}
+
+			pub(super) fn process(
+				&mut self,
+				input: &[f32],
+				input_channels: usize,
+				silent: bool,
+				out: &mut [f32],
+			) {
+				let Some(response) = &self.response else {
+					out.fill(0.0);
+					return;
+				};
+				let partitions = response.partitions;
+				self.quiet = if silent {
+					self.quiet.saturating_add(1)
+				} else {
+					0
+				};
+				if self.quiet > partitions {
+					for live in &mut self.live {
+						live.fill(false);
+					}
+					for previous in &mut self.previous {
+						previous.fill(0.0);
+					}
+					out.fill(0.0);
+					return;
+				}
+				self.newest = (self.newest + 1) % partitions;
+				for channel in 0..input_channels {
+					let block = &input[channel * QUANTUM..(channel + 1) * QUANTUM];
+					let was_live = self.previous[channel].iter().any(|v| *v != 0.0);
+					self.scratch_re[..QUANTUM].copy_from_slice(&self.previous[channel]);
+					for (slot, sample) in self.scratch_re[QUANTUM..].iter_mut().zip(block) {
+						*slot = if silent { 0.0 } else { f64::from(*sample) };
+					}
+					self.scratch_im.fill(0.0);
+					let live = was_live || !silent;
+					self.live[channel][self.newest] = live;
+					if live {
+						self.fft.forward(&mut self.scratch_re, &mut self.scratch_im);
+						let base = self.newest * BINS;
+						self.history_re[channel][base..base + BINS]
+							.copy_from_slice(&self.scratch_re[..BINS]);
+						self.history_im[channel][base..base + BINS]
+							.copy_from_slice(&self.scratch_im[..BINS]);
+					}
+					for (slot, sample) in self.previous[channel].iter_mut().zip(block) {
+						*slot = if silent { 0.0 } else { f64::from(*sample) };
+					}
+				}
+				let outputs = self.output_channels(input_channels);
+				for output in 0..outputs {
+					self.acc_re.fill(0.0);
+					self.acc_im.fill(0.0);
+					let mut any = false;
+					for (channel, kernel) in
+						self.pairs(input_channels, output).into_iter().flatten()
+					{
+						for p in 0..partitions {
+							let slot = (self.newest + partitions - p) % partitions;
+							if !self.live[channel][slot] {
+								continue;
+							}
+							any = true;
+							let x = slot * BINS;
+							let h = p * BINS;
+							let (xr, xi) = (
+								&self.history_re[channel][x..x + BINS],
+								&self.history_im[channel][x..x + BINS],
+							);
+							let (hr, hi) = (
+								&response.re[kernel][h..h + BINS],
+								&response.im[kernel][h..h + BINS],
+							);
+							for k in 0..BINS {
+								self.acc_re[k] += hr[k] * xr[k] - hi[k] * xi[k];
+								self.acc_im[k] += hr[k] * xi[k] + hi[k] * xr[k];
+							}
+						}
+					}
+					let target = &mut out[output * QUANTUM..(output + 1) * QUANTUM];
+					if !any {
+						target.fill(0.0);
+						continue;
+					}
+					self.scratch_re[..BINS].copy_from_slice(&self.acc_re);
+					self.scratch_im[..BINS].copy_from_slice(&self.acc_im);
+					for k in 1..QUANTUM {
+						self.scratch_re[FFT_SIZE - k] = self.acc_re[k];
+						self.scratch_im[FFT_SIZE - k] = -self.acc_im[k];
+					}
+					self.fft.inverse(&mut self.scratch_re, &mut self.scratch_im);
+					for (slot, value) in target.iter_mut().zip(&self.scratch_re[QUANTUM..]) {
+						*slot = *value as f32;
+					}
+				}
+			}
+		}
+	}
+
+	/// A small seeded generator (xorshift64*), so a failure names a seed that reproduces it.
+	struct Rng(u64);
+
+	impl Rng {
+		fn next(&mut self) -> u64 {
+			self.0 ^= self.0 >> 12;
+			self.0 ^= self.0 << 25;
+			self.0 ^= self.0 >> 27;
+			self.0.wrapping_mul(0x2545_F491_4F6C_DD1D)
+		}
+
+		fn below(&mut self, n: u64) -> u64 {
+			self.next() % n
+		}
+
+		/// A sample: mostly ordinary, with exact zeros, negative zeros, denormals, and tiny and large values.
+		fn sample(&mut self) -> f32 {
+			match self.below(16) {
+				0 => 0.0,
+				1 => -0.0,
+				2 => 1.0e-40,
+				3 => -3.0e-41,
+				4 => f32::MIN_POSITIVE * 0.5,
+				5 => 1.0e-20,
+				6 => 3.0e4,
+				_ => (self.next() >> 40) as f32 / (1u64 << 23) as f32 - 1.0,
+			}
+		}
+	}
+
+	fn assert_same_bits(got: &[f32], want: &[f32], what: &str) {
+		for (n, (g, w)) in got.iter().zip(want).enumerate() {
+			assert_eq!(
+				g.to_bits(),
+				w.to_bits(),
+				"{what}, sample {n}: {g:e} vs {w:e}"
+			);
+		}
+	}
+
+	/// One case: a random response and a random signal through both loops, compared bit for bit.
+	fn compare_with_reference(seed: u64) {
+		let mut rng = Rng(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
+		let mut convolver = Convolver::new();
+		let mut reference = reference::Reference::new();
+		let input_channels = 1 + rng.below(2) as usize;
+		let blocks = 40 + rng.below(40) as usize;
+		for round in 0..2 {
+			let response_channels = [1, 2, 4][rng.below(3) as usize];
+			let partitions = [1, 2, 3, 5, 8, 9, 17, 31][rng.below(8) as usize];
+			let length = partitions * QUANTUM - rng.below(QUANTUM as u64 - 1) as usize;
+			let response: Vec<Vec<f32>> = (0..response_channels)
+				.map(|_| (0..length).map(|_| rng.sample()).collect())
+				.collect();
+			convolver.set_response(Some(&response), 48_000.0, 48_000.0);
+			reference.set_response(&response, 48_000.0, 48_000.0);
+			convolver.resize(input_channels);
+			reference.resize(input_channels);
+			let outputs = convolver.output_channels(input_channels);
+			assert_eq!(outputs, reference.output_channels(input_channels));
+			let mut mode = 0;
+			for block in 0..blocks {
+				if block % 7 == 0 {
+					mode = rng.below(6);
+				}
+				let mut input = vec![0.0_f32; QUANTUM * input_channels];
+				for slot in &mut input {
+					*slot = match mode {
+						0 => rng.sample(),
+						1 => 0.0,
+						2 => -0.0,
+						3 => 2.0e-40,
+						4 => {
+							if rng.below(40) == 0 {
+								0.5
+							} else {
+								0.0
+							}
+						}
+						_ => (rng.below(2001) as f32 - 1000.0) / 1000.0,
+					};
+				}
+				// A silent flag is exact silence, but a silent block may also be reported as sound.
+				let silent = input.iter().all(|s| *s == 0.0) && rng.below(5) != 0;
+				let mut got = vec![0.0_f32; QUANTUM * outputs];
+				let mut want = vec![0.0_f32; QUANTUM * outputs];
+				convolver.process(&input, input_channels, silent, &mut got);
+				reference.process(&input, input_channels, silent, &mut want);
+				assert_same_bits(
+					&got,
+					&want,
+					&format!("seed {seed}, round {round}, block {block}, {partitions} partitions"),
+				);
+				assert_eq!(convolver.is_finished(), reference.quiet > partitions);
+			}
+		}
+	}
+
+	#[test]
+	fn the_loop_matches_the_old_loop_bit_for_bit() {
+		for seed in 0..60 {
+			compare_with_reference(seed);
+		}
+	}
+
+	#[test]
+	fn the_loop_matches_the_old_loop_through_a_long_tail() {
+		// A response of 31 partitions fed one burst and then silence for far longer than the tail: every block
+		// of the decay, and the blocks after the history has gone quiet, must match.
+		let mut rng = Rng(0xDEAD_BEEF);
+		let response: Vec<Vec<f32>> = (0..2)
+			.map(|_| (0..31 * QUANTUM - 5).map(|_| rng.sample()).collect())
+			.collect();
+		let mut convolver = Convolver::new();
+		let mut reference = reference::Reference::new();
+		convolver.set_response(Some(&response), 44_100.0, 48_000.0);
+		reference.set_response(&response, 44_100.0, 48_000.0);
+		convolver.resize(2);
+		reference.resize(2);
+		for block in 0..120 {
+			let burst = block < 3;
+			let input: Vec<f32> = (0..2 * QUANTUM)
+				.map(|_| if burst { rng.sample() } else { 0.0 })
+				.collect();
+			let silent = !burst;
+			let mut got = vec![0.0_f32; 2 * QUANTUM];
+			let mut want = vec![0.0_f32; 2 * QUANTUM];
+			convolver.process(&input, 2, silent, &mut got);
+			reference.process(&input, 2, silent, &mut want);
+			assert_same_bits(&got, &want, &format!("tail block {block}"));
+		}
+		assert!(convolver.is_finished());
 	}
 }
