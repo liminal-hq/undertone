@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Undertone run-all harness</title>
+<style>
+  body {
+    font:
+      15px/1.4 system-ui,
+      sans-serif;
+    max-width: 46rem;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  button,
+  input {
+    font: inherit;
+    padding: 0.4rem 0.8rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+  }
+  th,
+  td {
+    border-bottom: 1px solid #8884;
+    padding: 0.3rem 0.5rem;
+    text-align: left;
+  }
+  .ok {
+    color: #0a7d32;
+  }
+  .bad {
+    color: #c0262d;
+  }
+  pre {
+    background: #1112;
+    padding: 0.8rem;
+    overflow: auto;
+    max-height: 14rem;
+  }
+</style>
+<h1>Undertone run-all harness</h1>
+<p>
+  One press runs the speed probe and then the Light, Representative, and Heavy patterns through the
+  AudioWorklet backend, one after another, and sends the numbers to the machine that served this
+  page. Keep this window in front and leave the device alone while it runs. You will hear the
+  patterns; nothing here judges how they sound.
+</p>
+<label>Name for this browser (as you want it in the results) <input id="label" size="28" /></label>
+<label
+  >Seconds per pattern (after a 3 s warm-up that is not counted)
+  <input id="seconds" type="number" value="30" min="5" max="600"
+/></label>
+<p>
+  <button id="run">Run all</button> <button id="copy" disabled>Copy results</button>
+  <span id="status"></span>
+</p>
+<table id="table">
+  <thead>
+    <tr>
+      <th>Step</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<pre id="log"></pre>
+<script type="module" src="./matrix.js"></script>
