@@ -7,8 +7,8 @@
 //
 // The modules default to the two scripts/build-wasm.sh writes: the main module (packages/undertone/wasm/undertone_wasm_bg.wasm) and the
 // lazily loaded render module (packages/undertone/wasm/render/undertone_wasm_render_bg.wasm). Each has its own budget after Brotli 11
-// (KB is 1,000 bytes, as in R4), with a warning from 90%: the main module D-07's 150 KB; the render module 150 KB too, the ceiling the
-// person set for it (M6-BOUNDARY.md, section 9, has the proposal). The check fails when a module is over its budget; `--report` only
+// (KB is 1,000 bytes, as in R4), with a warning from 90%: the main module D-07's 150 KB; the render module 120 KB, the ceiling the
+// person set for it in D-43 (the warning from 90% is 108 KB). The check fails when a module is over its budget; `--report` only
 // prints (and writes no summary). gzip -9 is reported beside Brotli, with a warning line (no failure) over a gzip figure 1.2 times the
 // Brotli budget, because a host that serves gzip only (GitHub Pages, probably) sends that size. The glue JavaScript beside each module
 // is reported for information and has no budget. With GITHUB_STEP_SUMMARY set, the figures are appended to the job summary as a table.
@@ -25,7 +25,7 @@ interface Budget {
 /** The budget of a module, by file name. */
 const BUDGETS: Record<string, Budget> = {
   'undertone_wasm_bg.wasm': { label: 'main module', limit: 150_000 },
-  'undertone_wasm_render_bg.wasm': { label: 'render module', limit: 150_000 }
+  'undertone_wasm_render_bg.wasm': { label: 'render module', limit: 120_000 }
 };
 const WARN = 0.9;
 const GZIP_RATIO = 1.2;

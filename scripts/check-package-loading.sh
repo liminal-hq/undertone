@@ -9,6 +9,8 @@
 #   2. Node and Bun import the package by name (the `node` condition: synchronous load, no await), run a query, render a
 #      note through the lazily loaded render module and encode it as WAV, and the `./init` entry works with its explicit `await init()`;
 #   3. Deno does the same when it is installed (skipped otherwise, and said so);
+#      The opt-in `./worklet` entry (RF-29) imports there too, and its Vite build emits the render module's glue and module as
+#      assets (it finds them with `new URL(..., import.meta.url)`);
 #   4. a Vite 5 build of an app that imports the package fails at Vite 5's default target on the top-level `await` (the
 #      documented condition), succeeds with `build.target: 'esnext'`, and succeeds for the `./init` entry at the default target;
 #      the built output holds both modules as assets (the render module's glue a chunk of its own, imported on the first
@@ -42,7 +44,7 @@ echo "== 1. the tarball"
 (cd "${package}" && npm pack --silent --pack-destination "${work}" >/dev/null)
 tarball="$(ls "${work}"/*.tgz)"
 listing="$(tar -tzf "${tarball}")"
-for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/wasm/render/undertone_wasm_render.js package/wasm/render/undertone_wasm_render_bg.wasm package/README.md; do
+for want in package/dist/index.js package/dist/index.node.js package/dist/init.js package/dist/testing.js package/dist/worklet.js package/dist/workletProcessor.js package/dist/workletShim.js package/wasm/undertone_wasm_bg.wasm package/wasm/undertone_wasm.js package/wasm/render/undertone_wasm_render.js package/wasm/render/undertone_wasm_render_bg.wasm package/README.md; do
 	grep -qx "${want}" <<<"${listing}" || fail "the tarball lacks ${want}"
 done
 if grep -E '^package/(src|test)/|\.test\.' <<<"${listing}" >/dev/null; then fail "the tarball holds sources or tests"; fi
@@ -78,11 +80,20 @@ if ((await renderToBuffer(note('c3'), { sampleRate: 8000, master: false })).leng
 console.log('init ok');
 JS
 
+cat >"${app}/worklet.mjs" <<'JS'
+import { createWorkletOutput, workletModuleSource } from '@liminal-hq/undertone/worklet';
+if (typeof createWorkletOutput !== 'function') throw new Error('no createWorkletOutput');
+const source = workletModuleSource('/* glue */');
+if (!source.includes('registerProcessor') || !source.includes('TextDecoder')) throw new Error('the worklet module lacks the processor or the shim');
+console.log('worklet ok');
+JS
+
 echo "== 2. Node $(node --version) and Bun $(bun --version)"
 for runtime in node bun; do
 	out="$(cd "${app}" && "${runtime}" main.mjs)" || fail "${runtime} could not import the package"
 	[[ "${out}" == "0:a 1/2:b 3/4:b" ]] || fail "${runtime} printed '${out}'"
 	(cd "${app}" && "${runtime}" init.mjs >/dev/null) || fail "${runtime} could not use ./init"
+	(cd "${app}" && "${runtime}" worklet.mjs >/dev/null) || fail "${runtime} could not import ./worklet"
 	echo "ok   ${runtime}: . and ./init"
 done
 
@@ -158,5 +169,19 @@ build page-init --outDir ../out-init --emptyOutDir --base ./ >/dev/null || fail 
 [[ "$(ls "${app}"/out-init/assets/*.wasm 2>/dev/null | wc -l)" -ge 2 ]] || fail "the ./init build does not hold both .wasm assets"
 [[ "$(cd "${app}" && node run-built.mjs out-init)" == "48 a b 0.5 8 16000" ]] || fail "the ./init bundle did not run, encode, or render"
 echo "ok   ./init at the default target: built, and the bundle runs, encodes a WAV before any render, and renders"
+
+mkdir -p "${app}/page-worklet"
+cat >"${app}/page-worklet/index.html" <<'HTML'
+<!doctype html><html><body><script type="module" src="./main.js"></script></body></html>
+HTML
+cat >"${app}/page-worklet/main.js" <<'JS'
+import { createWorkletOutput } from '@liminal-hq/undertone/worklet';
+globalThis.worklet = createWorkletOutput;
+document.body.textContent = typeof createWorkletOutput;
+JS
+build page-worklet --outDir ../out-worklet --emptyOutDir --base ./ --target esnext >/dev/null || fail "the ./worklet build failed"
+[[ "$(ls "${app}"/out-worklet/assets/*.wasm 2>/dev/null | wc -l)" -ge 1 ]] || fail "the ./worklet build does not hold the render module as an asset"
+ls "${app}"/out-worklet/assets/ | grep -q '^undertone_wasm_render-.*\.js$' || fail "the ./worklet build does not hold the render module's glue as an asset"
+echo "ok   ./worklet: built, with the render module and its glue as assets"
 
 echo "check-package-loading: all checks passed"

@@ -99,6 +99,8 @@ function pcmOf(buffer: AudioBufferLike): Pcm {
 const registry = new Map<string, Entry>();
 const warned = new Set<string>();
 let render: SampleSink | undefined;
+/** Other holders of a registry: the AudioWorklet backend's outputs, each a second copy in its worklet (src/worklet.ts). */
+const sinks = new Set<SampleSink>();
 
 setHostBuffers((ctx) => {
   const hosts: HostBuffer[] = [];
@@ -130,6 +132,18 @@ export function connectRenderSamples(sink: SampleSink): void {
   for (const [name, entry] of registry) give(sink, name, entry);
 }
 
+/**
+ * Connects another registry (an AudioWorklet output's): it is given every sample registered so far, and every later registration,
+ * decode, and clear. Returns the function that disconnects it.
+ */
+export function connectSampleSink(sink: SampleSink): () => void {
+  sinks.add(sink);
+  for (const [name, entry] of registry) give(sink, name, entry);
+  return () => {
+    sinks.delete(sink);
+  };
+}
+
 /** Registers one sample under `name` — see SampleSource for the accepted forms. */
 export function registerSample(name: string, source: RegisteredSource): void {
   const normalized = normalizeSource(source);
@@ -142,6 +156,7 @@ export function registerSample(name: string, source: RegisteredSource): void {
   give(glue, name, entry);
   registry.set(name, entry);
   if (render) give(render, name, entry);
+  for (const sink of sinks) give(sink, name, entry);
 }
 
 /** Registers many samples at once: `{ bd: url, sd: url, ... }`. */
@@ -190,6 +205,7 @@ function decoded(ctx: AudioContextLike, key: string, entry: Entry, buffer: Audio
   if (!entry.pcm) {
     glue.loadSample(key, pcm);
     render?.loadSample(key, pcm);
+    for (const sink of sinks) sink.loadSample(key, pcm);
     entry.pcm = pcm;
   }
   entry.decodedOn.set(ctx, hostOf(buffer, pcm));
@@ -322,4 +338,5 @@ export function clearSamples(): void {
   warned.clear();
   glue.clearSamples();
   render?.clearSamples();
+  for (const sink of sinks) sink.clearSamples();
 }

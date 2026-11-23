@@ -18,6 +18,8 @@
 //!   replay on the caller's `OfflineAudioContext` (`renderToBuffer(pattern, { context })`), window by window.
 //! - [`render::encode_wav`] (`encodeWav`): samples to WAV bytes. The package's own `encodeWav` is TypeScript (RF-25d, so it
 //!   is synchronous in a browser before any render); this export is kept for the module's WAV corpus runner.
+//! - [`stream::WasmWorkletEngine`] (`WorkletEngine`): the AudioWorklet backend's engine (RF-29): collected voices booked at
+//!   an absolute frame and rendered a block at a time, with the offline render's own maths.
 //! - The sample registry (`registerSample`, `registerPendingSample`, `loadSample`, `clearSamples`, ...), one per
 //!   instance like the main module's: the wrapper registers each sample in both.
 //!
@@ -34,6 +36,7 @@ pub mod record;
 pub mod render;
 #[path = "../../undertone-wasm/src/samples.rs"]
 pub mod samples;
+pub mod stream;
 #[path = "../../undertone-wasm/src/warnings.rs"]
 #[allow(dead_code)]
 // `queried` and `has_warned` serve the main module; this one only prints the engine's warnings

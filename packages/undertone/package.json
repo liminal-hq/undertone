@@ -22,11 +22,16 @@
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
     },
+    "./worklet": {
+      "types": "./dist/worklet.d.ts",
+      "default": "./dist/worklet.js"
+    },
     "./wasm": {
       "types": "./wasm/undertone_wasm.d.ts",
       "default": "./wasm/undertone_wasm.js"
     },
     "./wasm/undertone_wasm_bg.wasm": "./wasm/undertone_wasm_bg.wasm",
+    "./wasm/render/undertone_wasm_render.js": "./wasm/render/undertone_wasm_render.js",
     "./wasm/render/undertone_wasm_render_bg.wasm": "./wasm/render/undertone_wasm_render_bg.wasm",
     "./package.json": "./package.json"
   },
