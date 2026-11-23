@@ -61,6 +61,8 @@ writeFileSync('arpeggio.wav', encodeWav(buffer));
 
 There is no `AudioContext` outside a browser, so `play()` and `loop()` need a `ctx` (a library such as `node-web-audio-api`, or a fake one in tests); rendering needs nothing.
 
+**Rendering with no browser is tested in all three.** CI renders five cases through the package in Node, Bun, and Deno and compares each WAV file byte for byte with the native Rust render (and the native build with a `wasm32-wasip1` build run under `wasmtime`); the files are identical. Locally, `bun run package:build`, then `scripts/check-wasi-render.sh` and `scripts/check-package-render.sh target/render-reference` do the same. CI runs Node 24 (the shared image's version), Bun 1.4.4, and Deno 2.9.8; Node 22, the floor, was run by hand and the checks pass there, and Node 20 is not supported (D-42). Deno needed no change: the `node` condition loads the package and its modules from disk as in Node. See [Rendering without a browser](/guide/rendering-and-export#rendering-without-a-browser).
+
 ## Browsers and bundlers
 
 The default entry uses top-level `await`, which needs a build target of ES2022 or later.

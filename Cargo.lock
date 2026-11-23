@@ -797,6 +797,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "undertone-cli"
+version = "0.0.0"
+dependencies = [
+ "undertone",
+]
+
+[[package]]
 name = "undertone-engine"
 version = "0.0.0"
 dependencies = [
