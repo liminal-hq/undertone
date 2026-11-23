@@ -35,6 +35,8 @@
     "./wasm/render/undertone_wasm_render_bg.wasm": "./wasm/render/undertone_wasm_render_bg.wasm",
     "./wasm/worklet/undertone_worklet.js": "./wasm/worklet/undertone_worklet.js",
     "./wasm/worklet/undertone_worklet_bg.wasm": "./wasm/worklet/undertone_worklet_bg.wasm",
+    "./wasm/worklet/undertone_worklet_simd.js": "./wasm/worklet/undertone_worklet_simd.js",
+    "./wasm/worklet/undertone_worklet_simd_bg.wasm": "./wasm/worklet/undertone_worklet_simd_bg.wasm",
     "./package.json": "./package.json"
   },
   "files": [
@@ -51,6 +53,10 @@
     "wasm/worklet/undertone_worklet.d.ts",
     "wasm/worklet/undertone_worklet_bg.wasm",
     "wasm/worklet/undertone_worklet_bg.wasm.d.ts",
+    "wasm/worklet/undertone_worklet_simd.js",
+    "wasm/worklet/undertone_worklet_simd.d.ts",
+    "wasm/worklet/undertone_worklet_simd_bg.wasm",
+    "wasm/worklet/undertone_worklet_simd_bg.wasm.d.ts",
     "README.md",
     "CHANGELOG.md"
   ],

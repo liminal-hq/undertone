@@ -120,7 +120,10 @@ The main thread compiles the worklet module once and posts the `WebAssembly.Modu
 | ----------------------- | ------------------------------------------------------------------------------------------------------- |
 | `wasm`                  | The worklet module: a compiled `WebAssembly.Module`, its bytes, a `Response`, or a URL.                 |
 | `glueUrl` or `glueText` | The worklet module's glue (`@liminal-hq/undertone/wasm/worklet/undertone_worklet.js`) as a URL or text. |
+| `simd`                  | `false` forces the baseline build, `true` the SIMD build; left out, `supportsSimd()` chooses (D-52).    |
 | `moduleUrl`             | A module you host (build it with `workletModuleSource(glueText)` and serve it), instead of a blob.      |
+
+The package carries two builds of the worklet module: one compiled with SIMD (`undertone_worklet_simd_bg.wasm`, 119.7 KB after Brotli), which `createWorkletOutput` loads where `WebAssembly.validate` accepts a SIMD module, and the baseline build, which it loads elsewhere and whenever you supply `wasm`, `glueUrl`, `glueText`, or `moduleUrl`. They render the same samples to the last bit; on a device bench the SIMD build was 25 to 60 percent cheaper per block on Chrome and Firefox on Windows, Edge, and Chrome on Android, and Firefox on Android gained nothing. `output.module` says which one runs. A glue file and its module go together, so a worklet takes one build for good.
 
 An `AudioWorklet` needs a secure context (https or `localhost`). A browser that cannot send a compiled module to a worklet gets the module's bytes, and the processor compiles them.
 

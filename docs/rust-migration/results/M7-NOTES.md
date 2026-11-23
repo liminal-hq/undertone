@@ -27,8 +27,8 @@ The stack is #120, #121, #122, #124, and #126, in that order.
 | Worklet in real Chromium 156 (headless)   | Against `renderToBuffer`: light patterns exact, the representative pattern within 1.8e-7. A correctness check with no audio device                                                                        |
 | Worklet: `process` timing                 | A headless desktop smoke run only: p99 about 9% of the 128-frame budget with the speed build, 41% with the size build. **Not the acceptance**                                                             |
 | Worklet: phone, Steam Deck, throttled     | **Not run.** `bun packages/undertone/harness/serve.ts` and the page it prints (the guide has the phone steps); the limits are no underrun over five minutes, p99 at most 40%, and zero drift              |
-| Module sizes after Brotli                 | Main 148.8 KB of 150 KB; render 100.1 KB of 120 KB; worklet 118.0 KB of 120 KB (its 108 KB warning fires every run, by design)                                                                            |
-| Decisions                                 | D-47 to D-51                                                                                                                                                                                              |
+| Module sizes after Brotli                 | Main 148.8 KB of 150 KB; render 100.1 KB of 120 KB; worklet 118.0 KB of 120 KB (its 108 KB warning fires every run, by design); worklet SIMD build 119.7 KB of 120 KB (D-52)                              |
+| Decisions                                 | D-47 to D-52                                                                                                                                                                                              |
 
 ## What changed in the plan
 
@@ -37,6 +37,8 @@ The stack is #120, #121, #122, #124, and #126, in that order.
 - **The native audio thread only copies from a ring.** The control thread renders about 0.1 s ahead, so a change made while playing is heard up to that late. Rendering voices on the audio thread would need the zero-allocation booking tick that D-34 deferred.
 - **The render module's budget was wrong in the script.** `scripts/check-wasm-size.ts` enforced 150 KB for it while D-43 said 120 KB. It was found by the RF-29 agent and fixed in #124.
 - **Chromium's `AudioWorkletGlobalScope` has no `performance`.** The processor times itself with a `SharedArrayBuffer` counter a page worker spins (`clock: 'spin'`), which needs cross-origin isolation. Other browsers' worklet scopes were not checked.
+
+- **The worklet ships a SIMD build with the baseline as its fallback** (D-52). The same crate with `simd128` is 25 to 60 percent cheaper per block on Chrome and Firefox on Windows, Edge, and Chrome on Android, with the same samples to the last bit; Firefox on Android is not helped. The SIMD module has 331 bytes of Brotli headroom, so the next change to the worklet module needs a budget decision.
 
 ## Known limits
 

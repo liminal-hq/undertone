@@ -18,6 +18,9 @@
 // (workletShim.ts, workletProcessor.ts), so nothing here depends on a bundler; the glue and the module are found with
 // `new URL(..., import.meta.url)`, which bundlers copy as assets, and each can be given as an option instead.
 //
+// Two builds of that module ship (D-52): a SIMD one, which `createWorkletOutput` loads where `WebAssembly.validate` accepts a SIMD
+// probe module (`supportsSimd()`), and the baseline one, the fallback, where it does not. They are bit-identical in output.
+//
 // Voices travel over the processor's `MessagePort`, which is always available. A `SharedArrayBuffer` ring for a cross-origin
 // isolated page is not built: the port's cost is measured by the harness first (packages/undertone/harness/).
 
@@ -71,6 +74,27 @@ export type WorkletSource = WebAssembly.Module | BufferSource | Response | strin
 /** The valid output channel counts: the render's (1, 2, 4, 6, 8). */
 export type WorkletChannels = 1 | 2 | 4 | 6 | 8;
 
+/** Which worklet module an output runs: the package's SIMD or baseline build, or one the caller supplied. */
+export type WorkletModuleKind = 'simd' | 'baseline' | 'custom';
+
+/**
+ * A module with one function that returns `i8x16.popcnt(i8x16.splat(0))`: it validates only where the engine implements the
+ * WebAssembly SIMD proposal. (The probe the `wasm-feature-detect` library uses.)
+ */
+export const simdProbe: Uint8Array<ArrayBuffer> = new Uint8Array([
+  0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15,
+  253, 98, 11
+]);
+
+/** Whether this browser (or runtime) accepts WebAssembly SIMD, which decides the worklet module `createWorkletOutput` loads. */
+export function supportsSimd(): boolean {
+  try {
+    return typeof WebAssembly === 'object' && WebAssembly.validate(simdProbe);
+  } catch {
+    return false;
+  }
+}
+
 /** Options of `createWorkletOutput`. */
 export interface WorkletOutputOptions {
   /** Output channels. Default 2. More than two needs a destination that can be that wide (`maxChannelCount`). */
@@ -85,7 +109,12 @@ export interface WorkletOutputOptions {
   connect?: unknown;
   /** How far ahead of now a pass starts when `when` is not given, in seconds. Default 0.15. */
   leadTime?: number;
-  /** The worklet module (`undertone_worklet_bg.wasm`): a compiled module, its bytes, a `Response`, or a URL. Default: next to this file. */
+  /**
+   * The worklet module (`undertone_worklet_bg.wasm`): a compiled module, its bytes, a `Response`, or a URL. Default: next to this
+   * file, the SIMD build where the browser accepts SIMD and the baseline one elsewhere (D-52). Giving `wasm`, `glueUrl`, `glueText`
+   * or `moduleUrl` turns that choice off: the module is the baseline build unless you supply another, and `output.module` says
+   * `'custom'`. A glue file and its module go together (each names the other), so supply both when you supply either.
+   */
   wasm?: WorkletSource;
   /** Where to fetch the worklet module's glue (`undertone_worklet.js`) from. Default: next to this file. */
   glueUrl?: string | URL;
@@ -93,6 +122,15 @@ export interface WorkletOutputOptions {
   glueText?: string;
   /** A module you host yourself (made with `workletModuleSource`), for a page whose policy refuses `blob:` URLs. Skips the blob. */
   moduleUrl?: string | URL;
+  /**
+   * Which of the package's two worklet builds to load: `false` forces the baseline build, `true` forces the SIMD build (without
+   * asking the browser, so it fails where SIMD is missing), and leaving it out chooses by `supportsSimd()`. Ignored when `wasm`,
+   * `glueUrl`, `glueText` or `moduleUrl` is given. A context's worklet takes one build for good: a later output on the same context
+   * uses the first's when this is left out, and throws when it asks for the other.
+   */
+  simd?: boolean;
+  /** Tells whether the browser accepts SIMD, in place of `supportsSimd()` (tests, and pages that know better). */
+  detectSimd?: () => boolean;
   /**
    * How `process` is timed. Chromium's worklet scope has no `performance.now()` (the statistics then report no times), so
    * `'spin'` starts a worker that writes its own `performance.now()` into a `SharedArrayBuffer` for the processor to read: a
@@ -195,6 +233,8 @@ export interface WorkletOutput {
   readonly timingNote: string | undefined;
   /** Whether the page is cross-origin isolated (a `SharedArrayBuffer` ring would be possible; this backend uses the message port). */
   readonly crossOriginIsolated: boolean;
+  /** Which worklet module is in use: the package's `'simd'` or `'baseline'` build, or `'custom'` when you supplied `wasm`, `glueUrl`, `glueText` or `moduleUrl`. */
+  readonly module: WorkletModuleKind;
   /** Plays `cycles` cycles of the pattern once. */
   play(pattern: PlayablePattern, options?: WorkletPlayOptions): WorkletPlayback;
   /** Plays the pattern `cycles` cycles at a time, going on from cycle to cycle (cycles 0 to N, then N to 2N, ...) until stopped. */
@@ -228,7 +268,7 @@ export function workletModuleSource(glueText: string): string {
   ].join('\n');
 }
 
-const added = new WeakMap<object, Promise<void>>();
+const added = new WeakMap<object, { adding: Promise<void>; kind: WorkletModuleKind }>();
 
 async function readText(source: string | URL): Promise<string> {
   const response = await fetch(source);
@@ -248,15 +288,23 @@ async function readBytes(source: WebAssembly.Module | BufferSource | Response | 
 }
 
 /** The URL of the worklet module's glue and module, next to this file (a bundler copies each as an asset). */
-function defaultGlueUrl(): URL {
-  return new URL('../wasm/worklet/undertone_worklet.js', import.meta.url);
+function defaultGlueUrl(simd: boolean): URL {
+  return simd
+    ? new URL('../wasm/worklet/undertone_worklet_simd.js', import.meta.url)
+    : new URL('../wasm/worklet/undertone_worklet.js', import.meta.url);
 }
-function defaultWasmUrl(): URL {
-  return new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.meta.url);
+function defaultWasmUrl(simd: boolean): URL {
+  return simd
+    ? new URL('../wasm/worklet/undertone_worklet_simd_bg.wasm', import.meta.url)
+    : new URL('../wasm/worklet/undertone_worklet_bg.wasm', import.meta.url);
 }
 
 /** Adds the processor to the context's worklet once. */
-function addProcessor(context: WorkletContextLike, options: WorkletOutputOptions): Promise<void> {
+function addProcessor(
+  context: WorkletContextLike,
+  options: WorkletOutputOptions,
+  kind: WorkletModuleKind
+): Promise<void> {
   const worklet = context.audioWorklet;
   if (worklet === undefined) {
     return Promise.reject(
@@ -266,13 +314,14 @@ function addProcessor(context: WorkletContextLike, options: WorkletOutputOptions
     );
   }
   const known = added.get(worklet);
-  if (known !== undefined) return known;
+  if (known !== undefined) return known.adding;
   const adding = (async () => {
     if (options.moduleUrl !== undefined) {
       await worklet.addModule(String(options.moduleUrl));
       return;
     }
-    const text = options.glueText ?? (await readText(options.glueUrl ?? defaultGlueUrl()));
+    const text =
+      options.glueText ?? (await readText(options.glueUrl ?? defaultGlueUrl(kind === 'simd')));
     const source = workletModuleSource(text);
     const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
     try {
@@ -281,10 +330,10 @@ function addProcessor(context: WorkletContextLike, options: WorkletOutputOptions
       URL.revokeObjectURL(url);
     }
   })();
-  added.set(worklet, adding);
+  added.set(worklet, { adding, kind });
   adding.catch(() => {
     // A failed add is not kept: the next output tries again.
-    if (added.get(worklet) === adding) added.delete(worklet);
+    if (added.get(worklet)?.adding === adding) added.delete(worklet);
   });
   return adding;
 }
@@ -403,10 +452,30 @@ export async function createWorkletOutput(
   if (options.seed !== undefined) engineOptions.seed = options.seed;
   if (options.master !== undefined) engineOptions.master = options.master;
 
+  // Which build: a supplied module, glue, or hosted module wins and is left alone; else the caller's `simd`, else the first output
+  // on this context (its glue is already in the worklet and each glue names its own module), else what the browser accepts.
+  const supplied =
+    options.wasm !== undefined ||
+    options.glueUrl !== undefined ||
+    options.glueText !== undefined ||
+    options.moduleUrl !== undefined;
+  const settled =
+    context.audioWorklet === undefined ? undefined : added.get(context.audioWorklet)?.kind;
+  let kind: WorkletModuleKind;
+  if (supplied) kind = 'custom';
+  else if (options.simd !== undefined) kind = options.simd ? 'simd' : 'baseline';
+  else if (settled !== undefined) kind = settled === 'custom' ? 'baseline' : settled;
+  else kind = (options.detectSimd ?? supportsSimd)() ? 'simd' : 'baseline';
+  if (settled !== undefined && settled !== 'custom' && kind !== 'custom' && kind !== settled) {
+    throw new Error(
+      `this context's worklet already has the ${settled} build of the worklet module, and a worklet takes one build for good; asked for ${kind}`
+    );
+  }
+
   // The worklet module, compiled once on this thread; its bytes are kept to post when the worklet cannot take a module.
   const [adding, source] = await Promise.all([
-    addProcessor(context, options),
-    readBytes(options.wasm ?? defaultWasmUrl())
+    addProcessor(context, options, kind),
+    readBytes(options.wasm ?? defaultWasmUrl(kind === 'simd'))
   ]);
   void adding;
   const compiled =
@@ -669,6 +738,7 @@ export async function createWorkletOutput(
     },
     crossOriginIsolated:
       (globalThis as { crossOriginIsolated?: boolean }).crossOriginIsolated === true,
+    module: kind,
     play: (pattern, playOptions = {}) => startOnce(pattern, playOptions),
     loop: (pattern, playOptions = {}) => startLoop(pattern, playOptions),
     stats() {
